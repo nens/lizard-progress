@@ -1,0 +1,124 @@
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/base/jquery-ui.css" type="text/css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
+
+{% comment %}
+JQuery is already included by lizard. Including it twice will cause CSRF errors.
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+{% endcomment %}
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+<script type="text/javascript" src="http://bp.yahooapis.com/2.4.21/browserplus-min.js"></script>
+
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.gears.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.silverlight.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.flash.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.browserplus.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html4.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
+
+<div id="uploader">
+  <p>You browser doesn't have HTML5, Flash, Silverlight, Gears, BrowserPlus or support.</p>
+</div>
+
+<script type="text/javascript">
+// Convert div to queue widget when the DOM is ready
+$(function () {
+    $("#uploader").plupload({
+        // General settings
+        //runtimes : 'html4,flash,browserplus,silverlight,gears,html5',
+        runtimes : 'html5',
+        url : '{{ view.upload_url }}',
+        max_file_size : '4mb',
+        //max_file_count : 20, // user can add no more than 20 files at a time
+        chunk_size : '1mb',
+        unique_names : true,
+        multiple_queues : true,
+
+        //resize : {width : 320, height : 240, quality : 90},
+
+        //headers : {'X-Requested-With' : 'XMLHttpRequest', 'X-CSRFToken' : '{{csrf_token}}'},
+        headers : {'X-CSRFToken' : '{{ csrf_token }}', 'FOO' : 'BAR'},
+
+        // This will be used below to send the filename.
+        multipart_params: {},
+
+        // Rename files by clicking on their titles
+        rename: true,
+
+        // Sort files
+        sortable: true,
+
+        // Specify what files to browse for
+        filters : [
+{% for ftype, fext in view.project.specifics.upload_file_types %}{title : "{{ ftype }}", extensions : "{{ fext }}"},
+{% endfor %}
+        ],
+
+        // Flash settings
+        flash_swf_url : '{{ STATIC_URL }}plupload/js/plupload.flash.swf',
+
+        // Silverlight settings
+        silverlight_xap_url : '{{ STATIC_URL }}plupload/js/plupload.silverlight.xap'
+    });
+
+    // When sending a large file in chunks, the original filename is lost.
+    // To have the client-side filename at the server, multipart_params
+    // is used as a workaround. For small files, request.FILES['file']
+    // also provides us with the filename.
+
+    var uploader = $('#uploader').plupload('getUploader');
+    uploader.bind('beforeUpload', function (u, f) {
+        u.settings.multipart_params.filename = f.name;
+    });
+
+    //alert(foo.plupload('getUploader').runtime);
+    //alert(uploader.runtime);
+    //uploader.bind('beforeUpload', function(u, f) { alert(plupload.File.name); });
+    //uploader.settings.multipart_params.myfilename = 'xyz';
+    //uploader.settings.multipart_params['X-CSRFToken'] = '{{csrf_token}}';
+
+    // Client side form validation
+    $('form').submit(function (e) {
+        var uploader = $('#uploader').plupload('getUploader');
+
+        // Files in queue upload them first
+        if (uploader.files.length > 0) {
+            // When all files are uploaded submit form
+            uploader.bind('StateChanged', function () {
+                if (uploader.files.length === (uploader.total.uploaded + uploader.total.failed)) {
+                    $('form')[0].submit();
+                }
+            });
+
+            uploader.start();
+        } else {
+            alert('You must at least upload one file.');
+        }
+
+        return false;
+    });
+
+    // Display error messages returned by the server
+    uploader.bind('FileUploaded', function (up, file, response) {
+
+        response = $.parseJSON(response.response);
+
+        if (response.error) {
+            up.trigger('Error', {
+                code: plupload.GENERIC_ERROR,
+                message: plupload.translate('Upload Error.'),
+                details: response.error.details,
+                file: file
+            });
+        }
+
+    });
+
+    //
+    uploader.bind('UploadComplete', function (up, files) {
+        refreshWorkspaceLayers();
+    });
+
+});
+</script>

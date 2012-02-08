@@ -14,6 +14,7 @@ install_requires = [
     'django-extensions',
     'django-nose',
     'lizard-ui >= 3.0',
+    'lizard-map',
     'pkginfo',
     ],
 
@@ -40,6 +41,8 @@ setup(name='lizard-progress',
       tests_require=tests_require,
       extras_require = {'test': tests_require},
       entry_points={
-          'console_scripts': [
-          ]},
-      )
+          'console_scripts': [],
+          'lizard_map.adapter_class': [
+              'adapter_progress = lizard_progress.layers:ProgressAdapter',
+              ]})
+

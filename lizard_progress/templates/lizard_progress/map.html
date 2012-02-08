@@ -1,0 +1,33 @@
+{% extends "lizard_map/wms.html" %}
+{% load workspaces %}
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet"
+      type="text/css"
+      href="{{ STATIC_URL }}hdsr/hdsr.css" />
+{% endblock css %}
+
+{% block map-javascript %}
+{{ block.super }}
+<script type="text/javascript"
+        src="{{ STATIC_URL }}hdsr/hdsr.js"></script>
+{% endblock map-javascript %}
+
+{% block sidebar %}
+<div class="sidebarbox sidebarbox-stretched">
+  <h2>Kaart</h2>
+  <ul class="without-bullets">
+{% for layer in view.available_layers %}
+    <li class="workspace-acceptable"
+        data-name="{{ layer.name }}"
+        data-adapter-class="adapter_progress"
+        data-adapter-layer-json='{{ layer.json }}'>{{ layer.name }}
+{% endfor %}
+  </ul>
+</div>
+
+{% workspace_edit view.workspace_edit %}
+{% collage_edit view.collage_edit %}
+
+{% endblock sidebar %}

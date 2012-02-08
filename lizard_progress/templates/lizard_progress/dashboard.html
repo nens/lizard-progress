@@ -1,0 +1,33 @@
+{% extends "lizard_map/wms.html" %}
+{% load workspaces %}
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet"
+      type="text/css"
+      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
+{% endblock css %}
+
+{% block map-javascript %}
+{{ block.super }}
+<script type="text/javascript"
+        src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock map-javascript %}
+
+{% block sidebar %}
+<div class="sidebarbox sidebarbox-stretched">
+  <h2>Dashboard</h2>
+  <ul class="without-bullets">
+{% for contractor, area, url in view.areas %}
+    <li class="dashboard" data-contractor-slug="{{ contractor.slug }}"
+	data-contractor-name="{{ contractor.name }}"
+	data-area-slug="{{ area.slug }}" data-area-name="{{ area.name }}"
+	data-dashboard-url="{{ url }}">Voortgang {{ contractor.name }} deelgebied {{ area.name }}
+{% endfor %}
+  </ul>
+</div>
+
+{% workspace_edit view.workspace_edit %}
+{% collage_edit view.collage_edit %}
+
+{% endblock sidebar %}

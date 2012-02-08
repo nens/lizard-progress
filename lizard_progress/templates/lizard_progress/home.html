@@ -1,0 +1,48 @@
+{% extends "lizard_map/wms.html" %}
+{% load workspaces %}
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet"
+      type="text/css"
+      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
+{% endblock css %}
+
+{% block map-javascript %}
+{{ block.super }}
+<script type="text/javascript"
+        src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock map-javascript %}
+
+{% block sidebar %}
+<div id="iconbox" class="sidebarbox sidebarbox-stretched iconlist" data-upload-url="{{ view.upload_url }}">
+  <h2>{{ view.project.name }}</h2>
+
+  <ul>
+    <li class="upload">
+      <a rel="tipsy" title="Upload files">
+        <img src="/static_media/lizard_ui/app_icons/oevers.png">
+        <div>Upload</div>
+      </a>
+    </li>
+    
+    <li>
+      <a rel="tipsy" title="Dashboard" href="{{ view.dashboard_url }}">
+        <img src="/static_media/lizard_ui/app_icons/oevers.png">
+        <div>Dashboard</div>
+      </a>
+    </li>
+
+    <li>
+      <a rel="tipsy" title="Kaartlagen" href="{{ view.map_url }}">
+        <img src="/static_media/lizard_ui/app_icons/oevers.png">
+        <div>Kaartlagen</div>
+      </a>
+    </li>
+  </ul>
+</div>
+
+{% workspace_edit view.workspace_edit %}
+{% collage_edit view.collage_edit %}
+
+{% endblock sidebar %}

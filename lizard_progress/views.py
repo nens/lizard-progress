@@ -26,6 +26,12 @@ from lizard_ui.views import ViewContextMixin
 
 logger = logging.getLogger(__name__)
 
+
+def JsonResponse(ob):
+    return HttpResponse(json.dumps(ob),
+                        mimetype="application/json")
+
+
 class View(AppView):
     project_slug = None
     project = None
@@ -34,20 +40,21 @@ class View(AppView):
     def dispatch(self, request, *args, **kwargs):
         self.project_slug = kwargs.get('project_slug', None)
         self.project = get_object_or_404(Project, slug=self.project_slug)
-            
+
         return super(View, self).dispatch(request, *args, **kwargs)
 
     def upload_url(self):
-        return reverse('lizard_progress_uploadview', 
+        return reverse('lizard_progress_uploadview',
                        kwargs={'project_slug': self.project_slug})
-        
+
     def dashboard_url(self):
-        return reverse('lizard_progress_dashboardview', 
+        return reverse('lizard_progress_dashboardview',
                        kwargs={'project_slug': self.project_slug})
 
     def map_url(self):
-        return reverse('lizard_progress_mapview', 
+        return reverse('lizard_progress_mapview',
                        kwargs={'project_slug': self.project_slug})
+
 
 class MapView(View):
     template_name = 'lizard_progress/map.html'
@@ -64,17 +71,20 @@ class MapView(View):
         return crumbs
 
     def available_layers(self):
-        return [ { 
+        return [{
                 'name': '%s %s' % (measurement_type.name, contractor.name),
-                'json': '{"contractor_slug":"%s","measurement_type_slug":"%s","project_slug":"%s"}' %
-                (contractor.slug, measurement_type.slug, self.project.slug) 
+                'json': '{"contractor_slug":"%s",' +
+                '"measurement_type_slug":"%s",' +
+                '"project_slug":"%s"}' %
+                (contractor.slug, measurement_type.slug, self.project.slug)
                 }
                  for contractor in self.project.contractor_set.all()
-                     for measurement_type in self.project.measurementtype_set.all() ]
-    
+                 for measurement_type in
+                 self.project.measurementtype_set.all()]
+
 
 class DashboardView(View):
-    template_name='lizard_progress/dashboard.html'
+    template_name = 'lizard_progress/dashboard.html'
 
     def crumbs(self):
         crumbs = super(DashboardView, self).crumbs()
@@ -92,12 +102,18 @@ class DashboardView(View):
         for contractor in Contractor.objects.filter(project=self.project):
             for area in Area.objects.filter(project=self.project):
                 areas.append((contractor, area,
-                             reverse('lizard_progress_dashboardareaview', kwargs={
+                             reverse('lizard_progress_dashboardareaview',
+                                     kwargs={
                             'contractor_slug': contractor.slug,
                             'project_slug': self.project.slug,
                             'area_slug': area.slug})))
 
         return areas
+
+
+class DummyException(BaseException):
+    "Only used for triggering transaction fail"
+    pass
 
 
 class UploadView(ViewContextMixin, TemplateView):
@@ -106,12 +122,48 @@ class UploadView(ViewContextMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         self.project_slug = kwargs.get('project_slug', None)
         self.project = get_object_or_404(Project, slug=self.project_slug)
-            
+
         return super(UploadView, self).dispatch(request, *args, **kwargs)
 
     def upload_url(self):
-        return reverse('lizard_progress_uploadview', 
+        return reverse('lizard_progress_uploadview',
                        kwargs={'project_slug': self.project_slug})
+
+    def try_parser(self, parser, path, project, contractor):
+        result = {}
+        try:
+            with transaction.commit_on_success():
+                # Call the parser.
+                parseresult = parser(path,
+                                     project=project,
+                                     contractor=contractor)
+
+                if parseresult.success:
+                    # Success! Move the file.
+                    result_dir = os.path.dirname(parseresult.result_path)
+                    if not os.path.exists(result_dir):
+                        os.makedirs(result_dir)
+                        shutil.move(path, parseresult.result_path)
+
+                        return True, {}
+                    else:
+                        # Unsuccess. Were there errors? Then set
+                        # them. Note that if there is more than one
+                        # parser, there may still be other parsers
+                        # after this one that are successful, so we
+                        # continue looping.
+                        if parseresult.error:
+                            result = {'error':
+                                          {'details': parseresult.error}}
+
+                        # We raise a dummy exception so that
+                        # commit_on_success doesn't commit whatever
+                        # was done to our database in the meantime.
+                        raise DummyException()
+        except DummyException:
+            pass
+
+        return False, result
 
     def post(self, request, *args, **kwargs):
         """Handle file upload.
@@ -124,14 +176,11 @@ class UploadView(ViewContextMixin, TemplateView):
             contractor = Contractor.objects.get(project=self.project,
                                                 user=request.user)
         except Contractor.DoesNotExist:
-            return HttpResponse(json.dumps({
-                        'error': {
-                            'details': "User not allowed to upload files."}}), 
-                                mimetype="application/json")
+            return JsonResponse({'error': {
+                        'details': "User not allowed to upload files."}})
 
         file = request.FILES['file']
         filename = request.POST['filename']
-        extension = os.path.splitext(filename)[1].lower()
         chunk = int(request.POST.get('chunk', 0))
         chunks = int(request.POST.get('chunks', 1))
         path = '/tmp/' + filename
@@ -140,51 +189,23 @@ class UploadView(ViewContextMixin, TemplateView):
             for bytes in file.chunks():
                 f.write(bytes)
 
-        
-        result = {}
-
-        class DummyException(BaseException):
-            "Only used for triggering transaction fail"
-            pass
-
         if chunk == chunks - 1:
             # We have the whole file. Let's find parsers for it and
             # parse it.
             for parser in self.project.specifics().parsers(filename):
-                try:
-                    with transaction.commit_on_success():
-                        # Call the parser.
-                        parseresult = parser(path, project=self.project, contractor=contractor)
-                        
-                        if parseresult.success:
-                            # Success! Move the file.
-                            result_dir = os.path.dirname(parseresult.result_path)
-                            if not os.path.exists(result_dir):
-                                os.makedirs(result_dir)
-                            shutil.move(path, parseresult.result_path)
-                            
-                            result = {} # Clear any existing errors
-                            break # Stop looping through the parsers
-                        else:
-                            # Unsuccess. Were there errors? Then set them. Note that if there
-                            # is more than one parser, there may still be other parsers after
-                            # this one that are successful, so we continue looping.
-                            if parseresult.error:
-                                result = {'error': {'details': parseresult.error}}
-                            
-                            # We raise a dummy exception so that commit_on_success
-                            # doesn't commit whatever was done to our database in the
-                            # meantime.
-                            raise DummyException()
-                except DummyException:
-                    pass
+                success, errors = self.try_parser(parser, path,
+                                                  self.project, contractor)
+                if success:
+                    break
             else:
                 # For loop finishes without breaking.
-                if not result:
-                    # No parser was successful, but there were no errors either.
-                    result = {'error': {'details': "Unknown filetype."}}
-
-        return HttpResponse(json.dumps(result), mimetype="application/json")
+                if not errors:
+                    # No parser was successful, but there were no
+                    # errors either.
+                    errors = {'error': {'details': "Unknown filetype."}}
+            return JsonResponse(errors)
+        else:
+            return JsonResponse({})
 
 
 class DashboardAreaView(View):
@@ -194,17 +215,22 @@ class DashboardAreaView(View):
         self.project_slug = kwargs.get('project_slug', None)
         self.project = get_object_or_404(Project, slug=self.project_slug)
         self.area_slug = kwargs.get('area_slug', None)
-        self.area = get_object_or_404(Area, project=self.project, slug=self.area_slug)
+        self.area = get_object_or_404(Area,
+                                      project=self.project,
+                                      slug=self.area_slug)
         self.contractor_slug = kwargs.get('contractor_slug', None)
-        self.contractor = get_object_or_404(Contractor, project=self.project, slug=self.contractor_slug)
+        self.contractor = get_object_or_404(Contractor,
+                                            project=self.project,
+                                            slug=self.contractor_slug)
 
-        return super(DashboardAreaView, self).dispatch(request, *args, **kwargs)
+        return (super(DashboardAreaView, self).
+                dispatch(request, *args, **kwargs))
 
     def graph_url(self):
         return reverse('lizard_progress_dashboardgraphview', kwargs={
                 'project_slug': self.project.slug,
                 'contractor_slug': self.contractor.slug,
-                'area_slug': self.area.slug});
+                'area_slug': self.area.slug})
 
 
 class ScreenFigure(figure.Figure):
@@ -224,14 +250,16 @@ class ScreenFigure(figure.Figure):
 
 
 @login_required
-def dashboard_graph(request, project_slug, contractor_slug, area_slug, *args, **kwargs):
+def dashboard_graph(request, project_slug, contractor_slug,
+                    area_slug, *args, **kwargs):
     """Show the work in progress per area in pie charts.
 
     A single PNG image is returned as a response.
     """
     project = get_object_or_404(Project, slug=project_slug)
     area = get_object_or_404(Area, project=project, slug=area_slug)
-    contractor = get_object_or_404(Contractor, project=project, slug=contractor_slug)
+    contractor = get_object_or_404(Contractor, project=project,
+                                   slug=contractor_slug)
 
     # XXX
     fig = ScreenFigure(600, 300)  # in pixels
@@ -249,22 +277,23 @@ def dashboard_graph(request, project_slug, contractor_slug, area_slug, *args, **
         rows = 1
         cols = images
 
-        start = 100*rows+10*cols
-        
+        start = 100 * rows + 10 * cols
+
         n = 0
         while n < images:
             n += 1
-            yield start+n
+            yield start + n
 
     mtypes = project.measurementtype_set.all()
     subplots = subplot_generator(len(mtypes))
 
     for mtype in mtypes:
         # Profiles to be measured
-        total = ScheduledMeasurement.objects.filter(project=project,
-                                                    contractor=contractor,
-                                                    measurement_type=mtype,
-                                                    location__area=area).count()
+        total = (ScheduledMeasurement.objects.
+                 filter(project=project,
+                        contractor=contractor,
+                        measurement_type=mtype,
+                        location__area=area).count())
 
         # Measured profiles
         done = ScheduledMeasurement.objects.filter(project=project,
@@ -287,4 +316,3 @@ def dashboard_graph(request, project_slug, contractor_slug, area_slug, *args, **
     canvas = FigureCanvas(fig)
     canvas.print_png(response)
     return response
-

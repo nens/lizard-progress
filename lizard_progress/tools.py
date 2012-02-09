@@ -10,13 +10,13 @@ class LookaheadLine(object):
              while la.line.startswith("<METING")
                  # ...Parse metingen...
                  la.next()
-        
+
     It helps to create a "lookahead-one-line" parser.
     """
 
     def __init__(self, filename):
         self.filename = filename
-        
+
     def __enter__(self):
         self.file = open(self.filename)
         self.next()
@@ -28,7 +28,7 @@ class LookaheadLine(object):
 
     def next(self):
         self._line = self.file.readline()
-        
+
     def eof(self):
         return not bool(self._line)
 

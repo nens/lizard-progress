@@ -3,17 +3,12 @@
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
-from django.http import HttpResponse
-from hdsr.views import ScreenFigure
 from lizard_map import coordinates
 from lizard_map.coordinates import RD
 from lizard_map.workspace import WorkspaceItemAdapter
-from math import sqrt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from pkg_resources import resource_filename
 import logging
 import mapnik
-import os.path
 import pyproj
 
 from lizard_progress.models import Contractor
@@ -24,11 +19,14 @@ from lizard_progress.models import ScheduledMeasurement
 
 logger = logging.getLogger(__name__)
 
+
 class ProgressAdapter(WorkspaceItemAdapter):
     def __init__(self, *args, **kwargs):
         project_slug = kwargs['layer_arguments'].get('project_slug', None)
-        contractor_slug = kwargs['layer_arguments'].get('contractor_slug', None)
-        measurement_type_slug = kwargs['layer_arguments'].get('measurement_type_slug', None)
+        contractor_slug = (kwargs['layer_arguments'].
+                           get('contractor_slug', None))
+        measurement_type_slug = (kwargs['layer_arguments'].
+                                 get('measurement_type_slug', None))
 
         self.project = None
         self.contractor = None
@@ -40,12 +38,15 @@ class ProgressAdapter(WorkspaceItemAdapter):
             return
 
         try:
-            self.contractor = Contractor.objects.get(project=self.project, slug=contractor_slug)
+            self.contractor = Contractor.objects.get(project=self.project,
+                                                     slug=contractor_slug)
         except Contractor.DoesNotExist:
             return
 
         try:
-            self.measurement_type = MeasurementType.objects.get(project=self.project, slug=measurement_type_slug)
+            self.measurement_type = (MeasurementType.objects.
+                                     get(project=self.project,
+                                         slug=measurement_type_slug))
         except MeasurementType.DoesNotExist:
             return
 
@@ -56,28 +57,31 @@ class ProgressAdapter(WorkspaceItemAdapter):
         layers = []
         styles = {}
 
-        if not self.project or not self.contractor or not self.measurement_type:
+        if not (self.project and self.contractor and self.measurement_type):
             return
 
         for complete in (True, False):
-            layer_desc = str("%s %s %s %s" % (self.project.slug, self.contractor.slug, 
-                                          self.measurement_type.name, str(complete)))
+            layer_desc = str("%s %s %s %s" % (self.project.slug,
+                                              self.contractor.slug,
+                                              self.measurement_type.name,
+                                              str(complete)))
 
-            query = ("""(select loc.the_geom from lizard_progress_location loc 
+            query = ("""(select loc.the_geom from lizard_progress_location loc
                   inner join lizard_progress_scheduledmeasurement sm on
                   sm.location_id = loc.unique_id
                   where sm.complete=%s
                   and sm.contractor_id=%d
                   and sm.project_id=%d
-                  and sm.measurement_type_id=%d) data""" % (str(complete).lower(),
-                                                         self.contractor.id,
-                                                         self.project.id,
-                                                         self.measurement_type.id))
+                  and sm.measurement_type_id=%d) data""" %
+                     (str(complete).lower(),
+                      self.contractor.id,
+                      self.project.id,
+                      self.measurement_type.id))
 
             img = (resource_filename("hdsr",
-                                     ("/media/hdsr/ball_%s.png" % ("green" if complete else "red",))),
+                                     ("/media/hdsr/ball_%s.png" %
+                                      ("green" if complete else "red",))),
                                      "png", 16, 16)
-                   
 
             style = mapnik.Style()
             styles[layer_desc] = style
@@ -96,7 +100,7 @@ class ProgressAdapter(WorkspaceItemAdapter):
                 dbname=default_database['NAME'],
                 table=query.encode('ascii')
                 )
-            
+
             layer = mapnik.Layer(layer_desc, RD)
             layer.datasource = datasource
             layer.styles.append(layer_desc)
@@ -138,12 +142,14 @@ class ProgressAdapter(WorkspaceItemAdapter):
 
         results = []
 
-        for location in Location.objects.filter(project=self.project,
-                                                the_geom__distance_lte=\
-                                                    (pt, D(m=distance))).distance(pt).order_by('distance'):
-            for scheduled in ScheduledMeasurement.objects.filter(location=location,
-                                                                 contractor=self.contractor,
-                                                                 measurement_type=self.measurement_type):
+        for location in (Location.objects.
+                         filter(project=self.project,
+                                the_geom__distance_lte=(pt, D(m=distance))).
+                         distance(pt).order_by('distance')):
+            for scheduled in (ScheduledMeasurement.objects.
+                              filter(location=location,
+                                     contractor=self.contractor,
+                                     measurement_type=self.measurement_type)):
                 result = {
                     'distance': location.distance.m,
                     'workspace_item': self.workspace_item,
@@ -162,11 +168,15 @@ class ProgressAdapter(WorkspaceItemAdapter):
         """
         """
         print "LOCATION"
-        scheduled = ScheduledMeasurement.objects.get(pk=scheduled_measurement_id)
+        scheduled = (ScheduledMeasurement.objects.
+                     get(pk=scheduled_measurement_id))
         if not scheduled:
-            return { "name": "unknown" }
-        
-        return { "name": "%s Uitvoerder: %s Type: %s" % (scheduled.location.unique_id, scheduled.contractor.name, scheduled.measurement_type.name) }
+            return {"name": "unknown"}
+
+        return {"name": "%s Uitvoerder: %s Type: %s" %
+                (scheduled.location.unique_id,
+                 scheduled.contractor.name,
+                 scheduled.measurement_type.name)}
 
     def symbol_url(self):
         ""
@@ -175,18 +185,21 @@ class ProgressAdapter(WorkspaceItemAdapter):
     def html(self, snippet_group=None, identifiers=None, layout_options=None):
         """
         """
-        scheduled_measurements = [ ScheduledMeasurement.objects.get(pk=id['scheduled_measurement_id'])
-                                   for id in identifiers ]
+        scheduled_measurements = [ScheduledMeasurement.objects.
+                                  get(pk=id['scheduled_measurement_id'])
+                                  for id in identifiers]
 
-        handler = self.project.specifics().html_handler(measurement_type=self.measurement_type,
-                                                        contractor=self.contractor,
-                                                        project=self.project)
+        handler = (self.project.specifics().
+                   html_handler(measurement_type=self.measurement_type,
+                                contractor=self.contractor,
+                                project=self.project))
 
         if handler is not None:
-            return handler(super(ProgressAdapter, self), scheduled_measurements,
-            snippet_group=snippet_group,
-            identifiers=identifiers,
-            layout_options=layout_options)
+            return handler(super(ProgressAdapter, self),
+                           scheduled_measurements,
+                           snippet_group=snippet_group,
+                           identifiers=identifiers,
+                           layout_options=layout_options)
 
         # Otherwise just use the default template (give implementing
         # sites the chance to just implement image)
@@ -214,12 +227,14 @@ class ProgressAdapter(WorkspaceItemAdapter):
     def image(self, identifiers=None, start_date=None, end_date=None,
               width=None, height=None, layout_extra=None):
 
-        scheduled_measurements = [ ScheduledMeasurement.objects.get(pk=id['scheduled_measurement_id'])
-                                   for id in identifiers ]
+        scheduled_measurements = [ScheduledMeasurement.objects.
+                                  get(pk=id['scheduled_measurement_id'])
+                                  for id in identifiers]
 
-        handler = self.project.specifics().image_handler(measurement_type=self.measurement_type,
-                                                        contractor=self.contractor,
-                                                        project=self.project)
+        handler = (self.project.specifics().
+                   image_handler(measurement_type=self.measurement_type,
+                                 contractor=self.contractor,
+                                 project=self.project))
 
         if handler is not None:
             return handler(scheduled_measurements)

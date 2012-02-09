@@ -8,9 +8,13 @@ as entrypoints in the site's setup.py, under
 'lizard_progress.project_specifics'.
 """
 
+import logging
 import pkg_resources
 
-ENTRY_POINT="lizard_progress.project_specifics"
+ENTRY_POINT = "lizard_progress.project_specifics"
+
+logger = logging.getLogger(__name__)
+
 
 def specifics(project):
     for entrypoint in pkg_resources.iter_entry_points(
@@ -20,7 +24,8 @@ def specifics(project):
                 cls = entrypoint.load()
                 return cls(project)
             except ImportError, e:
-                logger.warn("ImportError trying to find specific implementation: %s" % e)
+                logger.warn("ImportError trying to find " +
+                            "specific implementation: %s" % e)
                 logger.warn("Using defaults.")
                 return GenericSpecifics(project)
 
@@ -64,7 +69,7 @@ class GenericSpecifics(object):
         """
 
         return ()
-    
+
     def parsers(self, filename):
         """
         Return a tuple of functions that will try to parse an uploaded

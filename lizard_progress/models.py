@@ -15,6 +15,7 @@ import lizard_progress.specifics
 
 logger = logging.getLogger(__name__)
 
+
 class Project(models.Model):
     # "Profielen", "Peilschalen", etc
     name = models.CharField(max_length=50)
@@ -32,6 +33,7 @@ class Project(models.Model):
         logger.debug("Asking for specifics...")
         return lizard_progress.specifics.specifics(self)
 
+
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc
     # Lizard-security can relate these to Django user names?
@@ -43,7 +45,7 @@ class Contractor(models.Model):
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)
 
-    
+
 class Area(models.Model):
     # "Noord", "Oost", "Zuid", "West", ...
     project = models.ForeignKey(Project)
@@ -52,6 +54,7 @@ class Area(models.Model):
 
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)
+
 
 class Location(models.Model):
     # All relevant locations in the project
@@ -69,14 +72,17 @@ class Location(models.Model):
     def __unicode__(self):
         return u"Location with id '%s'" % (self.unique_id,)
 
+
 class MeasurementType(models.Model):
-    # "Dwarsprofiel", "Oeverfoto", "Oeverkenmerk", "Peilschaal foto", "Peilschaal kenmerk"
+    # "Dwarsprofiel", "Oeverfoto", "Oeverkenmerk", "Peilschaal foto",
+    # "Peilschaal kenmerk"
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
 
     def __unicode__(self):
         return u"Type '%s' in %s" % (self.name, self.project.name)
+
 
 class ScheduledMeasurement(models.Model):
     project = models.ForeignKey(Project)
@@ -92,6 +98,7 @@ class ScheduledMeasurement(models.Model):
             return Measurement.objects.get(scheduled=self)
         except Measurement.DoesNotExist:
             return None
+
 
 class Measurement(models.Model):
     scheduled = models.ForeignKey(ScheduledMeasurement)

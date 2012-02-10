@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.1 (unreleased)
+0.1 (2012-02-10)
 ----------------
 
 - Initial library skeleton created by nensskel.  [Remco Gerlich]

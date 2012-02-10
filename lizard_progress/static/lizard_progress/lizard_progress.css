@@ -10,23 +10,3 @@
     line-height: 2em;
 }
 
-img#oever {
-    display: block;
-    width: 525px;
-    height: 350px;
-}
-
-#dialog {
-    width: 525px !important;
-    height: 350px !important;
-    padding: 14px !important;
-}
-
-div.img-use-my-size {
-    width: 525px !important;
-    height: 300px !important;
-}
-
-div#photo-name {
-    font-size: 10px;
-}

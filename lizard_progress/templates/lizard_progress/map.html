@@ -5,13 +5,13 @@
 {{ block.super }}
 <link rel="stylesheet"
       type="text/css"
-      href="{{ STATIC_URL }}hdsr/hdsr.css" />
+      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
 {% endblock css %}
 
 {% block map-javascript %}
 {{ block.super }}
 <script type="text/javascript"
-        src="{{ STATIC_URL }}hdsr/hdsr.js"></script>
+        src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
 {% endblock map-javascript %}
 
 {% block sidebar %}
@@ -22,7 +22,7 @@
     <li class="workspace-acceptable"
         data-name="{{ layer.name }}"
         data-adapter-class="adapter_progress"
-        data-adapter-layer-json='{{ layer.json }}'>{{ layer.name }}
+        data-adapter-layer-json="{{ layer.json }}">{{ layer.name }}
 {% endfor %}
   </ul>
 </div>

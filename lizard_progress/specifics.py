@@ -84,3 +84,20 @@ class GenericSpecifics(object):
 
     def html_handler(self, measurement_type, contractor, project):
         return None
+
+    def image_handler(self, measurement_type, contractor, project):
+        return None
+
+    def sample_html_handler(self, html_default, scheduled_measurements,
+                            identifiers, layout_options):
+        # Html_default is the html_default function of the adapter
+        # scheduled_measurements is a list of ScheduledMeasurement objects
+        #     belonging to the identifiers passed in
+        # identifiers, layout_options mean that same
+        # as in a normal adapter.
+        pass
+
+    def sample_image_handler(self, scheduled_measurements):
+        # scheduled_measurements is a list of ScheduledMeasurement objects
+        #     belonging to the identifiers passed in
+        pass

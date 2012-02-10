@@ -1,4 +1,5 @@
 Credits
 =======
 
-- TODO started this library
+- Remco Gerlich started this library, by copying a lot of the code
+  from Carsten Byrman's HDSR site.

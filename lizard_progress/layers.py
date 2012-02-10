@@ -78,8 +78,8 @@ class ProgressAdapter(WorkspaceItemAdapter):
                       self.project.id,
                       self.measurement_type.id))
 
-            img = (resource_filename("hdsr",
-                                     ("/media/hdsr/ball_%s.png" %
+            img = (resource_filename("lizard_progress",
+                                     ("/static/lizard_progress/ball_%s.png" %
                                       ("green" if complete else "red",))),
                                      "png", 16, 16)
 
@@ -149,13 +149,17 @@ class ProgressAdapter(WorkspaceItemAdapter):
             for scheduled in (ScheduledMeasurement.objects.
                               filter(location=location,
                                      contractor=self.contractor,
-                                     measurement_type=self.measurement_type)):
+                                     measurement_type=self.measurement_type,
+                                     complete=True)):
                 result = {
+                    'name': '%s %s %s' % (location.unique_id, self.measurement_type.name,
+                                          self.contractor.name),
                     'distance': location.distance.m,
                     'workspace_item': self.workspace_item,
                     'identifier': {
                         'scheduled_measurement_id': scheduled.id,
                         },
+                    'grouping_hint': '%s %s' % (self.project.slug, self.measurement_type.slug),
                     }
                 results.append(result)
                 break
@@ -166,23 +170,32 @@ class ProgressAdapter(WorkspaceItemAdapter):
 
     def location(self, scheduled_measurement_id, layout=None):
         """
+        Who knows what a location function has to return?
+        Hacked something together based on what fewsjdbc does.
         """
-        print "LOCATION"
-        scheduled = (ScheduledMeasurement.objects.
-                     get(pk=scheduled_measurement_id))
-        if not scheduled:
-            return {"name": "unknown"}
+        try:
+            scheduled = (ScheduledMeasurement.objects.
+                         get(pk=scheduled_measurement_id))
+        except ScheduledMeasurement.DoesNotExist:
+            return None
 
-        return {"name": "%s Uitvoerder: %s Type: %s" %
+        return {"name": "%s %s %s" %
                 (scheduled.location.unique_id,
-                 scheduled.contractor.name,
-                 scheduled.measurement_type.name)}
+                 scheduled.measurement_type.name,
+                 scheduled.contractor.name,),
+                "identifier": {
+                "location": scheduled_measurement_id
+                },
+                "workspace_item": self.workspace_item,
+                "google_coords": (scheduled.location.the_geom.x,
+                                  scheduled.location.the_geom.y),
+                }
 
     def symbol_url(self):
         ""
-        return settings.STATIC_URL + 'hdsr/ball_green.png'
+        return settings.STATIC_URL + 'lizard_progress/ball_green.png'
 
-    def html(self, snippet_group=None, identifiers=None, layout_options=None):
+    def html(self, identifiers=None, layout_options=None):
         """
         """
         scheduled_measurements = [ScheduledMeasurement.objects.
@@ -195,19 +208,16 @@ class ProgressAdapter(WorkspaceItemAdapter):
                                 project=self.project))
 
         if handler is not None:
-            return handler(super(ProgressAdapter, self),
+            return handler(super(ProgressAdapter, self).html_default,
                            scheduled_measurements,
-                           snippet_group=snippet_group,
                            identifiers=identifiers,
                            layout_options=layout_options)
 
         # Otherwise just use the default template (give implementing
         # sites the chance to just implement image)
         return super(ProgressAdapter, self).html_default(
-            snippet_group=snippet_group,
             identifiers=identifiers,
             layout_options=layout_options,
-            extra_render_kwargs=identifiers[0]
         )
 
     def extent(self, identifiers=None):

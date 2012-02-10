@@ -5,27 +5,11 @@
 
 $().ready(function () {
 
-    var overlays;
-
-    overlays = map.getLayersByName('Hydrovakken');
-    if (overlays.length > 0) {
-        overlays[0].setVisibility(true);
-    }
-
-    overlays = map.getLayersByName('Deelgebieden');
-    if (overlays.length > 0) {
-        overlays[0].setVisibility(true);
-    }
-
-});
-
-$().ready(function () {
-
     var $dialog;
     
     $url = $("#iconbox").attr("data-upload-url");
 
-    $dialog = $('<div class="hdsr-popup"/>').load($url).dialog({
+    $dialog = $('<div class="lizard-progress-popup"/>').load($url).dialog({
         autoOpen: false,
         title: 'Uploaden',
         width: 500
@@ -54,14 +38,14 @@ $().ready(function () {
         if ($dialog[contractor_slug+area_slug]) {
             $dialog[contractor_slug+area_slug].dialog('open');
         } else {
-            $dialog[contractor_slug+area_slug] = $('<div class="hdsr-popup"/>').dialog({
+            $dialog[contractor_slug+area_slug] = $('<div class="lizard-progress-popup"/>').dialog({
                 autoOpen: true,
                 open: function (event, ui) {
                     $(this).load(dashboard_url);
                 },
                 title: 'Voortgang '+contractor_name+' Deelgebied ' + area_name,
-                width: 626,
-                height: 350
+                width: 630,
+                height: 420
             });
 
         }

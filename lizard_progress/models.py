@@ -15,16 +15,42 @@ import lizard_progress.specifics
 
 logger = logging.getLogger(__name__)
 
+def has_access(user, project, contractor=None):
+    """Test whether user has access to this project (showing data of
+    this contractor.
+
+    Should probably be implemented using lizard-security but I lack
+    the time to figure that out right now."""
+    
+    if user.is_anonymous():
+        # Not logged in
+        return False
+
+    if user.is_superuser:
+        # Site superuser
+        return True
+
+    if project.superuser == user:
+        # Project superuser
+        return True
+
+    if contractor:
+        return contractor.user == user
+    else:
+        # If this is not about some specific contractor's data,
+        # all contractors have access.
+        for c in project.contractor_set.all():
+            if c.user == user:
+                return True
+
+    return False
+
 
 class Project(models.Model):
     # "Profielen", "Peilschalen", etc
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50, unique=True)
-
-    # Python class that can accept uploaded files, does checking,
-    # and either returns errors or enters the data into the database
-    # Something like "hdsr.upload_file"
-    # upload_file_class = models.CharField()
+    superuser = models.ForeignKey(User, null=True, blank=True)
 
     def __unicode__(self):
         return unicode(self.name)
@@ -36,7 +62,6 @@ class Project(models.Model):
 
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc
-    # Lizard-security can relate these to Django user names?
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
@@ -68,6 +93,10 @@ class Location(models.Model):
     information = JSONField(null=True, blank=True)
 
     objects = models.GeoManager()
+    
+    class Meta:
+        # IDs are unique within a project
+        unique_together = (("unique_id", "project"))
 
     def __unicode__(self):
         return u"Location with id '%s'" % (self.unique_id,)

@@ -8,6 +8,54 @@ Split off from a project where measurements were taken of a large
 number of points along waterways, consisting of depth measurements,
 photos and other data.
 
+To make this work with your site, you'll have to implement all of the code
+specific to your project:
+
+- Custom import scripts that setup the locations in your project, etc.
+
+- Parsers for uploaded files of each type (it's a very new tradition
+  to put these in parsers.py). Parsers are responsible for putting the
+  data they read into the database and return a SuccessfulParserResult
+  or UnSuccessfulParserResult object. Lizard-progress will make sure
+  that this happens in the context of a database transaction, and will
+  roll back everything if the parse was unsuccessful.
+
+- HTML and Image handlers for showing popups and collage pages of your
+  data.
+
+- A "Specifics" object that points to parsers and handlers, it should
+  inherit from lizard_progress.specifics.GenericSpecifics (and probably
+  be placed in progress.py in your project).
+
+- Setup.py in your project should have entry points that allow lizard-progress
+  to find your Specifics objects; e.g. for HDSR:
+
+      entry_points={
+          'console_scripts': [],
+          'lizard_progress.project_specifics': [
+            'dwarsprofielen = hdsr.progress:Dwarsprofielen',
+            'peilschalen = hdsr.progress:Peilschalen',],
+      }
+
+- Nginx.conf.in in your project's etc directory should have a few
+  lines that allow lizard-progress to serve back uploaded files (like
+  photos that you want to show in popups):
+
+    location /protected/ {
+       internal;
+       root ${buildout:directory}/var/lizard_progress;
+    }
+
+- Uploaded files are placed in BUILDOUT_DIR+"/var/" by default, in a
+  project_slug/contractor_slug/measurement_type_slug/filename
+  structure.
+
+The HDSR site is currently the only site that uses this, so look there
+for examples.
+
+Design musings
+--------------
+
 Since such projects are inherently very different from each other, it
 remains to be seen how much can be made generic. At this point we have
 one project more or less working (it will be ported to this library)
@@ -49,4 +97,3 @@ Things that might be generic:
 
 - We need nice pie charts of the project's progress, because that's
   what the project is called.
-

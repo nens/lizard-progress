@@ -109,6 +109,10 @@ class MeasurementType(models.Model):
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
 
+    icon_missing = models.CharField(max_length=50, null=True, blank=True)
+    icon_complete = models.CharField(max_length=50, null=True, blank=True)
+    global_icon_complete = models.CharField(max_length=50, null=True, blank=True)
+
     def __unicode__(self):
         return u"Type '%s' in %s" % (self.name, self.project.name)
 

@@ -173,7 +173,7 @@ class UploadView(ViewContextMixin, TemplateView):
                     result_dir = os.path.dirname(parseresult.result_path)
                     if not os.path.exists(result_dir):
                         os.makedirs(result_dir)
-                        shutil.move(path, parseresult.result_path)
+                    shutil.move(path, parseresult.result_path)
                         
                     return True, {}
                 else:

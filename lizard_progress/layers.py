@@ -65,6 +65,7 @@ class ProgressAdapter(WorkspaceItemAdapter):
                                               self.contractor.slug,
                                               self.measurement_type.name,
                                               str(complete)))
+            logger.debug(layer_desc)
 
             query = ("""(select loc.the_geom from lizard_progress_location loc
                   inner join lizard_progress_scheduledmeasurement sm on
@@ -78,18 +79,41 @@ class ProgressAdapter(WorkspaceItemAdapter):
                       self.project.id,
                       self.measurement_type.id))
 
-            img = (resource_filename("lizard_progress",
-                                     ("/static/lizard_progress/ball_%s.png" %
-                                      ("green" if complete else "red",))),
-                                     "png", 16, 16)
+            default_img_file = "ball_%s.png" % ("green" if complete else "red",)
+            img_file = str(self.measurement_type.icon_complete if complete
+                        else self.measurement_type.icon_missing) or default_img_file
 
+            img = (resource_filename("lizard_progress",
+                                     ("/static/lizard_progress/%s" % img_file)),
+                   "png", 16, 16)
+
+            img_file_global = str(self.measurement_type.global_icon_complete if complete
+                                  else "emptycircle16.png")
+            img_global = (resource_filename("lizard_progress",
+                                            "/static/lizard_progress/%s" % img_file_global),
+                          "png", 16, 16)
+            
             style = mapnik.Style()
             styles[layer_desc] = style
 
-            rule = mapnik.Rule()
+            rule_detailed = mapnik.Rule()
+            rule_detailed.min_scale = 0
+            rule_detailed.max_scale = 50000
+
             symbol = mapnik.PointSymbolizer(*img)
-            rule.symbols.append(symbol)
-            style.rules.append(rule)
+            symbol.allow_overlap = True
+            rule_detailed.symbols.append(symbol)
+
+            rule_global = mapnik.Rule()
+            rule_global.min_scale = 50000
+            rule_global.max_scale = 1000000000.0 # "inf"
+
+            symbol_global = mapnik.PointSymbolizer(*img_global)
+            symbol_global.allow_overlap = False
+            rule_global.symbols.append(symbol_global)
+
+            style.rules.append(rule_detailed)
+            style.rules.append(rule_global)
 
             default_database = settings.DATABASES['default']
             datasource = mapnik.PostGIS(
@@ -193,7 +217,10 @@ class ProgressAdapter(WorkspaceItemAdapter):
 
     def symbol_url(self):
         ""
-        return settings.STATIC_URL + 'lizard_progress/ball_green.png'
+        default_img_file = "ball_green.png"
+        img_file = str(self.measurement_type.icon_complete) or default_img_file
+
+        return settings.STATIC_URL + 'lizard_progress/'+ img_file
 
     def html(self, identifiers=None, layout_options=None):
         """

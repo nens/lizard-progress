@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.2 (unreleased)
+0.2 (2012-02-15)
 ----------------
 
 - Fixed bug with moving uploaded files.

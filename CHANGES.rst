@@ -2,10 +2,10 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.4 (unreleased)
-----------------
+0.3.1 (2012-02-16)
+------------------
 
-- Nothing changed yet.
+- Add bullet icons.
 
 
 0.3 (2012-02-16)

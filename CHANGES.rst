@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.3 (unreleased)
+0.3 (2012-02-16)
 ----------------
 
 - Added a single layer for all measurement types. Needs lizard-map 3.23

@@ -32,12 +32,21 @@ def specifics(project):
 
 class SuccessfulParserResult(object):
     """
-    Returned by a successful parser. success is True, and
-    'result_path' contains the path that the file should be moved to.
+    Returned by a successful parser. success is True, and measurements
+    is an iterable of Measurement objects that were inserted by the
+    parser. Lizard_progress will update them with filename of the file
+    that was parsed (after moving it to its eventual destination) and
+    a timestamp.
+
+    Note that a parser can not have been succesful if it didn't add
+    any measurements! That situation should result in an error message.
     """
-    def __init__(self, result_path):
+    def __init__(self, measurements):
+        if not measurements or not len(measurements):
+            raise ValueError("Empty measurements in SuccessfulParserResult.")
+
         self.success = True
-        self.result_path = result_path
+        self.measurements = measurements
 
 
 class UnSuccessfulParserResult(object):

@@ -5,8 +5,27 @@ Changelog of lizard-progress
 0.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added a single layer for all measurement types. Needs lizard-map 3.23
+  to open popup with multiple tabs from a single layer.
 
+- Changed measurements so that they track their originating file and a
+  timestamp.
+
+- Made it possible for a single scheduled measurement to have multiple
+  measurements, because e.g. a scheduled measurement that consists of 2
+  photos will have 2 uploaded files and therefore 2 measurements.
+
+- Put timestamp in filenames of uploaded files, and if necessary a
+  sequence number. Files are never overwritten, renamed or otherwise
+  changed after uploading is complete. Therefore, Lizard_progress
+  keeps a complete history of uploaded files.
+
+- Made the location and structure of lizard_progress' archive
+  standard, so that implementing sites don't have to bother specifying
+  it. The location can be changed by setting LIZARD_PROGRESS_ROOT in
+  Django settings, the structure
+  (/project_slug/contractor_slug/measurement_type_slug/filename) is
+  fixed.
 
 0.2 (2012-02-15)
 ----------------

@@ -30,7 +30,7 @@ DATABASES = {
     # that as an error.
     'default': {
         'NAME': os.path.join(BUILDOUT_DIR, 'var', 'sqlite', 'test.db'),
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.contrib.gis.db.backends.spatialite',
         'USER': '',
         'PASSWORD': '',
         'HOST': '',  # empty string for localhost.
@@ -41,6 +41,7 @@ SITE_ID = 1
 INSTALLED_APPS = [
     'lizard_progress',
     'lizard_ui',
+    'lizard_map',
     'staticfiles',
     'compressor',
     'south',

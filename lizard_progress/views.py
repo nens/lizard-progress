@@ -2,7 +2,9 @@
 
 import logging
 import os
+import platform
 import shutil
+import time
 
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -12,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.utils import simplejson as json
 from django.views.generic import TemplateView
@@ -38,17 +40,46 @@ def JsonResponse(ob):
 
 
 def document_root():
-    return getattr(settings, 'LIZARD_PROGRESS_ROOT',
-                   os.path.join(settings.BUILDOUT_DIR, 
-                                'var', 
-                                'lizard_progress'))
+    """Get the document root for uploaded files as an absolute path.
+    If LIZARD_PROGRESS_ROOT is given in settings, return that,
+    otherwise the directory var/lizard_progress/ under BUILDOUT_DIR.
+    """
+
+    root = getattr(settings, 'LIZARD_PROGRESS_ROOT', None)
+    if root is None:
+        root = os.path.join(settings.BUILDOUT_DIR, 
+                            'var', 'lizard_progress')
+    return root
 
 
-def make_uploaded_file_path(root, project, contractor, mtype, filename):
+def make_uploaded_file_path(root, project, contractor,
+                            measurement_type, filename):
+    """Gives the path to some uploaded file, which depends on the
+    project it is for, the contractor that uploaded it and the
+    measurement type that got its data from this file.
+
+    Project, contractor, measurement_type can each be either a
+    model instance of that type or a string containing the slug
+    of one.
+
+    Can be used both for absolute file paths (pass in document_root()
+    as root) or for URLs that will be passed to Nginx for X-Sendfile
+    (uses /protected/ as the root).
+
+    External URLs should use a reverse() call to the
+    lizard_progress_filedownload view instead of this function."""
+
+    if isinstance(project, Project):
+        project = project.slug
+    if isinstance(contractor, Contractor):
+        contractor = contractor.slug
+    if isinstance(measurement_type, MeasurementType):
+        measurement_type = measurement_type.slug
+
     return os.path.join(root,
-                        project.slug,
-                        contractor.slug,
-                        mtype.slug,
+                        project,
+                        contractor,
+                        measurement_type,
                         os.path.basename(filename))
 
 
@@ -95,19 +126,33 @@ class MapView(View):
 
     def available_layers(self):
         logger.debug("Available layers:")
-        layers = [{
-                'name': '%s %s' % (measurement_type.name, contractor.name),
-                'json': ('{"contractor_slug":"%s",' +
-                '"measurement_type_slug":"%s",' +
-                '"project_slug":"%s"}') %
-                (contractor.slug, measurement_type.slug, self.project.slug)
-                }
-                  for contractor in self.project.contractor_set.all()
-                  for measurement_type in
-                  self.project.measurementtype_set.all()
-                  if has_access(self.request.user, self.project, contractor)]
-        logger.debug(layers)
+        layers = []
+        for contractor in self.project.contractor_set.all():
+            if has_access(self.request.user, self.project, contractor):
+                for measurement_type in self.project.measurementtype_set.all():
+                    layers.append({
+                            'name': '%s %s' %
+                            (measurement_type.name,
+                             contractor.name),
+                            'json': json.dumps({
+                                    "contractor_slug":
+                                    contractor.slug,
+                                    "measurement_type_slug":
+                                        measurement_type.slug,
+                                    "project_slug":
+                                        self.project.slug}),
+                            })
+                layers.append({
+                        'name': '%s alle metingen'
+                        % (contractor.name),
+                        'json': json.dumps({
+                                "contractor_slug":
+                                    contractor.slug,
+                                "project_slug":
+                                    self.project.slug})
+                        })
         return layers
+
 
 class DashboardView(View):
     template_name = 'lizard_progress/dashboard.html'
@@ -153,7 +198,7 @@ class UploadView(ViewContextMixin, TemplateView):
         if has_access(request.user, self.project):
             return super(UploadView, self).dispatch(request, *args, **kwargs)
         else:
-            raise PermissionDenied()
+            return HttpResponseForbidden()
 
     def upload_url(self):
         return reverse('lizard_progress_uploadview',
@@ -167,14 +212,52 @@ class UploadView(ViewContextMixin, TemplateView):
                 parseresult = parser(path,
                                      project=project,
                                      contractor=contractor)
-                
+
                 if parseresult.success:
+                    def add_time_and_seq(filename, seq=0):
+                        # Prepend a datetime string to hopefully
+                        # ensure uniqueness Format
+                        # e.g. 20120216-001159-
+                        # And a sequence number in case the first one
+                        # already exists.
+                        return ('%s-%s-%s' %
+                                (time.strftime('%Y%m%d-%H%M%S'),
+                                 str(seq),
+                                 filename))
+
+                    mtype = (parseresult.measurements[0].
+                             scheduled.measurement_type)
+
                     # Success! Move the file.
-                    result_dir = os.path.dirname(parseresult.result_path)
-                    if not os.path.exists(result_dir):
-                        os.makedirs(result_dir)
-                    shutil.move(path, parseresult.result_path)
-                        
+                    orig_filename = os.path.basename(path)
+
+                    new_filename = add_time_and_seq(orig_filename)
+
+                    # Dirname based on project etc
+                    dirname = os.path.dirname(make_uploaded_file_path(
+                        document_root(),
+                        project, contractor,
+                        mtype, new_filename))
+
+                    # Create if does not exist yet
+                    if not os.path.exists(dirname):
+                        os.makedirs(dirname)
+
+                    # Increase sequence number if filename exists
+                    seq = 1
+                    while os.path.exists(os.path.join(dirname, new_filename)):
+                        new_filename = add_time_and_seq(orig_filename, seq)
+                        seq += 1
+
+                    # Actual move
+                    filename = os.path.join(dirname, new_filename)
+                    shutil.move(path, filename)
+
+                    # Update measurements. Also updates the timestamp.
+                    for m in parseresult.measurements:
+                        m.filename = filename
+                        m.save()
+
                     return True, {}
                 else:
                     # Unsuccess. Were there errors? Then set
@@ -252,7 +335,7 @@ class DashboardAreaView(View):
         self.contractor = get_object_or_404(Contractor,
                                             project=self.project,
                                             slug=self.contractor_slug)
-        
+
         if not has_access(request.user, self.project, self.contractor):
             raise PermissionDenied()
 
@@ -361,7 +444,7 @@ def protected_file_download(request, project_slug, contractor_slug,
     own files, and the URLs of other contractor's files are easy to guess.
 
     Copied and adapted from deltaportaal, which has a more generic
-    example if you're looking for one. It is for Apache.
+    example, in case you're looking for one. It is for Apache.
 
     The one below works for both Apache (untested) and Nginx.  I used
     the docs at http://wiki.nginx.org/XSendfile for the Nginx
@@ -379,22 +462,23 @@ def protected_file_download(request, project_slug, contractor_slug,
     logger.debug("Incoming programfile request for %s", filename)
 
     if '/' in filename or '\\' in filename:
-        # Trickery
-        logger.warn("Returned 403 on suspect path %s" % (filename,))
+        # Trickery?
+        logger.warn("Returned Forbidden on suspect path %s" % (filename,))
+        return HttpResponseForbidden()
+
+    if not has_access(request.user, project, contractor):
+        logger.warn("Not allowed to access %s", filename)
+        return HttpResponseForbidden()
 
     file_path = make_uploaded_file_path(document_root(), project, contractor,
                                         mtype, filename)
     nginx_path = make_uploaded_file_path('/protected', project, contractor,
                                         mtype, filename)
 
-    if not has_access(request.user, project, contractor):
-        logger.warn("Not allowed to access %s", filename)
-        return HttpResponseForbidden()
-
     # This is where the magic takes place.
     response = HttpResponse()
-    response['X-Sendfile'] = file_path # Apache
-    response['X-Accel-Redirect'] = nginx_path # Nginx
+    response['X-Sendfile'] = file_path  # Apache
+    response['X-Accel-Redirect'] = nginx_path  # Nginx
 
     # Unset the Content-Type as to allow for the webserver
     # to determine it.
@@ -402,8 +486,8 @@ def protected_file_download(request, project_slug, contractor_slug,
     # TODO: ... or USE_IIS:...
     if settings.DEBUG or not platform.system() == 'Linux':
         logger.debug(
-            "With DEBUG off, we'd serve the programfile via apache: \n%s",
+            "With DEBUG off, we'd serve the programfile via webserver: \n%s",
             response)
         return serve(request, file_path, '/')
-    logger.debug("Serving programfile %s via apache.", fullpath)
+    logger.debug("Serving programfile %s via websever.", file_path)
     return response

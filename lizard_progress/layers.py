@@ -22,6 +22,11 @@ logger = logging.getLogger(__name__)
 
 class ProgressAdapter(WorkspaceItemAdapter):
     def __init__(self, *args, **kwargs):
+        if ('layer_arguments' not in kwargs or
+            not isinstance(kwargs['layer_arguments'], dict)):
+            raise ValueError(
+                'Argument layer_arguments of adapter should be a dict.')
+
         project_slug = kwargs['layer_arguments'].get('project_slug', None)
         contractor_slug = (kwargs['layer_arguments'].
                            get('contractor_slug', None))
@@ -48,85 +53,148 @@ class ProgressAdapter(WorkspaceItemAdapter):
                                      get(project=self.project,
                                          slug=measurement_type_slug))
         except MeasurementType.DoesNotExist:
-            return
+            pass  # Show for all measurement types
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
-    def layer(self, layer_ids=None, request=None):
-        "Return mapnik layers and styles."
-        layers = []
-        styles = {}
+    def make_style(self, img, cutoff=50000):
+        def make_rule(min, max, img, overlap):
+            rule = mapnik.Rule()
+            rule.min_scale = min
+            rule.max_scale = max
+            symbol = mapnik.PointSymbolizer(*img)
+            symbol.allow_overlap = overlap
+            rule.symbols.append(symbol)
+            return rule
 
-        if not (self.project and self.contractor and self.measurement_type):
-            return
+        # Below cutoff - allow overlap True
+        rule_detailed = make_rule(0, 50000, img, True)
 
-        for complete in (True, False):
-            layer_desc = str("%s %s %s %s" % (self.project.slug,
-                                              self.contractor.slug,
-                                              self.measurement_type.name,
-                                              str(complete)))
-            logger.debug(layer_desc)
+        # Over cutoff - overlap False
+        rule_global = make_rule(50000, 1000000000.0, img, False)
 
-            query = ("""(select loc.the_geom from lizard_progress_location loc
+        style = mapnik.Style()
+        style.rules.append(rule_detailed)
+        style.rules.append(rule_global)
+        return style
+
+    def mapnik_datasource(self, query):
+        default_database = settings.DATABASES['default']
+        return mapnik.PostGIS(
+            host=default_database['HOST'],
+            port=default_database['PORT'],
+            user=default_database['USER'],
+            password=default_database['PASSWORD'],
+            dbname=default_database['NAME'],
+            table=query.encode('ascii')
+            )
+
+    def mapnik_query(self, complete):
+        if self.measurement_type is None:
+            # If there is no measurement_type, we combine them all and
+            # show different icons in case there are no measurements
+            # complete (or is false and and is false), they are all
+            # complete (or is true and and is true) and also if only
+            # some of them are complete (or is true and and is false).
+            q = """(SELECT
+                        loc.the_geom
+                    FROM
+                        lizard_progress_location loc
+                    INNER JOIN
+                         lizard_progress_scheduledmeasurement sm
+                    ON
+                         sm.location_id = loc.unique_id
+                    WHERE
+                         sm.contractor_id=%d AND
+                         sm.project_id=%d
+                    GROUP BY
+                         loc.the_geom
+                    HAVING bool_or(sm.complete)=%s AND
+                           bool_and(sm.complete)=%s
+                   ) data"""
+            if complete == True:
+                return q % (self.contractor.id, self.project.id,
+                            "true", "true")
+            elif complete == False:
+                return q % (self.contractor.id, self.project.id,
+                            "false", "false")
+            elif complete == "some":
+                return q % (self.contractor.id, self.project.id,
+                            "true", "false")
+
+        else:
+            return ("""(select loc.the_geom from lizard_progress_location loc
                   inner join lizard_progress_scheduledmeasurement sm on
                   sm.location_id = loc.unique_id
                   where sm.complete=%s
                   and sm.contractor_id=%d
                   and sm.project_id=%d
                   and sm.measurement_type_id=%d) data""" %
-                     (str(complete).lower(),
-                      self.contractor.id,
-                      self.project.id,
-                      self.measurement_type.id))
+                    (str(complete).lower(),
+                     self.contractor.id,
+                     self.project.id,
+                     self.measurement_type.id))
 
-            default_img_file = "ball_%s.png" % ("green" if complete else "red",)
-            img_file = str(self.measurement_type.icon_complete if complete
-                        else self.measurement_type.icon_missing) or default_img_file
+    def layer_desc(self, complete):
+        mtname = self.measurement_type.name if self.measurement_type else "all"
+        return str(" ".join([
+                    self.project.slug,
+                    self.contractor.slug,
+                    mtname,
+                    str(complete)]))
 
-            img = (resource_filename("lizard_progress",
-                                     ("/static/lizard_progress/%s" % img_file)),
-                   "png", 16, 16)
+    def layer_all_types(self, layer_ids=None, request=None):
+        "Return mapnik layers and styles for all measurement types."
+        layers = []
+        styles = {}
 
-            img_file_global = str(self.measurement_type.global_icon_complete if complete
-                                  else "emptycircle16.png")
-            img_global = (resource_filename("lizard_progress",
-                                            "/static/lizard_progress/%s" % img_file_global),
-                          "png", 16, 16)
-            
-            style = mapnik.Style()
-            styles[layer_desc] = style
+        for complete in (True, False, "some"):
+            layer_desc = self.layer_desc(complete)
+            if complete == True:
+                img = self.symbol_img("ball_green.png")
+            elif complete == False:
+                img = self.symbol_img("ball_red.png")
+            else:
+                img = self.symbol_img("ball_yellow.png")
 
-            rule_detailed = mapnik.Rule()
-            rule_detailed.min_scale = 0
-            rule_detailed.max_scale = 50000
-
-            symbol = mapnik.PointSymbolizer(*img)
-            symbol.allow_overlap = True
-            rule_detailed.symbols.append(symbol)
-
-            rule_global = mapnik.Rule()
-            rule_global.min_scale = 50000
-            rule_global.max_scale = 1000000000.0 # "inf"
-
-            symbol_global = mapnik.PointSymbolizer(*img_global)
-            symbol_global.allow_overlap = False
-            rule_global.symbols.append(symbol_global)
-
-            style.rules.append(rule_detailed)
-            style.rules.append(rule_global)
-
-            default_database = settings.DATABASES['default']
-            datasource = mapnik.PostGIS(
-                host=default_database['HOST'],
-                port=default_database['PORT'],
-                user=default_database['USER'],
-                password=default_database['PASSWORD'],
-                dbname=default_database['NAME'],
-                table=query.encode('ascii')
-                )
+            styles[layer_desc] = self.make_style(img)
 
             layer = mapnik.Layer(layer_desc, RD)
-            layer.datasource = datasource
+            layer.datasource = self.mapnik_datasource(
+                self.mapnik_query(complete))
+            layer.styles.append(layer_desc)
+            layers.append(layer)
+
+        return layers, styles
+
+    def layer(self, layer_ids=None, request=None):
+        """Return mapnik layers and styles for a specific measurement
+        type."""
+        layers = []
+        styles = {}
+
+        if not self.project or not self.contractor:
+            return
+
+        if not self.measurement_type:
+            return self.layer_all_types(layer_ids, request)
+
+        for complete in (True, False):
+            layer_desc = self.layer_desc(complete)
+
+            if complete:
+                img_file = str(self.measurement_type.icon_complete)
+            else:
+                img_file = str(self.measurement_type.icon_missing)
+            if not img_file:
+                img_file = "ball_%s.png" % ("green" if complete else "red",)
+
+            img = self.symbol_img(img_file)
+            styles[layer_desc] = self.make_style(img)
+
+            layer = mapnik.Layer(layer_desc, RD)
+            layer.datasource = self.mapnik_datasource(
+                self.mapnik_query(complete))
             layer.styles.append(layer_desc)
             layers.append(layer)
 
@@ -170,26 +238,42 @@ class ProgressAdapter(WorkspaceItemAdapter):
                          filter(project=self.project,
                                 the_geom__distance_lte=(pt, D(m=distance))).
                          distance(pt).order_by('distance')):
-            for scheduled in (ScheduledMeasurement.objects.
+            if self.measurement_type:
+                scheduleds = (ScheduledMeasurement.objects.
                               filter(location=location,
                                      contractor=self.contractor,
                                      measurement_type=self.measurement_type,
-                                     complete=True)):
+                                     complete=True))
+            else:
+                scheduleds = (ScheduledMeasurement.objects.
+                              filter(location=location,
+                                     contractor=self.contractor,
+                                     complete=True).
+                              order_by('measurement_type__name'))
+
+            for scheduled in scheduleds:
                 result = {
-                    'name': '%s %s %s' % (location.unique_id, self.measurement_type.name,
+                    'name': '%s %s %s' % (location.unique_id,
+                                          scheduled.measurement_type.name,
                                           self.contractor.name),
                     'distance': location.distance.m,
                     'workspace_item': self.workspace_item,
                     'identifier': {
                         'scheduled_measurement_id': scheduled.id,
                         },
-                    'grouping_hint': '%s %s' % (self.project.slug, self.measurement_type.slug),
+                    'grouping_hint': 'lizard_progress %s %s %s %s' % (
+                        self.workspace_item.id,
+                        self.contractor.slug,
+                        self.project.slug,
+                        scheduled.measurement_type.slug),
                     }
                 results.append(result)
-                break
             if results:
+                # For now, only show info from one location because
+                # our templates don't really work with more yet
                 break
 
+        logger.debug("Results=" + str(results))
         return results
 
     def location(self, scheduled_measurement_id, layout=None):
@@ -203,12 +287,18 @@ class ProgressAdapter(WorkspaceItemAdapter):
         except ScheduledMeasurement.DoesNotExist:
             return None
 
+        grouping_hint = "lizard_progress::%s::%s::%s" % (
+            scheduled.project.slug,
+            scheduled.contractor.slug,
+            scheduled.measurement_type.slug)
+
         return {"name": "%s %s %s" %
                 (scheduled.location.unique_id,
                  scheduled.measurement_type.name,
                  scheduled.contractor.name,),
                 "identifier": {
-                "location": scheduled_measurement_id
+                "location": scheduled_measurement_id,
+                "grouping_hint": grouping_hint,
                 },
                 "workspace_item": self.workspace_item,
                 "google_coords": (scheduled.location.the_geom.x,
@@ -217,10 +307,17 @@ class ProgressAdapter(WorkspaceItemAdapter):
 
     def symbol_url(self):
         ""
-        default_img_file = "ball_green.png"
-        img_file = str(self.measurement_type.icon_complete) or default_img_file
+        img_file = "ball_green.png"
+        if self.measurement_type:
+            if self.measurement_type.icon_complete:
+                img_file = str(self.measurement_type.icon_complete)
 
-        return settings.STATIC_URL + 'lizard_progress/'+ img_file
+        return settings.STATIC_URL + 'lizard_progress/' + img_file
+
+    def symbol_img(self, img_file):
+        return (resource_filename("lizard_progress",
+                                  ("/static/lizard_progress/%s" % img_file)),
+                "png", 16, 16)
 
     def html(self, identifiers=None, layout_options=None):
         """
@@ -229,10 +326,14 @@ class ProgressAdapter(WorkspaceItemAdapter):
                                   get(pk=id['scheduled_measurement_id'])
                                   for id in identifiers]
 
+        if not scheduled_measurements:
+            return
+
+        sm = scheduled_measurements[0]
         handler = (self.project.specifics().
-                   html_handler(measurement_type=self.measurement_type,
-                                contractor=self.contractor,
-                                project=self.project))
+                   html_handler(measurement_type=sm.measurement_type,
+                                contractor=sm.contractor,
+                                project=sm.project))
 
         if handler is not None:
             return handler(super(ProgressAdapter, self).html_default,
@@ -268,10 +369,14 @@ class ProgressAdapter(WorkspaceItemAdapter):
                                   get(pk=id['scheduled_measurement_id'])
                                   for id in identifiers]
 
+        if not scheduled_measurements:
+            return
+
+        sm = scheduled_measurements[0]
         handler = (self.project.specifics().
-                   image_handler(measurement_type=self.measurement_type,
-                                 contractor=self.contractor,
-                                 project=self.project))
+                   image_handler(measurement_type=sm.measurement_type,
+                                 contractor=sm.contractor,
+                                 project=sm.project))
 
         if handler is not None:
             return handler(scheduled_measurements)

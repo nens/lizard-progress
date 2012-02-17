@@ -5,8 +5,9 @@ Changelog of lizard-progress
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Removed obsolete 'global_icon_complete' of measurement type.
 
+- Made using OO parsers mandatory, removed support for functions.
 
 0.5 (2012-02-17)
 ----------------

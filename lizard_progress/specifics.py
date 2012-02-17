@@ -13,12 +13,26 @@ from PIL.ImageFile import ImageFile
 import pkg_resources
 
 from lizard_progress.tools import LookaheadLine
+
 ENTRY_POINT = "lizard_progress.project_specifics"
 
 logger = logging.getLogger(__name__)
 
 
 def specifics(project):
+    """Find the specifics object for a given project. Implementing
+    sites or other packages can list specifics objects in their
+    setup.py, they are looked up using project.slug.
+
+    For instance the HDSR site has, in its setup.py:
+      entry_points={
+          'console_scripts': [],
+          'lizard_progress.project_specifics': [
+            'dwarsprofielen = hdsr.progress:Dwarsprofielen',
+            'peilschalen = hdsr.progress:Peilschalen',],
+      }
+
+    """
     for entrypoint in pkg_resources.iter_entry_points(
         group=ENTRY_POINT):
         if entrypoint.name == project.slug:
@@ -86,10 +100,13 @@ class ProgressParser(object):
         return self.la
 
     def error(self, key, *args):
+        """Lookup the error message by its key in self.ERRORS, format it
+        using *args and add the line number if possible."""
+
         if self.la:
-            linenr = "Fout op regel %d: " % (self.la.line_number,)
+            prefix = "Fout op regel %d: " % (self.la.line_number,)
         else:
-            linenr = "Fout: "
+            prefix = "Fout: "
 
         if hasattr(self, 'ERRORS') and key in self.ERRORS:
             message = self.ERRORS[key]
@@ -99,9 +116,11 @@ class ProgressParser(object):
         if args:
             message = message % tuple(args)
 
-        return UnSuccessfulParserResult(linenr+message)
+        return UnSuccessfulParserResult(prefix+message)
 
     def success(self, measurements):
+        """A shortcut with little utility, but if we have self.error()
+        perhaps we should also have self.success()."""
         return SuccessfulParserResult(measurements)
 
 class SuccessfulParserResult(object):
@@ -120,7 +139,7 @@ class SuccessfulParserResult(object):
             raise ValueError("Empty measurements in SuccessfulParserResult.")
 
         self.success = True
-        self.measurements = measurements
+        self.measurements = frozenset(measurements)
 
 
 class UnSuccessfulParserResult(object):
@@ -155,9 +174,12 @@ class GenericSpecifics(object):
 
     def parsers(self, filename):
         """
-        Return a tuple of functions that will try to parse an uploaded
-        file, in the order in which they are given (say to return only
-        a single parser, based on the filename's extension).
+        Return a tuple of parsers that will try to parse an uploaded
+        file, in the order in which they are given (typically this
+        function will return only a single parser, based on the
+        filename's extension).
+
+        Parsers should be subclasses of ProgressParser.
 
         Parsers should return an instance of either
         SuccessfulParserResult or UnSuccessfulParserResult.

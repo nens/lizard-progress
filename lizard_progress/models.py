@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def has_access(user, project, contractor=None):
     """Test whether user has access to this project (showing data of
-    this contractor.
+    this contractor).
 
     Should probably be implemented using lizard-security but I lack
     the time to figure that out right now."""

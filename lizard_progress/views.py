@@ -195,6 +195,10 @@ class UploadView(ViewContextMixin, TemplateView):
     template_name = "lizard_progress/upload.html"
 
     def dispatch(self, request, *args, **kwargs):
+        """Find project and contractor objects that should be
+        available for a good upload. Check if user has access to this
+        project, and if he can upload files."""
+
         self.project_slug = kwargs.get('project_slug', None)
         self.project = get_object_or_404(Project, slug=self.project_slug)
 
@@ -203,88 +207,101 @@ class UploadView(ViewContextMixin, TemplateView):
         else:
             return HttpResponseForbidden()
 
+        try:
+            self.contractor = Contractor.objects.get(project=self.project,
+                                                     user=request.user)
+        except Contractor.DoesNotExist:
+            return JsonResponse({'error': {
+                        'details': "User not allowed to upload files."}})
+
     def upload_url(self):
+        """Is this used?"""
         return reverse('lizard_progress_uploadview',
                        kwargs={'project_slug': self.project_slug})
 
-    def try_parser(self, parser, path, project, contractor):
-        def open_uploaded_file(path):
-            filename = os.path.basename(path)
-            
-            for ext in ('.jpg', '.gif', '.png'):
-                if filename.lower().endswith(ext):
-                    ob = Image.open(path)
-                    ob.name = filename
-                    return ob
-            return open(path, "rb")
+    def path_for_uploaded_file(self, measurement_type, uploaded_path):
+        """Create dirname based on project etc. Guaranteed not to
+        exist yet at the time of checking."""
+
+        dirname = os.path.dirname(make_uploaded_file_path(
+                document_root(),
+                self.project, self.contractor,
+                mtype, 'dummy'))
+        
+        # Create directory if does not exist yet
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        # Figure out a filename that doesn't exist yet
+        orig_filename = os.path.basename(uploaded_path)
+        seq = 0
+        while True:
+            new_filename = ('%s-%d-%s' % (time.strftime('%Y%m%d-%H%M%S'),
+                                          seq, orig_filename))
+            if not os.path.exists(os.path.join(dirname, new_filename)):
+                break
+            # Increase sequence number if filename exists
+            seq += 1
+
+        return os.path.join(dirname, new_filename)
+        
+    def open_uploaded_file(self, path):
+        """Open file using PIL.Image.open if it is an image, otherwise
+        open normally."""
+        filename = os.path.basename(path)
+        
+        for ext in ('.jpg', '.gif', '.png'):
+            if filename.lower().endswith(ext):
+                ob = Image.open(path)
+                ob.name = filename
+                return ob
+        return open(path, "rb")
+
+    def call_parser(self, parser, path):
+        """Actually call the parser. Open and close files. Return result."""
+
+        file_object = self.open_uploaded_file(path)
+        
+        parser_instance = parser(self.project,
+                                 self.contractor,
+                                 file_object)
+        parseresult = parser_instance.parse()
+
+        if hasattr(file_object, 'close'):
+            file_object.close()
+        return parseresult
+
+    def try_parser(self, parser, path):
+        """Tries a particular parser. Wraps everything in a database
+        transaction so that nothing is changed in the database in case
+        of an error message. Moves the file to the current location
+        and updates its taken measurements with the new filename in
+        case of success."""
 
         result = {}
         try:
             with transaction.commit_on_success():
                 # Call the parser.
-                file_object = open_uploaded_file(path)
-                if issubclass(parser, ProgressParser):
-                    parser_instance = parser(project, contractor, file_object)
-                    parseresult = parser_instance.parse()
-                else:
-                    parseresult = parser(file_object,
-                                         project=project,
-                                         contractor=contractor)
-                    if hasattr(file_object, 'close'):
-                        file_object.close()
+                parseresult = self.call_parser(parser, path)
 
                 if parseresult.success:
-                    def add_time_and_seq(filename, seq=0):
-                        # Prepend a datetime string to hopefully
-                        # ensure uniqueness Format
-                        # e.g. 20120216-001159-
-                        # And a sequence number in case the first one
-                        # already exists.
-                        return ('%s-%s-%s' %
-                                (time.strftime('%Y%m%d-%H%M%S'),
-                                 str(seq),
-                                 filename))
-
+                    # Get mtype from the parser result, for use in pathname
                     mtype = (parseresult.measurements[0].
                              scheduled.measurement_type)
 
-                    # Success! Move the file.
-                    orig_filename = os.path.basename(path)
-
-                    new_filename = add_time_and_seq(orig_filename)
-
-                    # Dirname based on project etc
-                    dirname = os.path.dirname(make_uploaded_file_path(
-                        document_root(),
-                        project, contractor,
-                        mtype, new_filename))
-
-                    # Create if does not exist yet
-                    if not os.path.exists(dirname):
-                        os.makedirs(dirname)
-
-                    # Increase sequence number if filename exists
-                    seq = 1
-                    while os.path.exists(os.path.join(dirname, new_filename)):
-                        new_filename = add_time_and_seq(orig_filename, seq)
-                        seq += 1
-
-                    # Actual move
-                    filename = os.path.join(dirname, new_filename)
-                    shutil.move(path, filename)
+                    # Move the file.
+                    target_path = path_for_uploaded_file(mtype, path)
+                    shutil.move(path, target_path)
 
                     # Update measurements. Also updates the timestamp.
                     for m in parseresult.measurements:
-                        m.filename = filename
+                        m.filename = target_path
                         m.save()
 
                     return True, {}
                 else:
                     # Unsuccess. Were there errors? Then set
-                    # them. Note that if there is more than one
-                    # parser, there may still be other parsers
-                    # after this one that are successful, so we
-                    # continue looping.
+                    # them.
                     if parseresult.error:
                         result = {'error':
                                       {'details': parseresult.error}}
@@ -303,14 +320,11 @@ class UploadView(ViewContextMixin, TemplateView):
 
         HTTP 200 (OK) is returned, even if processing fails. Not very RESTful,
         but the only way to show custom error messages when using Plupload.
-        """
 
-        try:
-            contractor = Contractor.objects.get(project=self.project,
-                                                user=request.user)
-        except Contractor.DoesNotExist:
-            return JsonResponse({'error': {
-                        'details': "User not allowed to upload files."}})
+        If we have the whole file (chunk == chunks-1), then get a list
+        of one or more parsers for it and see if one of them can parse
+        the file successfully.
+        """
 
         file = request.FILES['file']
         filename = request.POST['filename']
@@ -327,14 +341,14 @@ class UploadView(ViewContextMixin, TemplateView):
             # parse it.
             for parser in self.project.specifics().parsers(filename):
                 success, errors = self.try_parser(parser, path,
-                                                  self.project, contractor)
-                if success or errors:
-                    break
-            else:
-                # For loop finishes without breaking. No parser was
-                # successful, but there were no errors either.
-                errors = {'error': {'details': "Unknown filetype."}}
-            return JsonResponse(errors)
+                                                  self.project, self.contractor)
+                if success:
+                    return JsonResponse({})
+                if errors:
+                    return JsonResponse(errors)
+
+            # Found no suitable parsers
+            return JsonResponse({'error': {'details': "Unknown filetype."}})
         else:
             return JsonResponse({})
 
@@ -343,6 +357,9 @@ class DashboardAreaView(View):
     template_name = "lizard_progress/dashboard_content.html"
 
     def dispatch(self, request, *args, **kwargs):
+        """Get objects project, area and contractor from the request,
+        404 if they are not found. Check if the user has access."""
+
         self.project_slug = kwargs.get('project_slug', None)
         self.project = get_object_or_404(Project, slug=self.project_slug)
         self.area_slug = kwargs.get('area_slug', None)
@@ -361,6 +378,7 @@ class DashboardAreaView(View):
                 dispatch(request, *args, **kwargs))
 
     def graph_url(self):
+        """Url to the actual graph."""
         return reverse('lizard_progress_dashboardgraphview', kwargs={
                 'project_slug': self.project.slug,
                 'contractor_slug': self.contractor.slug,

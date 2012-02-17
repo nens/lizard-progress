@@ -30,6 +30,7 @@ from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import MeasurementType
 from lizard_progress.models import ScheduledMeasurement
+from lizard_progress.specifics import ProgressParser
 from lizard_ui.views import ViewContextMixin
 
 
@@ -222,11 +223,15 @@ class UploadView(ViewContextMixin, TemplateView):
             with transaction.commit_on_success():
                 # Call the parser.
                 file_object = open_uploaded_file(path)
-                parseresult = parser(file_object,
-                                     project=project,
-                                     contractor=contractor)
-                if hasattr(file_object, 'close'):
-                    file_object.close()
+                if issubclass(parser, ProgressParser):
+                    parser_instance = parser(project, contractor, file_object)
+                    parseresult = parser_instance.parse()
+                else:
+                    parseresult = parser(file_object,
+                                         project=project,
+                                         contractor=contractor)
+                    if hasattr(file_object, 'close'):
+                        file_object.close()
 
                 if parseresult.success:
                     def add_time_and_seq(filename, seq=0):
@@ -323,14 +328,12 @@ class UploadView(ViewContextMixin, TemplateView):
             for parser in self.project.specifics().parsers(filename):
                 success, errors = self.try_parser(parser, path,
                                                   self.project, contractor)
-                if success:
+                if success or errors:
                     break
             else:
-                # For loop finishes without breaking.
-                if not errors:
-                    # No parser was successful, but there were no
-                    # errors either.
-                    errors = {'error': {'details': "Unknown filetype."}}
+                # For loop finishes without breaking. No parser was
+                # successful, but there were no errors either.
+                errors = {'error': {'details': "Unknown filetype."}}
             return JsonResponse(errors)
         else:
             return JsonResponse({})

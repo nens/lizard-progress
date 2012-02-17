@@ -5,7 +5,12 @@ Changelog of lizard-progress
 0.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Introduced a parser class, making parsing more OO. The main reason
+  to do it was separating error messages from the code but still keeping
+  them together in the same class, but the end result should lead to less
+  code anyway.
+
+- We now show line numbers in error messages if using the OO parsers.
 
 
 0.4 (2012-02-17)

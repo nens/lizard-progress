@@ -9,8 +9,10 @@ as entrypoints in the site's setup.py, under
 """
 
 import logging
+from PIL.ImageFile import ImageFile
 import pkg_resources
 
+from lizard_progress.tools import LookaheadLine
 ENTRY_POINT = "lizard_progress.project_specifics"
 
 logger = logging.getLogger(__name__)
@@ -29,6 +31,78 @@ def specifics(project):
                 logger.warn("Using defaults.")
                 return GenericSpecifics(project)
 
+
+class ProgressParser(object):
+    """Parser superclass that implementing parsers should inherit from.
+    
+    When the parser instance is created, self.project and self.contractor
+    will be set. Deciding which measurement type we are dealing with is
+    left to the parsers.
+
+    The parse() method will have to be implemented by sites. It gets
+    one argument: file_object, which isn't passed in but set as
+    self.file_object so that other methods can access it as well. In
+    case the uploaded file is a .jpg, .gif or .png, this is an opened
+    PIL.Image object, which the file's basename added as
+    file_object.name. Otherwise it's a file object open for reading,
+    which always has a file.name attribute.
+
+    parse() should always check whether its argument is an instance of
+    PIL.ImageFile.ImageFile, and return UnsuccesfulParserResult if it
+    is the wrong type.  This is because the type of object you get is
+    effectively controlled by the user, and therefore untrusted.
+
+    Parse can return three different things:
+    - When it finds it is not applicable to the file in question,
+      return UnSuccessfulParserResult without any arguments.
+    - If it finds an error, return the same object with the error
+      message as its argument. There is a helper function below that
+      includes the line number in the file, if you use the also given
+      helper method for parsing the file line by line.
+    - In case of success, return SuccessfulParserResult with an
+      iterable of Measurement objects. The calling view will add the
+      full filename of the parsed file and a timestamp to them."""
+
+    def __init__(self, project, contractor, file_object):
+        self.project = project
+        self.contractor = contractor
+        self.file_object = file_object
+
+    def parse(self):
+        """Not applicable therefore return default."""
+        return UnSuccessfulParserResult()
+
+    def lookahead(self):
+        """Usage: 
+        with self.lookahead() as la:
+            print la.line
+            print la.line_number
+            la.next()
+        """
+        if not self.file_object or isinstance(self.file_object, ImageFile):
+            raise ValueError("lookahead() was passed PIL.Image object.")
+
+        self.la = LookaheadLine(self.file_object)
+        return self.la
+
+    def error(self, key, *args):
+        if self.la:
+            linenr = "Fout op regel %d: " % (self.la.line_number,)
+        else:
+            linenr = "Fout: "
+
+        if hasattr(self, 'ERRORS') and key in self.ERRORS:
+            message = self.ERRORS[key]
+        else:
+            message = "Onbekende fout"
+
+        if args:
+            message = message % tuple(args)
+
+        return UnSuccessfulParserResult(linenr+message)
+
+    def success(self, measurements):
+        return SuccessfulParserResult(measurements)
 
 class SuccessfulParserResult(object):
     """
@@ -53,7 +127,7 @@ class UnSuccessfulParserResult(object):
     """
     Returned by an unsuccessful parser. Error is an error message.
     """
-    def __init__(self, error):
+    def __init__(self, error=None):
         self.success = False
         self.error = error
 

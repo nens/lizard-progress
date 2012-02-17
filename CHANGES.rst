@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.4 (unreleased)
+0.4 (2012-02-17)
 ----------------
 
 - More measurements per scheduled measurement.

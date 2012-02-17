@@ -43,7 +43,7 @@ specific to your project:
 
     location /protected/ {
        internal;
-       root ${buildout:directory}/var/lizard_progress;
+       alias ${buildout:directory}/var/lizard_progress/ ;
     }
 
 - Uploaded files are placed in BUILDOUT_DIR+"/var/" by default, in a

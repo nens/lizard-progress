@@ -9,6 +9,8 @@ import time
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
+from PIL import Image
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -205,13 +207,26 @@ class UploadView(ViewContextMixin, TemplateView):
                        kwargs={'project_slug': self.project_slug})
 
     def try_parser(self, parser, path, project, contractor):
+        def open_uploaded_file(path):
+            filename = os.path.basename(path)
+            
+            for ext in ('.jpg', '.gif', '.png'):
+                if filename.lower().endswith(ext):
+                    ob = Image.open(path)
+                    ob.name = filename
+                    return ob
+            return open(path, "rb")
+
         result = {}
         try:
             with transaction.commit_on_success():
                 # Call the parser.
-                parseresult = parser(path,
+                file_object = open_uploaded_file(path)
+                parseresult = parser(file_object,
                                      project=project,
                                      contractor=contractor)
+                if hasattr(file_object, 'close'):
+                    file_object.close()
 
                 if parseresult.success:
                     def add_time_and_seq(filename, seq=0):
@@ -489,5 +504,5 @@ def protected_file_download(request, project_slug, contractor_slug,
             "With DEBUG off, we'd serve the programfile via webserver: \n%s",
             response)
         return serve(request, file_path, '/')
-    logger.debug("Serving programfile %s via websever.", file_path)
+    logger.debug("Serving programfile %s via webserver.", file_path)
     return response

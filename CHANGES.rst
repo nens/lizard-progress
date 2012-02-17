@@ -5,8 +5,10 @@ Changelog of lizard-progress
 0.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- More measurements per scheduled measurement.
 
+- Parsers now receive file objects instead of files, for easier
+testing.
 
 0.3.1 (2012-02-16)
 ------------------

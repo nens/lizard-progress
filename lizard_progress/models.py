@@ -5,6 +5,7 @@ RDNEW = 28992
 SRID = RDNEW
 
 import logging
+import os
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
@@ -128,6 +129,19 @@ class ScheduledMeasurement(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
 
     complete = models.BooleanField()
+
+    @property
+    def measurement(self):
+        """Note: ONLY use this if you are sure there will be only a single
+        measurement object per scheduledmeasurement object you call this on.
+        It makes no sense in other situations.
+
+        Returns None if there is no measurement. If there are multiple
+        measurements, MultipleObjectsReturned is raised."""
+        try:
+            return Measurement.objects.get(scheduled=self)
+        except Measurement.DoesNotExist:
+            return None
 
 
 class Measurement(models.Model):

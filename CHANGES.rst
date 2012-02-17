@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.5 (unreleased)
+0.5 (2012-02-17)
 ----------------
 
 - Introduced a parser class, making parsing more OO. The main reason

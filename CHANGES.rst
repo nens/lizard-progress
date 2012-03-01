@@ -9,6 +9,8 @@ Changelog of lizard-progress
 
 - Made using OO parsers mandatory, removed support for functions.
 
+- Further refactored upload view.
+
 0.5 (2012-02-17)
 ----------------
 

@@ -195,17 +195,27 @@ class UploadView(ViewContextMixin, TemplateView):
     template_name = "lizard_progress/upload.html"
 
     def dispatch(self, request, *args, **kwargs):
-        """Find project and contractor objects that should be
-        available for a good upload. Check if user has access to this
-        project, and if he can upload files."""
+        """Find project and contractor objects. A successful upload
+        can only be performed by a contractor for some specific
+        project.  Check if user has access to this project, and if he
+        can upload files."""
 
         self.project_slug = kwargs.get('project_slug', None)
         self.project = get_object_or_404(Project, slug=self.project_slug)
 
-        if has_access(request.user, self.project):
-            return super(UploadView, self).dispatch(request, *args, **kwargs)
-        else:
+        if not has_access(request.user, self.project):
             return HttpResponseForbidden()
+
+        return super(UploadView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Handle file upload.
+
+        HTTP 200 (OK) is returned, even if processing fails. Not very RESTful,
+        but the only way to show custom error messages when using Plupload.
+
+        If we have the whole file (chunk == chunks-1), then process it.
+        """
 
         try:
             self.contractor = Contractor.objects.get(project=self.project,
@@ -213,6 +223,101 @@ class UploadView(ViewContextMixin, TemplateView):
         except Contractor.DoesNotExist:
             return JsonResponse({'error': {
                         'details': "User not allowed to upload files."}})
+
+        file = request.FILES['file']
+        filename = request.POST['filename']
+        chunk = int(request.POST.get('chunk', 0))
+        chunks = int(request.POST.get('chunks', 1))
+        path = os.path.join('/tmp', filename)
+
+        with open(path, 'wb' if chunk == 0 else 'ab') as f:
+            for bytes in file.chunks():
+                f.write(bytes)
+
+        if chunk == chunks - 1:
+            # We have the whole file.
+            return self.process_file(path)
+        else:
+            return JsonResponse({})
+
+    def process_file(self, path):
+        """Find parsers for the uploaded file and see if they accept it."""
+        
+        filename = os.path.basename(path)
+
+        for parser in self.project.specifics().parsers(filename):
+            # Try_parser takes care of moving the file to its correct
+            # destination if successful, and all database operations.
+            success, errors = self.try_parser(parser, path,
+                                              self.project, self.contractor)
+            
+            if success:
+                return JsonResponse({})
+            if errors:
+                return JsonResponse(errors)
+            
+        # Found no suitable parsers
+        return JsonResponse({'error': {'details': "Unknown filetype."}})
+
+    def try_parser(self, parser, path):
+        """Tries a particular parser. Wraps everything in a database
+        transaction so that nothing is changed in the database in case
+        of an error message. Moves the file to the current location
+        and updates its taken measurements with the new filename in
+        case of success."""
+
+        errors = {}
+
+        try:
+            with transaction.commit_on_success():
+                # Call the parser.
+                parseresult = self.call_parser(parser, path)
+
+                if parseresult.success:
+                    # Get mtype from the parser result, for use in pathname
+                    mtype = (parseresult.measurements[0].
+                             scheduled.measurement_type)
+
+                    # Move the file.
+                    target_path = path_for_uploaded_file(mtype, path)
+                    shutil.move(path, target_path)
+
+                    # Update measurements.
+                    for m in parseresult.measurements:
+                        m.filename = target_path
+                        m.save()
+
+                    return True, {}
+                else:
+                    # Unsuccess. Were there errors? Then set
+                    # them.
+                    if parseresult.error:
+                        errors = {'error':
+                                      {'details': parseresult.error}}
+
+                    # We raise a dummy exception so that
+                    # commit_on_success doesn't commit whatever
+                    # was done to our database in the meantime.
+                    raise DummyException()
+        except DummyException:
+            pass
+
+        return False, errors
+
+    def call_parser(self, parser, path):
+        """Actually call the parser. Open and close files. Return result."""
+
+        file_object = self.open_uploaded_file(path)
+        
+        parser_instance = parser(self.project,
+                                 self.contractor,
+                                 file_object)
+        parseresult = parser_instance.parse()
+
+        if hasattr(file_object, 'close'):
+            file_object.close()
+
+        return parseresult
 
     def upload_url(self):
         """Is this used?"""
@@ -256,101 +361,6 @@ class UploadView(ViewContextMixin, TemplateView):
                 ob.name = filename
                 return ob
         return open(path, "rb")
-
-    def call_parser(self, parser, path):
-        """Actually call the parser. Open and close files. Return result."""
-
-        file_object = self.open_uploaded_file(path)
-        
-        parser_instance = parser(self.project,
-                                 self.contractor,
-                                 file_object)
-        parseresult = parser_instance.parse()
-
-        if hasattr(file_object, 'close'):
-            file_object.close()
-        return parseresult
-
-    def try_parser(self, parser, path):
-        """Tries a particular parser. Wraps everything in a database
-        transaction so that nothing is changed in the database in case
-        of an error message. Moves the file to the current location
-        and updates its taken measurements with the new filename in
-        case of success."""
-
-        result = {}
-        try:
-            with transaction.commit_on_success():
-                # Call the parser.
-                parseresult = self.call_parser(parser, path)
-
-                if parseresult.success:
-                    # Get mtype from the parser result, for use in pathname
-                    mtype = (parseresult.measurements[0].
-                             scheduled.measurement_type)
-
-                    # Move the file.
-                    target_path = path_for_uploaded_file(mtype, path)
-                    shutil.move(path, target_path)
-
-                    # Update measurements. Also updates the timestamp.
-                    for m in parseresult.measurements:
-                        m.filename = target_path
-                        m.save()
-
-                    return True, {}
-                else:
-                    # Unsuccess. Were there errors? Then set
-                    # them.
-                    if parseresult.error:
-                        result = {'error':
-                                      {'details': parseresult.error}}
-
-                    # We raise a dummy exception so that
-                    # commit_on_success doesn't commit whatever
-                    # was done to our database in the meantime.
-                    raise DummyException()
-        except DummyException:
-            pass
-
-        return False, result
-
-    def post(self, request, *args, **kwargs):
-        """Handle file upload.
-
-        HTTP 200 (OK) is returned, even if processing fails. Not very RESTful,
-        but the only way to show custom error messages when using Plupload.
-
-        If we have the whole file (chunk == chunks-1), then get a list
-        of one or more parsers for it and see if one of them can parse
-        the file successfully.
-        """
-
-        file = request.FILES['file']
-        filename = request.POST['filename']
-        chunk = int(request.POST.get('chunk', 0))
-        chunks = int(request.POST.get('chunks', 1))
-        path = '/tmp/' + filename
-
-        with open(path, 'wb' if chunk == 0 else 'ab') as f:
-            for bytes in file.chunks():
-                f.write(bytes)
-
-        if chunk == chunks - 1:
-            # We have the whole file. Let's find parsers for it and
-            # parse it.
-            for parser in self.project.specifics().parsers(filename):
-                success, errors = self.try_parser(parser, path,
-                                                  self.project, self.contractor)
-                if success:
-                    return JsonResponse({})
-                if errors:
-                    return JsonResponse(errors)
-
-            # Found no suitable parsers
-            return JsonResponse({'error': {'details': "Unknown filetype."}})
-        else:
-            return JsonResponse({})
 
 
 class DashboardAreaView(View):

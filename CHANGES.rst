@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.6 (unreleased)
+0.6 (2012-03-01)
 ----------------
 
 - Removed obsolete 'global_icon_complete' of measurement type.

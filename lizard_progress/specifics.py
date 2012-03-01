@@ -139,7 +139,7 @@ class SuccessfulParserResult(object):
             raise ValueError("Empty measurements in SuccessfulParserResult.")
 
         self.success = True
-        self.measurements = frozenset(measurements)
+        self.measurements = tuple(measurements)
 
 
 class UnSuccessfulParserResult(object):

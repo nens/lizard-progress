@@ -248,8 +248,7 @@ class UploadView(ViewContextMixin, TemplateView):
         for parser in self.project.specifics().parsers(filename):
             # Try_parser takes care of moving the file to its correct
             # destination if successful, and all database operations.
-            success, errors = self.try_parser(parser, path,
-                                              self.project, self.contractor)
+            success, errors = self.try_parser(parser, path)
             
             if success:
                 return JsonResponse({})
@@ -279,7 +278,7 @@ class UploadView(ViewContextMixin, TemplateView):
                              scheduled.measurement_type)
 
                     # Move the file.
-                    target_path = path_for_uploaded_file(mtype, path)
+                    target_path = self.path_for_uploaded_file(mtype, path)
                     shutil.move(path, target_path)
 
                     # Update measurements.
@@ -331,7 +330,7 @@ class UploadView(ViewContextMixin, TemplateView):
         dirname = os.path.dirname(make_uploaded_file_path(
                 document_root(),
                 self.project, self.contractor,
-                mtype, 'dummy'))
+                measurement_type, 'dummy'))
         
         # Create directory if does not exist yet
         if not os.path.exists(dirname):

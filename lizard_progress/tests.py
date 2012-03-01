@@ -15,7 +15,7 @@ import lizard_progress.views
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress.models import Project, Contractor, MeasurementType
 from lizard_map.models import WorkspaceEdit, WorkspaceEditItem
-
+from lizard_progress.specifics import ProgressParser, UnSuccessfulParserResult
 
 class AdapterTest(TestCase):
     def setUp(self):
@@ -80,3 +80,28 @@ class TestViews(TestCase):
 
         settings.LIZARD_PROGRESS_ROOT = old_settings
         settings.BUILDOUT_DIR = old_buildout
+
+class TestParsers(TestCase):
+    class MockParser(ProgressParser):
+        ERRORS = {'key': 'value %s'}
+        
+    class MockLa(object):
+        line_number = 1
+
+    def setUp(self):
+        self.parser = TestParsers.MockParser(None, None, None)
+
+    def test_error(self):
+        result = self.parser.error('key') # No message, but shouldn't fail
+        self.assertTrue(isinstance(result, UnSuccessfulParserResult))
+
+        self.assertEqual(result.error, 'Fout: value %s')
+
+        result = self.parser.error('key', 'arg')
+        self.assertEqual(result.error, 'Fout: value arg')
+
+        # With a la object we get a line number
+        self.parser.la = TestParsers.MockLa()
+        result = self.parser.error('key')
+        self.assertEqual(result.error, 'Fout op regel 1: value %s')
+

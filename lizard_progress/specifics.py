@@ -103,7 +103,7 @@ class ProgressParser(object):
         """Lookup the error message by its key in self.ERRORS, format it
         using *args and add the line number if possible."""
 
-        if self.la:
+        if hasattr(self, 'la') and self.la:
             prefix = "Fout op regel %d: " % (self.la.line_number,)
         else:
             prefix = "Fout: "

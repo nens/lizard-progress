@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.8 (unreleased)
-----------------
+0.7.1 (2012-03-01)
+------------------
 
 - Fixed error in specifics.ProgressParser.error()
 

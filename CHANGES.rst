@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.7 (unreleased)
+0.7 (2012-03-01)
 ----------------
 
 - Bug fixing (previous version didn't work at all).

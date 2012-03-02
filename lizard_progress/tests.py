@@ -103,5 +103,5 @@ class TestParsers(TestCase):
         # With a la object we get a line number
         self.parser.la = TestParsers.MockLa()
         result = self.parser.error('key')
-        self.assertEqual(result.error, 'Fout op regel 1: value %s')
+        self.assertEqual(result.error, 'Fout op regel 0: value %s')
 

@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.8 (unreleased)
-----------------
+0.7.2 (2012-03-02)
+------------------
 
 - Fixed line number in error messages.
 

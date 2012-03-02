@@ -5,7 +5,7 @@ Changelog of lizard-progress
 0.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixed line number in error messages.
 
 
 0.7.1 (2012-03-01)

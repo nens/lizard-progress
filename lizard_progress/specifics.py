@@ -104,7 +104,7 @@ class ProgressParser(object):
         using *args and add the line number if possible."""
 
         if hasattr(self, 'la') and self.la:
-            prefix = "Fout op regel %d: " % (self.la.line_number,)
+            prefix = "Fout op regel %d: " % (self.la.line_number-1,)
         else:
             prefix = "Fout: "
 

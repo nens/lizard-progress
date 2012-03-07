@@ -50,7 +50,7 @@ def document_root():
 
     root = getattr(settings, 'LIZARD_PROGRESS_ROOT', None)
     if root is None:
-        root = os.path.join(settings.BUILDOUT_DIR, 
+        root = os.path.join(settings.BUILDOUT_DIR,
                             'var', 'lizard_progress')
     return root
 
@@ -132,11 +132,21 @@ class MapView(View):
         layers = []
         for contractor in self.project.contractor_set.all():
             if has_access(self.request.user, self.project, contractor):
+                layers.append({
+                        'name': '%s %s Alle metingen'
+                        % (self.project.name, contractor.name),
+                        'json': json.dumps({
+                                "contractor_slug":
+                                    contractor.slug,
+                                "project_slug":
+                                    self.project.slug})
+                        })
                 for measurement_type in self.project.measurementtype_set.all():
                     layers.append({
-                            'name': '%s %s' %
-                            (measurement_type.name,
-                             contractor.name),
+                            'name': '%s %s %s' %
+                            (self.project.name,
+                             contractor.name,
+                             measurement_type.name),
                             'json': json.dumps({
                                     "contractor_slug":
                                     contractor.slug,
@@ -145,15 +155,6 @@ class MapView(View):
                                     "project_slug":
                                         self.project.slug}),
                             })
-                layers.append({
-                        'name': '%s alle metingen'
-                        % (contractor.name),
-                        'json': json.dumps({
-                                "contractor_slug":
-                                    contractor.slug,
-                                "project_slug":
-                                    self.project.slug})
-                        })
         return layers
 
 
@@ -242,19 +243,19 @@ class UploadView(ViewContextMixin, TemplateView):
 
     def process_file(self, path):
         """Find parsers for the uploaded file and see if they accept it."""
-        
+
         filename = os.path.basename(path)
 
         for parser in self.project.specifics().parsers(filename):
             # Try_parser takes care of moving the file to its correct
             # destination if successful, and all database operations.
             success, errors = self.try_parser(parser, path)
-            
+
             if success:
                 return JsonResponse({})
             if errors:
                 return JsonResponse(errors)
-            
+
         # Found no suitable parsers
         return JsonResponse({'error': {'details': "Unknown filetype."}})
 
@@ -307,7 +308,7 @@ class UploadView(ViewContextMixin, TemplateView):
         """Actually call the parser. Open and close files. Return result."""
 
         file_object = self.open_uploaded_file(path)
-        
+
         parser_instance = parser(self.project,
                                  self.contractor,
                                  file_object)
@@ -331,7 +332,7 @@ class UploadView(ViewContextMixin, TemplateView):
                 document_root(),
                 self.project, self.contractor,
                 measurement_type, 'dummy'))
-        
+
         # Create directory if does not exist yet
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -348,12 +349,12 @@ class UploadView(ViewContextMixin, TemplateView):
             seq += 1
 
         return os.path.join(dirname, new_filename)
-        
+
     def open_uploaded_file(self, path):
         """Open file using PIL.Image.open if it is an image, otherwise
         open normally."""
         filename = os.path.basename(path)
-        
+
         for ext in ('.jpg', '.gif', '.png'):
             if filename.lower().endswith(ext):
                 ob = Image.open(path)

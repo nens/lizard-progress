@@ -180,7 +180,7 @@ class Measurement(models.Model):
     def url(self):
         """Return the URL to the uploaded file that contained this
         measurement."""
-        
+
         sm = self.scheduled
         return reverse('lizard_progress_filedownload', kwargs={
                     'project_slug': sm.project.slug,

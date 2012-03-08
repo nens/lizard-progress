@@ -43,4 +43,3 @@ class LookaheadLine(object):
         # We don't open the file in this class, so we don't close it
         # either.
         pass
-

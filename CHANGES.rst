@@ -5,7 +5,14 @@ Changelog of lizard-progress
 0.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Show popups (and hover info) regardless of whether the measurement
+  is complete or not.
+
+- Added a new popup, used in case of noncomplete data, that just says
+  what the location ID is and that it is incomplete.
+
+- Fixed an odd bug with uploading multiple files, errors and
+  chunking. By turning off chunking.
 
 
 0.7.2 (2012-03-02)

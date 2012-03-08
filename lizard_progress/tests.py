@@ -17,6 +17,7 @@ from lizard_progress.models import Project, Contractor, MeasurementType
 from lizard_map.models import WorkspaceEdit, WorkspaceEditItem
 from lizard_progress.specifics import ProgressParser, UnSuccessfulParserResult
 
+
 class AdapterTest(TestCase):
     def setUp(self):
         self.workspace = WorkspaceEdit()
@@ -70,7 +71,7 @@ class TestViews(TestCase):
         settings.LIZARD_PROGRESS_ROOT = testroot
         self.assertEqual(lizard_progress.views.document_root(),
                          testroot)
-        
+
         # Test if it uses buildout dir
         old_buildout = getattr(settings, 'BUILDOUT_DIR', None)
         settings.LIZARD_PROGRESS_ROOT = None
@@ -81,18 +82,22 @@ class TestViews(TestCase):
         settings.LIZARD_PROGRESS_ROOT = old_settings
         settings.BUILDOUT_DIR = old_buildout
 
+
 class TestParsers(TestCase):
     class MockParser(ProgressParser):
         ERRORS = {'key': 'value %s'}
-        
+
     class MockLa(object):
         line_number = 1
+
+    class MockFileObject:
+        name = 'filename'
 
     def setUp(self):
         self.parser = TestParsers.MockParser(None, None, None)
 
     def test_error(self):
-        result = self.parser.error('key') # No message, but shouldn't fail
+        result = self.parser.error('key')  # No message, but shouldn't fail
         self.assertTrue(isinstance(result, UnSuccessfulParserResult))
 
         self.assertEqual(result.error, 'Fout: value %s')
@@ -100,8 +105,12 @@ class TestParsers(TestCase):
         result = self.parser.error('key', 'arg')
         self.assertEqual(result.error, 'Fout: value arg')
 
+        # If there is a file object with a name, add it to the error message
+        self.parser.file_object = TestParsers.MockFileObject()
+        result = self.parser.error('key', 'arg')
+        self.assertEqual(result.error, 'filename: Fout: value arg')
+
         # With a la object we get a line number
         self.parser.la = TestParsers.MockLa()
         result = self.parser.error('key')
-        self.assertEqual(result.error, 'Fout op regel 0: value %s')
-
+        self.assertEqual(result.error, 'filename: Fout op regel 0: value %s')

@@ -48,7 +48,7 @@ def specifics(project):
 
 class ProgressParser(object):
     """Parser superclass that implementing parsers should inherit from.
-    
+
     When the parser instance is created, self.project and self.contractor
     will be set. Deciding which measurement type we are dealing with is
     left to the parsers.
@@ -87,7 +87,7 @@ class ProgressParser(object):
         return UnSuccessfulParserResult()
 
     def lookahead(self):
-        """Usage: 
+        """Usage:
         with self.lookahead() as la:
             print la.line
             print la.line_number
@@ -103,10 +103,14 @@ class ProgressParser(object):
         """Lookup the error message by its key in self.ERRORS, format it
         using *args and add the line number if possible."""
 
+        prefix = ''
+        if hasattr(self, 'file_object') and hasattr(self.file_object, 'name'):
+            prefix += '%s: ' % (self.file_object.name)
+
         if hasattr(self, 'la') and self.la:
-            prefix = "Fout op regel %d: " % (self.la.line_number-1,)
+            prefix += "Fout op regel %d: " % (self.la.line_number - 1,)
         else:
-            prefix = "Fout: "
+            prefix += "Fout: "
 
         if hasattr(self, 'ERRORS') and key in self.ERRORS:
             message = self.ERRORS[key]
@@ -116,12 +120,13 @@ class ProgressParser(object):
         if args:
             message = message % tuple(args)
 
-        return UnSuccessfulParserResult(prefix+message)
+        return UnSuccessfulParserResult(prefix + message)
 
     def success(self, measurements):
         """A shortcut with little utility, but if we have self.error()
         perhaps we should also have self.success()."""
         return SuccessfulParserResult(measurements)
+
 
 class SuccessfulParserResult(object):
     """

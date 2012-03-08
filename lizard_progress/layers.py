@@ -242,13 +242,11 @@ class ProgressAdapter(WorkspaceItemAdapter):
                 scheduleds = (ScheduledMeasurement.objects.
                               filter(location=location,
                                      contractor=self.contractor,
-                                     measurement_type=self.measurement_type,
-                                     complete=True))
+                                     measurement_type=self.measurement_type))
             else:
                 scheduleds = (ScheduledMeasurement.objects.
                               filter(location=location,
-                                     contractor=self.contractor,
-                                     complete=True).
+                                     contractor=self.contractor).
                               order_by('measurement_type__name'))
 
             for scheduled in scheduleds:
@@ -330,10 +328,20 @@ class ProgressAdapter(WorkspaceItemAdapter):
             return
 
         sm = scheduled_measurements[0]
-        handler = (self.project.specifics().
-                   html_handler(measurement_type=sm.measurement_type,
-                                contractor=sm.contractor,
-                                project=sm.project))
+
+        if not sm.complete:
+            return super(ProgressAdapter, self).html_default(
+                identifiers=identifiers,
+                layout_options=layout_options,
+                template='lizard_progress/incomplete_measurement.html',
+                extra_render_kwargs={
+                    'scheduled_measurements': scheduled_measurements})
+
+        else:
+            handler = (self.project.specifics().
+                       html_handler(measurement_type=sm.measurement_type,
+                                    contractor=sm.contractor,
+                                    project=sm.project))
 
         if handler is not None:
             return handler(super(ProgressAdapter, self).html_default,

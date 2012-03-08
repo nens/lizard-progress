@@ -30,7 +30,6 @@ from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import MeasurementType
 from lizard_progress.models import ScheduledMeasurement
-from lizard_progress.specifics import ProgressParser
 from lizard_ui.views import ViewContextMixin
 
 
@@ -357,9 +356,13 @@ class UploadView(ViewContextMixin, TemplateView):
 
         for ext in ('.jpg', '.gif', '.png'):
             if filename.lower().endswith(ext):
-                ob = Image.open(path)
-                ob.name = filename
-                return ob
+                try:
+                    ob = Image.open(path)
+                    ob.name = filename
+                    return ob
+                except IOError:
+                    logger.info("IOError in Image.open(%s)!" % (path,))
+                    raise
         return open(path, "rb")
 
 

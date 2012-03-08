@@ -1,0 +1,5 @@
+{% for sm in scheduled_measurements %}
+<h2>{{ sm.contractor.name }} {{ sm.measurement_type.name }}</h2>
+<p>Locatie: {{ sm.location.unique_id }}</p>
+<p>Nog geen data aanwezig in het systeem.</p>
+{% endfor %}

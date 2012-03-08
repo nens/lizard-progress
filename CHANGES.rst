@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.8 (unreleased)
+0.8 (2012-03-08)
 ----------------
 
 - Show popups (and hover info) regardless of whether the measurement

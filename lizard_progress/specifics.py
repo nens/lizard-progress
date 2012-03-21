@@ -8,9 +8,10 @@ as entrypoints in the site's setup.py, under
 'lizard_progress.project_specifics'.
 """
 
+import os
 import logging
-from PIL.ImageFile import ImageFile
 import pkg_resources
+from PIL.ImageFile import ImageFile
 
 from lizard_progress.tools import LookaheadLine
 
@@ -57,7 +58,7 @@ class ProgressParser(object):
     one argument: file_object, which isn't passed in but set as
     self.file_object so that other methods can access it as well. In
     case the uploaded file is a .jpg, .gif or .png, this is an opened
-    PIL.Image object, which the file's basename added as
+    PIL.Image object, with the file's basename added as
     file_object.name. Otherwise it's a file object open for reading,
     which always has a file.name attribute.
 
@@ -87,11 +88,14 @@ class ProgressParser(object):
         return UnSuccessfulParserResult()
 
     def lookahead(self):
-        """Usage:
+        """
+        Helper method to go through a non-image file line by line.
+        Usage:
         with self.lookahead() as la:
-            print la.line
-            print la.line_number
-            la.next()
+            while not la.eof():
+                print la.line
+                print la.line_number
+                la.next()
         """
         if not self.file_object or isinstance(self.file_object, ImageFile):
             raise ValueError("lookahead() was passed PIL.Image object.")
@@ -105,7 +109,7 @@ class ProgressParser(object):
 
         prefix = ''
         if hasattr(self, 'file_object') and hasattr(self.file_object, 'name'):
-            prefix += '%s: ' % (self.file_object.name)
+            prefix += '%s: ' % (os.path.basename(self.file_object.name))
 
         if hasattr(self, 'la') and self.la:
             prefix += "Fout op regel %d: " % (self.la.line_number - 1,)
@@ -158,6 +162,8 @@ class UnSuccessfulParserResult(object):
 
 class GenericSpecifics(object):
     """
+    Example / base Specifics implementation.
+
     The goal of this class is threefold:
     - Have a specifics implementation we can use for testing
     - Have an implementation that can be used as a blueprint (you can
@@ -200,14 +206,17 @@ class GenericSpecifics(object):
 
     def sample_html_handler(self, html_default, scheduled_measurements,
                             identifiers, layout_options):
-        # Html_default is the html_default function of the adapter
-        # scheduled_measurements is a list of ScheduledMeasurement objects
-        #     belonging to the identifiers passed in
-        # identifiers, layout_options mean that same
-        # as in a normal adapter.
+        """
+        Html_default is the html_default function of the adapter.
+        Scheduled_measurements is a list of ScheduledMeasurement
+        objects belonging to the identifiers passed in identifiers.
+        Layout_options mean the same as in a normal adapter.
+        """
         pass
 
     def sample_image_handler(self, scheduled_measurements):
-        # scheduled_measurements is a list of ScheduledMeasurement objects
-        #     belonging to the identifiers passed in
+        """
+        Scheduled_measurements is a list of ScheduledMeasurement
+        objects belonging to the identifiers passed in.
+        """
         pass

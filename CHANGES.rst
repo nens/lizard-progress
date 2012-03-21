@@ -5,8 +5,12 @@ Changelog of lizard-progress
 0.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix error message so that it only shows the basename of uploaded
+  file.
 
+- Downloadable CSV files for each contractor in a project, so that
+  they have an overview of which things are still missing and which
+  files were uploaded.
 
 0.8 (2012-03-08)
 ----------------

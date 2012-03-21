@@ -25,6 +25,12 @@
 	data-dashboard-url="{{ url }}">Voortgang {{ contractor.name }} {{ area.name }}
 {% endfor %}
   </ul>
+  <h2>CSV bestanden</h2>
+  <ul class="without-bullets">
+{% for contractor, url in view.csv %}
+    <li><a href="{{ url }}">CSV file voortgang {{ contractor.name }}</li>
+{% endfor %}
+  </ul>
 </div>
 
 {% workspace_edit view.workspace_edit %}

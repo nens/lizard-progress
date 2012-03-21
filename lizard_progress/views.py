@@ -1,9 +1,11 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
 
+import csv
 import logging
 import os
 import platform
 import shutil
+import StringIO
 import time
 
 from matplotlib import figure
@@ -185,6 +187,21 @@ class DashboardView(View):
 
         return areas
 
+    def csv(self):
+        csvs = []
+
+        for contractor in Contractor.objects.filter(project=self.project):
+            if has_access(self.request.user, self.project, contractor):
+                url = reverse(
+                    'lizard_progress_dashboardcsvview',
+                    kwargs={
+                        'project_slug': self.project_slug,
+                        'contractor_slug': contractor.slug,
+                        })
+
+                csvs.append((contractor, url))
+
+        return csvs
 
 class DummyException(BaseException):
     "Only used for triggering transaction fail"
@@ -376,9 +393,10 @@ class DashboardAreaView(View):
         self.project_slug = kwargs.get('project_slug', None)
         self.project = get_object_or_404(Project, slug=self.project_slug)
         self.area_slug = kwargs.get('area_slug', None)
-        self.area = get_object_or_404(Area,
-                                      project=self.project,
-                                      slug=self.area_slug)
+        if self.area_slug:
+            self.area = get_object_or_404(Area,
+                                          project=self.project,
+                                          slug=self.area_slug)
         self.contractor_slug = kwargs.get('contractor_slug', None)
         self.contractor = get_object_or_404(Contractor,
                                             project=self.project,
@@ -397,6 +415,109 @@ class DashboardAreaView(View):
                 'contractor_slug': self.contractor.slug,
                 'area_slug': self.area.slug})
 
+
+class DashboardCsvView(DashboardAreaView):
+    template_name = "lizard_progress/project_progress.csv"
+
+    def clean_filename(self, filename):
+        """
+        Filenames are stored with an elaborate timestamp:
+        20120301-134855-0-pilot_peilschalen.csv
+
+        For the CSV file, we want to show an original filename
+        followed by the date in parentheses:
+        pilot_peilschalen.csv (2012-03-01)
+
+        In case of any errors or surprises, return the basename of the
+        original.
+        """
+
+        filename = os.path.basename(filename)
+
+        parts = filename.split('-')
+        if len(parts) < 4:
+            return filename
+
+        datestr, timestr, seqstr = parts[:3]
+        orig_filename = '-'.join(parts[3:])
+
+        if len(datestr) != 8:
+            return filename
+
+        return "%s (%s-%s-%s)" % (orig_filename, datestr[:4],
+                                  datestr[4:6], datestr[6:])
+
+    def get(self, request, *args, **kwargs):
+
+        # Setup HttpResponse and a CSV writer
+        response = HttpResponse(content_type="text/csv")
+        writer = csv.writer(response)
+
+        filename = '%s_%s.csv' % (self.project.slug, self.contractor.slug)
+
+        response['Content-Disposition'] = ('attachment; filename=%s' %
+                                           (filename,))
+
+        # Get measurement types, locations
+        measurement_types = sorted(
+            self.project.measurementtype_set.all(),
+            cmp=lambda a, b: cmp(a.name, b.name))
+
+        locations = sorted(
+            self.project.location_set.all(),
+            cmp=lambda a, b: cmp(a.unique_id, b.unique_id))
+
+        # Write header row
+        row1 = ['ID']
+        for mtype in measurement_types:
+            row1.append(mtype.name)
+        writer.writerow(row1)
+
+        # Write rest of the rows
+        for l in locations:
+            # Are there any scheduled measurements for this contractor
+            # at this location? Otherwise skip it.
+            if (ScheduledMeasurement.objects.filter(
+                    project=self.project, contractor=self.contractor,
+                    location=l).count()) == 0:
+                continue
+
+            # Row has the location's id first, then some information
+            # per measurement type.
+            row = [l.unique_id]
+            for mtype in measurement_types:
+                try:
+                    scheduled = ScheduledMeasurement.objects.get(
+                        project=self.project, contractor=self.contractor,
+                        location=l, measurement_type=mtype)
+                except ScheduledMeasurement.DoesNotExist:
+                    # This measurement type wasn't scheduled here -
+                    # empty cell.
+                    row.append('')
+                    continue
+
+                if scheduled.complete:
+                    # Nice sorted list of filenames and dates.
+                    filenames = [self.clean_filename(measurement.filename)
+                                 for measurement in
+                                 scheduled.measurement_set.all()]
+
+                    # Case insensitive sort
+                    filenames = sorted(filenames,
+                                       cmp=lambda a, b: cmp(a.lower(), b.lower()))
+
+                    row.append(', '.join(filenames))
+                else:
+                    # Although it is possible that there is some data already
+                    # (e.g., one photo already uploaded while the measurement
+                    # needs two to be complete), for simplicity we simply say
+                    # that the whole measurement isn't there yet.
+                    row.append('Nog niet aanwezig')
+
+            writer.writerow(row)
+
+        # Return
+        return response
 
 class ScreenFigure(figure.Figure):
     """A convenience class for creating matplotlib figures.

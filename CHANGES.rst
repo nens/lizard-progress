@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.9 (unreleased)
+0.9 (2012-03-21)
 ----------------
 
 - Fix error message so that it only shows the basename of uploaded

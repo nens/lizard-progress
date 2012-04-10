@@ -11,6 +11,8 @@ as entrypoints in the site's setup.py, under
 import os
 import logging
 import pkg_resources
+
+from PIL import Image
 from PIL.ImageFile import ImageFile
 
 from lizard_progress.tools import LookaheadLine
@@ -45,6 +47,34 @@ def specifics(project):
                             "specific implementation: %s" % e)
                 logger.warn("Using defaults.")
                 return GenericSpecifics(project)
+
+
+def _open_uploaded_file(path):
+    """Open file using PIL.Image.open if it is an image, otherwise
+    open normally."""
+    filename = os.path.basename(path)
+
+    for ext in ('.jpg', '.gif', '.png'):
+        if filename.lower().endswith(ext):
+            try:
+                ob = Image.open(path)
+                ob.name = filename
+                return ob
+            except IOError:
+                logger.info("IOError in Image.open(%s)!" % (path,))
+                raise
+    return open(path, "rb")
+
+
+def parser_factory(parser, project, contractor, path):
+    """Sets up the parser and returns a parser instance."""
+
+    if not isinstance(parser, ProgressParser):
+        raise ValueError("Argument 'parser' of parser_factory should be "
+                         "a ProgressParser instance.")
+
+    file_object = _open_uploaded_file(path)
+    return parser(project, contractor, file_object)
 
 
 class ProgressParser(object):
@@ -199,9 +229,21 @@ class GenericSpecifics(object):
         return ()
 
     def html_handler(self, measurement_type, contractor, project):
+        """Returns a function that can generate popup HTML for this
+        measurement type. Only called for complete measurements, from
+        lizard-progress' adapter's html() function. See
+        sample_html_handler below for the signature of a html_handler
+        function.
+
+        If None is returned, the adapter simply calls lizard_map's
+        html_default."""
         return None
 
     def image_handler(self, measurement_type, contractor, project):
+        """Returns a function that implements an adapter's image()
+        function. See sample_image_handler below for the signature of
+        a image_handler function."""
+
         return None
 
     def sample_html_handler(self, html_default, scheduled_measurements,

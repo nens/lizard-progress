@@ -5,7 +5,6 @@ import logging
 import os
 import platform
 import shutil
-import StringIO
 import time
 
 from matplotlib import figure
@@ -38,8 +37,8 @@ from lizard_ui.views import ViewContextMixin
 logger = logging.getLogger(__name__)
 
 
-def JsonResponse(ob):
-    return HttpResponse(json.dumps(ob),
+def json_response(obj):
+    return HttpResponse(json.dumps(obj),
                         mimetype="application/json")
 
 
@@ -203,6 +202,7 @@ class DashboardView(View):
 
         return csvs
 
+
 class DummyException(BaseException):
     "Only used for triggering transaction fail"
     pass
@@ -238,7 +238,7 @@ class UploadView(ViewContextMixin, TemplateView):
             self.contractor = Contractor.objects.get(project=self.project,
                                                      user=request.user)
         except Contractor.DoesNotExist:
-            return JsonResponse({'error': {
+            return json_response({'error': {
                         'details': "User not allowed to upload files."}})
 
         file = request.FILES['file']
@@ -255,7 +255,7 @@ class UploadView(ViewContextMixin, TemplateView):
             # We have the whole file.
             return self.process_file(path)
         else:
-            return JsonResponse({})
+            return json_response({})
 
     def process_file(self, path):
         """Find parsers for the uploaded file and see if they accept it."""
@@ -268,12 +268,12 @@ class UploadView(ViewContextMixin, TemplateView):
             success, errors = self.try_parser(parser, path)
 
             if success:
-                return JsonResponse({})
+                return json_response({})
             if errors:
-                return JsonResponse(errors)
+                return json_response(errors)
 
         # Found no suitable parsers
-        return JsonResponse({'error': {'details': "Unknown filetype."}})
+        return json_response({'error': {'details': "Unknown filetype."}})
 
     def try_parser(self, parser, path):
         """Tries a particular parser. Wraps everything in a database
@@ -323,11 +323,11 @@ class UploadView(ViewContextMixin, TemplateView):
     def call_parser(self, parser, path):
         """Actually call the parser. Open and close files. Return result."""
 
-        file_object = self.open_uploaded_file(path)
+        parser_instance = specifics.parser_factory(
+            self.project,
+            self.contractor,
+            path)
 
-        parser_instance = parser(self.project,
-                                 self.contractor,
-                                 file_object)
         parseresult = parser_instance.parse()
 
         if hasattr(file_object, 'close'):
@@ -365,23 +365,6 @@ class UploadView(ViewContextMixin, TemplateView):
             seq += 1
 
         return os.path.join(dirname, new_filename)
-
-    def open_uploaded_file(self, path):
-        """Open file using PIL.Image.open if it is an image, otherwise
-        open normally."""
-        filename = os.path.basename(path)
-
-        for ext in ('.jpg', '.gif', '.png'):
-            if filename.lower().endswith(ext):
-                try:
-                    ob = Image.open(path)
-                    ob.name = filename
-                    return ob
-                except IOError:
-                    logger.info("IOError in Image.open(%s)!" % (path,))
-                    raise
-        return open(path, "rb")
-
 
 class DashboardAreaView(View):
     template_name = "lizard_progress/dashboard_content.html"
@@ -503,8 +486,9 @@ class DashboardCsvView(DashboardAreaView):
                                  scheduled.measurement_set.all()]
 
                     # Case insensitive sort
-                    filenames = sorted(filenames,
-                                       cmp=lambda a, b: cmp(a.lower(), b.lower()))
+                    filenames = sorted(
+                        filenames,
+                        cmp=lambda a, b: cmp(a.lower(), b.lower()))
 
                     row.append(', '.join(filenames))
                 else:
@@ -518,6 +502,7 @@ class DashboardCsvView(DashboardAreaView):
 
         # Return
         return response
+
 
 class ScreenFigure(figure.Figure):
     """A convenience class for creating matplotlib figures.

@@ -290,18 +290,19 @@ class ProgressAdapter(WorkspaceItemAdapter):
             scheduled.contractor.slug,
             scheduled.measurement_type.slug)
 
-        return {"name": "%s %s %s" %
-                (scheduled.location.unique_id,
-                 scheduled.measurement_type.name,
-                 scheduled.contractor.name,),
-                "identifier": {
+        return {
+            "name": "%s %s %s" %
+            (scheduled.location.unique_id,
+             scheduled.measurement_type.name,
+             scheduled.contractor.name,),
+            "identifier": {
                 "location": scheduled_measurement_id,
                 "grouping_hint": grouping_hint,
                 },
-                "workspace_item": self.workspace_item,
-                "google_coords": (scheduled.location.the_geom.x,
-                                  scheduled.location.the_geom.y),
-                }
+            "workspace_item": self.workspace_item,
+            "google_coords": (scheduled.location.the_geom.x,
+                              scheduled.location.the_geom.y),
+            }
 
     def symbol_url(self):
         ""

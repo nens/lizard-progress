@@ -5,8 +5,8 @@ import factory
 from django.test import TestCase
 
 from lizard_progress import models
-from lizard_progress import specifics
 from lizard_progress.specifics import specifics
+
 
 class ProjectF(factory.Factory):
     """Factory for Project models."""
@@ -36,6 +36,7 @@ class TestProject(TestCase):
         class MockEntryPoint(object):
             """No functionality except for failed loading."""
             name = project.slug
+
             def load(self):
                 """I can't be loaded."""
                 raise ImportError("mock")

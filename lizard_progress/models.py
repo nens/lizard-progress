@@ -140,6 +140,11 @@ class ScheduledMeasurement(models.Model):
         except Measurement.DoesNotExist:
             return None
 
+    def __unicode__(self):
+        return (("Scheduled measurement of type '%s' at location '%s' "
+                 "in project '%s' by contractor '%s'.") %
+                (self.measurement_type.name, self.location.unique_id,
+                 self.project.name, self.contractor.name))
 
 class Measurement(models.Model):
     """Although most ScheduledMeasurements will have only a single

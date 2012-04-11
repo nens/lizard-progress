@@ -69,7 +69,7 @@ def _open_uploaded_file(path):
 def parser_factory(parser, project, contractor, path):
     """Sets up the parser and returns a parser instance."""
 
-    if not isinstance(parser, ProgressParser):
+    if not issubclass(parser, ProgressParser):
         raise ValueError("Argument 'parser' of parser_factory should be "
                          "a ProgressParser instance.")
 
@@ -113,7 +113,7 @@ class ProgressParser(object):
         self.contractor = contractor
         self.file_object = file_object
 
-    def parse(self):
+    def parse(self, check_only=False):
         """Not applicable therefore return default."""
         return UnSuccessfulParserResult()
 
@@ -170,13 +170,10 @@ class SuccessfulParserResult(object):
     that was parsed (after moving it to its eventual destination) and
     a timestamp.
 
-    Note that a parser can not have been succesful if it didn't add
-    any measurements! That situation should result in an error message.
+    Note that measurements can be empty, if the parser was called with
+    check_only=True (from a checking script, for instance).
     """
     def __init__(self, measurements):
-        if not measurements or not len(measurements):
-            raise ValueError("Empty measurements in SuccessfulParserResult.")
-
         self.success = True
         self.measurements = tuple(measurements)
 

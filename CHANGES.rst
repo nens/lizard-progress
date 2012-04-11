@@ -5,7 +5,12 @@ Changelog of lizard-progress
 0.10 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Successful measurements can still have an empty list of measurements,
+  because parsers can now be called with "check_only=True", which doesn't
+  save anything to the database and only runs checks.
+
+- Added script that runs parsers in check_only mode on all files
+  uploaded so far.
 
 
 0.9 (2012-03-21)

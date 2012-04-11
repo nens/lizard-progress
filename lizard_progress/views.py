@@ -10,8 +10,6 @@ import time
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-from PIL import Image
-
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -25,6 +23,7 @@ from django.views.static import serve
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
+from lizard_progress import specifics
 from lizard_progress.models import has_access
 from lizard_progress.models import Area
 from lizard_progress.models import Contractor
@@ -84,6 +83,27 @@ def make_uploaded_file_path(root, project, contractor,
                         contractor,
                         measurement_type,
                         os.path.basename(filename))
+
+
+def unique_filename(orig_filename, seq):
+    """Create a unique filenmae based on the original and a sequence
+    number."""
+    return ('%s-%d-%s' % (time.strftime('%Y%m%d-%H%M%S'),
+                          seq, orig_filename))
+
+
+def orig_from_unique_filename(filename):
+    """Restore the original filename (remove the time and sequence
+    number)."""
+    parts = filename.split('-')
+    if len(parts) < 4:
+        # We inserted 3 dashes in unique_filename(), there should be
+        # at least 4 parts.
+        raise ValueError(
+            "Filename '%s' doesn't look like it came from unique_filename()."
+            % (filename,))
+
+    return '-'.join(parts[3:])
 
 
 class View(AppView):
@@ -321,18 +341,14 @@ class UploadView(ViewContextMixin, TemplateView):
         return False, errors
 
     def call_parser(self, parser, path):
-        """Actually call the parser. Open and close files. Return result."""
+        """Actually call the parser. Open files. Return result."""
 
         parser_instance = specifics.parser_factory(
+            parser,
             self.project,
             self.contractor,
             path)
-
         parseresult = parser_instance.parse()
-
-        if hasattr(file_object, 'close'):
-            file_object.close()
-
         return parseresult
 
     def upload_url(self):
@@ -357,6 +373,7 @@ class UploadView(ViewContextMixin, TemplateView):
         orig_filename = os.path.basename(uploaded_path)
         seq = 0
         while True:
+            new_filename = unique_filename(orig_filename, seq)
             new_filename = ('%s-%d-%s' % (time.strftime('%Y%m%d-%H%M%S'),
                                           seq, orig_filename))
             if not os.path.exists(os.path.join(dirname, new_filename)):
@@ -365,6 +382,7 @@ class UploadView(ViewContextMixin, TemplateView):
             seq += 1
 
         return os.path.join(dirname, new_filename)
+
 
 class DashboardAreaView(View):
     template_name = "lizard_progress/dashboard_content.html"
@@ -421,7 +439,7 @@ class DashboardCsvView(DashboardAreaView):
         if len(parts) < 4:
             return filename
 
-        datestr, timestr, seqstr = parts[:3]
+        datestr, _timestr, _seqstr = parts[:3]
         orig_filename = '-'.join(parts[3:])
 
         if len(datestr) != 8:

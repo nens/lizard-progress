@@ -3,15 +3,7 @@
 from django.conf import settings
 from django.test import TestCase
 
-# Simplest test possible: import our modules :-)
-import lizard_progress.models
-import lizard_progress.layers
-import lizard_progress.specifics
-import lizard_progress.urls
-import lizard_progress.admin
-import lizard_progress.tools
-import lizard_progress.views
-
+from lizard_progress import views
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress.models import Project, Contractor, MeasurementType
 from lizard_map.models import WorkspaceEdit, WorkspaceEditItem
@@ -69,15 +61,13 @@ class TestViews(TestCase):
         old_settings = getattr(settings, 'LIZARD_PROGRESS_ROOT', None)
         testroot = '/some/ weird path/'
         settings.LIZARD_PROGRESS_ROOT = testroot
-        self.assertEqual(lizard_progress.views.document_root(),
-                         testroot)
+        self.assertEqual(views.document_root(), testroot)
 
         # Test if it uses buildout dir
         old_buildout = getattr(settings, 'BUILDOUT_DIR', None)
         settings.LIZARD_PROGRESS_ROOT = None
         settings.BUILDOUT_DIR = ''
-        self.assertEqual(lizard_progress.views.document_root(),
-                         'var/lizard_progress')
+        self.assertEqual(views.document_root(), 'var/lizard_progress')
 
         settings.LIZARD_PROGRESS_ROOT = old_settings
         settings.BUILDOUT_DIR = old_buildout

@@ -59,7 +59,6 @@ class Project(models.Model):
         return unicode(self.name)
 
     def specifics(self):
-        logger.debug("Asking for specifics...")
         return lizard_progress.specifics.specifics(self)
 
 

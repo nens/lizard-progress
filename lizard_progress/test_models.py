@@ -172,6 +172,8 @@ class TestScheduledMeasurement(TestCase):
         m1 = MeasurementF(scheduled=scheduled)
         m2 = MeasurementF(scheduled=scheduled)
         self.assertRaises(Exception, lambda: scheduled.measurement)
+        m1, m2  # pyflakes
+
 
 class TestMeasurement(TestCase):
     """Tests for the Measurement model."""

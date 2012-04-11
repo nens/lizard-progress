@@ -6,7 +6,7 @@ from django.contrib.gis.measure import D
 from lizard_map import coordinates
 from lizard_map.coordinates import RD
 from lizard_map.workspace import WorkspaceItemAdapter
-from pkg_resources import resource_filename
+from pkg_resources import resource_filename  # pylint: disable=E0611
 import logging
 import mapnik
 import pyproj
@@ -20,7 +20,7 @@ from lizard_progress.models import ScheduledMeasurement
 logger = logging.getLogger(__name__)
 
 
-class ProgressAdapter(WorkspaceItemAdapter):
+class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def __init__(self, *args, **kwargs):
         if ('layer_arguments' not in kwargs or
             not isinstance(kwargs['layer_arguments'], dict)):
@@ -227,7 +227,7 @@ class ProgressAdapter(WorkspaceItemAdapter):
         # ellipse setup failure
         # program abnormally terminated
 
-        forward, backward, distance = geod.inv(lon1, lat1, lon2, lat2)
+        _forward, _backward, distance = geod.inv(lon1, lat1, lon2, lat2)
         distance /= 2.0
 
         # Find all profiles within the search distance. Order them by distance.

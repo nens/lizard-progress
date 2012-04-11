@@ -27,7 +27,10 @@ def all_measurements(project, contractor):
 
 def current_files(measurements):
     """Given an iterable of measurements, return a set of all
-    filenames used to create them."""
+    filenames used to create them.
+
+    One file can contain many measurements, so if we didn't use a set
+    we could end up with many duplicates."""
 
     return set(measurement.filename for measurement in measurements)
 
@@ -35,10 +38,12 @@ def current_files(measurements):
 class MovedFile(object):
     """The silly thing is that the parsers sometimes do checks on the
     format of filenames, and then lizard-progress saves the files with
-    a timestamp added to the front, making them always fail. We need
-    to run the tests on a version of the file that has the
-    untimestamped name. We put it in /tmp and use this context manager
-    to ensure that it is deleted afterwards."""
+    a timestamp added to the front, making the tests always fail if
+    they are repeated later.
+
+    We need to run the repeated tests on a version of the file that
+    has the untimestamped name. We put it in /tmp and use this context
+    manager to ensure that it is deleted afterwards."""
 
     def __init__(self, path):
         self.path = path
@@ -63,13 +68,14 @@ def check_uploaded_files(project, contractor):
     (current-file-path, original-filename, error-message)."""
 
     files = current_files(all_measurements(project, contractor))
+    specifics = project.specifics()
 
     errors = []
 
     for path in files:
         with MovedFile(path) as moved_file:
             filename = os.path.basename(moved_file)
-            parsers = project.specifics().parsers(filename)
+            parsers = specifics.parsers(filename)
 
             for parser in parsers:
                 parse_object = parser_factory(

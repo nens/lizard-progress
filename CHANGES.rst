@@ -12,6 +12,7 @@ Changelog of lizard-progress
 - Added script that runs parsers in check_only mode on all files
   uploaded so far.
 
+- Added factory_boy for easy testing.
 
 0.9 (2012-03-21)
 ----------------

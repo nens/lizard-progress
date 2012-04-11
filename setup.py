@@ -15,6 +15,7 @@ install_requires = [
     'lizard-ui >= 3.0',
     'lizard-map >= 3.23',
     'pkginfo',
+    'factory_boy',
     ],
 
 tests_require = [
@@ -44,4 +45,3 @@ setup(name='lizard-progress',
           'lizard_map.adapter_class': [
               'adapter_progress = lizard_progress.layers:ProgressAdapter',
               ]})
-

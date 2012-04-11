@@ -22,7 +22,9 @@ ENTRY_POINT = "lizard_progress.project_specifics"
 logger = logging.getLogger(__name__)
 
 
-def specifics(project):
+def specifics(
+    project,
+    entrypoints=pkg_resources.iter_entry_points(group=ENTRY_POINT)):
     """Find the specifics object for a given project. Implementing
     sites or other packages can list specifics objects in their
     setup.py, they are looked up using project.slug.
@@ -36,17 +38,12 @@ def specifics(project):
       }
 
     """
-    for entrypoint in pkg_resources.iter_entry_points(
-        group=ENTRY_POINT):
+    for entrypoint in entrypoints:
         if entrypoint.name == project.slug:
-            try:
-                cls = entrypoint.load()
-                return cls(project)
-            except ImportError, e:
-                logger.warn("ImportError trying to find " +
-                            "specific implementation: %s" % e)
-                logger.warn("Using defaults.")
-                return GenericSpecifics(project)
+            # This may raise an ImportError, but we don't handle it
+            # because that means there's a critical error anyway.
+            cls = entrypoint.load()
+            return cls(project)
 
 
 def _open_uploaded_file(path):

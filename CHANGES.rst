@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.10 (unreleased)
+0.10 (2012-04-11)
 -----------------
 
 - Successful measurements can still have an empty list of measurements,

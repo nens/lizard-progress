@@ -116,8 +116,8 @@ the first error."""
         self.check_arguments(args)
         errors = check_uploaded_files(self.project, self.contractor)
 
-        for _path, original_filename, error in errors:
-            self.stdout.write("%s: %s\n" % (original_filename, error))
+        for _path, _original_filename, error in errors:
+            self.stdout.write("%s\n" % (error,))
 
     def check_arguments(self, args):
         """Check the arguments. Errors write some information to

@@ -22,9 +22,7 @@ ENTRY_POINT = "lizard_progress.project_specifics"
 logger = logging.getLogger(__name__)
 
 
-def specifics(
-    project,
-    entrypoints=pkg_resources.iter_entry_points(group=ENTRY_POINT)):
+def specifics(project, entrypoints=None):
     """Find the specifics object for a given project. Implementing
     sites or other packages can list specifics objects in their
     setup.py, they are looked up using project.slug.
@@ -38,6 +36,9 @@ def specifics(
       }
 
     """
+    if entrypoints is None:
+        entrypoints = pkg_resources.iter_entry_points(group=ENTRY_POINT)
+
     for entrypoint in entrypoints:
         if entrypoint.name == project.slug:
             # This may raise an ImportError, but we don't handle it

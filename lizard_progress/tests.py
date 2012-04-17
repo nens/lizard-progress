@@ -1,4 +1,5 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
+"""Tests that don't belong elsewhere"""
 
 from django.conf import settings
 from django.test import TestCase

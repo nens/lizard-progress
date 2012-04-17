@@ -1,3 +1,5 @@
+"""Settings for the Admin pages"""
+
 from django.contrib import admin
 from lizard_progress.models import Project
 from lizard_progress.models import Contractor

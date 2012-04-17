@@ -1,4 +1,14 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
+"""Views for the lizard-progress app. Includes:
+
+MapView - can show projects as map layers
+DashboardView - shows a project's dashboard, can show graphs per area and
+                offers CSV files for download.
+UploadView - where users can upload files
+DashboardAreaView - a graph of the project's progress (hence "lizard-progress")
+DashboardCsvView - a csv file view
+protected_file_download - to download some uploaded files
+"""
 
 import csv
 import logging
@@ -37,6 +47,7 @@ logger = logging.getLogger(__name__)
 
 
 def json_response(obj):
+    """Return a HttpResponse with obj serialized as JSON as content"""
     return HttpResponse(json.dumps(obj),
                         mimetype="application/json")
 
@@ -107,6 +118,9 @@ def orig_from_unique_filename(filename):
 
 
 class View(AppView):
+    """The app's root, shows a choice of projects, or a choice of
+    dashboard / upload / map layer pages if a project is chosen."""
+
     project_slug = None
     project = None
     template_name = 'lizard_progress/home.html'
@@ -121,22 +135,27 @@ class View(AppView):
             raise PermissionDenied()
 
     def upload_url(self):
+        """Returns URL to this project's Upload view"""
         return reverse('lizard_progress_uploadview',
                        kwargs={'project_slug': self.project_slug})
 
     def dashboard_url(self):
+        """Returns URL to this project's Dashboard view"""
         return reverse('lizard_progress_dashboardview',
                        kwargs={'project_slug': self.project_slug})
 
     def map_url(self):
+        """Returns URL to this project's Map view"""
         return reverse('lizard_progress_mapview',
                        kwargs={'project_slug': self.project_slug})
 
 
 class MapView(View):
+    """View that can show a project's locations as map layers."""
     template_name = 'lizard_progress/map.html'
 
     def crumbs(self):
+        """Breadcrumb for this page."""
         crumbs = super(MapView, self).crumbs()
 
         crumbs.append({
@@ -148,6 +167,11 @@ class MapView(View):
         return crumbs
 
     def available_layers(self):
+        """List of layers available to draw. Per contractor per area,
+        there is one layer for each measurement type and one layer
+        that shows all measurement types simultaneously. If the user
+        has access to that contractor's data."""
+
         logger.debug("Available layers:")
         layers = []
         for contractor in self.project.contractor_set.all():
@@ -179,9 +203,15 @@ class MapView(View):
 
 
 class DashboardView(View):
+    """Show the dashboard page. The page offers a popup per area per
+    contractor, if the user has access, and also downloads to CSV
+    files."""
+
     template_name = 'lizard_progress/dashboard.html'
 
     def crumbs(self):
+        """Breadcrumbs for this page."""
+
         crumbs = super(DashboardView, self).crumbs()
 
         crumbs.append({
@@ -193,6 +223,9 @@ class DashboardView(View):
         return crumbs
 
     def areas(self):
+        """The areas for which to show popup links. Shows each area
+        for each contractor the user has access to."""
+
         areas = []
         for contractor in Contractor.objects.filter(project=self.project):
             if has_access(self.request.user, self.project, contractor):
@@ -207,6 +240,8 @@ class DashboardView(View):
         return areas
 
     def csv(self):
+        """Links to CSV downloads. One per contractor."""
+
         csvs = []
 
         for contractor in Contractor.objects.filter(project=self.project):
@@ -229,6 +264,9 @@ class DummyException(BaseException):
 
 
 class UploadView(ViewContextMixin, TemplateView):
+    """Handles file upload, file validation, entering data into the
+    database and moving files to their destination."""
+
     template_name = "lizard_progress/upload.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -254,6 +292,9 @@ class UploadView(ViewContextMixin, TemplateView):
         If we have the whole file (chunk == chunks-1), then process it.
         """
 
+        # Note that the whole chunking thing is currently turned off
+        # in Javascript because it is buggy.
+
         try:
             self.contractor = Contractor.objects.get(project=self.project,
                                                      user=request.user)
@@ -261,15 +302,15 @@ class UploadView(ViewContextMixin, TemplateView):
             return json_response({'error': {
                         'details': "User not allowed to upload files."}})
 
-        file = request.FILES['file']
+        uploaded_file = request.FILES['file']
         filename = request.POST['filename']
         chunk = int(request.POST.get('chunk', 0))
         chunks = int(request.POST.get('chunks', 1))
         path = os.path.join('/tmp', filename)
 
         with open(path, 'wb' if chunk == 0 else 'ab') as f:
-            for bytes in file.chunks():
-                f.write(bytes)
+            for chunk_bytes in uploaded_file.chunks():
+                f.write(chunk_bytes)
 
         if chunk == chunks - 1:
             # We have the whole file.
@@ -385,6 +426,8 @@ class UploadView(ViewContextMixin, TemplateView):
 
 
 class DashboardAreaView(View):
+    """Shows Dashboard popup for one area."""
+
     template_name = "lizard_progress/dashboard_content.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -418,6 +461,8 @@ class DashboardAreaView(View):
 
 
 class DashboardCsvView(DashboardAreaView):
+    """Returns a CSV file for a contractor and measurement type."""
+
     template_name = "lizard_progress/project_progress.csv"
 
     def clean_filename(self, filename):
@@ -449,6 +494,8 @@ class DashboardCsvView(DashboardAreaView):
                                   datestr[4:6], datestr[6:])
 
     def get(self, request, *args, **kwargs):
+        """Returns a CSV file for this contractor and measurement
+        type."""
 
         # Setup HttpResponse and a CSV writer
         response = HttpResponse(content_type="text/csv")
@@ -534,6 +581,7 @@ class ScreenFigure(figure.Figure):
         self.set_facecolor('white')
 
     def set_size_pixels(self, width, height):
+        """Set figure size in pixels"""
         dpi = self.get_dpi()
         self.set_size_inches(width / dpi, height / dpi)
 
@@ -564,6 +612,8 @@ def dashboard_graph(request, project_slug, contractor_slug,
         return "%d" % int(round(pct * total / 100.0))
 
     def subplot_generator(images):
+        """Yields matplotlib subplot placing numbers"""
+
         # Maybe we can make this smarter later on
         rows = 1
         cols = images
@@ -656,7 +706,8 @@ def protected_file_download(request, project_slug, contractor_slug,
     # Unset the Content-Type as to allow for the webserver
     # to determine it.
     response['Content-Type'] = ''
-    # TODO: ... or USE_IIS:...
+
+    # Only works for Apache and Nginx, under Linux right now
     if settings.DEBUG or not platform.system() == 'Linux':
         logger.debug(
             "With DEBUG off, we'd serve the programfile via webserver: \n%s",

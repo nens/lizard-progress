@@ -146,6 +146,7 @@ class ScheduledMeasurement(models.Model):
                 (self.measurement_type.name, self.location.unique_id,
                  self.project.name, self.contractor.name))
 
+
 class Measurement(models.Model):
     """Although most ScheduledMeasurements will have only a single
     associated measurements, some will have more because there is only

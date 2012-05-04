@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.11 (unreleased)
+0.11 (2012-05-04)
 -----------------
 
 - Added create_zipfile command

@@ -40,6 +40,8 @@ from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import MeasurementType
 from lizard_progress.models import ScheduledMeasurement
+from lizard_progress.tools import unique_filename
+from lizard_progress.tools import orig_from_unique_filename
 from lizard_ui.views import ViewContextMixin
 
 
@@ -94,27 +96,6 @@ def make_uploaded_file_path(root, project, contractor,
                         contractor,
                         measurement_type,
                         os.path.basename(filename))
-
-
-def unique_filename(orig_filename, seq):
-    """Create a unique filenmae based on the original and a sequence
-    number."""
-    return ('%s-%d-%s' % (time.strftime('%Y%m%d-%H%M%S'),
-                          seq, orig_filename))
-
-
-def orig_from_unique_filename(filename):
-    """Restore the original filename (remove the time and sequence
-    number)."""
-    parts = filename.split('-')
-    if len(parts) < 4:
-        # We inserted 3 dashes in unique_filename(), there should be
-        # at least 4 parts.
-        raise ValueError(
-            "Filename '%s' doesn't look like it came from unique_filename()."
-            % (filename,))
-
-    return '-'.join(parts[3:])
 
 
 class View(AppView):

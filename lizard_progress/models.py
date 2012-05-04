@@ -14,6 +14,7 @@ from django.core.urlresolvers import reverse
 from lizard_map.models import JSONField
 
 import lizard_progress.specifics
+from lizard_progress.tools import orig_from_unique_filename
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,24 @@ def has_access(user, project, contractor=None):
                 return True
 
     return False
+
+
+def all_measurements(project, contractor):
+    """Return an iterable of all measurements taken for this
+    project and contractor."""
+
+    return Measurement.objects.filter(
+        scheduled__project=project, scheduled__contractor=contractor)
+
+
+def current_files(measurements):
+    """Given an iterable of measurements, return a set of all
+    filenames used to create them.
+
+    One file can contain many measurements, so if we didn't use a set
+    we could end up with many duplicates."""
+
+    return set(measurement.filename for measurement in measurements)
 
 
 class Project(models.Model):

@@ -7,15 +7,12 @@ if the parser checks have changed after some data has been uploaded
 already. If the parser hasn't changed, there should be no need."""
 
 import os
-import shutil
 import zipfile
 
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
-from lizard_progress.views import orig_from_unique_filename
 from lizard_progress import models
-from lizard_progress.specifics import parser_factory
 from lizard_progress.models import all_measurements
 from lizard_progress.models import current_files
 from lizard_progress.tools import MovedFile
@@ -110,7 +107,9 @@ the first error."""
                 self.measurement_type = models.MeasurementType.objects.get(
                     project=self.project, slug=args[2])
             except models.MeasurementType.DoesNotExist:
-                raise CommandError("Measurement type given, but type '%s' does not exist in project '%s'." %
+                raise CommandError(
+                    ("Measurement type given, but type '%s' does not"
+                     " exist in project '%s'.") %
                                    (args[2], str(self.project)))
         else:
             self.measurement_type = None

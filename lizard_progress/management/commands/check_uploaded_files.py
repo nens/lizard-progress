@@ -7,12 +7,10 @@ if the parser checks have changed after some data has been uploaded
 already. If the parser hasn't changed, there should be no need."""
 
 import os
-import shutil
 
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
-from lizard_progress.views import orig_from_unique_filename
 from lizard_progress import models
 from lizard_progress.specifics import parser_factory
 from lizard_progress.models import all_measurements

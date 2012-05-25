@@ -14,11 +14,11 @@ from django.core.urlresolvers import reverse
 # JSONField was moved for lizard-map 4.0...
 try:
     from lizard_map.fields import JSONField
+    JSONField  # Pyflakes...
 except ImportError:
     from lizard_map.models import JSONField
 
 import lizard_progress.specifics
-from lizard_progress.tools import orig_from_unique_filename
 
 logger = logging.getLogger(__name__)
 

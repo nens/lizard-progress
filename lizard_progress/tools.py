@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 
+
 class LookaheadLine(object):
     """
     Usage:
@@ -102,5 +103,3 @@ def orig_from_unique_filename(filename):
             % (filename,))
 
     return '-'.join(parts[3:])
-
-

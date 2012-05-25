@@ -12,8 +12,11 @@ install_requires = [
     'Django',
     'django-extensions',
     'django-nose',
-    'lizard-ui >= 3.0',
-    'lizard-map >= 3.23',
+    # We don't work with 4.0 yet; firstly because then we must require lizard-security
+    # and add it to installed_apps, secondly because there's only one customer using
+    # this app right now (HDSR) and they don't get the new interface yet.
+    'lizard-ui >= 3.0, < 4.0a1',
+    'lizard-map >= 3.23, < 4.0a1',
     'pkginfo',
     'factory_boy',
     ],

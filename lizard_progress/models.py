@@ -11,7 +11,11 @@ from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 
-from lizard_map.models import JSONField
+# JSONField was moved for lizard-map 4.0...
+try:
+    from lizard_map.fields import JSONField
+except ImportError:
+    from lizard_map.models import JSONField
 
 import lizard_progress.specifics
 from lizard_progress.tools import orig_from_unique_filename

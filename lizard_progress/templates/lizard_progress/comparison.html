@@ -1,0 +1,43 @@
+{% extends "lizard_map/wms.html" %}
+{% load workspaces %}
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet"
+      type="text/css"
+      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
+{% endblock css %}
+
+{% block map-javascript %}
+{{ block.super }}
+<script type="text/javascript"
+        src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock map-javascript %}
+
+{% block sidebar %}
+<div class="sidebarbox sidebarbox-stretched">
+  <h2>Meting types</h2>
+  <ul class="without-bullets">
+{% for mtype, url in view.measurement_types_urls %}
+    <li><a href="{{ url }}">{{ mtype.name }}</a></li>
+{% endfor %}
+  </ul>
+{% if view.measurement_type %}
+<h2>{{ view.measurement_type.name }}</h2>
+<p>Locaties waar meer dan een bedrijf een afgeronde meting van dit type heeft.</p>
+<ul class="without-bullets">
+{% for location, url in view.locations_to_compare %}
+   {% comment %} See lizard_progress.js for the functionality {% endcomment %}
+   <li class="comparison"
+     data-measurement-type="{{ view.measurement_type.name }}"
+     data-location-unique-id="{{ location.unique_id }}"
+     data-comparison-url="{{ url }}">{{ location.unique_id }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</div>
+
+{% workspace_edit view.workspace_edit %}
+{% collage_edit view.collage_edit %}
+
+{% endblock sidebar %}

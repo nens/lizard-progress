@@ -1,0 +1,20 @@
+<table>
+<thead>
+  {% for contractor in view.contractors %}
+  <th>{{ contractor.name }}</th>
+  {% endfor %}
+</thead>
+<tr>
+{% for html in view.contractor_html %}
+<td>
+{% autoescape off %}
+{{ html }}
+{% endautoescape %}
+</td>
+{% endfor %}
+</tr>
+</table>
+<script>
+reloadGraphs();
+</script>
+

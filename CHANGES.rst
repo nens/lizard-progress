@@ -5,7 +5,12 @@ Changelog of lizard-progress
 0.12 (unreleased)
 -----------------
 
-- Nothing changed yet.
+Added a screen to compare measurements taken by different contractors.
+
+- "Comparison" screen shows a list of measurement types, and for each
+  type, a list of locations where more than one contractor has taken
+  a measurement
+- Popup that can show measurements by different contractors side by side
 
 
 0.11.1 (2012-05-23)

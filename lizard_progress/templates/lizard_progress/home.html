@@ -25,7 +25,7 @@
         <div>Upload</div>
       </a>
     </li>
-    
+
     <li>
       <a rel="tipsy" title="Dashboard" href="{{ view.dashboard_url }}">
         <img src="/static_media/lizard_ui/app_icons/statusoverzicht.png">
@@ -39,6 +39,15 @@
         <div>Kaartlagen</div>
       </a>
     </li>
+
+{% if view.has_full_access %}
+    <li>
+      <a rel="tipsy" title="Vergelijking" href="{{ view.comparison_url }}">
+        <img src="/static_media/lizard_ui/app_icons/modelresultaten.png">
+        <div>Vergelijking</div>
+      </a>
+    </li>
+{% endif %}
   </ul>
 </div>
 

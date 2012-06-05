@@ -3,10 +3,10 @@
 // jslint configuration
 /*global $, map */
 
+// Upload popup
 $().ready(function () {
-
     var $dialog;
-    
+
     $url = $("#iconbox").attr("data-upload-url");
 
     $dialog = $('<div class="lizard-progress-popup"/>').load($url).dialog({
@@ -23,12 +23,12 @@ $().ready(function () {
 
 });
 
+// Dashboard popup
 $().ready(function () {
     // Clicking on an area in the dashboard view
     var $dialog = {};
 
     $('.dashboard').click(function () {
-
         var area_slug = $(this).attr('data-area-slug');
         var area_name = $(this).attr('data-area-name');
         var contractor_slug = $(this).attr('data-contractor-slug');
@@ -47,9 +47,33 @@ $().ready(function () {
                 width: 630,
                 height: 420
             });
-
         }
-
     });
+});
 
+$().ready(function () {
+    // Clicking on a location to be compared
+    var dialogs = {};
+
+    $('.comparison').click(function () {
+	var comparison_url = $(this).attr('data-comparison-url');
+	var location_unique_id = $(this).attr('data-location-unique-id');
+	var measurement_type = $(this).attr('data-measurement-type');
+
+	var dialog_key = comparison_url + location_unique_id;
+
+	if (dialogs[dialog_key]) {
+	    dialogs[dialog_key].dialog('open');
+	} else {
+	    dialogs[dialog_key] = $('<div class="lizard-progress-popup"/>').dialog({
+		autoOpen: true,
+		open: function(event, ui) {
+		    $(this).load(comparison_url);
+		},
+		title: 'Vergelijking '+measurement_type+' Locatie '+location_unique_id,
+		width: 900,
+		height: 420
+	    });
+	}
+    });
 });

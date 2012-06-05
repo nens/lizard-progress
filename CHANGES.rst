@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.12 (unreleased)
+0.12 (2012-06-05)
 -----------------
 
 Added a screen to compare measurements taken by different contractors.

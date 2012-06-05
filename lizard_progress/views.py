@@ -196,14 +196,15 @@ class MapView(View):
 
 
 class ComparisonView(View):
-    """View that can show measurement types of this project, and if one is chosen,
-    a sorted list of locations with more than one contractor."""
+    """View that can show measurement types of this project, and if
+    one is chosen, a sorted list of locations with more than one
+    contractor."""
 
     template_name = 'lizard_progress/comparison.html'
 
     def dispatch(self, request, *args, **kwargs):
-        """Check access (user needs to be able to read data of all contractors),
-        and find the current measurement type, if any."""
+        """Check access (user needs to be able to read data of all
+        contractors), and find the current measurement type, if any."""
 
         self.mtype_slug = kwargs.get('mtype_slug', None)
 
@@ -211,7 +212,7 @@ class ComparisonView(View):
 
         for contractor in self.project.contractor_set.all():
             if not has_access(request.user, self.project, contractor):
-                raise PermisionDenied()
+                raise PermissionDenied()
 
         return result
 
@@ -288,7 +289,8 @@ class ComparisonView(View):
             order_by('unique_id').
             all())
 
-        return [(location, self.comparison_popup_url(measurement_type, location))
+        return [(location,
+                 self.comparison_popup_url(measurement_type, location))
                 for location in locations]
 
     def comparison_popup_url(self, measurement_type, location):
@@ -307,50 +309,54 @@ class ComparisonPopupView(View):
     template_name = 'lizard_progress/comparison_popup.html'
 
     def dispatch(self, request, *args, **kwargs):
-        """Check access (user needs to be able to read data of all contractors),
-        and find the current measurement type, if any."""
+        """Check access (user needs to be able to read data of all
+        contractors), find current measurement type and location."""
 
         self.mtype_slug = kwargs.get('mtype_slug', None)
-        self.measurement_type = MeasurementType.objects.get(slug=self.mtype_slug)
+        self.measurement_type = MeasurementType.objects.get(
+            slug=self.mtype_slug)
 
         self.location_unique_id = kwargs.get('location_unique_id', None)
         self.location = Location.objects.get(unique_id=self.location_unique_id)
 
-        result = super(ComparisonPopupView, self).dispatch(request, *args, **kwargs)
+        result = super(ComparisonPopupView, self).dispatch(
+            request, *args, **kwargs)
 
         for contractor in self.project.contractor_set.all():
             if not has_access(request.user, self.project, contractor):
-                raise PermisionDenied()
+                raise PermissionDenied()
 
         return result
 
     def contractors(self):
-        """Return the contractors that have a complete measurement at this location"""
+        """Return the contractors that have a complete measurement at
+        this location"""
 
         contractors = set()
 
-        scheduled_measurements = (ScheduledMeasurement.objects.
-                                  filter(project=self.project).
-                                  filter(measurement_type=self.measurement_type).
-                                  filter(location=self.location).
-                                  filter(complete=True))
+        scheduled_measurements = (
+            ScheduledMeasurement.objects.
+            filter(project=self.project).
+            filter(measurement_type=self.measurement_type).
+            filter(location=self.location).
+            filter(complete=True))
 
         for sm in scheduled_measurements:
             contractors.add(sm.contractor)
 
         return sorted(contractors,
-                      cmp=lambda a,b: cmp(a.name, b.name))
-
+                      cmp=lambda a, b: cmp(a.name, b.name))
 
     def contractor_html(self):
-        """Perform lizard-map-ish magic to get the same HTML as normal popups do."""
+        """Perform lizard-map-ish magic to get the same HTML as normal
+        popups do."""
         htmls = []
 
         class FakeWorkspaceItem(object):
             adapter_class = 'adapter_progress'
 
             def __init__(self, layer_arguments):
-                self.adapter_layer_json=json.dumps(layer_arguments)
+                self.adapter_layer_json = json.dumps(layer_arguments)
 
             def _url_arguments(self, identifiers):
                 """for img_url, csv_url"""
@@ -382,7 +388,7 @@ class ComparisonPopupView(View):
 
         for contractor in self.contractors():
             try:
-                layer_arguments={
+                layer_arguments = {
                     'project_slug': self.project.slug,
                     'contractor_slug': contractor.slug,
                     'measurement_type_slug': self.measurement_type.slug,
@@ -396,7 +402,7 @@ class ComparisonPopupView(View):
                     )
 
             except Exception as e:
-                logger.critical("Adapter exception: "+str(e))
+                logger.critical("Adapter exception: " + str(e))
 
             scheduled_measurements = (
                 ScheduledMeasurement.objects.
@@ -409,12 +415,10 @@ class ComparisonPopupView(View):
                     'scheduled_measurement_id': sm.id,
                     } for sm in scheduled_measurements]
 
-            logger.critical("SM IDs: "+str(sm_ids))
-
             try:
                 htmls.append(adapter.html(identifiers=sm_ids))
             except Exception as e:
-                logger.critical("HTML exception: "+str(e))
+                logger.critical("HTML exception: " + str(e))
 
         return htmls
 

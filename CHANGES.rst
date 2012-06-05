@@ -5,7 +5,7 @@ Changelog of lizard-progress
 0.13 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added missing templates...
 
 
 0.12 (2012-06-05)

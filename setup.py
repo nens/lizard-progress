@@ -9,7 +9,7 @@ long_description = '\n\n'.join([
     ])
 
 install_requires = [
-    'Django',
+    'Django >= 1.4',  # Ships with form-wizard
     'django-extensions',
     'django-nose',
     # We don't work with 4.0 yet; firstly because then we must require lizard-security

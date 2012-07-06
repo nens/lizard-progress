@@ -16,10 +16,19 @@ from lizard_progress.views import DashboardAreaView
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
+from lizard_progress.forms import ProjectWizard, ProjectForm, ContractorForm
+from lizard_progress.forms import ProjectCreate, ProjectUpdate, ProjectDelete
+
 admin.autodiscover()
 
 urlpatterns = patterns(
     '',
+    ## Start N0032 experiments:
+    #url('^project/wizard/$', ProjectWizard.as_view([ProjectForm, ContractorForm])),
+    #url('^project/add/$', ProjectCreate.as_view(), name='project_add'),
+    #url('^project/(?P<pk>\d+)/$', ProjectUpdate.as_view(), name='project_update'),
+    #url('^project/(?P<pk>\d+)/delete/$', ProjectDelete.as_view(), name='project_delete'),
+    ## End N0032 experiments.
     url('^(?P<project_slug>[^/]+)/$', login_required(View.as_view()),
         name='lizard_progress_view'),
     url('^(?P<project_slug>[^/]+)/map/$', login_required(MapView.as_view()),

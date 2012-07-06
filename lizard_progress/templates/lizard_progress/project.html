@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>TITEL</title>
+<meta charset="UTF-8">
+</head>
+<body>
+<h1>FOOBAR</h1>
+<p>params</p>
+{{ params }}
+<p>params.form.as_p</p>
+{{ params.form.as_p }}
+<p>form.as_p</p>
+<form action="/progress/project/add/" method="post">{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Submit" />
+</form>
+</body>
+</html>

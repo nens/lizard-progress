@@ -1,9 +1,11 @@
 """A module containing things that had no obvious other home."""
 
 import os
+import logging
 import shutil
 import time
 
+logger = logging.getLogger(__name__)
 
 class LookaheadLine(object):
     """

@@ -74,9 +74,11 @@ def current_files(measurements):
 
 class Project(models.Model):
     # "Profielen", "Peilschalen", etc
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True,
+        verbose_name='projectnaam')
     slug = models.SlugField(max_length=50, unique=True)
-    superuser = models.ForeignKey(User, null=True, blank=True)
+    superuser = models.ForeignKey(User, null=True, blank=True,
+        verbose_name='projectmanager')
 
     def __unicode__(self):
         return unicode(self.name)
@@ -90,10 +92,14 @@ class Contractor(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
-    user = models.ForeignKey(User, null=True, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True,
+        verbose_name='loginnaam')
 
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)
+
+    class Meta:
+        unique_together = (("project", "slug"))
 
 
 class Area(models.Model):

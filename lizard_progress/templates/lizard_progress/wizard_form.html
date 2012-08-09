@@ -1,13 +1,28 @@
+{% extends "lizard_ui/lizardbase.html" %}
 {% load i18n %}
-<!DOCTYPE html>
-<html>
-<head>
-<title>TITEL</title>
-<meta charset="UTF-8">
-</head>
-<body>
-<h1>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</h1>
-<form action="" method="post">
+
+{% block css %}
+{{ block.super }}
+<style type="text/css">
+div#content {
+    padding: 20px;
+}
+</style>
+{% endblock css %}
+
+{% block sidebar %}
+<div class="sidebarbox sidebarbox-stretched">
+  <h2>Admin</h2>
+  {% include "lizard_progress/admin_tasks.html" %}
+</div>
+{% endblock sidebar %}
+{% block content %}
+{# <h1>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</h1> #}
+{% if wizard.form.is_multipart %}
+<form enctype="multipart/form-data" method="post" action="">
+{% else %}
+<form method="post" action="">
+{% endif %}
 {% csrf_token %}
 {{ wizard.form.media }}
 {{ wizard.management_form }}
@@ -25,5 +40,4 @@
 {% endif %}
 <input type="submit" name="submit" value="{% trans "submit" %}" />
 </form>
-</body>
-</html>
+{% endblock content %}

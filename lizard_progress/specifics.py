@@ -61,7 +61,9 @@ def _open_uploaded_file(path):
             except IOError:
                 logger.info("IOError in Image.open(%s)!" % (path,))
                 raise
-    return open(path, "rb")
+    return open(path, "rU")  # U for universal line endings -- some
+                             # people uploaded Mac ending files. Does
+                             # mean that binaries fail.
 
 
 def parser_factory(parser, project, contractor, path):
@@ -183,6 +185,9 @@ class UnSuccessfulParserResult(object):
     def __init__(self, error=None):
         self.success = False
         self.error = error
+
+    def __str__(self):
+        return "UnSuccessfulParserResult: {}".format(self.error)
 
 
 class GenericSpecifics(object):

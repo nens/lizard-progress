@@ -555,7 +555,8 @@ class UploadView(ViewContextMixin, TemplateView):
                 return json_response(errors)
 
         # Found no suitable parsers
-        return json_response({'error': {'details': "Unknown filetype."}})
+        return json_response({
+                'error': {'details': "Unknown filetype or empty file."}})
 
     def try_parser(self, parser, path):
         """Tries a particular parser. Wraps everything in a database
@@ -571,7 +572,8 @@ class UploadView(ViewContextMixin, TemplateView):
                 # Call the parser.
                 parseresult = self.call_parser(parser, path)
 
-                if parseresult.success:
+                if (parseresult.success and hasattr(parseresult, 'measurements')
+                    and parseresult.measurements):
                     # Get mtype from the parser result, for use in pathname
                     mtype = (parseresult.measurements[0].
                              scheduled.measurement_type)
@@ -586,6 +588,12 @@ class UploadView(ViewContextMixin, TemplateView):
                         m.save()
 
                     return True, {}
+                elif parseresult.success:
+                    # Success, but no results.  Don't count this as
+                    # success, so that other parsers may be tried.
+                    parseresult.success = False
+                    # Prevent database change.
+                    raise DummyException()
                 else:
                     # Unsuccess. Were there errors? Then set
                     # them.

@@ -2,10 +2,23 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.13 (unreleased)
+0.14 (unreleased)
 -----------------
 
 - Nothing changed yet.
+
+
+0.13 (2012-07-13)
+-----------------
+
+Two changes:
+
+- Non-image files are now opened in 'rU' mode, universal line ending
+  mode. This should fix a problem some people at Van der Zwaan had
+  with uploading MET-files with Mac-line endings.
+
+- Sending a file with no measurements in it now results in an error
+  message, not an internal server error.
 
 
 0.12.1 (2012-06-05)

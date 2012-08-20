@@ -1,0 +1,24 @@
+{% extends "lizard_map/wms.html" %}
+{% load workspaces %}
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet"
+      type="text/css"
+      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css"/>
+{% endblock css %}
+
+{% block sidebar %}
+<div class="sidebarbox sidebarbox-stretched">
+  <h2>Projecten</h2>
+  <ul class="without-bullets">
+  {% for project in view.projects %}
+    <li>
+      <a href="{% url lizard_progress_view project.slug %}">{{ project }}</a>
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+{% workspace_edit view.workspace_edit %}
+{% collage_edit view.collage_edit %}
+{% endblock sidebar %}

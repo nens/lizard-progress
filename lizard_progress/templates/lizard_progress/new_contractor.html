@@ -1,0 +1,6 @@
+{% extends "lizard_progress/wizard_base.html" %}
+
+{% block breadcrumbs %}
+{{ block.super }}
+&rarr; <a href="{% url lizard_progress_newcontractor %}">Uitvoerder toekennen aan een project</a>
+{% endblock breadcrumbs %}

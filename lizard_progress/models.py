@@ -143,6 +143,10 @@ class MeasurementType(models.Model):
     icon_missing = models.CharField(max_length=50, null=True, blank=True)
     icon_complete = models.CharField(max_length=50, null=True, blank=True)
 
+    class Meta:
+        # `name` and `slug` are unique within a project
+        unique_together = (("project", "name"), ("project", "slug"))
+
     def __unicode__(self):
         return u"Type '%s' in %s" % (self.name, self.project.name)
 

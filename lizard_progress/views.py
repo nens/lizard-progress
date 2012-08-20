@@ -101,6 +101,14 @@ def make_uploaded_file_path(root, project, contractor,
                         os.path.basename(filename))
 
 
+class ProjectsView(AppView):
+    """Displays a list of projects to choose from."""
+    template_name = "lizard_progress/projects.html"
+
+    def projects(self):
+        return Project.objects.all()
+
+
 class View(AppView):
     """The app's root, shows a choice of projects, or a choice of
     dashboard / upload / map layer pages if a project is chosen."""
@@ -141,6 +149,20 @@ class View(AppView):
         """Returns URL to this project's Comparison view"""
         return reverse('lizard_progress_comparisonview',
                        kwargs={'project_slug': self.project_slug})
+
+    def crumbs(self):
+        """Returns a list of breadcrumbs to this project."""
+        crumbs = super(View, self).crumbs()
+        crumbs.append({
+            'description': 'Projecten',
+            'url': reverse('lizard_progress_projecten')
+        })
+        crumbs.append({
+            'description': self.project.name,
+            'url': reverse('lizard_progress_view',
+                kwargs={'project_slug': self.project_slug})
+        })
+        return crumbs
 
 
 class MapView(View):
@@ -944,3 +966,4 @@ def protected_file_download(request, project_slug, contractor_slug,
         return serve(request, file_path, '/')
     logger.debug("Serving programfile %s via webserver.", file_path)
     return response
+

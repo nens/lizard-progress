@@ -7,8 +7,9 @@ from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import UpdateView
 from django.views.generic.edit import DeleteView
-from models import Project, Contractor
+from models import Contractor, Location, MeasurementType, Project, ScheduledMeasurement
 import os
+import osgeo.ogr
 
 ### Form Wizard experiments
 ### Directly available in Django 1.4!
@@ -19,6 +20,17 @@ from django.contrib.auth.models import User
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 
+from django.contrib.gis.geos import fromstr, Point
+
+
+MEASUREMENT_TYPES = {
+    '1': {'name': 'Dwarsprofiel', 'icon_missing': 'bullets/squarered16.png',   'icon_complete': 'bullets/squaregreen16.png',   'choice': 'Dwarsprofiel'},
+    '2': {'name': 'Oeverfoto',    'icon_missing': 'camera_missing.png',        'icon_complete': 'camera_present.png',          'choice': 'Oeverfoto'},
+    '3': {'name': 'Oeverkenmerk', 'icon_missing': 'bullets/trianglered16.png', 'icon_complete': 'bullets/trianglegreen16.png', 'choice': 'Oeverkenmerk'},
+    '4': {'name': 'Foto',         'icon_missing': 'camera_missing.png',        'icon_complete': 'camera_present.png',          'choice': 'Foto'},
+    '5': {'name': 'Meting',       'icon_missing': 'bullets/squarered16.png',   'icon_complete': 'bullets/squaregreen16.png',   'choice': 'Meting'},
+}
+
 
 def handle_uploaded_file(f):
     with open('/tmp/uploaded_file.pdf', 'wb+') as destination:
@@ -27,10 +39,14 @@ def handle_uploaded_file(f):
 
 
 class ProjectWizard(SessionWizardView):
+    """Form wizard for creating a new `Project`.
 
-    #file_storage = settings.DEFAULT_FILE_STORAGE
-    #file_storage = FileSystemStorage(location="/tmp/hdsr")
-    file_storage = FileSystemStorage()
+    Usage of this wizard requires `lizard_progress.add_project` permission.
+    """
+
+    @method_decorator(permission_required('lizard_progress.add_project'))
+    def dispatch(self, *args, **kwargs):
+        return super(ProjectWizard, self).dispatch(*args, **kwargs)
 
     def get_form_initial(self, step):
         """Returns a dictionary with initial form data for the current step."""
@@ -41,8 +57,9 @@ class ProjectWizard(SessionWizardView):
 
     def get_template_names(self):
         #return ("lizard_progress/wizard_form.html", "lizard_progress/wizard_form.html", "lizard_progress/wizard_form.html")
-        return "lizard_progress/wizard_form.html"
+        return ["lizard_progress/new_project.html"]
 
+    @transaction.commit_on_success
     def done(self, form_list, **kwargs):
         # Save the new project.
         project = form_list[0].save(commit=False)
@@ -54,12 +71,6 @@ class ProjectWizard(SessionWizardView):
 
 
 class ProjectForm(forms.ModelForm):
-
-    def __init__(self, *args, **kwargs):
-        super(ProjectForm, self).__init__(*args, **kwargs)
-        print dir(self)
-        print args
-        print kwargs
 
     def clean_name(self):
         """Validates and returns the name of a new project."""
@@ -76,53 +87,27 @@ class ProjectForm(forms.ModelForm):
         exclude = ('slug',)
 
 
-
-MEASUREMENT_TYPES_CHOICES = (
-    ('dwarsprofiel', 'Dwarsprofiel'),
-    ('oeverfoto', 'Oeverfoto'),
-    ('oeverkenmerk', 'Oeverkenmerk'),
-    ('foto', 'Foto'),
-    ('meting', 'Meting')
-)
-
-
-class MeasurementTypeForm(forms.Form):
-    measurement_types = forms.MultipleChoiceField(
-        widget=forms.CheckboxSelectMultiple,
-        choices=MEASUREMENT_TYPES_CHOICES,
-        label="Uit te voeren metingen")
-
-
-class LocationForm(forms.Form):
-    dbf = forms.FileField()
-    prj = forms.FileField(required=False)
-    shp = forms.FileField()
-    shx = forms.FileField()
-
-    def clean_dbf(self):
-        dbf = self.cleaned_data['dbf']
-        self.check_ext(dbf.name, '.dbf')
-
-    def clean_shp(self):
-        shp = self.cleaned_data['shp']
-        self.check_ext(shp.name, '.shp')
-
-    def check_ext(self, filename, ext):
-        if not os.path.splitext(filename)[1].lower() == ext:
-            msg = "Dit is geen %s bestand." % (ext,)
-            raise forms.ValidationError(msg)
-
 ### Contractor
 
 
 class ContractorWizard(SessionWizardView):
+    """Form wizard for creating a new `Contractor`.
+
+    Usage of this wizard requires `lizard_progress.add_project` permission.
+    """
 
     @method_decorator(permission_required('lizard_progress.add_project'))
     def dispatch(self, *args, **kwargs):
         return super(ContractorWizard, self).dispatch(*args, **kwargs)
 
+    def get_form_kwargs(self, step):
+        form_kwargs = super(ContractorWizard, self).get_form_kwargs(step)
+        if step == '0':
+            form_kwargs['user'] = self.request.user
+        return form_kwargs
+
     def get_template_names(self):
-        return "lizard_progress/wizard_form.html"
+        return ["lizard_progress/new_contractor.html"]
 
     @transaction.commit_on_success
     def done(self, form_list, **kwargs):
@@ -149,12 +134,18 @@ USER_CHOICES = (
 
 
 class ContractorForm(forms.ModelForm):
-    name = forms.CharField(label='Uitvoerder:', max_length=50) 
+    name = forms.CharField(label='Uitvoerder:', max_length=50)
     user_choice_field = forms.ChoiceField(
         label='Loginnaam en wachtwoord',
         widget=forms.RadioSelect,
         choices=USER_CHOICES
     )
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(ContractorForm, self).__init__(*args, **kwargs)
+        self.fields['project'].queryset = \
+            Project.objects.filter(superuser=user)
 
     # TODO: (`project`, `slug`) should be unique
 
@@ -202,7 +193,209 @@ class NewUserForm(forms.ModelForm):
         fields = ('username', 'password')
 
 
+### Activities
+
+
+class ActivitiesWizard(SessionWizardView):
+    """Form wizard for creating a new `Contractor`.
+
+    Usage of this wizard requires `lizard_progress.add_project` permission.
+    """
+
+    #file_storage = settings.DEFAULT_FILE_STORAGE
+    #file_storage = FileSystemStorage(location="/tmp/hdsr")
+    file_storage = FileSystemStorage()
+
+    @method_decorator(permission_required('lizard_progress.add_project'))
+    def dispatch(self, *args, **kwargs):
+        return super(ActivitiesWizard, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self, step):
+        form_kwargs = super(ActivitiesWizard, self).get_form_kwargs(step)
+        if step == '0':
+            form_kwargs['user'] = self.request.user
+        elif step == '1':
+            form_kwargs['project'] = \
+                self.get_cleaned_data_for_step('0')['project']
+        return form_kwargs
+
+    def get_template_names(self):
+        if self.steps.current == '3':
+            return ["lizard_progress/new_activities_step3.html"]
+        return ["lizard_progress/new_activities.html"]
+
+    @transaction.commit_on_success
+    def done(self, form_list, **kwargs):
+        self.__process_shapefile(form_list)
+        self.__save_measurement_types(form_list)
+        self.__save_locations(form_list)
+        self.__save_scheduled_measurements(form_list)
+        return render_to_response('lizard_progress/done.html', {
+            'form_data': [form.cleaned_data for form in form_list],
+        })
+
+    def __process_shapefile(self, form_list):
+        unique_ids = []
+        shp = form_list[3].cleaned_data['shp']
+        shapefile = osgeo.ogr.Open(str(shp.file.name))
+        layer = shapefile.GetLayer(0)
+        for featureNum in range(layer.GetFeatureCount()):
+            feature = layer.GetFeature(featureNum)
+            unique_id = feature.GetField("ID_DWP")
+            unique_ids.append(unique_id)
+        self.unique_ids = set(unique_ids)
+
+    # TODO: the object model requires a major overhaul. Currently,
+    # a `MeasurementType` cannot exist without a `Project`.
+    # A many-to-many relationship seems more appropriate.
+    def __save_measurement_types(self, form_list):
+        project = form_list[0].cleaned_data['project']
+        for key in form_list[2].cleaned_data['measurement_types']:
+            if not MeasurementType.objects.filter(project=project,
+                name=MEASUREMENT_TYPES[key]['name']).exists():
+                MeasurementType(
+                    project=project,
+                    name=MEASUREMENT_TYPES[key]['name'],
+                    slug = slugify(MEASUREMENT_TYPES[key]['name']),
+                    icon_missing = MEASUREMENT_TYPES[key]['icon_missing'],
+                    icon_complete = MEASUREMENT_TYPES[key]['icon_complete']
+                ).save()
+
+    # TODO: the object model requires a major overhaul. Currently,
+    # a specific `Location` can only be part of one `Project`.
+    # A many-to-many relationship seems more appropriate.
+    def __save_locations(self, form_list):
+        project = form_list[0].cleaned_data['project']
+        unique_ids = set(Location.objects.filter(
+            project=project).values_list('unique_id', flat=True))
+        locations = []
+        contractor = form_list[1].cleaned_data['contractor']
+        shp = form_list[3].cleaned_data['shp']
+        shapefile = osgeo.ogr.Open(str(shp.file.name))
+        for layerNum in range(shapefile.GetLayerCount()):
+            layer = shapefile.GetLayer(layerNum)
+            for featureNum in range(layer.GetFeatureCount()):
+                feature = layer.GetFeature(featureNum)
+                unique_id = feature.GetField("ID_DWP")
+                if not unique_id in unique_ids:
+                    geometry = feature.GetGeometryRef()
+                    location = Location(
+                        unique_id=unique_id,
+                        project=project,
+                        the_geom=fromstr(geometry.ExportToWkt()))
+                    locations.append(location)
+                    unique_ids.update(unique_id)
+        Location.objects.bulk_create(locations)
+
+
+    # TODO: the object model requires a major overhaul. Currently,
+    # things are far from normalized: `ScheduledMeasurement` has
+    # many - possibly conflicting - links to `Project`.
+    def __save_scheduled_measurements(self, form_list):
+
+        project = form_list[0].cleaned_data['project']
+        contractor = form_list[1].cleaned_data['contractor']
+        scheduled_measurements = []
+
+        for key in form_list[2].cleaned_data['measurement_types']:
+
+            mt = MeasurementType.objects.get(project=project,
+                name=MEASUREMENT_TYPES[key]['name'])
+
+            unique_ids = set(ScheduledMeasurement.objects.filter(
+                project=project, contractor=contractor, measurement_type=mt).\
+                values_list('location__unique_id', flat=True))
+
+            difference = self.unique_ids - unique_ids
+
+            for unique_id in difference:
+
+                location = Location(unique_id=unique_id)
+                scheduled_measurement = ScheduledMeasurement(
+                    project=project, contractor=contractor,
+                    measurement_type=mt, location=location)
+                scheduled_measurements.append(scheduled_measurement)
+
+        ScheduledMeasurement.objects.bulk_create(scheduled_measurements)
+
+
+class ProjectChoiceForm(forms.Form):
+    """Form that allows the selection of a single `Project`.
+
+    The currently logged-in user can only choose from
+    projects he owns (i.e. is superuser of).
+    """
+
+    project = forms.ModelChoiceField(queryset=None)
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(ProjectChoiceForm, self).__init__(*args, **kwargs)
+        self.fields['project'].queryset = \
+            Project.objects.filter(superuser=user)
+
+
+class ContractorChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, contractor):
+        return contractor.name
+
+
+class ContractorChoiceForm(forms.Form):
+    """Form that allows the selection of a single `Contractor`.
+
+    The currently logged-in user can only choose from
+    contractors associated with the `Project` that
+    was selected in a previous step.
+    """
+
+    contractor = ContractorChoiceField(queryset=None, label='Uitvoerder')
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop('project', None)
+        super(ContractorChoiceForm, self).__init__(*args, **kwargs)
+        self.fields['contractor'].queryset = \
+            Contractor.objects.filter(project=project)
+
+
+class MeasurementTypeForm(forms.Form):
+    """Foobar."""
+
+    measurement_types = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        choices=[(k, v['choice']) for k, v in MEASUREMENT_TYPES.items()],
+        label="Uit te voeren werkzaamheden")
+
+
+class ExtFileField(forms.FileField):
+    """A `FileField` that validates the filename extension.
+
+    The extensions allowed are passed as a list to the
+    constructor, e.g.: ExtFileField(exts=[".dbf"])
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.exts = [ext.lower() for ext in kwargs.pop("exts")]
+        super(ExtFileField, self).__init__(*args, **kwargs)
+
+    def validate(self, value):
+        super(ExtFileField, self).validate(value)
+        ext = os.path.splitext(value.name)[1]
+        if ext.lower() not in self.exts:
+            msg = "Verkeerd bestandsformaat."
+            raise forms.ValidationError(msg)
+
+
+class LocationForm(forms.Form):
+    """Foobar."""
+
+    dbf = ExtFileField(exts=[".dbf"])
+#   prj = ExtFileField(exts=[".prj"])
+    shp = ExtFileField(exts=[".shp"])
+    shx = ExtFileField(exts=[".shx"])
+
+
 ### Form handling with class-based views experiments
+
 
 class ProjectCreate(CreateView):
     form_class = ProjectForm

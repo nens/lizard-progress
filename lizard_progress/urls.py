@@ -18,8 +18,10 @@ from lizard_progress.views import DashboardAreaView
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
+from lizard_progress.views import ProjectsView
 from lizard_progress.forms import ProjectWizard, ProjectForm, MeasurementTypeForm, LocationForm
 from lizard_progress.forms import ContractorWizard, ContractorForm, ExistingUserForm, NewUserForm
+from lizard_progress.forms import ActivitiesWizard, ProjectChoiceForm, ContractorChoiceForm
 from lizard_progress.forms import ProjectCreate, ProjectUpdate, ProjectDelete
 from lizard_progress.forms import existing_user_condition, new_user_condition
 
@@ -30,13 +32,17 @@ admin.autodiscover()
 urlpatterns = patterns(
     '',
     ## Start N0032 experiments:
-    url('^admin/$', AppView.as_view(template_name='lizard_progress/admin.html')),
-    url('^admin/projects/new/$', ProjectWizard.as_view([ProjectForm, LocationForm, MeasurementTypeForm]), name='new_project'),
+    url('^projects/$', ProjectsView.as_view(), name='lizard_progress_projecten'),
+    url('^admin/$', AppView.as_view(template_name='lizard_progress/admin.html'), name='lizard_progress_admin'),
+    url('^admin/projects/new/$', ProjectWizard.as_view([ProjectForm]), name='lizard_progress_newproject'),
+    #url('^admin/projects/new/$', ProjectWizard.as_view([ProjectForm, LocationForm]), name='lizard_progress_newproject'),
     url('^project/add/$', ProjectCreate.as_view(), name='project_add'),
     url('^project/(?P<pk>\d+)/$', ProjectUpdate.as_view(), name='project_update'),
     url('^project/(?P<pk>\d+)/delete/$', ProjectDelete.as_view(), name='project_delete'),
     url('^admin/contractors/new/$', ContractorWizard.as_view([ContractorForm, ExistingUserForm, NewUserForm],
-        condition_dict={'1': existing_user_condition, '2': new_user_condition}), name='new_contractor'),
+        condition_dict={'1': existing_user_condition, '2': new_user_condition}), name='lizard_progress_newcontractor'),
+    url('^admin/activities/new/$', ActivitiesWizard.as_view(
+        [ProjectChoiceForm, ContractorChoiceForm, MeasurementTypeForm, LocationForm]), name='lizard_progress_newactivities'),
     ## End N0032 experiments.
     url('^(?P<project_slug>[^/]+)/$', login_required(View.as_view()),
         name='lizard_progress_view'),

@@ -7,7 +7,8 @@ from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import UpdateView
 from django.views.generic.edit import DeleteView
-from models import Contractor, Location, MeasurementType, Project, ScheduledMeasurement
+from models import (Area, Contractor, Location, MeasurementType, Project,
+    ScheduledMeasurement)
 import os
 import osgeo.ogr
 
@@ -19,7 +20,9 @@ from django.shortcuts import render_to_response
 from django.contrib.auth.models import User
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
+from django.http import HttpResponseRedirect
 
+from django.contrib import messages
 from django.contrib.gis.geos import fromstr, Point
 
 
@@ -56,7 +59,6 @@ class ProjectWizard(SessionWizardView):
         return form_initial
 
     def get_template_names(self):
-        #return ("lizard_progress/wizard_form.html", "lizard_progress/wizard_form.html", "lizard_progress/wizard_form.html")
         return ["lizard_progress/new_project.html"]
 
     @transaction.commit_on_success
@@ -65,9 +67,15 @@ class ProjectWizard(SessionWizardView):
         project = form_list[0].save(commit=False)
         project.slug = slugify(project.name)
         project.save()
-        return render_to_response('lizard_progress/done.html', {
-            'form_data': [form.cleaned_data for form in form_list],
-        })
+        if False:
+            # For development purposes.
+            return render_to_response('lizard_progress/done.html', {
+                'form_data': [form.cleaned_data for form in form_list],
+            })
+        else:
+            msg = 'Het aanmaken van project "%s" was succesvol.' % project.name
+            messages.info(self.request, msg)
+            return HttpResponseRedirect('/progress/admin/')
 
 
 class ProjectForm(forms.ModelForm):
@@ -121,10 +129,16 @@ class ContractorWizard(SessionWizardView):
         contractor.slug = slugify(contractor.name)
         contractor.user = user
         contractor.save()
-
-        return render_to_response('lizard_progress/done.html', {
-            'form_data': [form.cleaned_data for form in form_list],
-        })
+        if False:
+            # For development purposes.
+            return render_to_response('lizard_progress/done.html', {
+                'form_data': [form.cleaned_data for form in form_list],
+            })
+        else:
+            msg = ('Het toekennen van uitvoerder "%s" aan project "%s" was ' +
+                'succesvol.') % (contractor.name, contractor.project.name)
+            messages.info(self.request, msg)
+            return HttpResponseRedirect('/progress/admin/')
 
 
 USER_CHOICES = (
@@ -186,7 +200,16 @@ class NewUserForm(forms.ModelForm):
         help_text='Vul hetzelfde wachtwoord als hierboven in, ter bevestiging.'
     )
 
-    # TODO: `password` should match `password_again`
+    def clean(self):
+        cleaned_data = super(NewUserForm, self).clean()
+        password = cleaned_data.get("password")
+        password_again = cleaned_data.get("password_again")
+
+        if password != password_again:
+            msg = "U moet twee keer hetzelfde wachtwoord invoeren."
+            raise forms.ValidationError(msg)
+
+        return cleaned_data
 
     class Meta:
         model = User
@@ -228,11 +251,21 @@ class ActivitiesWizard(SessionWizardView):
     def done(self, form_list, **kwargs):
         self.__process_shapefile(form_list)
         self.__save_measurement_types(form_list)
+        self.__save_area(form_list)
         self.__save_locations(form_list)
         self.__save_scheduled_measurements(form_list)
-        return render_to_response('lizard_progress/done.html', {
-            'form_data': [form.cleaned_data for form in form_list],
-        })
+        if False:
+            # For development purposes.
+            return render_to_response('lizard_progress/done.html', {
+                'form_data': [form.cleaned_data for form in form_list],
+            })
+        else:
+            contractor = form_list[1].cleaned_data['contractor']
+            msg = ('Het toewijzen van werkzaamheden aan uitvoerder '
+                + '"%s" binnen project "%s" was succesvol.') % (
+                contractor.name, contractor.project.name)
+            messages.info(self.request, msg)
+            return HttpResponseRedirect('/progress/admin/')
 
     def __process_shapefile(self, form_list):
         unique_ids = []
@@ -261,6 +294,16 @@ class ActivitiesWizard(SessionWizardView):
                     icon_complete = MEASUREMENT_TYPES[key]['icon_complete']
                 ).save()
 
+    # Within a project, locations can be assigned to different
+    # areas, for example `North`, `East`, `South`, and `West`.
+    # This information cannot be automatically deduced from
+    # the shape files yet. For that reason, we'll assign
+    # all locations to a single `Area`.
+    def __save_area(self, form_list):
+        project = form_list[0].cleaned_data['project']
+        self.area, _ = Area.objects.get_or_create(project=project,
+            name=project.name, slug=project.slug)
+
     # TODO: the object model requires a major overhaul. Currently,
     # a specific `Location` can only be part of one `Project`.
     # A many-to-many relationship seems more appropriate.
@@ -282,6 +325,7 @@ class ActivitiesWizard(SessionWizardView):
                     location = Location(
                         unique_id=unique_id,
                         project=project,
+                        area=self.area,
                         the_geom=fromstr(geometry.ExportToWkt()))
                     locations.append(location)
                     unique_ids.update(unique_id)
@@ -393,6 +437,21 @@ class LocationForm(forms.Form):
     shp = ExtFileField(exts=[".shp"])
     shx = ExtFileField(exts=[".shx"])
 
+    def clean(self):
+        cleaned_data = super(LocationForm, self).clean()
+        dbf = os.path.splitext(cleaned_data.get("dbf").name)[0]
+        shp = os.path.splitext(cleaned_data.get("shp").name)[0]
+        shx = os.path.splitext(cleaned_data.get("shx").name)[0]
+
+        if dbf == shp == shx:
+            pass
+        else:
+            msg = ("De geselecteerde bestanden horen "
+                + "niet tot dezelfde shapefile.")
+            raise forms.ValidationError(msg)
+
+        return cleaned_data
+
 
 ### Form handling with class-based views experiments
 
@@ -414,6 +473,5 @@ class ProjectUpdate(UpdateView):
 
 
 class ProjectDelete(DeleteView):
-    template_name = "lizard_progress/project.html"
     model = Project
 

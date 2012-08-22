@@ -7,9 +7,26 @@
       href="{{ STATIC_URL }}lizard_progress/lizard_progress.css"/>
 {% endblock css %}
 
+{% block map-javascript %}
+{{ block.super }}
+<script type="text/javascript"
+        src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock map-javascript %}
+
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
   <h2>Admin</h2>
   {% include "lizard_progress/admin_tasks.html" %}
 </div>
 {% endblock sidebar %}
+
+{% block content %}
+{{ block.super }}
+{% if messages %}
+<div id="messages">
+  {% for message in messages %}
+  <p>{{ message }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock content %}

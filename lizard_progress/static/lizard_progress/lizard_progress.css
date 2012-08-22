@@ -10,3 +10,10 @@
     line-height: 2em;
 }
 
+div#messages {
+    display: none;
+}
+
+.errorlist {
+    color: red;
+}

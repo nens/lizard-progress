@@ -77,3 +77,13 @@ $().ready(function () {
 	}
     });
 });
+
+$().ready(function () {
+    $('div#messages').dialog({
+        buttons: { "OK": function () { $(this).dialog("close"); } },
+        draggable: false,
+        modal: true,
+        resizable: false,
+        title: 'Admin'
+    });
+});

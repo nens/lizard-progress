@@ -173,6 +173,10 @@ class ScheduledMeasurement(models.Model):
         except Measurement.DoesNotExist:
             return None
 
+    class Meta:
+        unique_together = ("project", "contractor",
+            "measurement_type", "location")
+
     def __unicode__(self):
         return (("Scheduled measurement of type '%s' at location '%s' "
                  "in project '%s' by contractor '%s'.") %

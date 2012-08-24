@@ -24,6 +24,9 @@ from django.http import HttpResponseRedirect
 
 from django.contrib import messages
 from django.contrib.gis.geos import fromstr, Point
+import tempfile
+import shutil
+from django.core.files.uploadedfile import UploadedFile
 
 
 MEASUREMENT_TYPES = {
@@ -35,10 +38,12 @@ MEASUREMENT_TYPES = {
 }
 
 
-def handle_uploaded_file(f):
-    with open('/tmp/uploaded_file.pdf', 'wb+') as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
+class OverwriteStorage(FileSystemStorage):
+
+    def get_available_name(self, name):
+        if self.exists(name):
+            self.delete(name)
+        return name
 
 
 class ProjectWizard(SessionWizardView):
@@ -225,9 +230,7 @@ class ActivitiesWizard(SessionWizardView):
     Usage of this wizard requires `lizard_progress.add_project` permission.
     """
 
-    #file_storage = settings.DEFAULT_FILE_STORAGE
-    #file_storage = FileSystemStorage(location="/tmp/hdsr")
-    file_storage = FileSystemStorage()
+    file_storage = OverwriteStorage(location=tempfile.mkdtemp())
 
     @method_decorator(permission_required('lizard_progress.add_project'))
     def dispatch(self, *args, **kwargs):
@@ -254,6 +257,7 @@ class ActivitiesWizard(SessionWizardView):
         self.__save_area(form_list)
         self.__save_locations(form_list)
         self.__save_scheduled_measurements(form_list)
+        self.__save_uploads(form_list)
         if False:
             # For development purposes.
             return render_to_response('lizard_progress/done.html', {
@@ -362,6 +366,28 @@ class ActivitiesWizard(SessionWizardView):
 
         ScheduledMeasurement.objects.bulk_create(scheduled_measurements)
 
+    def __save_uploads(self, form_list):
+
+        project = form_list[0].cleaned_data['project']
+        contractor = form_list[1].cleaned_data['contractor']
+
+        # The root directory.
+        dst = os.path.join(settings.BUILDOUT_DIR, 'var',
+            Project._meta.app_label, project.slug,
+            contractor.slug, 'locations')
+
+        # The root might not exist yet.
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        # Create a unique subdirectory in the root.
+        dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
+
+        # Copy the shapefile to the subdirectory.
+        for _, v in form_list[1].cleaned_data.iteritems():
+            if isinstance(v, UploadedFile):
+                shutil.copy(v.file.name, dst)
+
 
 class ProjectChoiceForm(forms.Form):
     """Form that allows the selection of a single `Project`.
@@ -423,27 +449,44 @@ class ExtFileField(forms.FileField):
 
     def validate(self, value):
         super(ExtFileField, self).validate(value)
-        ext = os.path.splitext(value.name)[1]
-        if ext.lower() not in self.exts:
-            msg = "Verkeerd bestandsformaat."
-            raise forms.ValidationError(msg)
+        if value:
+            ext = os.path.splitext(value.name)[1]
+            if ext.lower() not in self.exts:
+                msg = "Verkeerd bestandsformaat."
+                raise forms.ValidationError(msg)
 
 
-class LocationForm(forms.Form):
-    """Foobar."""
+class ShapefileForm(forms.Form):
+    """Form for uploading a shapefile."""
 
     dbf = ExtFileField(exts=[".dbf"])
-#   prj = ExtFileField(exts=[".prj"])
+    prj = ExtFileField(exts=[".prj"], required=False, help_text="(Optioneel)")
     shp = ExtFileField(exts=[".shp"])
     shx = ExtFileField(exts=[".shx"])
 
     def clean(self):
-        cleaned_data = super(LocationForm, self).clean()
+        cleaned_data = super(ShapefileForm, self).clean()
+
+        if self.errors:
+            return cleaned_data
+
+        # Since there are no errors, `cleaned_data` has all required fields.
+
         dbf = os.path.splitext(cleaned_data.get("dbf").name)[0]
         shp = os.path.splitext(cleaned_data.get("shp").name)[0]
         shx = os.path.splitext(cleaned_data.get("shx").name)[0]
 
-        if dbf == shp == shx:
+        # According to http://en.wikipedia.org/wiki/Shapefile,
+        # a `.prj` file is not mandatory, but if it is not
+        # absent, it has to have the same filename.
+
+        prj = cleaned_data.get("prj", None)
+        if prj:
+            prj = os.path.splitext(prj.name)[0]
+        else:
+            prj = dbf
+
+        if dbf == prj == shp == shx:
             pass
         else:
             msg = ("De geselecteerde bestanden horen "
@@ -451,6 +494,64 @@ class LocationForm(forms.Form):
             raise forms.ValidationError(msg)
 
         return cleaned_data
+
+
+### Hydrovakken
+
+
+class HydrovakkenWizard(SessionWizardView):
+    """Form wizard for uploading a shapefile of hydrovakken.
+
+    Usage of this wizard requires `lizard_progress.add_project` permission.
+    """
+
+    file_storage = OverwriteStorage(location=tempfile.mkdtemp())
+
+    @method_decorator(permission_required('lizard_progress.add_project'))
+    def dispatch(self, *args, **kwargs):
+        return super(HydrovakkenWizard, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self, step):
+        form_kwargs = super(HydrovakkenWizard, self).get_form_kwargs(step)
+        if step == '0':
+            form_kwargs['user'] = self.request.user
+        return form_kwargs
+
+    def get_template_names(self):
+        return ["lizard_progress/new_hydrovakken.html"]
+
+    @transaction.commit_on_success
+    def done(self, form_list, **kwargs):
+        self.project = form_list[0].cleaned_data['project']
+        self.__save_uploads(form_list)
+        if False:
+            # For development purposes.
+            return render_to_response('lizard_progress/done.html', {
+                'form_data': [form.cleaned_data for form in form_list],
+            })
+        else:
+            msg = ('Het uploaden van hydrovakken t.b.v. project "%s" '
+                + 'was succesvol.') % self.project.name
+            messages.info(self.request, msg)
+            return HttpResponseRedirect('/progress/admin/')
+
+    def __save_uploads(self, form_list):
+
+        # The root directory.
+        dst = os.path.join(settings.BUILDOUT_DIR, 'var',
+            Project._meta.app_label, self.project.slug, 'hydrovakken')
+
+        # The root might not exist yet.
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        # Create a unique subdirectory in the root.
+        dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
+
+        # Copy the shapefile to the subdirectory.
+        for _, v in form_list[1].cleaned_data.iteritems():
+            if isinstance(v, UploadedFile):
+                shutil.copy(v.file.name, dst)
 
 
 ### Form handling with class-based views experiments

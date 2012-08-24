@@ -17,3 +17,7 @@ div#messages {
 .errorlist {
     color: red;
 }
+
+.helptext {
+    font-style: italic;
+}

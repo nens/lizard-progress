@@ -1,32 +1,13 @@
+"""Forms, mainly used as steps by form wizards."""
+
 from django import forms
-from django.conf import settings
-from django.contrib.auth.decorators import permission_required
-from django.db import transaction
-from django.template.defaultfilters import slugify
-from django.utils.decorators import method_decorator
-from django.views.generic.edit import CreateView
-from django.views.generic.edit import UpdateView
-from django.views.generic.edit import DeleteView
-from models import (Area, Contractor, Location, MeasurementType, Project,
-    ScheduledMeasurement)
-import os
-import osgeo.ogr
-
-### Form Wizard experiments
-### Directly available in Django 1.4!
-### Steps are defined in urls.py
-
-from django.shortcuts import render_to_response
 from django.contrib.auth.models import User
-from django.contrib.formtools.wizard.views import SessionWizardView
-from django.core.files.storage import FileSystemStorage
-from django.http import HttpResponseRedirect
-
-from django.contrib import messages
-from django.contrib.gis.geos import fromstr, Point
-import tempfile
-import shutil
-from django.core.files.uploadedfile import UploadedFile
+from django.template.defaultfilters import slugify
+from django.views.generic.edit import CreateView
+from django.views.generic.edit import DeleteView
+from django.views.generic.edit import UpdateView
+from lizard_progress.models import Contractor, Project
+import os
 
 
 MEASUREMENT_TYPES = {
@@ -36,51 +17,6 @@ MEASUREMENT_TYPES = {
     '4': {'name': 'Foto',         'icon_missing': 'camera_missing.png',        'icon_complete': 'camera_present.png',          'choice': 'Foto'},
     '5': {'name': 'Meting',       'icon_missing': 'bullets/squarered16.png',   'icon_complete': 'bullets/squaregreen16.png',   'choice': 'Meting'},
 }
-
-
-class OverwriteStorage(FileSystemStorage):
-
-    def get_available_name(self, name):
-        if self.exists(name):
-            self.delete(name)
-        return name
-
-
-class ProjectWizard(SessionWizardView):
-    """Form wizard for creating a new `Project`.
-
-    Usage of this wizard requires `lizard_progress.add_project` permission.
-    """
-
-    @method_decorator(permission_required('lizard_progress.add_project'))
-    def dispatch(self, *args, **kwargs):
-        return super(ProjectWizard, self).dispatch(*args, **kwargs)
-
-    def get_form_initial(self, step):
-        """Returns a dictionary with initial form data for the current step."""
-        form_initial = super(ProjectWizard, self).get_form_initial(step)
-        if step == "0":
-            form_initial['superuser'] = self.request.user
-        return form_initial
-
-    def get_template_names(self):
-        return ["lizard_progress/new_project.html"]
-
-    @transaction.commit_on_success
-    def done(self, form_list, **kwargs):
-        # Save the new project.
-        project = form_list[0].save(commit=False)
-        project.slug = slugify(project.name)
-        project.save()
-        if False:
-            # For development purposes.
-            return render_to_response('lizard_progress/done.html', {
-                'form_data': [form.cleaned_data for form in form_list],
-            })
-        else:
-            msg = 'Het aanmaken van project "%s" was succesvol.' % project.name
-            messages.info(self.request, msg)
-            return HttpResponseRedirect('/progress/admin/')
 
 
 class ProjectForm(forms.ModelForm):
@@ -98,52 +34,6 @@ class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
         exclude = ('slug',)
-
-
-### Contractor
-
-
-class ContractorWizard(SessionWizardView):
-    """Form wizard for creating a new `Contractor`.
-
-    Usage of this wizard requires `lizard_progress.add_project` permission.
-    """
-
-    @method_decorator(permission_required('lizard_progress.add_project'))
-    def dispatch(self, *args, **kwargs):
-        return super(ContractorWizard, self).dispatch(*args, **kwargs)
-
-    def get_form_kwargs(self, step):
-        form_kwargs = super(ContractorWizard, self).get_form_kwargs(step)
-        if step == '0':
-            form_kwargs['user'] = self.request.user
-        return form_kwargs
-
-    def get_template_names(self):
-        return ["lizard_progress/new_contractor.html"]
-
-    @transaction.commit_on_success
-    def done(self, form_list, **kwargs):
-        if form_list[0].cleaned_data['user_choice_field'] == '1':
-            user = form_list[1].cleaned_data['user']
-        else:
-            user = form_list[1].save(commit=False)
-            user.set_password(user.password)
-            user.save()
-        contractor = form_list[0].save(commit=False)
-        contractor.slug = slugify(contractor.name)
-        contractor.user = user
-        contractor.save()
-        if False:
-            # For development purposes.
-            return render_to_response('lizard_progress/done.html', {
-                'form_data': [form.cleaned_data for form in form_list],
-            })
-        else:
-            msg = ('Het toekennen van uitvoerder "%s" aan project "%s" was ' +
-                'succesvol.') % (contractor.name, contractor.project.name)
-            messages.info(self.request, msg)
-            return HttpResponseRedirect('/progress/admin/')
 
 
 USER_CHOICES = (
@@ -181,7 +71,7 @@ def existing_user_condition(wizard):
 
 class ExistingUserForm(forms.Form):
     user = forms.ModelChoiceField(
-        label = 'Loginnaam',
+        label='Loginnaam',
         queryset=User.objects.all()
     )
 
@@ -195,13 +85,13 @@ def new_user_condition(wizard):
 class NewUserForm(forms.ModelForm):
     password = forms.CharField(
         label="Wachtwoord",
-        widget=forms.PasswordInput(attrs={'autocomplete':'off'}),
-        max_length = 128
+        widget=forms.PasswordInput(attrs={'autocomplete': 'off'}),
+        max_length=128
     )
     password_again = forms.CharField(
         label="Bevestiging wachtwoord",
-        widget=forms.PasswordInput(attrs={'autocomplete':'off'}),
-        max_length = 128,
+        widget=forms.PasswordInput(attrs={'autocomplete': 'off'}),
+        max_length=128,
         help_text='Vul hetzelfde wachtwoord als hierboven in, ter bevestiging.'
     )
 
@@ -219,174 +109,6 @@ class NewUserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('username', 'password')
-
-
-### Activities
-
-
-class ActivitiesWizard(SessionWizardView):
-    """Form wizard for creating a new `Contractor`.
-
-    Usage of this wizard requires `lizard_progress.add_project` permission.
-    """
-
-    file_storage = OverwriteStorage(location=tempfile.mkdtemp())
-
-    @method_decorator(permission_required('lizard_progress.add_project'))
-    def dispatch(self, *args, **kwargs):
-        return super(ActivitiesWizard, self).dispatch(*args, **kwargs)
-
-    def get_form_kwargs(self, step):
-        form_kwargs = super(ActivitiesWizard, self).get_form_kwargs(step)
-        if step == '0':
-            form_kwargs['user'] = self.request.user
-        elif step == '1':
-            form_kwargs['project'] = \
-                self.get_cleaned_data_for_step('0')['project']
-        return form_kwargs
-
-    def get_template_names(self):
-        if self.steps.current == '3':
-            return ["lizard_progress/new_activities_step3.html"]
-        return ["lizard_progress/new_activities.html"]
-
-    @transaction.commit_on_success
-    def done(self, form_list, **kwargs):
-        self.__process_shapefile(form_list)
-        self.__save_measurement_types(form_list)
-        self.__save_area(form_list)
-        self.__save_locations(form_list)
-        self.__save_scheduled_measurements(form_list)
-        self.__save_uploads(form_list)
-        if False:
-            # For development purposes.
-            return render_to_response('lizard_progress/done.html', {
-                'form_data': [form.cleaned_data for form in form_list],
-            })
-        else:
-            contractor = form_list[1].cleaned_data['contractor']
-            msg = ('Het toewijzen van werkzaamheden aan uitvoerder '
-                + '"%s" binnen project "%s" was succesvol.') % (
-                contractor.name, contractor.project.name)
-            messages.info(self.request, msg)
-            return HttpResponseRedirect('/progress/admin/')
-
-    def __process_shapefile(self, form_list):
-        unique_ids = []
-        shp = form_list[3].cleaned_data['shp']
-        shapefile = osgeo.ogr.Open(str(shp.file.name))
-        layer = shapefile.GetLayer(0)
-        for featureNum in range(layer.GetFeatureCount()):
-            feature = layer.GetFeature(featureNum)
-            unique_id = feature.GetField("ID_DWP")
-            unique_ids.append(unique_id)
-        self.unique_ids = set(unique_ids)
-
-    # TODO: the object model requires a major overhaul. Currently,
-    # a `MeasurementType` cannot exist without a `Project`.
-    # A many-to-many relationship seems more appropriate.
-    def __save_measurement_types(self, form_list):
-        project = form_list[0].cleaned_data['project']
-        for key in form_list[2].cleaned_data['measurement_types']:
-            if not MeasurementType.objects.filter(project=project,
-                name=MEASUREMENT_TYPES[key]['name']).exists():
-                MeasurementType(
-                    project=project,
-                    name=MEASUREMENT_TYPES[key]['name'],
-                    slug = slugify(MEASUREMENT_TYPES[key]['name']),
-                    icon_missing = MEASUREMENT_TYPES[key]['icon_missing'],
-                    icon_complete = MEASUREMENT_TYPES[key]['icon_complete']
-                ).save()
-
-    # Within a project, locations can be assigned to different
-    # areas, for example `North`, `East`, `South`, and `West`.
-    # This information cannot be automatically deduced from
-    # the shape files yet. For that reason, we'll assign
-    # all locations to a single `Area`.
-    def __save_area(self, form_list):
-        project = form_list[0].cleaned_data['project']
-        self.area, _ = Area.objects.get_or_create(project=project,
-            name=project.name, slug=project.slug)
-
-    # TODO: the object model requires a major overhaul. Currently,
-    # a specific `Location` can only be part of one `Project`.
-    # A many-to-many relationship seems more appropriate.
-    def __save_locations(self, form_list):
-        project = form_list[0].cleaned_data['project']
-        unique_ids = set(Location.objects.filter(
-            project=project).values_list('unique_id', flat=True))
-        locations = []
-        contractor = form_list[1].cleaned_data['contractor']
-        shp = form_list[3].cleaned_data['shp']
-        shapefile = osgeo.ogr.Open(str(shp.file.name))
-        for layerNum in range(shapefile.GetLayerCount()):
-            layer = shapefile.GetLayer(layerNum)
-            for featureNum in range(layer.GetFeatureCount()):
-                feature = layer.GetFeature(featureNum)
-                unique_id = feature.GetField("ID_DWP")
-                if not unique_id in unique_ids:
-                    geometry = feature.GetGeometryRef()
-                    location = Location(
-                        unique_id=unique_id,
-                        project=project,
-                        area=self.area,
-                        the_geom=fromstr(geometry.ExportToWkt()))
-                    locations.append(location)
-                    unique_ids.update(unique_id)
-        Location.objects.bulk_create(locations)
-
-
-    # TODO: the object model requires a major overhaul. Currently,
-    # things are far from normalized: `ScheduledMeasurement` has
-    # many - possibly conflicting - links to `Project`.
-    def __save_scheduled_measurements(self, form_list):
-
-        project = form_list[0].cleaned_data['project']
-        contractor = form_list[1].cleaned_data['contractor']
-        scheduled_measurements = []
-
-        for key in form_list[2].cleaned_data['measurement_types']:
-
-            mt = MeasurementType.objects.get(project=project,
-                name=MEASUREMENT_TYPES[key]['name'])
-
-            unique_ids = set(ScheduledMeasurement.objects.filter(
-                project=project, contractor=contractor, measurement_type=mt).\
-                values_list('location__unique_id', flat=True))
-
-            difference = self.unique_ids - unique_ids
-
-            for unique_id in difference:
-
-                location = Location(unique_id=unique_id)
-                scheduled_measurement = ScheduledMeasurement(
-                    project=project, contractor=contractor,
-                    measurement_type=mt, location=location)
-                scheduled_measurements.append(scheduled_measurement)
-
-        ScheduledMeasurement.objects.bulk_create(scheduled_measurements)
-
-    def __save_uploads(self, form_list):
-
-        project = form_list[0].cleaned_data['project']
-        contractor = form_list[1].cleaned_data['contractor']
-
-        # The root directory.
-        dst = os.path.join(settings.BUILDOUT_DIR, 'var',
-            Project._meta.app_label, project.slug,
-            contractor.slug, 'locations')
-
-        # The root might not exist yet.
-        if not os.path.exists(dst):
-            os.makedirs(dst)
-
-        # Create a unique subdirectory in the root.
-        dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
-
-        # Copy the shapefile to the subdirectory.
-        for _, v in form_list[1].cleaned_data.iteritems():
-            if isinstance(v, UploadedFile):
-                shutil.copy(v.file.name, dst)
 
 
 class ProjectChoiceForm(forms.Form):
@@ -496,64 +218,6 @@ class ShapefileForm(forms.Form):
         return cleaned_data
 
 
-### Hydrovakken
-
-
-class HydrovakkenWizard(SessionWizardView):
-    """Form wizard for uploading a shapefile of hydrovakken.
-
-    Usage of this wizard requires `lizard_progress.add_project` permission.
-    """
-
-    file_storage = OverwriteStorage(location=tempfile.mkdtemp())
-
-    @method_decorator(permission_required('lizard_progress.add_project'))
-    def dispatch(self, *args, **kwargs):
-        return super(HydrovakkenWizard, self).dispatch(*args, **kwargs)
-
-    def get_form_kwargs(self, step):
-        form_kwargs = super(HydrovakkenWizard, self).get_form_kwargs(step)
-        if step == '0':
-            form_kwargs['user'] = self.request.user
-        return form_kwargs
-
-    def get_template_names(self):
-        return ["lizard_progress/new_hydrovakken.html"]
-
-    @transaction.commit_on_success
-    def done(self, form_list, **kwargs):
-        self.project = form_list[0].cleaned_data['project']
-        self.__save_uploads(form_list)
-        if False:
-            # For development purposes.
-            return render_to_response('lizard_progress/done.html', {
-                'form_data': [form.cleaned_data for form in form_list],
-            })
-        else:
-            msg = ('Het uploaden van hydrovakken t.b.v. project "%s" '
-                + 'was succesvol.') % self.project.name
-            messages.info(self.request, msg)
-            return HttpResponseRedirect('/progress/admin/')
-
-    def __save_uploads(self, form_list):
-
-        # The root directory.
-        dst = os.path.join(settings.BUILDOUT_DIR, 'var',
-            Project._meta.app_label, self.project.slug, 'hydrovakken')
-
-        # The root might not exist yet.
-        if not os.path.exists(dst):
-            os.makedirs(dst)
-
-        # Create a unique subdirectory in the root.
-        dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
-
-        # Copy the shapefile to the subdirectory.
-        for _, v in form_list[1].cleaned_data.iteritems():
-            if isinstance(v, UploadedFile):
-                shutil.copy(v.file.name, dst)
-
-
 ### Form handling with class-based views experiments
 
 
@@ -575,4 +239,3 @@ class ProjectUpdate(UpdateView):
 
 class ProjectDelete(DeleteView):
     model = Project
-

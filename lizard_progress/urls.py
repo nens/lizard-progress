@@ -19,10 +19,10 @@ from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
 from lizard_progress.views import ProjectsView
-from lizard_progress.forms import ProjectWizard, ProjectForm, MeasurementTypeForm, ShapefileForm
-from lizard_progress.forms import ContractorWizard, ContractorForm, ExistingUserForm, NewUserForm
-from lizard_progress.forms import ActivitiesWizard, ProjectChoiceForm, ContractorChoiceForm
-from lizard_progress.forms import HydrovakkenWizard
+from lizard_progress.views import ProjectWizard, ContractorWizard, ActivitiesWizard, HydrovakkenWizard
+from lizard_progress.forms import ProjectForm, MeasurementTypeForm, ShapefileForm
+from lizard_progress.forms import ContractorForm, ExistingUserForm, NewUserForm
+from lizard_progress.forms import ProjectChoiceForm, ContractorChoiceForm
 from lizard_progress.forms import ProjectCreate, ProjectUpdate, ProjectDelete
 from lizard_progress.forms import existing_user_condition, new_user_condition
 

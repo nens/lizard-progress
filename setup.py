@@ -47,4 +47,5 @@ setup(name='lizard-progress',
           'console_scripts': [],
           'lizard_map.adapter_class': [
               'adapter_progress = lizard_progress.layers:ProgressAdapter',
+              'adapter_hydrovak = lizard_progress.layers:HydrovakAdapter',
               ]})

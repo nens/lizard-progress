@@ -206,6 +206,7 @@ class MapView(View):
                             (self.project.name,
                              contractor.name,
                              measurement_type.name),
+                            'adapter': 'adapter_progress',
                             'json': json.dumps({
                                     "contractor_slug":
                                     contractor.slug,
@@ -214,6 +215,13 @@ class MapView(View):
                                     "project_slug":
                                         self.project.slug}),
                             })
+
+        layers.append({
+            'name': 'Hydrovakken',
+            'adapter': 'adapter_hydrovak',
+            'json': json.dumps({"project_slug": self.project_slug})
+        })
+
         return layers
 
 

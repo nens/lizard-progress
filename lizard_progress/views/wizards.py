@@ -5,21 +5,23 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.contrib.gis.geos import fromstr
+from django.contrib.gis.utils import LayerMapping
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.defaultfilters import slugify
 from django.utils.decorators import method_decorator
 from lizard_progress.forms import MEASUREMENT_TYPES
-from lizard_progress.models import (Area, Location, MeasurementType,
-    ScheduledMeasurement)
+from lizard_progress.models import (Area, Hydrovak, Location,
+    MeasurementType, SRID, ScheduledMeasurement)
 import os
 import osgeo.ogr
 import shutil
 import tempfile
-
 
 APP_LABEL = Area._meta.app_label
 
@@ -327,6 +329,7 @@ class HydrovakkenWizard(SessionWizardView):
 
     @transaction.commit_on_success
     def done(self, form_list, **kwargs):
+        self.__import_geoms(form_list)
         self.__save_uploads(form_list)
         if False:
             # For development purposes.
@@ -339,6 +342,33 @@ class HydrovakkenWizard(SessionWizardView):
                 + 'was succesvol.') % project.name
             messages.info(self.request, msg)
             return HttpResponseRedirect('/progress/admin/')
+
+    @staticmethod
+    def __import_geoms(form_list):
+
+        prj = form_list[1].cleaned_data.get('prj', None)
+        shp = form_list[1].cleaned_data['shp']
+        mapping = {'br_ident': 'BR_IDENT', 'the_geom': 'LINESTRING'}
+
+        if prj:
+            layer_mapping = LayerMapping(Hydrovak,
+                shp.file.name, mapping)
+        else:
+            layer_mapping = LayerMapping(Hydrovak,
+                shp.file.name, mapping,
+                source_srs=SRID)
+
+        try:
+            # TODO: `LayerMapping` offers no means of setting extra
+            # model fields: only feature properties can be mapped.
+            # To set the required `Project` foreign key, the pre_
+            # save signal will be used in a fishy, by no means
+            # robust way. Bear with me.
+            global PROJECT
+            PROJECT = form_list[0].cleaned_data['project']
+            layer_mapping.save(strict=True)
+        finally:
+            PROJECT = None
 
     @staticmethod
     def __save_uploads(form_list):
@@ -360,3 +390,12 @@ class HydrovakkenWizard(SessionWizardView):
         for _, value in form_list[1].cleaned_data.iteritems():
             if isinstance(value, UploadedFile):
                 shutil.copy(value.file.name, dst)
+
+
+PROJECT = None
+@receiver(pre_save, sender=Hydrovak)
+def hydrovak_handler(sender, **kwargs):
+    if PROJECT:
+        hydrovak = kwargs['instance']
+        if not hydrovak.pk:
+            hydrovak.project = PROJECT

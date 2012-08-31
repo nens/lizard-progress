@@ -5,6 +5,7 @@ from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from lizard_map import coordinates
 from lizard_map.coordinates import RD
+from lizard_map.coordinates import rd_to_google
 from lizard_map.workspace import WorkspaceItemAdapter
 from pkg_resources import resource_filename  # pylint: disable=E0611
 import logging
@@ -12,12 +13,24 @@ import mapnik
 import pyproj
 
 from lizard_progress.models import Contractor
+from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
 from lizard_progress.models import MeasurementType
 from lizard_progress.models import Project
 from lizard_progress.models import ScheduledMeasurement
 
 logger = logging.getLogger(__name__)
+
+def mapnik_datasource(query):
+    default_database = settings.DATABASES['default']
+    return mapnik.PostGIS(
+        host=default_database['HOST'],
+        port=default_database['PORT'],
+        user=default_database['USER'],
+        password=default_database['PASSWORD'],
+        dbname=default_database['NAME'],
+        table=query.encode('ascii')
+        )
 
 
 class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
@@ -57,7 +70,8 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
-    def make_style(self, img, cutoff=50000):
+    @staticmethod
+    def make_style(img):
         def make_rule(min, max, img, overlap):
             rule = mapnik.Rule()
             rule.min_scale = min
@@ -77,17 +91,6 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         style.rules.append(rule_detailed)
         style.rules.append(rule_global)
         return style
-
-    def mapnik_datasource(self, query):
-        default_database = settings.DATABASES['default']
-        return mapnik.PostGIS(
-            host=default_database['HOST'],
-            port=default_database['PORT'],
-            user=default_database['USER'],
-            password=default_database['PASSWORD'],
-            dbname=default_database['NAME'],
-            table=query.encode('ascii')
-            )
 
     def mapnik_query(self, complete):
         if self.measurement_type is None:
@@ -160,7 +163,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             styles[layer_desc] = self.make_style(img)
 
             layer = mapnik.Layer(layer_desc, RD)
-            layer.datasource = self.mapnik_datasource(
+            layer.datasource = mapnik_datasource(
                 self.mapnik_query(complete))
             layer.styles.append(layer_desc)
             layers.append(layer)
@@ -193,7 +196,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             styles[layer_desc] = self.make_style(img)
 
             layer = mapnik.Layer(layer_desc, RD)
-            layer.datasource = self.mapnik_datasource(
+            layer.datasource = mapnik_datasource(
                 self.mapnik_query(complete))
             layer.styles.append(layer_desc)
             layers.append(layer)
@@ -362,14 +365,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         Returns extent {'west':.., 'south':.., 'east':.., 'north':..}
         in google projection. None for each key means unknown.
         """
-
-        print "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
-        print "EXTENT"
-
-        return {
-            'west': None, 'south': None,
-            'east': None, 'north': None
-        }
+        return super(ProgressAdapter, self).extent(identifiers)
 
     def image(self, identifiers=None, start_date=None, end_date=None,
               width=None, height=None, layout_extra=None):
@@ -389,3 +385,44 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         if handler is not None:
             return handler(scheduled_measurements)
+
+
+class HydrovakAdapter(WorkspaceItemAdapter):
+    """HydrovakAdapter."""
+
+    def __init__(self, *args, **kwargs):
+        self.project_slug = kwargs['layer_arguments'].get('project_slug', None)
+        super(HydrovakAdapter, self).__init__(*args, **kwargs)
+
+    def layer(self, layer_ids=None, request=None):
+        layers = []
+        styles = {}
+
+        rule = mapnik.Rule()
+        symbol = mapnik.LineSymbolizer(mapnik.Color("#A0522D"), 1.0)
+        rule.symbols.append(symbol)
+        style = mapnik.Style()
+        style.rules.append(rule)
+
+        hydrovakken = Hydrovak.objects.filter(
+            project__slug="'%s'" % self.project_slug).only("the_geom")
+        query = "(%s) data" % hydrovakken.query
+        layer = mapnik.Layer('Hydrovakken', RD)
+        layer.datasource = mapnik_datasource(query)
+        layer.styles.append('hydrovak')
+
+        layers.append(layer)
+        styles['hydrovak'] = style
+
+        return layers, styles
+
+    def extent(self, identifiers=None):
+        "Return extent in Google projection."
+        west, south, east, north = Hydrovak.objects.filter(
+            project__slug=self.project_slug).only("the_geom").extent()
+        west, south = rd_to_google(west, south)
+        east, north = rd_to_google(east, north)
+        return {'west': west, 'south': south, 'east': east, 'north': north}
+
+    def search(self, x, y, radius=None):
+        return []

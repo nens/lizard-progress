@@ -21,7 +21,7 @@
 {% for layer in view.available_layers %}
     <li class="workspace-acceptable"
         data-name="{{ layer.name }}"
-        data-adapter-class="adapter_progress"
+        data-adapter-class="{{ layer.adapter }}"
         data-adapter-layer-json="{{ layer.json }}">{{ layer.name }}
 {% endfor %}
   </ul>

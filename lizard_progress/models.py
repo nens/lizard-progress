@@ -229,3 +229,18 @@ class Measurement(models.Model):
                     'contractor_slug': sm.contractor.slug,
                     'measurement_type_slug': sm.measurement_type.slug,
                     'filename': os.path.basename(self.filename)})
+
+
+class Hydrovak(models.Model):
+    """Hydrovak."""
+    project = models.ForeignKey(Project)
+    br_ident = models.CharField(max_length=24)
+    the_geom = models.LineStringField(srid=SRID)
+    objects = models.GeoManager()
+
+    def __unicode__(self):
+        return unicode(self.br_ident)
+
+    class Meta:
+        unique_together = ("project", "br_ident")
+        verbose_name_plural = "Hydrovakken"

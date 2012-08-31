@@ -39,8 +39,9 @@ from lizard_progress import specifics
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress.models import Area
 from lizard_progress.models import Contractor
-from lizard_progress.models import MeasurementType
+from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
+from lizard_progress.models import MeasurementType
 from lizard_progress.models import Project
 from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.models import has_access
@@ -216,11 +217,12 @@ class MapView(View):
                                         self.project.slug}),
                             })
 
-        layers.append({
-            'name': 'Hydrovakken',
-            'adapter': 'adapter_hydrovak',
-            'json': json.dumps({"project_slug": self.project_slug})
-        })
+        if Hydrovak.objects.filter(project=self.project).exists():
+            layers.append({
+                'name': 'Hydrovakken',
+                'adapter': 'adapter_hydrovak',
+                'json': json.dumps({"project_slug": self.project_slug})
+            })
 
         return layers
 

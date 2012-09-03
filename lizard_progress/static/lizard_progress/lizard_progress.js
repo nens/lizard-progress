@@ -7,7 +7,7 @@
 $().ready(function () {
     var $dialog;
 
-    $url = $("#iconbox").attr("data-upload-url");
+    $url = $("div.sidebarbox").attr("data-upload-url");
 
     $dialog = $('<div class="lizard-progress-popup"/>').load($url).dialog({
         autoOpen: false,

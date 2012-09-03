@@ -107,7 +107,50 @@ class ProjectsView(AppView):
     template_name = "lizard_progress/projects.html"
 
     def projects(self):
-        return Project.objects.all()
+        """Returns a list of projects the current user has access to."""
+        projects = []
+        for project in Project.objects.all():
+            if has_access(self.request.user, project):
+                projects.append(project)
+        return projects
+
+
+class UploadHomeView(AppView):
+    """The homepage for uploading files.
+
+    Within a project, there are various files to be uploaded:
+    measurements, shapefiles, reports, etc. This view is the
+    starting point for a contractor who has to upload data.
+    """
+    template_name = "lizard_progress/upload_home.html"
+
+    def get(self, request, *args, **kwargs):
+        self.project_slug = kwargs.get('project_slug', None)
+        self.project = get_object_or_404(Project, slug=self.project_slug)
+        if has_access(request.user, self.project):
+            return super(UploadHomeView, self).get(request, *args, **kwargs)
+        else:
+            return HttpResponseForbidden()
+
+    def upload_url(self):
+        """Returns URL to this project's Upload view"""
+        return reverse('lizard_progress_uploadview',
+                       kwargs={'project_slug': self.project_slug})
+
+    def crumbs(self):
+        """Returns a list of breadcrumbs."""
+        crumbs = super(UploadHomeView, self).crumbs()
+        crumbs.append({
+            'description': self.project.name,
+            'url': reverse('lizard_progress_view',
+                kwargs={'project_slug': self.project_slug})
+        })
+        crumbs.append({
+            'description': 'Upload',
+            'url': reverse('lizard_progress_uploadhomeview',
+                kwargs={'project_slug': self.project_slug})
+        })
+        return crumbs
 
 
 class View(AppView):
@@ -131,9 +174,9 @@ class View(AppView):
         else:
             raise PermissionDenied()
 
-    def upload_url(self):
+    def upload_home_url(self):
         """Returns URL to this project's Upload view"""
-        return reverse('lizard_progress_uploadview',
+        return reverse('lizard_progress_uploadhomeview',
                        kwargs={'project_slug': self.project_slug})
 
     def dashboard_url(self):
@@ -154,10 +197,10 @@ class View(AppView):
     def crumbs(self):
         """Returns a list of breadcrumbs to this project."""
         crumbs = super(View, self).crumbs()
-        crumbs.append({
-            'description': 'Projecten',
-            'url': reverse('lizard_progress_projecten')
-        })
+#       crumbs.append({
+#           'description': 'Projecten',
+#           'url': reverse('lizard_progress_projecten')
+#       })
         crumbs.append({
             'description': self.project.name,
             'url': reverse('lizard_progress_view',

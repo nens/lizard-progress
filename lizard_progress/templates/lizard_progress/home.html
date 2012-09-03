@@ -15,12 +15,12 @@
 {% endblock map-javascript %}
 
 {% block sidebar %}
-<div id="iconbox" class="sidebarbox sidebarbox-stretched iconlist" data-upload-url="{{ view.upload_url }}">
+<div id="iconbox" class="sidebarbox sidebarbox-stretched iconlist">
   <h2>{{ view.project.name }}</h2>
-
   <ul>
-    <li class="upload">
-      <a rel="tipsy" title="Upload files">
+
+    <li>
+      <a rel="tipsy" title="Upload files" href="{{ view.upload_home_url }}">
         <img src="/static_media/lizard_ui/app_icons/upload.png">
         <div>Upload</div>
       </a>
@@ -48,6 +48,7 @@
       </a>
     </li>
 {% endif %}
+
   </ul>
 </div>
 

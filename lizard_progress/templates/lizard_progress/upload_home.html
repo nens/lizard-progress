@@ -1,0 +1,30 @@
+{% extends "lizard_map/wms.html" %}
+{% load workspaces %}
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet"
+      type="text/css"
+      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
+{% endblock css %}
+
+{% block map-javascript %}
+{{ block.super }}
+<script type="text/javascript"
+        src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock map-javascript %}
+
+{% block sidebar %}
+<div class="sidebarbox sidebarbox-stretched" data-upload-url="{{ view.upload_url }}">
+  <h2>Upload</h2>
+  <ul class="without-bullets">
+    <li class="upload"><a href="">Metingen</a></li>
+    <li><a href="">Moedershapefile</a></li>
+    <li><a href="">Eindrapportages</a></li>
+  </ul>
+</div>
+
+{% workspace_edit view.workspace_edit %}
+{% collage_edit view.collage_edit %}
+
+{% endblock sidebar %}

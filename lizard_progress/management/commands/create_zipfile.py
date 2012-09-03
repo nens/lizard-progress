@@ -37,7 +37,7 @@ def add_to_zipfile(project, contractor, measurement_type):
                               filter(scheduled__measurement_type=mtype))
         for path in files:
             with MovedFile(path) as moved_file:
-                archive_filename = os.path.join(mtype.slug,
+                archive_filename = os.path.join(mtype.mtype.slug,
                                                 os.path.basename(moved_file))
                 print archive_filename
                 zipped.write(path, archive_filename)
@@ -105,7 +105,7 @@ the first error."""
         if len(args) != 2:
             try:
                 self.measurement_type = models.MeasurementType.objects.get(
-                    project=self.project, slug=args[2])
+                    project=self.project, mtype__slug=args[2])
             except models.MeasurementType.DoesNotExist:
                 raise CommandError(
                     ("Measurement type given, but type '%s' does not"

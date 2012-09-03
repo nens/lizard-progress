@@ -1,4 +1,5 @@
-"""Soms heeft Erik een shapefile met IDs erin, en wil hij X/Y coordinaten van die IDs hebben.
+"""Soms heeft Erik een shapefile met IDs erin, en wil hij X/Y
+coordinaten van die IDs hebben.
 
 Stappen:
 - De .db openen in OO / Excel, opslaan als CSV (komma gescheiden)

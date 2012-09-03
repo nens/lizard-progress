@@ -2,9 +2,7 @@
 
 from django.conf.urls.defaults import patterns, url
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.contrib import admin
-from django.views.generic import TemplateView
 
 from lizard_map.views import AppView
 from lizard_progress.views import View

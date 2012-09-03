@@ -604,7 +604,8 @@ class UploadView(ViewContextMixin, TemplateView):
                 # Call the parser.
                 parseresult = self.call_parser(parser, path)
 
-                if (parseresult.success and hasattr(parseresult, 'measurements')
+                if (parseresult.success
+                    and hasattr(parseresult, 'measurements')
                     and parseresult.measurements):
                     # Get mtype from the parser result, for use in pathname
                     mtype = (parseresult.measurements[0].
@@ -976,4 +977,3 @@ def protected_file_download(request, project_slug, contractor_slug,
         return serve(request, file_path, '/')
     logger.debug("Serving programfile %s via webserver.", file_path)
     return response
-

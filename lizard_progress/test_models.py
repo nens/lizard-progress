@@ -47,13 +47,19 @@ class LocationF(factory.Factory):
     information = {"key": "value"}
 
 
+class AvailableMeasurementTypeF(factory.Factory):
+    FACTORY_FOR = models.AvailableMeasurementType
+
+    name = "Metingtype"
+    slug = "metingtype"
+
+
 class MeasurementTypeF(factory.Factory):
     """Factory for MeasurementType objects."""
     FACTORY_FOR = models.MeasurementType
 
+    mtype = factory.LazyAttribute(lambda a: AvailableMeasurementTypeF())
     project = factory.LazyAttribute(lambda a: ProjectF())
-    name = "Metingtype"
-    slug = "metingtype"
 
 
 class ScheduledMeasurementF(factory.Factory):

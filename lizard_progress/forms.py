@@ -11,11 +11,36 @@ import os
 
 
 MEASUREMENT_TYPES = {
-    '1': {'name': 'Dwarsprofiel', 'icon_missing': 'bullets/squarered16.png',   'icon_complete': 'bullets/squaregreen16.png',   'choice': 'Dwarsprofiel'},
-    '2': {'name': 'Oeverfoto',    'icon_missing': 'camera_missing.png',        'icon_complete': 'camera_present.png',          'choice': 'Oeverfoto'},
-    '3': {'name': 'Oeverkenmerk', 'icon_missing': 'bullets/trianglered16.png', 'icon_complete': 'bullets/trianglegreen16.png', 'choice': 'Oeverkenmerk'},
-    '4': {'name': 'Foto',         'icon_missing': 'camera_missing.png',        'icon_complete': 'camera_present.png',          'choice': 'Foto'},
-    '5': {'name': 'Meting',       'icon_missing': 'bullets/squarered16.png',   'icon_complete': 'bullets/squaregreen16.png',   'choice': 'Meting'},
+    '1': {
+        'name': 'Dwarsprofiel',
+        'icon_missing': 'bullets/squarered16.png',
+        'icon_complete': 'bullets/squaregreen16.png',
+        'choice': 'Dwarsprofiel'
+        },
+    '2': {
+        'name': 'Oeverfoto',
+        'icon_missing': 'camera_missing.png',
+        'icon_complete': 'camera_present.png',
+        'choice': 'Oeverfoto'
+        },
+    '3': {
+        'name': 'Oeverkenmerk',
+        'icon_missing': 'bullets/trianglered16.png',
+        'icon_complete': 'bullets/trianglegreen16.png',
+        'choice': 'Oeverkenmerk'
+        },
+    '4': {
+        'name': 'Foto',
+        'icon_missing': 'camera_missing.png',
+        'icon_complete': 'camera_present.png',
+        'choice': 'Foto'
+        },
+    '5': {
+        'name': 'Meting',
+        'icon_missing': 'bullets/squarered16.png',
+        'icon_complete': 'bullets/squaregreen16.png',
+        'choice': 'Meting'
+        },
 }
 
 

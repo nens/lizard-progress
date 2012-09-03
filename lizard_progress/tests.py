@@ -6,7 +6,8 @@ from django.test import TestCase
 
 from lizard_progress import views
 from lizard_progress.layers import ProgressAdapter
-from lizard_progress.models import Project, Contractor, MeasurementType
+from lizard_progress.models import Project, Contractor,\
+    MeasurementType, AvailableMeasurementType
 from lizard_map.models import WorkspaceEdit, WorkspaceEditItem
 from lizard_progress.specifics import ProgressParser, UnSuccessfulParserResult
 
@@ -45,7 +46,8 @@ class AdapterTest(TestCase):
         contractor = Contractor(slug='contractor')
         contractor.project = project
         contractor.save()
-        measurement_type = MeasurementType(slug='mtype')
+        available_measurement_type = AvailableMeasurementType(slug='mtype')
+        measurement_type = MeasurementType(mtype=available_measurement_type)
         measurement_type.project = project
         measurement_type.save()
 

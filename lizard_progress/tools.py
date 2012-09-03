@@ -7,6 +7,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
 class LookaheadLine(object):
     """
     Usage:

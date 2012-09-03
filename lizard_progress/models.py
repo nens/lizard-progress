@@ -133,22 +133,41 @@ class Location(models.Model):
         return u"Location with id '%s'" % (self.unique_id,)
 
 
-class MeasurementType(models.Model):
+class AvailableMeasurementType(models.Model):
     # "Dwarsprofiel", "Oeverfoto", "Oeverkenmerk", "Peilschaal foto",
     # "Peilschaal kenmerk"
-    project = models.ForeignKey(Project)
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
+
+
+class MeasurementType(models.Model):
+    """The way this is implemented now, there is basically a
+    many-to-many relationship between AvailableMeasurementType and
+    Project, and it is implemented through this table.  Previous
+    properties of this model (name and slug) that are now in
+    AvailableMeasurementType are available through property functions
+    for ease of use and backward compatibility."""
+
+    mtype = models.ForeignKey(AvailableMeasurementType)
+    project = models.ForeignKey(Project)
 
     icon_missing = models.CharField(max_length=50, null=True, blank=True)
     icon_complete = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
-        # `name` and `slug` are unique within a project
-        unique_together = (("project", "name"), ("project", "slug"))
+        # Measurement types occur only once in a project
+        unique_together = (("project", "mtype"),)
+
+    @property
+    def name(self):
+        return self.mtype.name
+
+    @property
+    def slug(self):
+        return self.mtype.slug
 
     def __unicode__(self):
-        return u"Type '%s' in %s" % (self.name, self.project.name)
+        return u"Type '%s' in %s" % (self.mtype.name, self.project.name)
 
 
 class ScheduledMeasurement(models.Model):

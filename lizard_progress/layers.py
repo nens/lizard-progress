@@ -21,6 +21,7 @@ from lizard_progress.models import ScheduledMeasurement
 
 logger = logging.getLogger(__name__)
 
+
 def mapnik_datasource(query):
     default_database = settings.DATABASES['default']
     return mapnik.PostGIS(
@@ -64,7 +65,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         try:
             self.measurement_type = (MeasurementType.objects.
                                      get(project=self.project,
-                                         slug=measurement_type_slug))
+                                         mtype__slug=measurement_type_slug))
         except MeasurementType.DoesNotExist:
             pass  # Show for all measurement types
 
@@ -250,7 +251,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                 scheduleds = (ScheduledMeasurement.objects.
                               filter(location=location,
                                      contractor=self.contractor).
-                              order_by('measurement_type__name'))
+                              order_by('measurement_type__mtype__name'))
 
             for scheduled in scheduleds:
                 result = {

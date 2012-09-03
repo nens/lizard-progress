@@ -5,8 +5,11 @@ Changelog of lizard-progress
 0.14 (unreleased)
 -----------------
 
-- Nothing changed yet.
-
+Reworked the model a bit:
+- Added an AvailableMeasurementType model
+- Changed the MeasurementType model so that it functions as if it were
+  the "through" table in a many-to-many relationship between Project
+  and AvailableMeasurementType.
 
 0.13 (2012-07-13)
 -----------------

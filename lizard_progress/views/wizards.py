@@ -17,7 +17,7 @@ from django.template.defaultfilters import slugify
 from django.utils.decorators import method_decorator
 from lizard_progress.forms import MEASUREMENT_TYPES
 from lizard_progress.models import (Area, Hydrovak, Location,
-    MeasurementType, SRID, ScheduledMeasurement)
+    MeasurementType, SRID, ScheduledMeasurement, AvailableMeasurementType)
 import os
 import osgeo.ogr
 import shutil
@@ -202,11 +202,13 @@ class ActivitiesWizard(SessionWizardView):
         project = form_list[0].cleaned_data['project']
         for key in form_list[2].cleaned_data['measurement_types']:
             if not MeasurementType.objects.filter(project=project,
-                name=MEASUREMENT_TYPES[key]['name']).exists():
+                mtype__name=MEASUREMENT_TYPES[key]['name']).exists():
+                mtype = AvailableMeasurementType.objects.get(
+                    name=MEASUREMENT_TYPES[key]['name'])
+
                 MeasurementType(
                     project=project,
-                    name=MEASUREMENT_TYPES[key]['name'],
-                    slug=slugify(MEASUREMENT_TYPES[key]['name']),
+                    mtype=mtype,
                     icon_missing=MEASUREMENT_TYPES[key]['icon_missing'],
                     icon_complete=MEASUREMENT_TYPES[key]['icon_complete']
                 ).save()
@@ -393,6 +395,8 @@ class HydrovakkenWizard(SessionWizardView):
 
 
 PROJECT = None
+
+
 @receiver(pre_save, sender=Hydrovak)
 def hydrovak_handler(sender, **kwargs):
     if PROJECT:

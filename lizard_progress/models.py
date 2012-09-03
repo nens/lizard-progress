@@ -138,6 +138,8 @@ class AvailableMeasurementType(models.Model):
     # "Peilschaal kenmerk"
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=50, unique=True)
+    default_icon_missing = models.CharField(max_length=50)
+    default_icon_complete = models.CharField(max_length=50)
 
 
 class MeasurementType(models.Model):

@@ -33,7 +33,7 @@ $().ready(function () {
         var area_name = $(this).attr('data-area-name');
         var contractor_slug = $(this).attr('data-contractor-slug');
         var contractor_name = $(this).attr('data-contractor-name');
-	var dashboard_url = $(this).attr('data-dashboard-url');
+        var dashboard_url = $(this).attr('data-dashboard-url');
 
         if ($dialog[contractor_slug+area_slug]) {
             $dialog[contractor_slug+area_slug].dialog('open');
@@ -56,25 +56,25 @@ $().ready(function () {
     var dialogs = {};
 
     $('.comparison').click(function () {
-	var comparison_url = $(this).attr('data-comparison-url');
-	var location_unique_id = $(this).attr('data-location-unique-id');
-	var measurement_type = $(this).attr('data-measurement-type');
+        var comparison_url = $(this).attr('data-comparison-url');
+        var location_code = $(this).attr('data-location-code');
+        var measurement_type = $(this).attr('data-measurement-type');
 
-	var dialog_key = comparison_url + location_unique_id;
+        var dialog_key = comparison_url + location_code;
 
-	if (dialogs[dialog_key]) {
-	    dialogs[dialog_key].dialog('open');
-	} else {
-	    dialogs[dialog_key] = $('<div class="lizard-progress-popup"/>').dialog({
-		autoOpen: true,
-		open: function(event, ui) {
-		    $(this).load(comparison_url);
-		},
-		title: 'Vergelijking '+measurement_type+' Locatie '+location_unique_id,
-		width: 900,
-		height: 420
-	    });
-	}
+        if (dialogs[dialog_key]) {
+            dialogs[dialog_key].dialog('open');
+        } else {
+            dialogs[dialog_key] = $('<div class="lizard-progress-popup"/>').dialog({
+                autoOpen: true,
+                open: function(event, ui) {
+                    $(this).load(comparison_url);
+                },
+                title: 'Vergelijking '+measurement_type+' Locatie '+location_code,
+                width: 900,
+                height: 420
+            });
+        }
     });
 });
 

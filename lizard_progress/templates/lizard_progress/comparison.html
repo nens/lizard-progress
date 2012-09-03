@@ -30,8 +30,8 @@
    {% comment %} See lizard_progress.js for the functionality {% endcomment %}
    <li class="comparison"
      data-measurement-type="{{ view.measurement_type.name }}"
-     data-location-unique-id="{{ location.unique_id }}"
-     data-comparison-url="{{ url }}">{{ location.unique_id }}</li>
+     data-location-code="{{ location.location_code }}"
+     data-comparison-url="{{ url }}">{{ location.location_code }}</li>
 {% endfor %}
 </ul>
 {% endif %}

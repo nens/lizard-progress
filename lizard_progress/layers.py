@@ -107,7 +107,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                     INNER JOIN
                          lizard_progress_scheduledmeasurement sm
                     ON
-                         sm.location_id = loc.unique_id
+                         sm.location_id = loc.id
                     WHERE
                          sm.contractor_id=%d AND
                          sm.project_id=%d
@@ -129,7 +129,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         else:
             return ("""(select loc.the_geom from lizard_progress_location loc
                   inner join lizard_progress_scheduledmeasurement sm on
-                  sm.location_id = loc.unique_id
+                  sm.location_id = loc.id
                   where sm.complete=%s
                   and sm.contractor_id=%d
                   and sm.project_id=%d
@@ -255,7 +255,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
             for scheduled in scheduleds:
                 result = {
-                    'name': '%s %s %s' % (location.unique_id,
+                    'name': '%s %s %s' % (location.location_code,
                                           scheduled.measurement_type.name,
                                           self.contractor.name),
                     'distance': location.distance.m,
@@ -296,7 +296,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         return {
             "name": "%s %s %s" %
-            (scheduled.location.unique_id,
+            (scheduled.location.location_code,
              scheduled.measurement_type.name,
              scheduled.contractor.name,),
             "identifier": {

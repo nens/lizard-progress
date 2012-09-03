@@ -354,14 +354,14 @@ class ComparisonView(View):
             lizard_progress_scheduledmeasurement
           WHERE
             lizard_progress_scheduledmeasurement.location_id =
-              lizard_progress_location.unique_id
+              lizard_progress_location.id
           AND
             lizard_progress_scheduledmeasurement.complete='t'
           AND
             lizard_progress_scheduledmeasurement.measurement_type_id=%d
           ) > 1
          """ % measurement_type.id]).
-            order_by('unique_id').
+            order_by('location_code').
             all())
 
         return [(location,
@@ -375,7 +375,7 @@ class ComparisonView(View):
             kwargs={
                 'project_slug': self.project_slug,
                 'mtype_slug': measurement_type.slug,
-                'location_unique_id': location.unique_id,
+                'location_code': location.location_code,
                 }
             )
 
@@ -389,10 +389,13 @@ class ComparisonPopupView(View):
 
         self.mtype_slug = kwargs.get('mtype_slug', None)
         self.measurement_type = MeasurementType.objects.get(
-            slug=self.mtype_slug)
+            project=self.project,
+            mtype__slug=self.mtype_slug)
 
-        self.location_unique_id = kwargs.get('location_unique_id', None)
-        self.location = Location.objects.get(unique_id=self.location_unique_id)
+        self.location_code = kwargs.get('location_code', None)
+        self.location = Location.objects.get(
+            project=self.project,
+            location_code=self.location_code)
 
         result = super(ComparisonPopupView, self).dispatch(
             request, *args, **kwargs)
@@ -818,7 +821,7 @@ class DashboardCsvView(DashboardAreaView):
 
         locations = sorted(
             self.project.location_set.all(),
-            cmp=lambda a, b: cmp(a.unique_id, b.unique_id))
+            cmp=lambda a, b: cmp(a.location_code, b.location_code))
 
         # Write header row
         row1 = ['ID']
@@ -837,7 +840,7 @@ class DashboardCsvView(DashboardAreaView):
 
             # Row has the location's id first, then some information
             # per measurement type.
-            row = [l.unique_id]
+            row = [l.location_code]
             for mtype in measurement_types:
                 try:
                     scheduled = ScheduledMeasurement.objects.get(

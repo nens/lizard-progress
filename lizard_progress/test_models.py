@@ -40,7 +40,7 @@ class LocationF(factory.Factory):
     """Factory for Location models."""
     FACTORY_FOR = models.Location
 
-    unique_id = "SOME_ID"
+    location_code = "SOME_ID"
     project = factory.LazyAttribute(lambda a: ProjectF())
     area = factory.LazyAttribute(lambda a: AreaF(project=a.project))
 
@@ -134,8 +134,8 @@ class TestLocation(TestCase):
     """Tests for the Location model."""
     def test_unicode(self):
         """Tests unicode method."""
-        location = LocationF(unique_id="TESTID", area=None)
-        self.assertEquals(unicode(location), "Location with id 'TESTID'")
+        location = LocationF(location_code="TESTID", area=None)
+        self.assertEquals(unicode(location), "Location with code 'TESTID'")
 
 
 class TestMeasurementType(TestCase):
@@ -144,7 +144,7 @@ class TestMeasurementType(TestCase):
         """Tests unicode method."""
         mtype = MeasurementTypeF(
             name='testtype', project=ProjectF(name='testproject'))
-        self.assertEquals(unicode(mtype), "Type 'testtype' in testproject")
+        self.assertEquals(unicode(mtype), "Type 'Metingtype' in testproject")
 
 
 class TestScheduledMeasurement(TestCase):
@@ -156,12 +156,12 @@ class TestScheduledMeasurement(TestCase):
             project=project,
             measurement_type=MeasurementTypeF(
                 project=project, name='testtype'),
-            location=LocationF(project=project, unique_id='TEST'),
+            location=LocationF(project=project, location_code='TEST'),
             contractor=ContractorF(project=project, name="testcontractor"))
 
         self.assertEquals(
             unicode(scheduled),
-            ("Scheduled measurement of type 'testtype' at location 'TEST' "
+            ("Scheduled measurement of type 'Metingtype' at location 'TEST' "
              "in project 'testproject' by contractor 'testcontractor'."))
 
     def test_measurement(self):

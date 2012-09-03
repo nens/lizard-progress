@@ -35,6 +35,8 @@ class Command(BaseCommand):
         if not os.path.exists(filename):
             raise CommandError("File '{0}' does not exist.".format(filename))
 
+        project = models.Project.objects.get(pk=1)  # Dwarsprofielen
+
         csvfile = csv.reader(open(filename))
         for row in csvfile:
             item = row[colnr]
@@ -44,9 +46,10 @@ class Command(BaseCommand):
                 item = "{0}-{1}_{2}".format(*item.split('-'))
 
             try:
-                location = models.Location.objects.get(unique_id=item)
+                location = models.Location.objects.get(
+                    location_code=item, project=project)
                 print(u','.join(
-                        (location.unique_id,
+                        (location.location_code,
                          unicode(location.the_geom.x),
                          unicode(location.the_geom.y))))
             except models.Location.DoesNotExist:

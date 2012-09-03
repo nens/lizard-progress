@@ -47,6 +47,7 @@ class AdapterTest(TestCase):
         contractor.project = project
         contractor.save()
         available_measurement_type = AvailableMeasurementType(slug='mtype')
+        available_measurement_type.save()
         measurement_type = MeasurementType(mtype=available_measurement_type)
         measurement_type.project = project
         measurement_type.save()

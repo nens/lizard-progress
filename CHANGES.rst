@@ -11,6 +11,14 @@ Reworked the model a bit:
   the "through" table in a many-to-many relationship between Project
   and AvailableMeasurementType.
 
+- Location's primary key is now a normal AutoField (took six
+migrations to do that, see
+http://stackoverflow.com/questions/2055784/what-is-the-best-approach-to-change-primary-keys-in-an-existing-django-app/12247601#12247601
+)
+- Location's "unique_id" is renamed to "location_code", because it's
+  not necessarily unique anymore.
+
+
 0.13 (2012-07-13)
 -----------------
 

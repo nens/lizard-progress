@@ -114,9 +114,9 @@ class Area(models.Model):
 
 class Location(models.Model):
     # All relevant locations in the project
-    unique_id = models.CharField(max_length=50, primary_key=True)
-
+    location_code = models.CharField(max_length=50, db_index=True)
     project = models.ForeignKey(Project)
+
     area = models.ForeignKey(Area, null=True, blank=True)
 
     the_geom = models.PointField(null=True, srid=SRID)
@@ -126,11 +126,11 @@ class Location(models.Model):
     objects = models.GeoManager()
 
     class Meta:
-        # IDs are unique within a project
-        unique_together = (("unique_id", "project"))
+        # Location codes are unique within a project
+        unique_together = (("location_code", "project"))
 
     def __unicode__(self):
-        return u"Location with id '%s'" % (self.unique_id,)
+        return u"Location with code '%s'" % (self.location_code,)
 
 
 class AvailableMeasurementType(models.Model):
@@ -199,7 +199,7 @@ class ScheduledMeasurement(models.Model):
     def __unicode__(self):
         return (("Scheduled measurement of type '%s' at location '%s' "
                  "in project '%s' by contractor '%s'.") %
-                (self.measurement_type.name, self.location.unique_id,
+                (self.measurement_type.name, self.location.location_code,
                  self.project.name, self.contractor.name))
 
 

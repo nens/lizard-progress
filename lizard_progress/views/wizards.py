@@ -133,7 +133,7 @@ class ActivitiesWizard(SessionWizardView):
 
     def __init__(self, *args, **kwargs):
         super(ActivitiesWizard, self).__init__(*args, **kwargs)
-        self.unique_ids = None
+        self.location_codes = None
         self.area = None
 
     @method_decorator(permission_required('lizard_progress.add_project'))
@@ -183,15 +183,15 @@ class ActivitiesWizard(SessionWizardView):
         is represented by a unique id. Save the ids in a
         set for fast lookup.
         """
-        unique_ids = []
+        location_codes = []
         shp = form_list[3].cleaned_data['shp']
         shapefile = osgeo.ogr.Open(str(shp.file.name))
         layer = shapefile.GetLayer(0)
         for feature_num in range(layer.GetFeatureCount()):
             feature = layer.GetFeature(feature_num)
-            unique_id = feature.GetField("ID_DWP")
-            unique_ids.append(unique_id)
-        self.unique_ids = set(unique_ids)
+            location_code = feature.GetField("ID_DWP")
+            location_codes.append(location_code)
+        self.location_codes = set(location_codes)
 
     # TODO: the object model requires a major overhaul. Currently,
     # a `MeasurementType` cannot exist without a `Project`.
@@ -230,8 +230,8 @@ class ActivitiesWizard(SessionWizardView):
     def __save_locations(self, form_list):
         """Save locations."""
         project = form_list[0].cleaned_data['project']
-        unique_ids = set(Location.objects.filter(
-            project=project).values_list('unique_id', flat=True))
+        location_codes = set(Location.objects.filter(
+            project=project).values_list('location_code', flat=True))
         locations = []
         shp = form_list[3].cleaned_data['shp']
         shapefile = osgeo.ogr.Open(str(shp.file.name))
@@ -239,16 +239,16 @@ class ActivitiesWizard(SessionWizardView):
             layer = shapefile.GetLayer(layer_num)
             for feature_num in range(layer.GetFeatureCount()):
                 feature = layer.GetFeature(feature_num)
-                unique_id = feature.GetField("ID_DWP")
-                if not unique_id in unique_ids:
+                location_code = feature.GetField("ID_DWP")
+                if not location_code in location_codes:
                     geometry = feature.GetGeometryRef()
                     location = Location(
-                        unique_id=unique_id,
+                        location_code=location_code,
                         project=project,
                         area=self.area,
                         the_geom=fromstr(geometry.ExportToWkt()))
                     locations.append(location)
-                    unique_ids.update(unique_id)
+                    location_codes.update(location_code)
         Location.objects.bulk_create(locations)
 
     # TODO: the object model requires a major overhaul. Currently,
@@ -266,16 +266,18 @@ class ActivitiesWizard(SessionWizardView):
             mtype = MeasurementType.objects.get(project=project,
                 name=MEASUREMENT_TYPES[key]['name'])
 
-            unique_ids = set(ScheduledMeasurement.objects.filter(
+            location_codes = set(ScheduledMeasurement.objects.filter(
                 project=project, contractor=contractor,
                 measurement_type=mtype).\
-                values_list('location__unique_id', flat=True))
+                values_list('location__location_code', flat=True))
 
-            difference = self.unique_ids - unique_ids
+            difference = self.location_codes - location_codes
 
-            for unique_id in difference:
+            for location_code in difference:
 
-                location = Location(unique_id=unique_id)
+                location = Location(
+                    project=project,
+                    location_code=location_code)
                 scheduled_measurement = ScheduledMeasurement(
                     project=project, contractor=contractor,
                     measurement_type=mtype, location=location)

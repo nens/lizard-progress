@@ -59,7 +59,7 @@ urlpatterns = patterns(
         login_required(ComparisonView.as_view()),
         name='lizard_progress_comparisonview2'),
     url('^(?P<project_slug>[^/]+)/comparison/popup/'
-        '(?P<mtype_slug>[^/]+)/(?P<location_unique_id>[^/]+)/$',
+        '(?P<mtype_slug>[^/]+)/(?P<location_code>[^/]+)/$',
         login_required(ComparisonPopupView.as_view()),
         name='lizard_progress_comparisonpopup'),
     url('^projects/(?P<project_slug>[^/]+)/dashboard/$',

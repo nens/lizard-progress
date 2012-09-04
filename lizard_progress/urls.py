@@ -70,7 +70,7 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/upload/$',
         login_required(UploadHomeView.as_view()),
         name='lizard_progress_uploadhomeview'),
-    url('^(?P<project_slug>[^/]+)/upload/$',
+    url('^projects/(?P<project_slug>[^/]+)/upload/measurements/$',
         login_required(UploadView.as_view()),
         name='lizard_progress_uploadview'),
     url('^(?P<project_slug>[^/]+)/dashboard/' +

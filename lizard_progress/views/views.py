@@ -238,6 +238,7 @@ class MapView(View):
                 layers.append({
                         'name': '%s %s Alle metingen'
                         % (self.project.name, contractor.name),
+                        'adapter': 'adapter_progress',
                         'json': json.dumps({
                                 "contractor_slug":
                                     contractor.slug,

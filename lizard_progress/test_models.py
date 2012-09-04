@@ -5,7 +5,7 @@ import factory
 from django.test import TestCase
 
 from lizard_progress import models
-from lizard_progress.specifics import specifics
+from lizard_progress.specifics import Specifics
 
 
 class ProjectF(factory.Factory):
@@ -110,7 +110,7 @@ class TestProject(TestCase):
 
         self.assertRaises(
             ImportError,
-            lambda: specifics(project, entrypoints=[MockEntryPoint()]))
+            lambda: Specifics(project, entrypoints=[MockEntryPoint()]))
 
 
 class TestContractor(TestCase):

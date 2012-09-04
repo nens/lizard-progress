@@ -17,34 +17,59 @@ from PIL.ImageFile import ImageFile
 
 from lizard_progress.tools import LookaheadLine
 
-ENTRY_POINT = "lizard_progress.project_specifics"
+ENTRY_POINT = "lizard_progress.measurement_type_specifics"
 
 logger = logging.getLogger(__name__)
 
 
-def specifics(project, entrypoints=None):
-    """Find the specifics object for a given project. Implementing
-    sites or other packages can list specifics objects in their
-    setup.py, they are looked up using project.slug.
+class Specifics(object):
+    def __init__(self, project):
+        self.project = project
+        self.__set_specifics()
 
-    For instance the HDSR site has, in its setup.py:
-      entry_points={
-          'console_scripts': [],
-          'lizard_progress.project_specifics': [
-            'dwarsprofielen = hdsr.progress:Dwarsprofielen',
-            'peilschalen = hdsr.progress:Peilschalen',],
-      }
-
-    """
-    if entrypoints is None:
+    def __set_specifics(self):
+        self._specifics = {}
         entrypoints = pkg_resources.iter_entry_points(group=ENTRY_POINT)
 
-    for entrypoint in entrypoints:
-        if entrypoint.name == project.slug:
-            # This may raise an ImportError, but we don't handle it
-            # because that means there's a critical error anyway.
-            cls = entrypoint.load()
-            return cls(project)
+        self._slugs_in_project = dict(
+            (measurement_type.mtype.slug, measurement_type)
+            for measurement_type in self.project.measurementtype_set.all())
+
+        for entrypoint in entrypoints:
+            if entrypoint.name in self._slugs_in_project:
+                # This may raise an ImportError, but we don't handle it
+                # because that means there's a critical error anyway.
+                cls = entrypoint.load()
+                self._specifics[entrypoint.name] = cls
+
+    def __instance(self, measurement_type, contractor=None):
+        slug = measurement_type.mtype.slug
+        cls = self._specifics[slug]
+        return cls(self.project, measurement_type, contractor)
+
+    def parsers(self, filename):
+        parsers = []
+        for measurement_type in self._slugs_in_project.values():
+            instance = self.__instance(measurement_type)
+            if filename.endswith(instance.extension):
+                parsers.append(instance.parser)
+
+        return parsers
+
+    def html_handler(self, measurement_type, contractor):
+        instance = self.__instance(measurement_type, contractor)
+        if hasattr(instance, 'html_handler'):
+            return instance.html_handler
+        else:
+            return None
+
+    def image_handler(self, measurement_type, contractor):
+        instance = self.__instance(measurement_type, contractor)
+
+        if hasattr(instance, 'image_handler'):
+            return instance.image_handler
+        else:
+            return None
 
 
 def _open_uploaded_file(path):
@@ -201,54 +226,23 @@ class GenericSpecifics(object):
     - To have a class with this name.
     """
 
-    def __init__(self, project):
+    def __init__(self, project, measurement_type, contractor=None):
         self.project = project
+        self.measurement_type = measurement_type
+        self.contractor = contractor
 
-    def upload_file_types(self, project):
-        """
-        Return a tuple of 2-tuples (filedescription, extension) to be
-        used in the file upload dialog. E.g. return (("CSV files",
-        "csv")).
-        """
-
-        return ()
-
-    def parsers(self, filename):
-        """
-        Return a tuple of parsers that will try to parse an uploaded
-        file, in the order in which they are given (typically this
-        function will return only a single parser, based on the
-        filename's extension).
-
-        Parsers should be subclasses of ProgressParser.
-
-        Parsers should return an instance of either
-        SuccessfulParserResult or UnSuccessfulParserResult.
-        """
-
-        return ()
-
-    def html_handler(self, measurement_type, contractor, project):
-        """Returns a function that can generate popup HTML for this
-        measurement type. Only called for complete measurements, from
-        lizard-progress' adapter's html() function. See
-        sample_html_handler below for the signature of a html_handler
-        function.
-
-        If None is returned, the adapter simply calls lizard_map's
-        html_default."""
-        return None
-
-    def image_handler(self, measurement_type, contractor, project):
-        """Returns a function that implements an adapter's image()
-        function. See sample_image_handler below for the signature of
-        a image_handler function."""
-
-        return None
+    ## The below are named "sample_" so that the adapter can see that
+    ## the real html_handler and image_handler aren't implemented.  In
+    ## your own Specifics objects, they need to be named
+    ## 'html_handler' and 'image_handler'.
 
     def sample_html_handler(self, html_default, scheduled_measurements,
                             identifiers, layout_options):
         """
+        A function that can generate popup HTML for this measurement
+        type. Only called for complete measurements, from
+        lizard-progress' adapter's html() function.
+
         Html_default is the html_default function of the adapter.
         Scheduled_measurements is a list of ScheduledMeasurement
         objects belonging to the identifiers passed in identifiers.
@@ -258,6 +252,8 @@ class GenericSpecifics(object):
 
     def sample_image_handler(self, scheduled_measurements):
         """
+        A function that implements an adapter's image() function.
+
         Scheduled_measurements is a list of ScheduledMeasurement
         objects belonging to the identifiers passed in.
         """

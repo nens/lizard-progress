@@ -84,7 +84,7 @@ class Project(models.Model):
         return unicode(self.name)
 
     def specifics(self):
-        return lizard_progress.specifics.specifics(self)
+        return lizard_progress.specifics.Specifics(self)
 
 
 class Contractor(models.Model):

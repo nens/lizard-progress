@@ -18,6 +18,10 @@ http://stackoverflow.com/questions/2055784/what-is-the-best-approach-to-change-p
 - Location's "unique_id" is renamed to "location_code", because it's
   not necessarily unique anymore.
 
+The way that lizard-progress talks to implementing sites has
+changed. Instead of a "Specifics" implementation per project, there is
+now one per measurement type. See the HDSR site for details (in its
+setup.py and progress.py).
 
 0.13 (2012-07-13)
 -----------------

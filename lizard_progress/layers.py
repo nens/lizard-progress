@@ -345,8 +345,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         else:
             handler = (self.project.specifics().
                        html_handler(measurement_type=sm.measurement_type,
-                                    contractor=sm.contractor,
-                                    project=sm.project))
+                                    contractor=sm.contractor))
 
         if handler is not None:
             return handler(super(ProgressAdapter, self).html_default,
@@ -381,8 +380,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         sm = scheduled_measurements[0]
         handler = (self.project.specifics().
                    image_handler(measurement_type=sm.measurement_type,
-                                 contractor=sm.contractor,
-                                 project=sm.project))
+                                 contractor=sm.contractor))
 
         if handler is not None:
             return handler(scheduled_measurements)

@@ -15,7 +15,6 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.defaultfilters import slugify
 from django.utils.decorators import method_decorator
-from lizard_progress.forms import MEASUREMENT_TYPES
 from lizard_progress.models import (Area, Hydrovak, Location,
     MeasurementType, SRID, ScheduledMeasurement, AvailableMeasurementType)
 import os
@@ -124,7 +123,7 @@ class ContractorWizard(SessionWizardView):
 
 
 class ActivitiesWizard(SessionWizardView):
-    """Form wizard for creating a new `Contractor`.
+    """Form wizard for creating new activities, i.e. `ScheduledMeasurements`.
 
     Usage of this wizard requires `lizard_progress.add_project` permission.
     """
@@ -193,25 +192,17 @@ class ActivitiesWizard(SessionWizardView):
             location_codes.append(location_code)
         self.location_codes = set(location_codes)
 
-    # TODO: the object model requires a major overhaul. Currently,
-    # a `MeasurementType` cannot exist without a `Project`.
-    # A many-to-many relationship seems more appropriate.
     @staticmethod
     def __save_measurement_types(form_list):
         """Save measurement types."""
         project = form_list[0].cleaned_data['project']
-        for key in form_list[2].cleaned_data['measurement_types']:
-            if not MeasurementType.objects.filter(project=project,
-                mtype__name=MEASUREMENT_TYPES[key]['name']).exists():
-                mtype = AvailableMeasurementType.objects.get(
-                    name=MEASUREMENT_TYPES[key]['name'])
-
-                MeasurementType(
-                    project=project,
-                    mtype=mtype,
-                    icon_missing=MEASUREMENT_TYPES[key]['icon_missing'],
-                    icon_complete=MEASUREMENT_TYPES[key]['icon_complete']
-                ).save()
+        for mtype in form_list[2].cleaned_data['measurement_types']:
+            try:
+                MeasurementType.objects.get(project=project, mtype=mtype)
+            except MeasurementType.DoesNotExist:
+                MeasurementType(project=project, mtype=mtype,
+                    icon_missing=mtype.default_icon_missing,
+                    icon_complete=mtype.default_icon_complete).save()
 
     # Within a project, locations can be assigned to different
     # areas, for example `North`, `East`, `South`, and `West`.
@@ -224,9 +215,6 @@ class ActivitiesWizard(SessionWizardView):
         self.area, _ = Area.objects.get_or_create(project=project,
             name=project.name, slug=project.slug)
 
-    # TODO: the object model requires a major overhaul. Currently,
-    # a specific `Location` can only be part of one `Project`.
-    # A many-to-many relationship seems more appropriate.
     def __save_locations(self, form_list):
         """Save locations."""
         project = form_list[0].cleaned_data['project']
@@ -257,32 +245,46 @@ class ActivitiesWizard(SessionWizardView):
     def __save_scheduled_measurements(self, form_list):
         """Save scheduled measurements."""
 
+        # For reasons of performance, we want to use bulk_create.
+        # However, it takes quite some preparation to make sure
+        # that the transaction as a whole will succeed.
+
         project = form_list[0].cleaned_data['project']
         contractor = form_list[1].cleaned_data['contractor']
         scheduled_measurements = []
 
-        for key in form_list[2].cleaned_data['measurement_types']:
+        # amtype = AvailableMeasurementType
+        for amtype in form_list[2].cleaned_data['measurement_types']:
 
-            mtype = MeasurementType.objects.get(project=project,
-                name=MEASUREMENT_TYPES[key]['name'])
+            # mtype = MeasurementType
+            mtype = MeasurementType.objects.get(project=project, mtype=amtype)
 
+            # Measurements already scheduled. These need to
+            # be excluded to make bulk_create successful.
             location_codes = set(ScheduledMeasurement.objects.filter(
                 project=project, contractor=contractor,
                 measurement_type=mtype).\
                 values_list('location__location_code', flat=True))
 
+            # New location_codes, for which measurements need to
+            # be scheduled, is the difference between two sets.
             difference = self.location_codes - location_codes
 
-            for location_code in difference:
+            # Get the corresponding `Location` objects.
+            locations = Location.objects.filter(project=project,
+                location_code__in=difference)
 
-                location = Location(
-                    project=project,
-                    location_code=location_code)
+            # One `Location` for every `ScheduledMeasurement`.
+            assert len(difference) == len(locations)
+
+            # Create `ScheduledMeasurement` objects.
+            for location in locations:
                 scheduled_measurement = ScheduledMeasurement(
                     project=project, contractor=contractor,
                     measurement_type=mtype, location=location)
                 scheduled_measurements.append(scheduled_measurement)
 
+        # Finally, execute the bulk insert.
         ScheduledMeasurement.objects.bulk_create(scheduled_measurements)
 
     @staticmethod

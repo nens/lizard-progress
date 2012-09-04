@@ -6,42 +6,9 @@ from django.template.defaultfilters import slugify
 from django.views.generic.edit import CreateView
 from django.views.generic.edit import DeleteView
 from django.views.generic.edit import UpdateView
-from lizard_progress.models import Contractor, Project
+from lizard_progress.models import (AvailableMeasurementType, Contractor,
+    Project)
 import os
-
-
-MEASUREMENT_TYPES = {
-    '1': {
-        'name': 'Dwarsprofiel',
-        'icon_missing': 'bullets/squarered16.png',
-        'icon_complete': 'bullets/squaregreen16.png',
-        'choice': 'Dwarsprofiel'
-        },
-    '2': {
-        'name': 'Oeverfoto',
-        'icon_missing': 'camera_missing.png',
-        'icon_complete': 'camera_present.png',
-        'choice': 'Oeverfoto'
-        },
-    '3': {
-        'name': 'Oeverkenmerk',
-        'icon_missing': 'bullets/trianglered16.png',
-        'icon_complete': 'bullets/trianglegreen16.png',
-        'choice': 'Oeverkenmerk'
-        },
-    '4': {
-        'name': 'Foto',
-        'icon_missing': 'camera_missing.png',
-        'icon_complete': 'camera_present.png',
-        'choice': 'Foto'
-        },
-    '5': {
-        'name': 'Meting',
-        'icon_missing': 'bullets/squarered16.png',
-        'icon_complete': 'bullets/squaregreen16.png',
-        'choice': 'Meting'
-        },
-}
 
 
 class ProjectForm(forms.ModelForm):
@@ -80,8 +47,6 @@ class ContractorForm(forms.ModelForm):
         super(ContractorForm, self).__init__(*args, **kwargs)
         self.fields['project'].queryset = \
             Project.objects.filter(superuser=user)
-
-    # TODO: (`project`, `slug`) should be unique
 
     class Meta:
         model = Contractor
@@ -175,12 +140,13 @@ class ContractorChoiceForm(forms.Form):
 
 
 class MeasurementTypeForm(forms.Form):
-    """Foobar."""
+    """Displays `AvailableMeasurementTypes` to choose from."""
 
-    measurement_types = forms.MultipleChoiceField(
+    measurement_types = forms.ModelMultipleChoiceField(
         widget=forms.CheckboxSelectMultiple,
-        choices=[(k, v['choice']) for k, v in MEASUREMENT_TYPES.items()],
-        label="Uit te voeren werkzaamheden")
+        queryset=AvailableMeasurementType.objects.all(),
+        label="Uit te voeren werkzaamheden"
+    )
 
 
 class ExtFileField(forms.FileField):

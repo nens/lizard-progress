@@ -37,7 +37,6 @@ urlpatterns = patterns(
     url('^projects/$', ProjectsView.as_view(), name='lizard_progress_projecten'),
     url('^admin/$', AppView.as_view(template_name='lizard_progress/admin.html'), name='lizard_progress_admin'),
     url('^admin/projects/new/$', ProjectWizard.as_view([ProjectForm]), name='lizard_progress_newproject'),
-    #url('^admin/projects/new/$', ProjectWizard.as_view([ProjectForm, ShapefileForm]), name='lizard_progress_newproject'),
     url('^project/add/$', ProjectCreate.as_view(), name='project_add'),
     url('^project/(?P<pk>\d+)/$', ProjectUpdate.as_view(), name='project_update'),
     url('^project/(?P<pk>\d+)/delete/$', ProjectDelete.as_view(), name='project_delete'),

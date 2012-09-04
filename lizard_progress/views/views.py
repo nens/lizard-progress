@@ -988,8 +988,9 @@ def protected_file_download(request, project_slug, contractor_slug,
     project = get_object_or_404(Project, slug=project_slug)
     contractor = get_object_or_404(Contractor, slug=contractor_slug,
                                    project=project)
-    mtype = get_object_or_404(MeasurementType, slug=measurement_type_slug,
-                              project=project)
+    mtype = get_object_or_404(
+        MeasurementType, mtype__slug=measurement_type_slug,
+        project=project)
 
     logger.debug("Incoming programfile request for %s", filename)
 

@@ -7,29 +7,27 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        from lizard_progress.models import AvailableMeasurementType
-
-        available_measurement_type = AvailableMeasurementType.objects.get(slug='dwarsprofiel')
+        available_measurement_type = orm.AvailableMeasurementType.objects.get(slug='dwarsprofiel')
         available_measurement_type.default_icon_missing = 'bullets/squarered16.png'
         available_measurement_type.default_icon_complete = 'bullets/squaregreen16.png'
         available_measurement_type.save()
 
-        available_measurement_type = AvailableMeasurementType.objects.get(slug='oeverfoto')
+        available_measurement_type = orm.AvailableMeasurementType.objects.get(slug='oeverfoto')
         available_measurement_type.default_icon_missing = 'camera_missing.png'
         available_measurement_type.default_icon_complete = 'camera_present.png'
         available_measurement_type.save()
 
-        available_measurement_type = AvailableMeasurementType.objects.get(slug='oeverkenmerk')
+        available_measurement_type = orm.AvailableMeasurementType.objects.get(slug='oeverkenmerk')
         available_measurement_type.default_icon_missing = 'bullets/trianglered16.png'
         available_measurement_type.default_icon_complete = 'bullets/trianglegreen16.png'
         available_measurement_type.save()
 
-        available_measurement_type = AvailableMeasurementType.objects.get(slug='foto')
+        available_measurement_type = orm.AvailableMeasurementType.objects.get(slug='foto')
         available_measurement_type.default_icon_missing = 'camera_missing.png'
         available_measurement_type.default_icon_complete = 'camera_present.png'
         available_measurement_type.save()
 
-        available_measurement_type = AvailableMeasurementType.objects.get(slug='meting')
+        available_measurement_type = orm.AvailableMeasurementType.objects.get(slug='meting')
         available_measurement_type.default_icon_missing = 'bullets/squarered16.png'
         available_measurement_type.default_icon_complete = 'bullets/squaregreen16.png'
         available_measurement_type.save()

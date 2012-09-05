@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.14 (unreleased)
+0.14 (2012-09-05)
 -----------------
 
 Reworked the model a bit:

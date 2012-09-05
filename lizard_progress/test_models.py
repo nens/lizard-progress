@@ -84,35 +84,6 @@ class MeasurementF(factory.Factory):
     filename = "test.txt"
 
 
-class TestProject(TestCase):
-    """Tests for the Project model."""
-
-    def test_specifics_unknown(self):
-        """Getting specifics for an unknown project should return None."""
-
-        project = ProjectF.build()
-
-        self.assertEquals(project.specifics(), None)
-
-    def test_specifics_importerror(self):
-        """Getting specifics for a project with an entry point that
-        can't be imported should raise an exception."""
-
-        project = ProjectF.build()
-
-        class MockEntryPoint(object):
-            """No functionality except for failed loading."""
-            name = project.slug
-
-            def load(self):
-                """I can't be loaded."""
-                raise ImportError("mock")
-
-        self.assertRaises(
-            ImportError,
-            lambda: Specifics(project, entrypoints=[MockEntryPoint()]))
-
-
 class TestContractor(TestCase):
     """Tests for the Contractor model."""
     def test_unicode(self):

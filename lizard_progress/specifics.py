@@ -23,13 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 class Specifics(object):
-    def __init__(self, project):
+    def __init__(self, project, entrypoints=None):
         self.project = project
-        self.__set_specifics()
+        self.__set_specifics(entrypoints)
 
-    def __set_specifics(self):
+    def __set_specifics(self, entrypoints=None):
         self._specifics = {}
-        entrypoints = pkg_resources.iter_entry_points(group=ENTRY_POINT)
+        if entrypoints is None:
+            entrypoints = pkg_resources.iter_entry_points(
+                group=ENTRY_POINT)
 
         self._slugs_in_project = dict(
             (measurement_type.mtype.slug, measurement_type)

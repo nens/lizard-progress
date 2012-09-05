@@ -16,7 +16,7 @@ from django.shortcuts import render_to_response
 from django.template.defaultfilters import slugify
 from django.utils.decorators import method_decorator
 from lizard_progress.models import (Area, Hydrovak, Location,
-    MeasurementType, SRID, ScheduledMeasurement, AvailableMeasurementType)
+    MeasurementType, SRID, ScheduledMeasurement)
 import os
 import osgeo.ogr
 import shutil

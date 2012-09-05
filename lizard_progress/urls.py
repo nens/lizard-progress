@@ -3,8 +3,6 @@
 from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.views.generic import TemplateView
 
 from lizard_map.views import AppView
 from lizard_progress.views import ComparisonPopupView
@@ -20,8 +18,11 @@ from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
 from lizard_progress.views import ProjectsView
-from lizard_progress.views import ProjectWizard, ContractorWizard, ActivitiesWizard, HydrovakkenWizard
-from lizard_progress.forms import ProjectForm, MeasurementTypeForm, ShapefileForm
+from lizard_progress.views import (
+    ProjectWizard, ContractorWizard,
+    ActivitiesWizard, HydrovakkenWizard)
+from lizard_progress.forms import (
+    ProjectForm, MeasurementTypeForm, ShapefileForm)
 from lizard_progress.forms import ContractorForm, ExistingUserForm, NewUserForm
 from lizard_progress.forms import ProjectChoiceForm, ContractorChoiceForm
 from lizard_progress.forms import ProjectCreate, ProjectUpdate, ProjectDelete
@@ -34,22 +35,42 @@ admin.autodiscover()
 urlpatterns = patterns(
     '',
     ## Start N0032 experiments:
-    url('^projects/$', ProjectsView.as_view(), name='lizard_progress_projecten'),
-    url('^admin/$', AppView.as_view(template_name='lizard_progress/admin.html'), name='lizard_progress_admin'),
-    url('^admin/projects/new/$', ProjectWizard.as_view([ProjectForm]), name='lizard_progress_newproject'),
+    url('^projects/$',
+        ProjectsView.as_view(), name='lizard_progress_projecten'),
+    url('^admin/$',
+        AppView.as_view(template_name='lizard_progress/admin.html'),
+        name='lizard_progress_admin'),
+    url('^admin/projects/new/$',
+        ProjectWizard.as_view([ProjectForm]),
+        name='lizard_progress_newproject'),
     url('^project/add/$', ProjectCreate.as_view(), name='project_add'),
-    url('^project/(?P<pk>\d+)/$', ProjectUpdate.as_view(), name='project_update'),
-    url('^project/(?P<pk>\d+)/delete/$', ProjectDelete.as_view(), name='project_delete'),
-    url('^admin/contractors/new/$', ContractorWizard.as_view([ContractorForm, ExistingUserForm, NewUserForm],
-        condition_dict={'1': existing_user_condition, '2': new_user_condition}), name='lizard_progress_newcontractor'),
-    url('^admin/activities/new/$', ActivitiesWizard.as_view(
-        [ProjectChoiceForm, ContractorChoiceForm, MeasurementTypeForm, ShapefileForm]), name='lizard_progress_newactivities'),
-    url('^admin/hydrovakken/new/$', HydrovakkenWizard.as_view(
-        [ProjectChoiceForm, ShapefileForm]), name='lizard_progress_newhydrovakken'),
+    url('^project/(?P<pk>\d+)/$',
+        ProjectUpdate.as_view(),
+        name='project_update'),
+    url('^project/(?P<pk>\d+)/delete/$',
+        ProjectDelete.as_view(),
+        name='project_delete'),
+    url('^admin/contractors/new/$',
+        ContractorWizard.as_view(
+            [ContractorForm, ExistingUserForm, NewUserForm],
+        condition_dict={
+                '1': existing_user_condition,
+                '2': new_user_condition}),
+        name='lizard_progress_newcontractor'),
+    url('^admin/activities/new/$',
+        ActivitiesWizard.as_view(
+            [ProjectChoiceForm, ContractorChoiceForm,
+             MeasurementTypeForm, ShapefileForm]),
+        name='lizard_progress_newactivities'),
+    url('^admin/hydrovakken/new/$',
+        HydrovakkenWizard.as_view(
+            [ProjectChoiceForm, ShapefileForm]),
+        name='lizard_progress_newhydrovakken'),
     ## End N0032 experiments.
     url('^projects/(?P<project_slug>[^/]+)/$', login_required(View.as_view()),
         name='lizard_progress_view'),
-    url('^projects/(?P<project_slug>[^/]+)/map/$', login_required(MapView.as_view()),
+    url('^projects/(?P<project_slug>[^/]+)/map/$',
+        login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
     url('^projects/(?P<project_slug>[^/]+)/comparison/$',
         login_required(ComparisonView.as_view()),

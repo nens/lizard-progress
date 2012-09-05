@@ -51,7 +51,7 @@ class Specifics(object):
         parsers = []
         for measurement_type in self._slugs_in_project.values():
             instance = self.__instance(measurement_type)
-            if filename.endswith(instance.extension):
+            if filename.lower().endswith(instance.extension):
                 parsers.append(instance.parser)
 
         return parsers

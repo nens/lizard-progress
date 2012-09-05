@@ -110,7 +110,8 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                          sm.location_id = loc.id
                     WHERE
                          sm.contractor_id=%d AND
-                         sm.project_id=%d
+                         sm.project_id=%d AND
+                         loc.the_geom IS NOT NULL
                     GROUP BY
                          loc.the_geom
                     HAVING bool_or(sm.complete)=%s AND
@@ -127,13 +128,21 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                             "true", "false")
 
         else:
-            return ("""(select loc.the_geom from lizard_progress_location loc
-                  inner join lizard_progress_scheduledmeasurement sm on
-                  sm.location_id = loc.id
-                  where sm.complete=%s
-                  and sm.contractor_id=%d
-                  and sm.project_id=%d
-                  and sm.measurement_type_id=%d) data""" %
+            return ("""(
+                  SELECT
+                      loc.the_geom
+                  FROM
+                      lizard_progress_location loc
+                  INNER JOIN
+                      lizard_progress_scheduledmeasurement sm
+                  ON
+                      sm.location_id = loc.id
+                  WHERE
+                      sm.complete=%s
+                  AND sm.contractor_id=%d
+                  AND sm.project_id=%d
+                  AND sm.measurement_type_id=%d
+                  AND loc.the_geom IS NOT NULL) data""" %
                     (str(complete).lower(),
                      self.contractor.id,
                      self.project.id,
@@ -250,7 +259,8 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             else:
                 scheduleds = (ScheduledMeasurement.objects.
                               filter(location=location,
-                                     contractor=self.contractor).
+                                     contractor=self.contractor,
+                               measurement_type__mtype__can_be_displayed=True).
                               order_by('measurement_type__mtype__name'))
 
             for scheduled in scheduleds:

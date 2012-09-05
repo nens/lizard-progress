@@ -23,6 +23,12 @@ changed. Instead of a "Specifics" implementation per project, there is
 now one per measurement type. See the HDSR site for details (in its
 setup.py and progress.py).
 
+Added a field "can_be_displayed" to AvailableMeasurementType. Types
+that can't be displayed on the map will have this False, the default
+is True. Measurement types that can't be displayed do not show up at
+the available map layers and don't have popups either. Only locations
+with the_geom not equal to NULL are used for maps.
+
 0.13 (2012-07-13)
 -----------------
 

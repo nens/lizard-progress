@@ -141,6 +141,8 @@ class AvailableMeasurementType(models.Model):
     default_icon_missing = models.CharField(max_length=50)
     default_icon_complete = models.CharField(max_length=50)
 
+    can_be_displayed = models.BooleanField(default=True)
+
     def __unicode__(self):
         return self.name
 

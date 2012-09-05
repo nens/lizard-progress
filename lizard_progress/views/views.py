@@ -246,20 +246,21 @@ class MapView(View):
                                     self.project.slug})
                         })
                 for measurement_type in self.project.measurementtype_set.all():
-                    layers.append({
-                            'name': '%s %s %s' %
-                            (self.project.name,
-                             contractor.name,
-                             measurement_type.name),
-                            'adapter': 'adapter_progress',
-                            'json': json.dumps({
-                                    "contractor_slug":
-                                    contractor.slug,
-                                    "measurement_type_slug":
-                                        measurement_type.slug,
-                                    "project_slug":
-                                        self.project.slug}),
-                            })
+                    if measurement_type.mtype.can_be_displayed:
+                        layers.append({
+                                'name': '%s %s %s' %
+                                (self.project.name,
+                                 contractor.name,
+                                 measurement_type.name),
+                                'adapter': 'adapter_progress',
+                                'json': json.dumps({
+                                        "contractor_slug":
+                                            contractor.slug,
+                                        "measurement_type_slug":
+                                            measurement_type.slug,
+                                        "project_slug":
+                                            self.project.slug}),
+                                })
 
         if Hydrovak.objects.filter(project=self.project).exists():
             layers.append({

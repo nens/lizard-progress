@@ -9,16 +9,22 @@ JQuery is already included by lizard. Including it twice will cause CSRF errors.
 <script type="text/javascript" src="http://bp.yahooapis.com/2.4.21/browserplus-min.js"></script>
 
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
+{% comment %}
+Skip javascript corresponding to disabled runtimes.
+Uncomment `flash_swf_url` when using Flash.
+Uncomment `silverlight_xap_url` when using Silverlight.
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.gears.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.silverlight.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.flash.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.browserplus.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html4.js"></script>
+{% endcomment %}
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
 
 <div id="uploader">
-  <p>You browser doesn't have HTML5, Flash, Silverlight, Gears, BrowserPlus or support.</p>
+  {# <p>You browser doesn't have HTML5, Flash, Silverlight, Gears, BrowserPlus or support.</p> #}
+  <p>You browser doesn't have HTML5 support.</p>
 </div>
 
 <script type="text/javascript">
@@ -28,7 +34,8 @@ $(function () {
         // General settings
         //runtimes : 'html4,flash,browserplus,silverlight,gears,html5',
         runtimes : 'html5',
-        url : '{{ view.upload_url }}',
+        //url will be set dynamically. see lizard_progress.js
+        //url : '{{ view.upload_url }}',
         max_file_size : '4mb',
         //max_file_count : 20, // user can add no more than 20 files at a time
 // With chunking on, we get two bugs:
@@ -42,7 +49,7 @@ $(function () {
         //resize : {width : 320, height : 240, quality : 90},
 
         //headers : {'X-Requested-With' : 'XMLHttpRequest', 'X-CSRFToken' : '{{csrf_token}}'},
-        headers : {'X-CSRFToken' : '{{ csrf_token }}', 'FOO' : 'BAR'},
+        headers : {'X-CSRFToken' : '{{ csrf_token }}'},
 
         // This will be used below to send the filename.
         multipart_params: {},
@@ -54,16 +61,18 @@ $(function () {
         sortable: true,
 
         // Specify what files to browse for
+        {% comment %}
         filters : [
 {% for ftype, fext in view.project.specifics.upload_file_types %}{title : "{{ ftype }}", extensions : "{{ fext }}"},
 {% endfor %}
         ],
+        {% endcomment %}
 
         // Flash settings
-        flash_swf_url : '{{ STATIC_URL }}plupload/js/plupload.flash.swf',
+        //flash_swf_url : '{{ STATIC_URL }}plupload/js/plupload.flash.swf',
 
         // Silverlight settings
-        silverlight_xap_url : '{{ STATIC_URL }}plupload/js/plupload.silverlight.xap'
+        //silverlight_xap_url : '{{ STATIC_URL }}plupload/js/plupload.silverlight.xap'
     });
 
     // When sending a large file in chunks, the original filename is lost.

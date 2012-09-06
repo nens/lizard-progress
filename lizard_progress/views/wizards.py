@@ -155,11 +155,17 @@ class ActivitiesWizard(SessionWizardView):
 
     @transaction.commit_on_success
     def done(self, form_list, **kwargs):
-        self.__process_shapefile(form_list)
+        has_shapefile = ((len(form_list) > 3) and
+                         'shp' in form_list[3].cleaned_data)
+
         self.__save_measurement_types(form_list)
-        self.__save_area(form_list)
-        self.__save_locations(form_list)
-        self.__save_scheduled_measurements(form_list)
+
+        if has_shapefile:
+            self.__process_shapefile(form_list)
+            self.__save_area(form_list)
+            self.__save_locations(form_list)
+            self.__save_scheduled_measurements(form_list)
+
         self.__save_uploads(form_list)
         if False:
             # For development purposes.
@@ -255,6 +261,10 @@ class ActivitiesWizard(SessionWizardView):
 
         # amtype = AvailableMeasurementType
         for amtype in form_list[2].cleaned_data['measurement_types']:
+            # Skip measurement types that create their own scheduled
+            # measurements as needed
+            if not amtype.needs_scheduled_measurements:
+                continue
 
             # mtype = MeasurementType
             mtype = MeasurementType.objects.get(project=project, mtype=amtype)

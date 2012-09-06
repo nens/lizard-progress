@@ -308,7 +308,9 @@ class ComparisonView(View):
     @property
     def measurement_type(self):
         if self.mtype_slug is not None:
-            return MeasurementType.objects.get(slug=self.mtype_slug)
+            return MeasurementType.objects.get(
+                project=self.project,
+                mtype__slug=self.mtype_slug)
         else:
             return None
 

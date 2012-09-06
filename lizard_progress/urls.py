@@ -11,8 +11,9 @@ from lizard_progress.views import DashboardAreaView
 from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DashboardView
 from lizard_progress.views import MapView
+from lizard_progress.views import UploadDialogView
 from lizard_progress.views import UploadHomeView
-from lizard_progress.views import UploadView
+from lizard_progress.views import UploadMeasurementsView
 from lizard_progress.views import View
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
@@ -88,12 +89,15 @@ urlpatterns = patterns(
     url('^dashboardcsv/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/$',
         login_required(DashboardCsvView.as_view()),
         name='lizard_progress_dashboardcsvview'),
+    url('^upload/$',
+        login_required(UploadDialogView.as_view()),
+        name='lizard_progress_uploaddialogview'),
     url('^projects/(?P<project_slug>[^/]+)/upload/$',
         login_required(UploadHomeView.as_view()),
         name='lizard_progress_uploadhomeview'),
     url('^projects/(?P<project_slug>[^/]+)/upload/measurements/$',
-        login_required(UploadView.as_view()),
-        name='lizard_progress_uploadview'),
+        login_required(UploadMeasurementsView.as_view()),
+        name='lizard_progress_uploadmeasurementsview'),
     url('^(?P<project_slug>[^/]+)/dashboard/' +
         '(?P<contractor_slug>[^/]+)/(?P<area_slug>.+)/graph/$',
         dashboard_graph,

@@ -15,10 +15,10 @@
 {% endblock map-javascript %}
 
 {% block sidebar %}
-<div class="sidebarbox sidebarbox-stretched" data-upload-url="{{ view.upload_url }}">
+<div class="sidebarbox sidebarbox-stretched">
   <h2>Upload</h2>
-  <ul class="without-bullets">
-    <li class="upload"><a href="">Metingen</a></li>
+  <ul class="without-bullets" id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
+    <li class="upload" data-upload-url="{{ view.upload_measurements_url }}"><a href="">Metingen</a></li>
     <li><a href="">Moedershapefile</a></li>
     <li><a href="">Eindrapportages</a></li>
   </ul>

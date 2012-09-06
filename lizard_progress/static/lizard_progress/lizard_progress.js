@@ -5,10 +5,11 @@
 
 // Upload popup
 $().ready(function () {
-    var $dialog;
+    var $dialog, $url;
 
-    $url = $("div.sidebarbox").attr("data-upload-url");
+    $url = $('#upload-wrapper').attr('data-upload-dialog-url');
 
+    // Preload
     $dialog = $('<div class="lizard-progress-popup"/>').load($url).dialog({
         autoOpen: false,
         title: 'Uploaden',
@@ -16,6 +17,9 @@ $().ready(function () {
     });
 
     $('.upload').click(function () {
+        var uploader = $('#uploader').plupload('getUploader');
+        uploader.settings.url = $(this).attr('data-upload-url');
+        uploader.splice(); // Clean the queue
         $dialog.dialog('open');
         // prevent the default action, e.g., following a link
         return false;

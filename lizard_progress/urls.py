@@ -14,6 +14,7 @@ from lizard_progress.views import MapView
 from lizard_progress.views import UploadDialogView
 from lizard_progress.views import UploadHomeView
 from lizard_progress.views import UploadMeasurementsView
+from lizard_progress.views import UploadReportsView
 from lizard_progress.views import View
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
@@ -98,6 +99,9 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/upload/measurements/$',
         login_required(UploadMeasurementsView.as_view()),
         name='lizard_progress_uploadmeasurementsview'),
+    url('^projects/(?P<project_slug>[^/]+)/upload/reports/$',
+        login_required(UploadReportsView.as_view()),
+        name='lizard_progress_uploadreportsview'),
     url('^(?P<project_slug>[^/]+)/dashboard/' +
         '(?P<contractor_slug>[^/]+)/(?P<area_slug>.+)/graph/$',
         dashboard_graph,

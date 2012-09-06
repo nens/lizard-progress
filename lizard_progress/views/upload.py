@@ -5,6 +5,7 @@
 See wizards.py for wizard-specific upload code.
 """
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse
@@ -21,6 +22,7 @@ from lizard_progress.models import has_access
 from lizard_progress.tools import unique_filename
 from lizard_progress.views.views import document_root
 from lizard_progress.views.views import make_uploaded_file_path
+from lizard_progress.views.wizards import APP_LABEL
 import os
 import shutil
 import time
@@ -63,13 +65,24 @@ class UploadHomeView(AppView):
         else:
             return HttpResponseForbidden()
 
-    def upload_dialog_url(self):
+    @staticmethod
+    def upload_dialog_url():
         """Returns URL to the file upload dialog."""
         return reverse('lizard_progress_uploaddialogview')
 
     def upload_measurements_url(self):
         """Returns URL to post measurements to."""
         return reverse('lizard_progress_uploadmeasurementsview',
+                       kwargs={'project_slug': self.project_slug})
+
+    def upload_reports_url(self):
+        """Returns URL to post project reports to."""
+        return reverse('lizard_progress_uploadreportsview',
+                       kwargs={'project_slug': self.project_slug})
+
+    def upload_shapefiles_url(self):
+        """Returns URL to post a project's (mother) shapefile to."""
+        return reverse('lizard_progress_uploadshapefilesview',
                        kwargs={'project_slug': self.project_slug})
 
     def crumbs(self):
@@ -88,9 +101,7 @@ class UploadHomeView(AppView):
         return crumbs
 
 
-class UploadMeasurementsView(View):
-    """Handles file upload, file validation, entering data into the
-    database and moving files to their destination."""
+class UploadView(View):
 
     def dispatch(self, request, *args, **kwargs):
         """Find project and contractor objects. A successful upload
@@ -104,7 +115,7 @@ class UploadMeasurementsView(View):
         if not has_access(request.user, self.project):
             return HttpResponseForbidden()
 
-        return super(UploadMeasurementsView, self).dispatch(
+        return super(UploadView, self).dispatch(
             request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -141,6 +152,14 @@ class UploadMeasurementsView(View):
             return self.process_file(path)
         else:
             return json_response({})
+
+    def process_file(self, path):
+        raise NotImplementedError
+
+
+class UploadMeasurementsView(UploadView):
+    """Handles file upload, file validation, entering data into the
+    database and moving files to their destination."""
 
     def process_file(self, path):
         """Find parsers for the uploaded file and see if they accept it."""
@@ -256,3 +275,42 @@ class UploadMeasurementsView(View):
             seq += 1
 
         return os.path.join(dirname, new_filename)
+
+
+class UploadReportsView(UploadView):
+
+    def process_file(self, path):
+
+        # The destination directory.
+        dst = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+            self.project.slug, self.contractor.slug, 'reports')
+
+        # Create it if necessary.
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        # Copy the report.
+        shutil.copy(path, dst)
+
+        return json_response({})
+
+
+class UploadShapefilesView(UploadView):
+
+    def process_file(self, path):
+
+        # TODO: perform a sanity check before copying
+        # the shapefile to its permanent location?
+
+        # The destination directory.
+        dst = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+            self.project.slug, self.contractor.slug, 'shapefile')
+
+        # Create it if necessary.
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        # Copy the report.
+        shutil.copy(path, dst)
+
+        return json_response({})

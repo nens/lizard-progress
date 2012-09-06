@@ -141,7 +141,28 @@ class AvailableMeasurementType(models.Model):
     default_icon_missing = models.CharField(max_length=50)
     default_icon_complete = models.CharField(max_length=50)
 
+    # Can this type be displayed as a map layer / popup?
+    # (some day we will need to split that in two, for now this is ok)
     can_be_displayed = models.BooleanField(default=True)
+
+    # If the parser of this measurement type enters newly encountered
+    # locations into the database, they don't need to be predefined,
+    # and a shape doesn't have to be uploaded before measurements can
+    # be uploaded. For most types, however, it'll be True.
+    needs_predefined_locations = models.BooleanField(default=True)
+
+    # For most measurement types, there will first be a number of scheduled
+    # measurements that will be "filled in" by uploaded measurements. However.
+    # it is possible that measurements for some type aren't scheduled, and
+    # that the parser for that type enters newly encountered measurements
+    # into the database as if they were scheduled right then. In that case,
+    # this field will be False and scheduled measurements won't need to
+    # be setup in advance.
+    needs_scheduled_measurements = models.BooleanField(default=True)
+
+    # Description to show to users, e.g. in the wizard where users can choose
+    # measurement types.
+    description = models.TextField(default='', blank=True)
 
     def __unicode__(self):
         return self.name

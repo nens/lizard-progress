@@ -28,6 +28,7 @@ from lizard_progress.forms import ContractorForm, ExistingUserForm, NewUserForm
 from lizard_progress.forms import ProjectChoiceForm, ContractorChoiceForm
 from lizard_progress.forms import ProjectCreate, ProjectUpdate, ProjectDelete
 from lizard_progress.forms import existing_user_condition, new_user_condition
+from lizard_progress.forms import needs_shapefile_condition
 
 from lizard_ui.urls import debugmode_urlpatterns
 
@@ -61,7 +62,9 @@ urlpatterns = patterns(
     url('^admin/activities/new/$',
         ActivitiesWizard.as_view(
             [ProjectChoiceForm, ContractorChoiceForm,
-             MeasurementTypeForm, ShapefileForm]),
+             MeasurementTypeForm, ShapefileForm],
+            condition_dict={
+                '3': needs_shapefile_condition}),
         name='lizard_progress_newactivities'),
     url('^admin/hydrovakken/new/$',
         HydrovakkenWizard.as_view(

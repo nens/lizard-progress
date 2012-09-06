@@ -12,6 +12,7 @@ $().ready(function () {
     // Preload
     $dialog = $('<div class="lizard-progress-popup"/>').load($url).dialog({
         autoOpen: false,
+        modal: true,
         title: 'Uploaden',
         width: 500
     });

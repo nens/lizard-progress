@@ -279,7 +279,14 @@ class UploadMeasurementsView(UploadView):
 
 class UploadReportsView(UploadView):
 
+    exts = [".pdf"]
+
     def process_file(self, path):
+
+        ext = os.path.splitext(path)[1].lower()
+        if not ext in self.exts:
+            msg = "Allowed file types: %s." % self.exts
+            return json_response({'error': {'details': msg}})
 
         # The destination directory.
         dst = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
@@ -297,7 +304,14 @@ class UploadReportsView(UploadView):
 
 class UploadShapefilesView(UploadView):
 
+    exts = [".dbf", ".prj", ".sbn", ".sbx", ".shp", ".shx"]
+
     def process_file(self, path):
+
+        ext = os.path.splitext(path)[1].lower()
+        if not ext in self.exts:
+            msg = "Allowed file types: %s." % self.exts
+            return json_response({'error': {'details': msg}})
 
         # TODO: perform a sanity check before copying
         # the shapefile to its permanent location?

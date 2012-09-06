@@ -60,14 +60,6 @@ $(function () {
         // Sort files
         sortable: true,
 
-        // Specify what files to browse for
-        {% comment %}
-        filters : [
-{% for ftype, fext in view.project.specifics.upload_file_types %}{title : "{{ ftype }}", extensions : "{{ fext }}"},
-{% endfor %}
-        ],
-        {% endcomment %}
-
         // Flash settings
         //flash_swf_url : '{{ STATIC_URL }}plupload/js/plupload.flash.swf',
 

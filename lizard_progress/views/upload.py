@@ -281,6 +281,11 @@ class UploadReportsView(UploadView):
 
     exts = [".pdf"]
 
+    @staticmethod
+    def get_directory(contractor):
+        return os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+            contractor.project.slug, contractor.slug, 'reports')
+
     def process_file(self, path):
 
         ext = os.path.splitext(path)[1].lower()
@@ -289,8 +294,7 @@ class UploadReportsView(UploadView):
             return json_response({'error': {'details': msg}})
 
         # The destination directory.
-        dst = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
-            self.project.slug, self.contractor.slug, 'reports')
+        dst = UploadReportsView.get_directory(self.contractor)
 
         # Create it if necessary.
         if not os.path.exists(dst):

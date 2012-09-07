@@ -10,6 +10,8 @@ from lizard_progress.views import ComparisonView
 from lizard_progress.views import DashboardAreaView
 from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DashboardView
+from lizard_progress.views import DownloadHomeView
+from lizard_progress.views import DownloadReportsView
 from lizard_progress.views import MapView
 from lizard_progress.views import UploadDialogView
 from lizard_progress.views import UploadHomeView
@@ -109,6 +111,12 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/upload/shapefiles/$',
         login_required(UploadShapefilesView.as_view()),
         name='lizard_progress_uploadshapefilesview'),
+    url('^projects/(?P<project_slug>[^/]+)/download/$',
+        login_required(DownloadHomeView.as_view()),
+        name='lizard_progress_downloadhomeview'),
+    url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/reports/(?P<report>[^/]+)/$',
+        login_required(DownloadReportsView.as_view()),
+        name='lizard_progress_downloadreportsview'),
     url('^(?P<project_slug>[^/]+)/dashboard/' +
         '(?P<contractor_slug>[^/]+)/(?P<area_slug>.+)/graph/$',
         dashboard_graph,

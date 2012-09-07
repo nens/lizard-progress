@@ -33,7 +33,9 @@
   </ul>
 </div>
 
+{% if view.workspace_edit.workspace_items.all or view.collage_edit.collage_items.all %}
 {% workspace_edit view.workspace_edit %}
 {% collage_edit view.collage_edit %}
+{% endif %}
 
 {% endblock sidebar %}

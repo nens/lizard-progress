@@ -127,6 +127,11 @@ class View(AppView):
         return reverse('lizard_progress_uploadhomeview',
                        kwargs={'project_slug': self.project_slug})
 
+    def download_home_url(self):
+        """Returns URL to this project's Download view"""
+        return reverse('lizard_progress_downloadhomeview',
+                       kwargs={'project_slug': self.project_slug})
+
     def dashboard_url(self):
         """Returns URL to this project's Dashboard view"""
         return reverse('lizard_progress_dashboardview',

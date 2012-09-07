@@ -17,11 +17,13 @@
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
   <h2>Download</h2>
+  {% if view.reports %}
   <ul class="without-bullets">
     {% for report in view.reports %}
     <li><a href="{{ report.url }}" title="{{ report.contractor }}">{{ report.name }}</a></li>
     {% endfor %}
   </ul>
+  {% endif %}
 </div>
 {% if view.workspace_edit.workspace_items.all or view.collage_edit.collage_items.all %}
 {% workspace_edit view.workspace_edit %}

@@ -5,20 +5,25 @@
 
 // Upload popup
 $().ready(function () {
-    var $dialog, $url;
+    var $dialog, url;
 
-    $url = $('#upload-wrapper').attr('data-upload-dialog-url');
+    url = $('#upload-wrapper').attr('data-upload-dialog-url');
 
     // Preload
-    $dialog = $('<div class="lizard-progress-popup"/>').load($url).dialog({
+    $dialog = $('<div class="lizard-progress-popup"/>').load(url).dialog({
         autoOpen: false,
-        modal: true,
+        //The "Add Files" button does not work in Chrome when
+        //using a modal dialog. This is a z-index bug?
+        //modal: true,
         title: 'Uploaden',
         width: 500
     });
 
     $('.upload').click(function () {
         var uploader = $('#uploader').plupload('getUploader');
+        //Next line seems to solve a problem with the "Add Files"
+        //button in Chrome when using a modal dialog.
+        //$('#uploader > div.plupload').css('z-index','99999');
         uploader.settings.url = $(this).attr('data-upload-url');
         uploader.splice(); // Clean the queue
         $dialog.dialog('open');

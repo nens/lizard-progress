@@ -165,8 +165,8 @@ class ActivitiesWizard(SessionWizardView):
             self.__save_area(form_list)
             self.__save_locations(form_list)
             self.__save_scheduled_measurements(form_list)
+            self.__save_uploads(form_list)
 
-        self.__save_uploads(form_list)
         if False:
             # For development purposes.
             return render_to_response('lizard_progress/done.html', {
@@ -317,7 +317,7 @@ class ActivitiesWizard(SessionWizardView):
         dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
 
         # Copy the shapefile to the subdirectory.
-        for _, value in form_list[1].cleaned_data.iteritems():
+        for _, value in form_list[3].cleaned_data.iteritems():
             if isinstance(value, UploadedFile):
                 shutil.copy(value.file.name, dst)
 

@@ -30,7 +30,6 @@ from lizard_progress.forms import (
     ProjectForm, MeasurementTypeForm, ShapefileForm)
 from lizard_progress.forms import ContractorForm, ExistingUserForm, NewUserForm
 from lizard_progress.forms import ProjectChoiceForm, ContractorChoiceForm
-from lizard_progress.forms import ProjectCreate, ProjectUpdate, ProjectDelete
 from lizard_progress.forms import existing_user_condition, new_user_condition
 from lizard_progress.forms import needs_shapefile_condition
 
@@ -42,37 +41,31 @@ urlpatterns = patterns(
     '',
     ## Start N0032 experiments:
     url('^projects/$',
-        ProjectsView.as_view(), name='lizard_progress_projecten'),
+        login_required(ProjectsView.as_view()),
+        name='lizard_progress_projecten'),
     url('^admin/$',
-        AppView.as_view(template_name='lizard_progress/admin.html'),
+        login_required(AppView.as_view(template_name='lizard_progress/admin.html')),
         name='lizard_progress_admin'),
     url('^admin/projects/new/$',
-        ProjectWizard.as_view([ProjectForm]),
+        login_required(ProjectWizard.as_view([ProjectForm])),
         name='lizard_progress_newproject'),
-    url('^project/add/$', ProjectCreate.as_view(), name='project_add'),
-    url('^project/(?P<pk>\d+)/$',
-        ProjectUpdate.as_view(),
-        name='project_update'),
-    url('^project/(?P<pk>\d+)/delete/$',
-        ProjectDelete.as_view(),
-        name='project_delete'),
     url('^admin/contractors/new/$',
-        ContractorWizard.as_view(
+        login_required(ContractorWizard.as_view(
             [ContractorForm, ExistingUserForm, NewUserForm],
         condition_dict={
                 '1': existing_user_condition,
-                '2': new_user_condition}),
+                '2': new_user_condition})),
         name='lizard_progress_newcontractor'),
     url('^admin/activities/new/$',
-        ActivitiesWizard.as_view(
+        login_required(ActivitiesWizard.as_view(
             [ProjectChoiceForm, ContractorChoiceForm,
              MeasurementTypeForm, ShapefileForm],
             condition_dict={
-                '3': needs_shapefile_condition}),
+                '3': needs_shapefile_condition})),
         name='lizard_progress_newactivities'),
     url('^admin/hydrovakken/new/$',
-        HydrovakkenWizard.as_view(
-            [ProjectChoiceForm, ShapefileForm]),
+        login_required(HydrovakkenWizard.as_view(
+            [ProjectChoiceForm, ShapefileForm])),
         name='lizard_progress_newhydrovakken'),
     ## End N0032 experiments.
     url('^projects/(?P<project_slug>[^/]+)/$', login_required(View.as_view()),

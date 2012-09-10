@@ -270,26 +270,3 @@ class ShapefileForm(forms.Form):
             raise forms.ValidationError(msg)
 
         return cleaned_data
-
-
-### Form handling with class-based views experiments
-
-
-class ProjectCreate(CreateView):
-    form_class = ProjectForm
-    template_name = "lizard_progress/project.html"
-    success_url = '/'
-    model = Project
-
-    def form_valid(self, form):
-        form.instance.slug = slugify(form.cleaned_data['name'])
-        return super(ProjectCreate, self).form_valid(form)
-
-
-class ProjectUpdate(UpdateView):
-    template_name = "lizard_progress/project.html"
-    model = Project
-
-
-class ProjectDelete(DeleteView):
-    model = Project

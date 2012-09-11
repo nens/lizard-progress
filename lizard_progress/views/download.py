@@ -95,6 +95,7 @@ class DownloadHomeView(AppView):
 
 
 class DownloadReportsView(View):
+    """A view for downloading project reports."""
 
     def get(self, request, *args, **kwargs):
         """Returns the requested project report.
@@ -121,6 +122,7 @@ class DownloadReportsView(View):
         if not os.path.isfile(fullname):
             return HttpResponseForbidden()
 
+        # TODO: let nginx serve the file
         response = HttpResponse(file(fullname).read())
         response['Content-Type'] = mimetypes.guess_type(filename)
         response['Content-Disposition'] = 'attachment; filename=%s' % filename

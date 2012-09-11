@@ -5,14 +5,34 @@ from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 
 from lizard_map.views import AppView
+
+from lizard_progress.forms import CalculateForm
+from lizard_progress.forms import ContractorChoiceForm
+from lizard_progress.forms import ContractorForm
+from lizard_progress.forms import ExistingUserForm
+from lizard_progress.forms import MeasurementTypeForm
+from lizard_progress.forms import NewUserForm
+from lizard_progress.forms import ProjectChoiceForm
+from lizard_progress.forms import ProjectForm
+from lizard_progress.forms import ShapefileForm
+from lizard_progress.forms import existing_user_condition
+from lizard_progress.forms import needs_shapefile_condition
+from lizard_progress.forms import new_user_condition
+
+from lizard_progress.views import ActivitiesWizard
 from lizard_progress.views import ComparisonPopupView
 from lizard_progress.views import ComparisonView
+from lizard_progress.views import ContractorWizard
 from lizard_progress.views import DashboardAreaView
 from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DashboardView
 from lizard_progress.views import DownloadHomeView
 from lizard_progress.views import DownloadReportsView
+from lizard_progress.views import HydrovakkenWizard
 from lizard_progress.views import MapView
+from lizard_progress.views import ProjectWizard
+from lizard_progress.views import ProjectsView
+from lizard_progress.views import ResultsWizard
 from lizard_progress.views import UploadDialogView
 from lizard_progress.views import UploadHomeView
 from lizard_progress.views import UploadMeasurementsView
@@ -22,24 +42,12 @@ from lizard_progress.views import View
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
-from lizard_progress.views import ProjectsView
-from lizard_progress.views import (
-    ProjectWizard, ContractorWizard,
-    ActivitiesWizard, HydrovakkenWizard)
-from lizard_progress.forms import (
-    ProjectForm, MeasurementTypeForm, ShapefileForm)
-from lizard_progress.forms import ContractorForm, ExistingUserForm, NewUserForm
-from lizard_progress.forms import ProjectChoiceForm, ContractorChoiceForm
-from lizard_progress.forms import existing_user_condition, new_user_condition
-from lizard_progress.forms import needs_shapefile_condition
-
 from lizard_ui.urls import debugmode_urlpatterns
 
 admin.autodiscover()
 
 urlpatterns = patterns(
     '',
-    ## Start N0032 experiments:
     url('^projects/$',
         login_required(ProjectsView.as_view()),
         name='lizard_progress_projecten'),
@@ -67,7 +75,10 @@ urlpatterns = patterns(
         login_required(HydrovakkenWizard.as_view(
             [ProjectChoiceForm, ShapefileForm])),
         name='lizard_progress_newhydrovakken'),
-    ## End N0032 experiments.
+    url('^admin/results/$',
+        login_required(ResultsWizard.as_view(
+            [ProjectChoiceForm, ContractorChoiceForm, CalculateForm])),
+        name='lizard_progress_results'),
     url('^projects/(?P<project_slug>[^/]+)/$', login_required(View.as_view()),
         name='lizard_progress_view'),
     url('^projects/(?P<project_slug>[^/]+)/map/$',

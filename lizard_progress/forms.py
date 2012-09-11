@@ -1,3 +1,4 @@
+# coding=utf8
 """Forms, mainly used as steps by form wizards."""
 
 from itertools import chain
@@ -5,11 +6,9 @@ from itertools import chain
 from django import forms
 from django.contrib.auth.models import User
 from django.template.defaultfilters import slugify
-from django.views.generic.edit import CreateView
-from django.views.generic.edit import DeleteView
-from django.views.generic.edit import UpdateView
 from lizard_progress.models import (AvailableMeasurementType, Contractor,
     Project)
+from lizard_progress.views import UploadShapefilesView
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
@@ -270,3 +269,28 @@ class ShapefileForm(forms.Form):
             raise forms.ValidationError(msg)
 
         return cleaned_data
+
+
+class CalculateForm(forms.Form):
+    """cccc"""
+    error_messages = {
+        'no_mothershape': (u'De uitvoerder heeft nog ' +
+            u'geen (moeder)shapefile geüpload.'),
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.contractor = kwargs.pop('contractor', None)
+        super(CalculateForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super(CalculateForm, self).clean()
+        if not self.has_mothershape:
+            raise forms.ValidationError(
+                CalculateForm.error_messages['no_mothershape'])
+        return cleaned_data
+
+    @property
+    def has_mothershape(self):
+        """Returns `True` if an uploaded shapefile is present."""
+        directory = UploadShapefilesView.get_directory(self.contractor)
+        return bool([fn for fn in os.listdir(directory) if fn.endswith('.shp')])

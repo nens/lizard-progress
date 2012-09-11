@@ -8,6 +8,7 @@ from django.contrib.gis.geos import fromstr
 from django.contrib.gis.utils import LayerMapping
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
+from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -15,8 +16,11 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.defaultfilters import slugify
 from django.utils.decorators import method_decorator
+
 from lizard_progress.models import (Area, Hydrovak, Location,
     MeasurementType, SRID, ScheduledMeasurement)
+from lizard_progress.views.upload import UploadShapefilesView
+
 import os
 import osgeo.ogr
 import shutil
@@ -417,3 +421,78 @@ def hydrovak_handler(sender, **kwargs):
         hydrovak = kwargs['instance']
         if not hydrovak.pk:
             hydrovak.project = PROJECT
+
+
+class ResultsWizard(SessionWizardView):
+    """Form wizard for calculating/verifying final project results.
+
+    Usage of this wizard requires `lizard_progress.add_project` permission.
+    """
+
+    @method_decorator(permission_required('lizard_progress.add_project'))
+    def dispatch(self, *args, **kwargs):
+        return super(ResultsWizard, self).dispatch(*args, **kwargs)
+
+    def get_template_names(self):
+        if self.steps.current == '2':
+            return ["lizard_progress/results_last_step.html"]
+        return ["lizard_progress/results.html"]
+
+    def get_form_kwargs(self, step=None):
+        form_kwargs = super(ResultsWizard, self).get_form_kwargs(step)
+        if step == '0':
+            form_kwargs['user'] = self.request.user
+        elif step == '1':
+            form_kwargs['project'] = \
+                self.get_cleaned_data_for_step('0')['project']
+        elif step == '2':
+            form_kwargs['contractor'] = \
+                self.get_cleaned_data_for_step('1')['contractor']
+        return form_kwargs
+
+    def done(self, form_list, **kwargs):
+        if False:
+            # For development purposes.
+            return render_to_response('lizard_progress/done.html', {
+                'form_data': [form.cleaned_data for form in form_list],
+            })
+        else:
+            # TODO: this app should not depend on the hdsr site!
+            from hdsr.metfile import generate_metfile
+            from hdsr.mothershape import check_mothershape
+
+            project = form_list[0].cleaned_data['project']
+            contractor = form_list[1].cleaned_data['contractor']
+
+            # The directory where final results will be stored.
+            dst = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+                project.slug, contractor.slug, 'final_results')
+
+            # Create it if necessary.
+            if not os.path.exists(dst):
+                os.makedirs(dst)
+
+            # Create one huge .met file.
+            with open(os.path.join(dst, 'alle_dwarsprofielen.met'), 'w') \
+                as metfile:
+                generate_metfile(project, contractor, metfile)
+
+            # Check the most recently uploaded 'mother' shapefile.
+            # File `laboratorium_check.txt` will have error messages.
+            shapedir = UploadShapefilesView.get_directory(contractor)
+            mtime = lambda fn: os.stat(os.path.join(shapedir, fn)).st_mtime
+            shapefilename = sorted([fn for fn in os.listdir(shapedir)
+                if fn.endswith('.shp')], key=mtime)[-1]
+
+            with open(os.path.join(dst, 'laboratorium_check.txt'), 'w') as txt_file:
+                check_mothershape(
+                    project, 
+                    contractor, 
+                    str(os.path.join(shapedir, shapefilename)),
+                    txt_file)
+
+            # Redirect to downloads page.
+            url = reverse('lizard_progress_downloadhomeview',
+                kwargs={'project_slug': project.slug})
+
+            return HttpResponseRedirect(url)

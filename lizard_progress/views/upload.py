@@ -22,10 +22,12 @@ from lizard_progress.models import has_access
 from lizard_progress.tools import unique_filename
 from lizard_progress.views.views import document_root
 from lizard_progress.views.views import make_uploaded_file_path
-from lizard_progress.views.wizards import APP_LABEL
 import os
 import shutil
 import time
+
+
+APP_LABEL = Project._meta.app_label
 
 
 def json_response(obj):
@@ -310,6 +312,11 @@ class UploadShapefilesView(UploadView):
 
     exts = [".dbf", ".prj", ".sbn", ".sbx", ".shp", ".shx"]
 
+    @staticmethod
+    def get_directory(contractor):
+        return os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+            contractor.project.slug, contractor.slug, 'shapefile')
+
     def process_file(self, path):
 
         ext = os.path.splitext(path)[1].lower()
@@ -321,8 +328,7 @@ class UploadShapefilesView(UploadView):
         # the shapefile to its permanent location?
 
         # The destination directory.
-        dst = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
-            self.project.slug, self.contractor.slug, 'shapefile')
+        dst = UploadShapefilesView.get_directory(self.contractor)
 
         # Create it if necessary.
         if not os.path.exists(dst):

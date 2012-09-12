@@ -29,6 +29,21 @@ import tempfile
 APP_LABEL = Area._meta.app_label
 
 
+def location_shapefile_directory(project, contractor):
+    return os.path.join(
+        settings.BUILDOUT_DIR, 'var',
+        APP_LABEL, project.slug,
+        contractor.slug, 'locations')
+
+
+def newest_file_in(path, extension=None):
+    mtime = lambda fn: os.stat(os.path.join(path, fn)).st_mtime
+    filename = sorted(
+        [fn for fn in os.listdir(path)
+         if extension is None or fn.endswith(extension)], key=mtime)[-1]
+    return os.path.join(path, filename)
+
+
 class OverwriteStorage(FileSystemStorage):
     """A `FileSystemStorage` class that overwrites existing files.
 
@@ -309,9 +324,7 @@ class ActivitiesWizard(SessionWizardView):
         contractor = form_list[1].cleaned_data['contractor']
 
         # The root directory.
-        dst = os.path.join(settings.BUILDOUT_DIR, 'var',
-            APP_LABEL, project.slug,
-            contractor.slug, 'locations')
+        dst = location_shapefile_directory(project, contractor)
 
         # The root might not exist yet.
         if not os.path.exists(dst):
@@ -460,6 +473,7 @@ class ResultsWizard(SessionWizardView):
             # TODO: this app should not depend on the hdsr site!
             from hdsr.metfile import generate_metfile
             from hdsr.mothershape import check_mothershape
+            from hdsr_controle.realtech_hdsr import controleren
 
             project = form_list[0].cleaned_data['project']
             contractor = form_list[1].cleaned_data['contractor']
@@ -472,24 +486,43 @@ class ResultsWizard(SessionWizardView):
             if not os.path.exists(dst):
                 os.makedirs(dst)
 
-            # Create one huge .met file.
-            with open(os.path.join(dst, 'alle_dwarsprofielen.met'), 'w') \
-                as metfile:
-                generate_metfile(project, contractor, metfile)
-
-            # Check the most recently uploaded 'mother' shapefile.
-            # File `laboratorium_check.txt` will have error messages.
+            # "Moedershape" / "Hydrovakkenshape"
             shapedir = UploadShapefilesView.get_directory(contractor)
-            mtime = lambda fn: os.stat(os.path.join(shapedir, fn)).st_mtime
-            shapefilename = sorted([fn for fn in os.listdir(shapedir)
-                if fn.endswith('.shp')], key=mtime)[-1]
+            shapefilename = newest_file_in(shapedir, extension='.shp')
 
-            with open(os.path.join(dst, 'laboratorium_check.txt'), 'w') as txt_file:
-                check_mothershape(
-                    project, 
-                    contractor, 
-                    str(os.path.join(shapedir, shapefilename)),
-                    txt_file)
+            if ScheduledMeasurement.objects.filter(
+                    project=project,
+                    contractor=contractor,
+                    measurement_type__slug='dwarsprofiel').exists():
+                # Create one huge .met file.
+                with open(os.path.join(dst, 'alle_dwarsprofielen.met'), 'w') \
+                        as metfile:
+                    generate_metfile(project, contractor, metfile)
+
+                # Realtech controle, klopt het aantal kuubs
+                location_shape = newest_file_in(
+                    location_shapefile_directory(project, contractor),
+                    extension='.shp')
+
+                controleren(
+                    str(shapefilename),
+                    location_shape,
+                    os.path.join(dst, 'alle_dwarsprofielen.met'),
+                    project.slug,
+                    contractor.slug)
+
+            if project.has_measurement_type('laboratorium_csv'):
+                # Check the most recently uploaded 'mother' shapefile
+                # against uploaded CSV files.  File
+                # `laboratorium_check.txt` will have error messages.
+                with open(
+                    os.path.join(
+                        dst, 'laboratorium_check.txt'), 'w') as txt_file:
+                    check_mothershape(
+                        project,
+                        contractor,
+                        shapefilename,
+                        txt_file)
 
             # Redirect to downloads page.
             url = reverse('lizard_progress_downloadhomeview',

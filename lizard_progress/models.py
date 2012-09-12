@@ -86,6 +86,15 @@ class Project(models.Model):
     def specifics(self):
         return lizard_progress.specifics.Specifics(self)
 
+    def has_measurement_type(self, mtype_slug):
+        try:
+            MeasurementType.objects.get(
+                project=self,
+                mtype__slug=mtype_slug)
+            return True
+        except MeasurementType.DoesNotExist:
+            return False
+
 
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc
@@ -136,6 +145,7 @@ class Location(models.Model):
 class AvailableMeasurementType(models.Model):
     # "Dwarsprofiel", "Oeverfoto", "Oeverkenmerk", "Peilschaal foto",
     # "Peilschaal kenmerk"
+
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=50, unique=True)
     default_icon_missing = models.CharField(max_length=50)

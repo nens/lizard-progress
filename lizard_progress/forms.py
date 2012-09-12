@@ -293,4 +293,5 @@ class CalculateForm(forms.Form):
     def has_mothershape(self):
         """Returns `True` if an uploaded shapefile is present."""
         directory = UploadShapefilesView.get_directory(self.contractor)
-        return bool([fn for fn in os.listdir(directory) if fn.endswith('.shp')])
+        return bool(
+            [fn for fn in os.listdir(directory) if fn.endswith('.shp')])

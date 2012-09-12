@@ -107,7 +107,8 @@ class DownloadHomeView(AppView):
 
         for contractor in self.project.contractor_set.all():
             if has_access(self.user, self.project, contractor):
-                directory = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+                directory = os.path.join(
+                    settings.BUILDOUT_DIR, 'var', APP_LABEL,
                     contractor.project.slug, contractor.slug, 'final_results')
                 if os.path.isdir(directory):
                     for filename in os.listdir(directory):

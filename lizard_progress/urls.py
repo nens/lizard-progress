@@ -28,6 +28,7 @@ from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DashboardView
 from lizard_progress.views import DownloadHomeView
 from lizard_progress.views import DownloadReportsView
+from lizard_progress.views import DownloadResultsView
 from lizard_progress.views import HydrovakkenWizard
 from lizard_progress.views import MapView
 from lizard_progress.views import ProjectWizard
@@ -121,6 +122,9 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/reports/(?P<report>[^/]+)/$',
         login_required(DownloadReportsView.as_view()),
         name='lizard_progress_downloadreportsview'),
+    url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/results/(?P<report>[^/]+)/$',
+        login_required(DownloadResultsView.as_view()),
+        name='lizard_progress_downloadresultsview'),
     url('^(?P<project_slug>[^/]+)/dashboard/' +
         '(?P<contractor_slug>[^/]+)/(?P<area_slug>.+)/graph/$',
         dashboard_graph,

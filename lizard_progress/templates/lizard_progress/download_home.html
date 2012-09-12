@@ -17,9 +17,12 @@
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
   <h2>Download</h2>
-  {% if view.reports %}
+  {% if view.reports or view.results %}
   <ul class="without-bullets">
     {% for report in view.reports %}
+    <li><a href="{{ report.url }}" title="{{ report.contractor }}">{{ report.name }}</a></li>
+    {% endfor %}
+    {% for report in view.results %}
     <li><a href="{{ report.url }}" title="{{ report.contractor }}">{{ report.name }}</a></li>
     {% endfor %}
   </ul>

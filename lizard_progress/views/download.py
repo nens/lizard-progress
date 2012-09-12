@@ -2,6 +2,7 @@
 
 """Views concerned with downloading files."""
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
@@ -14,6 +15,9 @@ from lizard_progress.models import has_access
 from lizard_progress.views.upload import UploadReportsView
 import mimetypes
 import os
+
+
+APP_LABEL = Project._meta.app_label
 
 
 class DownloadHomeView(AppView):
@@ -93,6 +97,37 @@ class DownloadHomeView(AppView):
 
         return reports
 
+    # TODO: too much code repetition here.
+    def results(self):
+
+        if not self.project:
+            return []
+
+        results = []
+
+        for contractor in self.project.contractor_set.all():
+            if has_access(self.user, self.project, contractor):
+                directory = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+                    contractor.project.slug, contractor.slug, 'final_results')
+                if os.path.isdir(directory):
+                    for filename in os.listdir(directory):
+                        fullname = os.path.join(directory, filename)
+                        if os.path.isfile(fullname):
+                            url = reverse(
+                                'lizard_progress_downloadresultsview',
+                                kwargs={
+                                    'project_slug': self.project.slug,
+                                    'contractor_slug': contractor.slug,
+                                    'report': filename
+                                }
+                            )
+                            results.append({
+                                'contractor': contractor.name,
+                                'name': filename,
+                                'url': url
+                            })
+        return results
+
 
 class DownloadReportsView(View):
     """A view for downloading project reports."""
@@ -118,6 +153,40 @@ class DownloadReportsView(View):
             return HttpResponseForbidden()
 
         directory = UploadReportsView.get_directory(contractor)
+        fullname = os.path.join(directory, filename)
+        if not os.path.isfile(fullname):
+            return HttpResponseForbidden()
+
+        # TODO: let nginx serve the file
+        response = HttpResponse(file(fullname).read())
+        response['Content-Type'] = mimetypes.guess_type(filename)
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        return response
+
+
+class DownloadResultsView(View):
+    """A view for downloading project reports."""
+
+    # TODO: too much code repetition here.
+    def get(self, request, *args, **kwargs):
+        """Returns the requested project report.
+
+        Throws a `HttpResponseForbidden` if the user
+        is not allowed to view the report.
+        """
+
+        project_slug = kwargs.pop('project_slug', None)
+        project = get_object_or_404(Project, slug=project_slug)
+        contractor_slug = kwargs.pop('contractor_slug', None)
+        contractor = get_object_or_404(Contractor,
+            project=project, slug=contractor_slug)
+        if not has_access(request.user, project, contractor):
+            return HttpResponseForbidden()
+
+        filename = os.path.basename(kwargs.pop('report', None))
+
+        directory = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+            contractor.project.slug, contractor.slug, 'final_results')
         fullname = os.path.join(directory, filename)
         if not os.path.isfile(fullname):
             return HttpResponseForbidden()

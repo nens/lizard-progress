@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.0.1 (unreleased)
+1.0.1 (2012-09-12)
 ------------------
 
 Fixed shaky dependencies on where exactly files were uploaded when

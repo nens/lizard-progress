@@ -5,7 +5,9 @@ Changelog of lizard-progress
 1.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+Fixed shaky dependencies on where exactly files were uploaded when
+using them for checks. Now we look in all subdirectories too to find
+the newest file.
 
 
 1.0 (2012-09-12)

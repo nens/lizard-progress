@@ -331,7 +331,7 @@ class ActivitiesWizard(SessionWizardView):
             os.makedirs(dst)
 
         # Create a unique subdirectory in the root.
-        dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
+        #dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
 
         # Copy the shapefile to the subdirectory.
         for _, value in form_list[3].cleaned_data.iteritems():
@@ -473,7 +473,7 @@ class ResultsWizard(SessionWizardView):
             # TODO: this app should not depend on the hdsr site!
             from hdsr.metfile import generate_metfile
             from hdsr.mothershape import check_mothershape
-            from hdsr_controle.realtech_hdsr import controleren
+            from hdsr_controle.realtech_hdsr.data_loader import controleren
 
             project = form_list[0].cleaned_data['project']
             contractor = form_list[1].cleaned_data['contractor']
@@ -488,12 +488,12 @@ class ResultsWizard(SessionWizardView):
 
             # "Moedershape" / "Hydrovakkenshape"
             shapedir = UploadShapefilesView.get_directory(contractor)
-            shapefilename = newest_file_in(shapedir, extension='.shp')
+            shapefilename = str(newest_file_in(shapedir, extension='.shp'))
 
             if ScheduledMeasurement.objects.filter(
                     project=project,
                     contractor=contractor,
-                    measurement_type__slug='dwarsprofiel').exists():
+                    measurement_type__mtype__slug='dwarsprofiel').exists():
                 # Create one huge .met file.
                 with open(os.path.join(dst, 'alle_dwarsprofielen.met'), 'w') \
                         as metfile:
@@ -505,7 +505,7 @@ class ResultsWizard(SessionWizardView):
                     extension='.shp')
 
                 controleren(
-                    str(shapefilename),
+                    shapefilename,
                     location_shape,
                     os.path.join(dst, 'alle_dwarsprofielen.met'),
                     project.slug,

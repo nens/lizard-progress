@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.0.2 (unreleased)
+1.0.2 (2012-09-13)
 ------------------
 
 Moved result of calling Realtech's code to the correct directory.

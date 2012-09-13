@@ -521,6 +521,13 @@ class ResultsWizard(SessionWizardView):
                         project.slug,
                         contractor.slug)
 
+                    # The result file will have the same path as the
+                    # 'mothershape', except with .zip at the end.
+                    resultshape = shapefilename + '.zip'
+
+                    # Move it to the result dir
+                    shutil.move(resultshape, result_dir)
+
             if project.has_measurement_type('laboratorium_csv'):
                 # Check the most recently uploaded 'mother' shapefile
                 # against uploaded CSV files.  File

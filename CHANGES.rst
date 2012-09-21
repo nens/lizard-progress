@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.0.3 (unreleased)
+1.0.3 (2012-09-21)
 ------------------
 
 Fix the call to Realtech code, moving the resulting zipped shapefile

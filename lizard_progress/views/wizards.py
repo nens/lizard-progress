@@ -1,5 +1,12 @@
 """Form-wizard views."""
 
+import logging
+import os
+import osgeo.ogr
+import re
+import shutil
+import tempfile
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -21,10 +28,8 @@ from lizard_progress.models import (Area, Hydrovak, Location,
     MeasurementType, SRID, ScheduledMeasurement)
 from lizard_progress.views.upload import UploadShapefilesView
 
-import os
-import osgeo.ogr
-import shutil
-import tempfile
+
+logger = logging.getLogger(__name__)
 
 APP_LABEL = Area._meta.app_label
 
@@ -522,11 +527,16 @@ class ResultsWizard(SessionWizardView):
                         contractor.slug)
 
                     # The result file will have the same path as the
-                    # 'mothershape', except with .zip at the end.
-                    resultshape = shapefilename + '.zip'
+                    # 'mothershape', except with .zip as extension.
+                    zipshapefile = re.sub('.shp$', '.zip', shapefilename)
 
                     # Move it to the result dir
-                    shutil.move(resultshape, result_dir)
+                    result_path = os.path.join(
+                            result_dir,
+                            os.path.basename(zipshapefile))
+                    if os.path.exists(result_path):
+                        os.remove(result_path)
+                    shutil.move(zipshapefile, result_path)
 
             if project.has_measurement_type('laboratorium_csv'):
                 # Check the most recently uploaded 'mother' shapefile

@@ -44,7 +44,7 @@ USER_CHOICES = (
 
 
 class ContractorForm(forms.ModelForm):
-    name = forms.CharField(label='Uitvoerder:', max_length=50)
+    name = forms.CharField(label='Opdrachtnemer:', max_length=50)
     user_choice_field = forms.ChoiceField(
         label='Loginnaam en wachtwoord',
         widget=forms.RadioSelect,
@@ -139,7 +139,7 @@ class ContractorChoiceForm(forms.Form):
     was selected in a previous step.
     """
 
-    contractor = ContractorChoiceField(queryset=None, label='Uitvoerder')
+    contractor = ContractorChoiceField(queryset=None, label='Opdrachtnemer')
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop('project', None)
@@ -274,7 +274,7 @@ class ShapefileForm(forms.Form):
 class CalculateForm(forms.Form):
     """cccc"""
     error_messages = {
-        'no_mothershape': (u'De uitvoerder heeft nog ' +
+        'no_mothershape': (u'De opdrachtnemer heeft nog ' +
             u'geen (moeder)shapefile geüpload.'),
     }
 

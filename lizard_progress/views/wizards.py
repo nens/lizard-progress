@@ -148,8 +148,8 @@ class ContractorWizard(SessionWizardView):
                 'form_data': [form.cleaned_data for form in form_list],
             })
         else:
-            msg = ('Het toekennen van uitvoerder "%s" aan project "%s" was ' +
-                'succesvol.') % (contractor.name, contractor.project.name)
+            msg = ('Het toekennen van opdrachtnemer "%s" aan project "%s" was '
+                + 'succesvol.') % (contractor.name, contractor.project.name)
             messages.info(self.request, msg)
             return HttpResponseRedirect('/progress/admin/')
 
@@ -206,7 +206,7 @@ class ActivitiesWizard(SessionWizardView):
             })
         else:
             contractor = form_list[1].cleaned_data['contractor']
-            msg = ('Het toewijzen van werkzaamheden aan uitvoerder '
+            msg = ('Het toewijzen van werkzaamheden aan opdrachtnemer '
                 + '"%s" binnen project "%s" was succesvol.') % (
                 contractor.name, contractor.project.name)
             messages.info(self.request, msg)
@@ -305,7 +305,7 @@ class ActivitiesWizard(SessionWizardView):
             # be excluded to make bulk_create successful.
             location_codes = set(ScheduledMeasurement.objects.filter(
                 project=project, contractor=contractor,
-                measurement_type=mtype).\
+                measurement_type=mtype).
                 values_list('location__location_code', flat=True))
 
             # New location_codes, for which measurements need to

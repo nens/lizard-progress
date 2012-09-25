@@ -1,5 +1,12 @@
 """Form-wizard views."""
 
+import logging
+import os
+import osgeo.ogr
+import re
+import shutil
+import tempfile
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -21,10 +28,8 @@ from lizard_progress.models import (Area, Hydrovak, Location,
     MeasurementType, SRID, ScheduledMeasurement)
 from lizard_progress.views.upload import UploadShapefilesView
 
-import os
-import osgeo.ogr
-import shutil
-import tempfile
+
+logger = logging.getLogger(__name__)
 
 APP_LABEL = Area._meta.app_label
 
@@ -36,12 +41,20 @@ def location_shapefile_directory(project, contractor):
         contractor.slug, 'locations')
 
 
+def all_files_in(path, extension=None):
+    for directory, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            if extension is None or filename.endswith(extension):
+                yield os.path.join(directory, filename)
+
+
 def newest_file_in(path, extension=None):
     mtime = lambda fn: os.stat(os.path.join(path, fn)).st_mtime
-    filename = sorted(
-        [fn for fn in os.listdir(path)
-         if extension is None or fn.endswith(extension)], key=mtime)[-1]
-    return os.path.join(path, filename)
+    filenames = sorted(all_files_in(path, extension), key=mtime)
+    if filenames:
+        return filenames[-1].encode('utf8')
+    else:
+        return None
 
 
 class OverwriteStorage(FileSystemStorage):
@@ -331,7 +344,7 @@ class ActivitiesWizard(SessionWizardView):
             os.makedirs(dst)
 
         # Create a unique subdirectory in the root.
-        #dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
+        dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
 
         # Copy the shapefile to the subdirectory.
         for _, value in form_list[3].cleaned_data.iteritems():
@@ -479,24 +492,25 @@ class ResultsWizard(SessionWizardView):
             contractor = form_list[1].cleaned_data['contractor']
 
             # The directory where final results will be stored.
-            dst = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
+            result_dir = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
                 project.slug, contractor.slug, 'final_results')
 
             # Create it if necessary.
-            if not os.path.exists(dst):
-                os.makedirs(dst)
+            if not os.path.exists(result_dir):
+                os.makedirs(result_dir)
 
             # "Moedershape" / "Hydrovakkenshape"
             shapedir = UploadShapefilesView.get_directory(contractor)
-            shapefilename = str(newest_file_in(shapedir, extension='.shp'))
+            shapefilename = newest_file_in(shapedir, extension='.shp')
 
             if ScheduledMeasurement.objects.filter(
                     project=project,
                     contractor=contractor,
                     measurement_type__mtype__slug='dwarsprofiel').exists():
+                metfilename = os.path.join(
+                    result_dir, 'alle_dwarsprofielen.met')
                 # Create one huge .met file.
-                with open(os.path.join(dst, 'alle_dwarsprofielen.met'), 'w') \
-                        as metfile:
+                with open(metfilename, 'w') as metfile:
                     generate_metfile(project, contractor, metfile)
 
                 # Realtech controle, klopt het aantal kuubs
@@ -504,12 +518,25 @@ class ResultsWizard(SessionWizardView):
                     location_shapefile_directory(project, contractor),
                     extension='.shp')
 
-                controleren(
-                    shapefilename,
-                    location_shape,
-                    os.path.join(dst, 'alle_dwarsprofielen.met'),
-                    project.slug,
-                    contractor.slug)
+                if shapefilename and location_shape:
+                    controleren(
+                        shapefilename,
+                        location_shape,
+                        metfilename,
+                        project.slug,
+                        contractor.slug)
+
+                    # The result file will have the same path as the
+                    # 'mothershape', except with .zip as extension.
+                    zipshapefile = re.sub('.shp$', '.zip', shapefilename)
+
+                    # Move it to the result dir
+                    result_path = os.path.join(
+                            result_dir,
+                            os.path.basename(zipshapefile))
+                    if os.path.exists(result_path):
+                        os.remove(result_path)
+                    shutil.move(zipshapefile, result_path)
 
             if project.has_measurement_type('laboratorium_csv'):
                 # Check the most recently uploaded 'mother' shapefile
@@ -517,7 +544,8 @@ class ResultsWizard(SessionWizardView):
                 # `laboratorium_check.txt` will have error messages.
                 with open(
                     os.path.join(
-                        dst, 'laboratorium_check.txt'), 'w') as txt_file:
+                        result_dir,
+                        'laboratorium_check.txt'), 'w') as txt_file:
                     check_mothershape(
                         project,
                         contractor,

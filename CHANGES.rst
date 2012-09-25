@@ -2,8 +2,35 @@ Changelog of lizard-progress
 ===================================================
 
 
-0.15 (unreleased)
------------------
+1.0.4 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+1.0.3 (2012-09-21)
+------------------
+
+Fix the call to Realtech code, moving the resulting zipped shapefile
+afterwards.
+
+
+1.0.2 (2012-09-13)
+------------------
+
+Moved result of calling Realtech's code to the correct directory.
+
+
+1.0.1 (2012-09-12)
+------------------
+
+Fixed shaky dependencies on where exactly files were uploaded when
+using them for checks. Now we look in all subdirectories too to find
+the newest file.
+
+
+1.0 (2012-09-12)
+----------------
 
 - Nothing changed yet.
 

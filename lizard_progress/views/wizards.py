@@ -108,6 +108,10 @@ class ProjectWizard(SessionWizardView):
         else:
             msg = 'Het aanmaken van project "%s" was succesvol.' % project.name
             messages.info(self.request, msg)
+            url = reverse('lizard_progress_newcontractor')
+            msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
+                'Opdrachtnemer toekennen aan een project</a>') % url
+            messages.info(self.request, msg)
             return HttpResponseRedirect('/progress/admin/')
 
 
@@ -150,6 +154,10 @@ class ContractorWizard(SessionWizardView):
         else:
             msg = ('Het toekennen van opdrachtnemer "%s" aan project "%s" was '
                 + 'succesvol.') % (contractor.name, contractor.project.name)
+            messages.info(self.request, msg)
+            url = reverse('lizard_progress_newactivities')
+            msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
+                'Werkzaamheden toewijzen aan een opdrachtnemer</a>') % url
             messages.info(self.request, msg)
             return HttpResponseRedirect('/progress/admin/')
 
@@ -209,6 +217,10 @@ class ActivitiesWizard(SessionWizardView):
             msg = ('Het toewijzen van werkzaamheden aan opdrachtnemer '
                 + '"%s" binnen project "%s" was succesvol.') % (
                 contractor.name, contractor.project.name)
+            messages.info(self.request, msg)
+            url = reverse('lizard_progress_newhydrovakken')
+            msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
+                'Hydrovakken uploaden</a>') % url
             messages.info(self.request, msg)
             return HttpResponseRedirect('/progress/admin/')
 

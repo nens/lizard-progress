@@ -94,6 +94,7 @@ $().ready(function () {
         draggable: false,
         modal: true,
         resizable: false,
-        title: 'Admin'
+        title: 'Admin',
+        width: 450
     });
 });

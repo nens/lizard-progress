@@ -197,7 +197,7 @@ class MeasurementTypeForm(forms.Form):
 
     measurement_types = forms.ModelMultipleChoiceField(
         widget=MtypeCheckboxSelectMultiple,
-        queryset=AvailableMeasurementType.objects.all(),
+        queryset=AvailableMeasurementType.objects.all().order_by('name'),
         label="Uit te voeren werkzaamheden"
     )
 

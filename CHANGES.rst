@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.0.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Improvements to GUI.
 
 
 1.0.3 (2012-09-21)

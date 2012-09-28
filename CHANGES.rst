@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.0.4 (unreleased)
+1.0.4 (2012-09-28)
 ------------------
 
 - Improvements to GUI.

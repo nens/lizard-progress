@@ -310,7 +310,7 @@ class UploadReportsView(UploadView):
 
 class UploadShapefilesView(UploadView):
 
-    exts = [".dbf", ".prj", ".sbn", ".sbx", ".shp", ".shx"]
+    exts = [".dbf", ".prj", ".sbn", ".sbx", ".shp", ".shx", ".xml"]
 
     @staticmethod
     def get_directory(contractor):

@@ -21,3 +21,38 @@ div#messages {
 .helptext {
     font-style: italic;
 }
+
+.wizard-table {
+    width: 95%;
+}
+
+.wizard-table th {
+    width: 10%;
+}
+
+.wizard-table ul {
+    list-style-type: none;
+    margin: 0 0 0 -6px;
+    padding: 0;
+}
+
+.wizard-table li {
+    padding: 2px 0;
+}
+
+.tooltip, .legend-tooltip {
+    cursor: auto;
+}
+
+.rounded-corners {
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    -khtml-border-radius: 6px;
+    border-radius: 6px;
+}
+
+p.admin {
+    font-style: italic;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}

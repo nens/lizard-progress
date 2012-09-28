@@ -399,6 +399,11 @@ class HydrovakkenWizard(SessionWizardView):
             msg = ('Het uploaden van hydrovakken t.b.v. project "%s" '
                 + 'was succesvol.') % project.name
             messages.info(self.request, msg)
+            url = reverse('lizard_progress_view',
+                kwargs={'project_slug': project.slug})
+            msg = ('<a href="%s" tabIndex="-1">' +
+                'Naar de overzichtspagina van dit project</a>') % url
+            messages.info(self.request, msg)
             return HttpResponseRedirect('/progress/admin/')
 
     @staticmethod

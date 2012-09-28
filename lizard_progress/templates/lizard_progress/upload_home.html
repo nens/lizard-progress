@@ -18,9 +18,21 @@
 <div class="sidebarbox sidebarbox-stretched">
   <h2>Upload</h2>
   <ul class="without-bullets" id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
-    <li class="upload" data-upload-url="{{ view.upload_measurements_url }}"><a href="">Metingen</a></li>
-    <li class="upload" data-upload-url="{{ view.upload_shapefiles_url }}"><a href="">Moedershapefile</a></li>
-    <li class="upload" data-upload-url="{{ view.upload_reports_url }}"><a href="">Eindrapportages</a></li>
+    <li class="upload" data-upload-url="{{ view.upload_measurements_url }}">
+      <a href="">Metingen</a>
+      <span class="ss_sprite ss_information sidebarbox-action-icon legend-tooltip">&nbsp;</span>
+      <div class="tooltip rounded-corners">Laad hier uw bestanden in (.CSV en .MET bestanden voor metingen, .JPG bestanden voor foto's).</div>
+    </li>
+    <li class="upload" data-upload-url="{{ view.upload_shapefiles_url }}">
+      <a href="">Moedershapefile</a>
+      <span class="ss_sprite ss_information sidebarbox-action-icon legend-tooltip">&nbsp;</span>
+      <div class="tooltip rounded-corners">Laad hier uw shape-bestanden in (.SHP, .SHX, .DBF, en evtueel .PRJ, .SBX, .SBN).</div>
+    </li>
+    <li class="upload" data-upload-url="{{ view.upload_reports_url }}">
+      <a href="">Eindrapportages</a>
+      <span class="ss_sprite ss_information sidebarbox-action-icon legend-tooltip">&nbsp;</span>
+      <div class="tooltip rounded-corners">Laad hier uw eindrapportage in (.PDF).</div>
+    </li>
   </ul>
 </div>
 {% if view.workspace_edit.workspace_items.all or view.collage_edit.collage_items.all %}

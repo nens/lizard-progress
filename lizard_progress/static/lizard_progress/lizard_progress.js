@@ -98,3 +98,14 @@ $().ready(function () {
         width: 450
     });
 });
+
+$().ready(function () {
+    $('.tooltip').click(function () {
+        // prevent the default action, e.g., following a link
+        return false;
+    });
+    $('.legend-tooltip').click(function () {
+        // prevent the default action, e.g., following a link
+        return false;
+    });
+});

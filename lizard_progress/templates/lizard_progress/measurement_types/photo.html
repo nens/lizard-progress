@@ -1,0 +1,28 @@
+{% if oevers|length > 1 %}
+
+<script type="text/javascript">
+$(function () {
+
+    $img = $('img#oever').css('cursor', 'pointer');
+    
+    $img.toggle(
+    
+        {% for oever in oevers reversed %}
+        
+        function () {
+            $(this).attr('src', '{{ oever.photo_url }}');
+            $(this).attr('alt', '{{ oever.photo_name }}');
+            $('#photo-name').html('{{ oever.photo_name }}');
+        }{% if not forloop.last %},{% endif %}
+        
+        {% endfor %}
+        
+    );
+    
+});
+</script>
+
+{% endif %}
+
+<img id="oever" src="{{ oevers.0.photo_url }}" alt="{{ oevers.0.photo_name }}">
+<div id="photo-name">{{ oevers.0.photo_name }}</div>

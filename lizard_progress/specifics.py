@@ -10,7 +10,6 @@ as entrypoints in the site's setup.py, under
 
 import os
 import logging
-import pkg_resources
 
 from PIL import Image
 from PIL.ImageFile import ImageFile
@@ -28,21 +27,21 @@ class Specifics(object):
         self.__set_specifics(entrypoints)
 
     def __set_specifics(self, entrypoints=None):
-        self._specifics = {}
-        if entrypoints is None:
-            entrypoints = pkg_resources.iter_entry_points(
-                group=ENTRY_POINT)
+        # Only import it now to avoid circular imports (models
+        # imports this, this imports mtype_specifics, that imports
+        # parsers, those import models).
+        from lizard_progress.mtype_specifics import AVAILABLE_SPECIFICS
 
+        self._specifics = {}
         self._slugs_in_project = dict(
             (measurement_type.mtype.slug, measurement_type)
             for measurement_type in self.project.measurementtype_set.all())
 
-        for entrypoint in entrypoints:
-            if entrypoint.name in self._slugs_in_project:
-                # This may raise an ImportError, but we don't handle it
-                # because that means there's a critical error anyway.
-                cls = entrypoint.load()
-                self._specifics[entrypoint.name] = cls
+        for slug in self._slugs_in_project:
+            # If the key doesn't exist in AVAILABLE_SPECIFICS, we just
+            # let it throw the exception because something is wrong
+            # anyway.
+            self._specifics[slug] = AVAILABLE_SPECIFICS[slug]
 
     def __instance(self, measurement_type, contractor=None):
         slug = measurement_type.mtype.slug
@@ -215,48 +214,3 @@ class UnSuccessfulParserResult(object):
 
     def __str__(self):
         return "UnSuccessfulParserResult: {}".format(self.error)
-
-
-class GenericSpecifics(object):
-    """
-    Example / base Specifics implementation.
-
-    The goal of this class is threefold:
-    - Have a specifics implementation we can use for testing
-    - Have an implementation that can be used as a blueprint (you can
-      inherit this class, if you wish).
-    - To have a class with this name.
-    """
-
-    def __init__(self, project, measurement_type, contractor=None):
-        self.project = project
-        self.measurement_type = measurement_type
-        self.contractor = contractor
-
-    ## The below are named "sample_" so that the adapter can see that
-    ## the real html_handler and image_handler aren't implemented.  In
-    ## your own Specifics objects, they need to be named
-    ## 'html_handler' and 'image_handler'.
-
-    def sample_html_handler(self, html_default, scheduled_measurements,
-                            identifiers, layout_options):
-        """
-        A function that can generate popup HTML for this measurement
-        type. Only called for complete measurements, from
-        lizard-progress' adapter's html() function.
-
-        Html_default is the html_default function of the adapter.
-        Scheduled_measurements is a list of ScheduledMeasurement
-        objects belonging to the identifiers passed in identifiers.
-        Layout_options mean the same as in a normal adapter.
-        """
-        pass
-
-    def sample_image_handler(self, scheduled_measurements):
-        """
-        A function that implements an adapter's image() function.
-
-        Scheduled_measurements is a list of ScheduledMeasurement
-        objects belonging to the identifiers passed in.
-        """
-        pass

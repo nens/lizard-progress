@@ -500,9 +500,8 @@ class ResultsWizard(SessionWizardView):
                 'form_data': [form.cleaned_data for form in form_list],
             })
         else:
-            # TODO: this app should not depend on the hdsr site!
-            from hdsr.metfile import generate_metfile
-            from hdsr.mothershape import check_mothershape
+            from lizard_progress.util.metfile import generate_metfile
+            from lizard_progress.mothershape import check_mothershape
             from hdsr_controle.realtech_hdsr.data_loader import controleren
 
             project = form_list[0].cleaned_data['project']

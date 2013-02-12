@@ -1,0 +1,6 @@
+Controle op aanwezigheid en juistheid meetdata in {{ shapefilename }}
+
+{% for location in erratic_locations %}
+{{ location.code }}:
+{% for error in location.errors %}    {{ error }}{% endfor %}
+{% endfor %}

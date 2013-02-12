@@ -1,0 +1,46 @@
+{# Default template for popup #}
+{% load workspaces %}
+
+{% for sm in scheduled_measurements %}
+
+<h2>Peilschaalmeting {{ sm.location.location_code }}</h2>
+{% if sm.complete %}
+<table>
+<thead>
+<th>Veld</th><th>Meting {{ sm.contractor.name }}</th>
+</thead>
+<tr><td>Datum</td><td><strong>{{ sm.measurement.data.date }}</strong></td></tr>
+<tr><td>Tijd</td><td><strong>{{ sm.measurement.data.time }}</strong></td></tr>
+<tr><td>Aflezing</td><td><strong>{{ sm.measurement.data.peilschaal }}</strong></td></tr>
+<tr><td>Meting</td><td><strong>{{ sm.measurement.data.measurement }}</strong></td></tr>
+<tr><td>Opmerking</td><td><strong>{{ sm.measurement.data.comment }}</strong></td></tr>
+</table>
+{% else %}
+<p>Meting nog niet verricht.</p>
+{% endif %}
+{% endfor %}
+
+{% if collage_item_props %}
+<div>
+  <ul class="without-bullets">
+  {% for collage_item_prop in collage_item_props %}
+  <li>
+{% comment %}
+  <a href="{{ collage_item_prop.url }}"
+     class="ss_table_save ss_sprite"
+     title="Export csv">&nbsp;</a>
+{% endcomment %}
+  <a href="{% url lizard_map_collage_add %}"
+     class="ss_sprite ss_star collage-add"
+     data-name="{{ collage_item_prop.name }}"
+     data-adapter-class="{{ collage_item_prop.adapter_class }}"
+     data-adapter-layer-json="{{ collage_item_prop.adapter_layer_json }}"
+     data-identifier="{{ collage_item_prop.identifier }}"
+     data-target-id="#edit-collage"
+     title="Toevoegen aan selectie">&nbsp;</a>
+    {{ collage_item_prop.name }}
+  </li>
+  {% endfor %}
+  </ul>
+</div>
+{% endif %}

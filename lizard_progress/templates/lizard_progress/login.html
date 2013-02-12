@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>HDSR Upload Server</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<style type="text/css">
+<!--
+body, input {
+   font-family: Helvetica, sans-serif;
+   font-size: 13px;
+}
+h1 {
+   text-align: center;
+}
+table {
+   width: 100%;
+}
+.error {
+   color: red;
+}
+.center {
+   width: 450px;
+   height: 200px;
+   position: absolute;
+   left: 50%;
+   top: 50%;
+   margin-left: -225px;
+   margin-top: -100px;
+}
+img#logo {
+  position: absolute;
+  left: -200px;
+  top: -111px;
+}
+img#nenslogo {
+  position: absolute;
+  right: -229px;
+  bottom: -89px;
+}
+-->
+</style>
+</head>
+
+<body>
+<div class="center">
+<h1>UPLOAD SERVER</h1>
+<a href="http://www.hdsr.nl"><img id="logo" src="/static_media/hdsr/logo_2.gif" /></a>
+<a href="http://www.nelen-schuurmans.nl"><img id="nenslogo" src="/static_media/hdsr/logo_nelenschuurmans.png" /></a>
+
+{% load url from future %}
+
+{% if form.non_field_errors %}
+  {% for error in form.non_field_errors %}
+  <p class="error">{{ error }}</a>
+  {% endfor %}
+{% endif %}
+
+<form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+{% csrf_token %}
+<table>
+<tr>
+    <td>{{ form.username.label_tag }}</td>
+    <td>{{ form.username }}<span class="error"> {{ form.username.errors|striptags }}</span></td>
+</tr>
+<tr>
+    <td>{{ form.password.label_tag }}</td>
+    <td>{{ form.password }}<span class="error"> {{ form.password.errors|striptags }}</span></td>
+</tr>
+</table>
+
+<input type="submit" value="login" />
+<input type="hidden" name="next" value="{{ next }}" />
+</form>
+
+</div>
+
+</body>
+
+</html>

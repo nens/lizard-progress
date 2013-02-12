@@ -16,6 +16,7 @@ install_requires = [
     'lizard-map',
     'pkginfo',
     'factory_boy',
+    'mock'
     ],
 
 tests_require = [

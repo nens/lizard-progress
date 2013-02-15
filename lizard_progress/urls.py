@@ -49,6 +49,9 @@ admin.autodiscover()
 
 urlpatterns = patterns(
     '',
+    url('^$',
+        login_required(ProjectsView.as_view()),
+        name='lizard_progress_projecten'),
     url('^projects/$',
         login_required(ProjectsView.as_view()),
         name='lizard_progress_projecten'),

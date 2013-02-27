@@ -115,7 +115,7 @@ class ProjectWizard(SessionWizardView):
             msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
                 'Opdrachtnemer toekennen aan een project</a>') % url
             messages.info(self.request, msg)
-            return HttpResponseRedirect('/progress/admin/')
+            return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
 
 class ContractorWizard(SessionWizardView):
@@ -162,7 +162,7 @@ class ContractorWizard(SessionWizardView):
             msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
                 'Werkzaamheden toewijzen aan een opdrachtnemer</a>') % url
             messages.info(self.request, msg)
-            return HttpResponseRedirect('/progress/admin/')
+            return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
 
 class ActivitiesWizard(SessionWizardView):
@@ -225,7 +225,7 @@ class ActivitiesWizard(SessionWizardView):
             msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
                 'Hydrovakken uploaden</a>') % url
             messages.info(self.request, msg)
-            return HttpResponseRedirect('/progress/admin/')
+            return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
     def __process_shapefile(self, form_list):
         """Process shapefile.
@@ -407,7 +407,7 @@ class HydrovakkenWizard(SessionWizardView):
             msg = ('<a href="%s" tabIndex="-1">' +
                 'Naar de overzichtspagina van dit project</a>') % url
             messages.info(self.request, msg)
-            return HttpResponseRedirect('/progress/admin/')
+            return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
     @staticmethod
     def __import_geoms(form_list):

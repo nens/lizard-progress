@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.0.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixes to make the app work in uploadserver-site (standing alone).
 
 
 1.0.4 (2012-09-28)

@@ -11,6 +11,7 @@ long_description = '\n\n'.join([
 install_requires = [
     'Django >= 1.4',  # Ships with form-wizard
     'django-extensions',
+    'django-jsonfield',
     'django-nose',
     'lizard-ui',
     'lizard-map',

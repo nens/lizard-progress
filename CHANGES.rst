@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.2 (unreleased)
+1.2 (2013-03-05)
 ----------------
 
 - Lots of work to make it possible to have several error messages for

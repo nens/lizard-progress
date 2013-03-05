@@ -5,6 +5,12 @@
 See wizards.py for wizard-specific upload code.
 """
 
+import datetime
+import logging
+import os
+import shutil
+import time
+
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -14,20 +20,21 @@ from django.shortcuts import get_object_or_404
 from django.utils import simplejson as json
 from django.views.generic import TemplateView
 from django.views.generic import View
+
 from lizard_map.views import AppView
 from lizard_progress import specifics
 from lizard_progress.models import Contractor
 from lizard_progress.models import Project
+from lizard_progress.models import UploadedFile
 from lizard_progress.models import has_access
 from lizard_progress.tools import unique_filename
 from lizard_progress.views.views import document_root
 from lizard_progress.views.views import make_uploaded_file_path
-import os
-import shutil
-import time
 
 
 APP_LABEL = Project._meta.app_label
+
+logger = logging.getLogger(__name__)
 
 
 def json_response(obj):
@@ -52,7 +59,7 @@ class UploadHomeView(AppView):
     measurements, shapefiles, reports, etc. This view is the
     starting point for a contractor who has to upload data.
     """
-    template_name = "lizard_progress/upload_home.html"
+    template_name = "lizard_progress/upload_page.html"
 
     def __init__(self, *args, **kwargs):
         super(UploadHomeView, self).__init__(*args, **kwargs)
@@ -62,6 +69,14 @@ class UploadHomeView(AppView):
     def get(self, request, *args, **kwargs):
         self.project_slug = kwargs.get('project_slug', None)
         self.project = get_object_or_404(Project, slug=self.project_slug)
+
+        try:
+            self.contractor = Contractor.objects.get(
+                project=self.project,
+                user=request.user)
+        except Contractor.DoesNotExist:
+            pass
+
         if has_access(request.user, self.project):
             return super(UploadHomeView, self).get(request, *args, **kwargs)
         else:
@@ -102,6 +117,22 @@ class UploadHomeView(AppView):
         })
         return crumbs
 
+    def files_ready(self):
+        if not hasattr(self, '_files_ready'):
+            self._files_ready = list(UploadedFile.objects.filter(
+                    project=self.project,
+                    contractor=self.contractor,
+                    ready=True))
+        return self._files_ready
+
+    def files_not_ready(self):
+        if not hasattr(self, '_files_not_ready'):
+            self._files_not_ready = list(UploadedFile.objects.filter(
+                    project=self.project,
+                    contractor=self.contractor,
+                    ready=False))
+        return self._files_not_ready
+
 
 class UploadView(View):
 
@@ -116,6 +147,8 @@ class UploadView(View):
 
         if not has_access(request.user, self.project):
             return HttpResponseForbidden()
+
+        self.user = request.user
 
         return super(UploadView, self).dispatch(
             request, *args, **kwargs)
@@ -160,8 +193,22 @@ class UploadView(View):
 
 
 class UploadMeasurementsView(UploadView):
+    def process_file(self, path):
+        UploadedFile.objects.create(
+            project=self.project,
+            contractor=self.contractor,
+            uploaded_by=self.user,
+            uploaded_at=datetime.datetime.now(),
+            path=path)
+
+        return json_response({})
+
+
+class OldUploadMeasurementsView(UploadView):
     """Handles file upload, file validation, entering data into the
-    database and moving files to their destination."""
+    database and moving files to their destination.
+
+    XXX: This will all now be handled by a background Celery task."""
 
     def process_file(self, path):
         """Find parsers for the uploaded file and see if they accept it."""

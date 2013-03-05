@@ -23,6 +23,11 @@ from lizard_progress.views import ScreenFigure
 logger = logging.getLogger(__name__)
 
 
+FILE_IMAGE = object()
+FILE_NORMAL = object()
+FILE_READER = object()
+
+
 class GenericSpecifics(object):
     """
     Example / base Specifics implementation.
@@ -71,6 +76,7 @@ class GenericSpecifics(object):
 class MetfileSpecifics(GenericSpecifics):
     extension = '.met'
     parser = lizard_progress.parsers.met_parser.MetParser
+    linelike = True
 
     def image_handler(self, scheduled_measurements):
         if not scheduled_measurements:
@@ -136,6 +142,7 @@ class MetfileSpecifics(GenericSpecifics):
 class OeverfotoSpecifics(GenericSpecifics):
     extension = '.jpg'
     parser = lizard_progress.parsers.oeverfoto_parser.OeverfotoParser
+    linelike = False
 
     def html_handler(self, html_default, scheduled_measurements,
                      identifiers, layout_options):
@@ -185,6 +192,7 @@ class OeverfotoSpecifics(GenericSpecifics):
 class OeverkenmerkSpecifics(GenericSpecifics):
     extension = '.csv'
     parser = lizard_progress.parsers.oeverkenmerk_parser.OeverkenmerkParser
+    linelike = True
 
     def html_handler(self, html_default, scheduled_measurements,
                          identifiers, layout_options):
@@ -199,6 +207,7 @@ class OeverkenmerkSpecifics(GenericSpecifics):
 class PeilschaalFotoSpecifics(GenericSpecifics):
     extension = '.jpg'
     parser = lizard_progress.parsers.peilschaal_jpg_parser.PeilschaalJpgParser
+    linelike = False
 
     def html_handler(self, html_default, scheduled_measurements,
                           identifiers, layout_options):
@@ -225,6 +234,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
 class PeilschaalMetingSpecifics(GenericSpecifics):
     extension = '.csv'
     parser = lizard_progress.parsers.peilschaal_csv_parser.PeilschaalCsvParser
+    linelike = True
 
     def html_handler(self, html_default, scheduled_measurements,
                      identifiers, layout_options):
@@ -238,6 +248,7 @@ class PeilschaalMetingSpecifics(GenericSpecifics):
 class LaboratoriumCsvSpecifics(GenericSpecifics):
     extension = '.csv'
     parser = lizard_progress.parsers.lab_csv_parser.LabCsvParser
+    linelike = True
 
 
 AVAILABLE_SPECIFICS = {

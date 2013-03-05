@@ -1,0 +1,33 @@
+{% extends "lizard_progress/ui_base.html" %}
+
+{% block main-area %}
+<h1>Upload bestanden</h1>
+
+<div id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
+<button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_measurements_url }}"><i class="icon-upload"></i> Upload bestanden</button>
+<button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_shapefiles_url }}"><i class="icon-upload"></i> Upload moedershapefile</button>
+<button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_reports_url }}"><i class="icon-upload"></i> Upload eindrapportages</button>
+</div>
+
+
+{% if view.files_not_ready %}
+<h3>Nog niet verwerkte bestanden</h3>
+<table class="table table-striped">
+<thead><td>Filenaam</td><td>Datum</td></thead>
+{% for f in view.files_not_ready %}
+<tr><td>{{ f.filename }}</td><td>{{ f.uploaded_at }}</td></tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% if view.files_ready %}
+<h3>Verwerkte bestanden</h3>
+<table class="table">
+<thead><td>Filenaam</td><td>Datum</td></thead>
+{% for f in view.files_ready %}
+<tr class="{% if f.success %}success{% else %}error{% endif %}"><td>{{ f.filename }}</td><td>{{ f.uploaded_at }}</td></tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}

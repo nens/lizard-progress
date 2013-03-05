@@ -1,4 +1,11 @@
-# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
+# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
+# -*- coding: utf-8 -*-
+
+# Python 3 is coming
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
@@ -43,6 +50,8 @@ from lizard_progress.views import View
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
+from lizard_progress.views import ui
+
 from lizard_ui.urls import debugmode_urlpatterns
 
 admin.autodiscover()
@@ -56,7 +65,8 @@ urlpatterns = patterns(
         login_required(ProjectsView.as_view()),
         name='lizard_progress_projecten'),
     url('^admin/$',
-        login_required(AppView.as_view(template_name='lizard_progress/admin.html')),
+        login_required(
+            AppView.as_view(template_name='lizard_progress/admin.html')),
         name='lizard_progress_admin'),
     url('^admin/projects/new/$',
         login_required(ProjectWizard.as_view([ProjectForm])),
@@ -141,5 +151,9 @@ urlpatterns = patterns(
         '(?P<filename>[^/]+)$',
         protected_file_download,
         name='lizard_progress_filedownload'),
+
+    # Nieuwe UI voor uploadserver-site
+    url('^ui/$',
+        ui.TestView.as_view()),
     )
 urlpatterns += debugmode_urlpatterns()

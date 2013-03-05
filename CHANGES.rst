@@ -5,8 +5,16 @@ Changelog of lizard-progress
 1.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Lots of work to make it possible to have several error messages for
+  a file parse, use of metfilelib.parser.
 
+- Instead of immediately parsing an uploaded file in the view, it is
+  now saved as an UploadedFile, and can be processed in the
+  background. There is a new upload page that shows the status of
+  uploaded files.
+
+- Some simplifying work, but the way measurement types are tied to
+  projects is still far too complicated.
 
 1.1 (2013-02-27)
 ----------------

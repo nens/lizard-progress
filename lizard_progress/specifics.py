@@ -1,24 +1,33 @@
+# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
+# -*- coding: utf-8 -*-
 """
-Connect to classes that implement the specifics of a given project.
-
-Usually implemented in a Lizard site.
-
-Class/function names to be called by this module should be registered
-as entrypoints in the site's setup.py, under
-'lizard_progress.project_specifics'.
+Base class and some utilities for the measurement-type specific stuff
+that is in mtype_specifics and parsers/*.
 """
 
+# Python 3 is coming
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
+import collections
 import os
 import logging
+import metfilelib.util.file_reader
 
 from PIL import Image
-from PIL.ImageFile import ImageFile
-
-from lizard_progress.tools import LookaheadLine
-
-ENTRY_POINT = "lizard_progress.measurement_type_specifics"
 
 logger = logging.getLogger(__name__)
+
+
+# Parsers can decide what type of opened file they want to receive
+FILE_IMAGE = object()   # An Image object
+FILE_NORMAL = object()  # A normal file object as returned by open()
+FILE_READER = object()  # A file reader with support for line numbers, etc
+
+
+Error = collections.namedtuple('Error', 'line, error_code, error_message')
 
 
 class Specifics(object):
@@ -33,63 +42,59 @@ class Specifics(object):
         from lizard_progress.mtype_specifics import AVAILABLE_SPECIFICS
 
         self._specifics = {}
-        self._slugs_in_project = dict(
-            (measurement_type.mtype.slug, measurement_type)
+
+        slugs_in_project = set(
+            measurement_type.slug
             for measurement_type in self.project.measurementtype_set.all())
 
-        for slug in self._slugs_in_project:
+        for slug in slugs_in_project:
             # If the key doesn't exist in AVAILABLE_SPECIFICS, we just
             # let it throw the exception because something is wrong
             # anyway.
             self._specifics[slug] = AVAILABLE_SPECIFICS[slug]
 
     def __instance(self, measurement_type, contractor=None):
-        slug = measurement_type.mtype.slug
+        slug = measurement_type.slug
         cls = self._specifics[slug]
         return cls(self.project, measurement_type, contractor)
 
     def parsers(self, filename):
-        parsers = []
-        for measurement_type in self._slugs_in_project.values():
-            instance = self.__instance(measurement_type)
-            if filename.lower().endswith(instance.extension):
-                parsers.append(instance.parser)
-
-        return parsers
+        """Return the parsers that have the right extension for this
+        filename"""
+        return [
+            specifics.parser
+            for specifics in self._specifics.values()
+            if filename.lower().endswith(specifics.extension)
+            ]
 
     def html_handler(self, measurement_type, contractor):
         instance = self.__instance(measurement_type, contractor)
-        if hasattr(instance, 'html_handler'):
-            return instance.html_handler
-        else:
-            return None
+        return getattr(instance, 'html_handler', None)
 
     def image_handler(self, measurement_type, contractor):
         instance = self.__instance(measurement_type, contractor)
-
-        if hasattr(instance, 'image_handler'):
-            return instance.image_handler
-        else:
-            return None
+        return getattr(instance, 'image_handler', None)
 
 
-def _open_uploaded_file(path):
+def _open_uploaded_file(path, file_type):
     """Open file using PIL.Image.open if it is an image, otherwise
     open normally."""
     filename = os.path.basename(path)
 
-    for ext in ('.jpg', '.gif', '.png'):
-        if filename.lower().endswith(ext):
-            try:
-                ob = Image.open(path)
-                ob.name = filename
-                return ob
-            except IOError:
-                logger.info("IOError in Image.open(%s)!" % (path,))
-                raise
-    return open(path, "rU")  # U for universal line endings -- some
-                             # people uploaded Mac ending files. Does
-                             # mean that binaries fail.
+    if file_type is FILE_IMAGE:
+        try:
+            ob = Image.open(path)
+            ob.name = filename
+            return ob
+        except IOError:
+            logger.info("IOError in Image.open(%s)!" % (path,))
+            raise
+
+    if file_type is FILE_READER:
+        return metfilelib.util.file_reader.FileReader(
+            path, skip_empty_lines=True)
+
+    return open(path, 'rU')
 
 
 def parser_factory(parser, project, contractor, path):
@@ -99,7 +104,7 @@ def parser_factory(parser, project, contractor, path):
         raise ValueError("Argument 'parser' of parser_factory should be "
                          "a ProgressParser instance.")
 
-    file_object = _open_uploaded_file(path)
+    file_object = _open_uploaded_file(path, parser.FILE_TYPE)
     return parser(project, contractor, file_object)
 
 
@@ -110,7 +115,7 @@ class ProgressParser(object):
     will be set. Deciding which measurement type we are dealing with is
     left to the parsers.
 
-    The parse() method will have to be implemented by sites. It gets
+    The parse() method will have to be implemented by parsers. It gets
     one argument: file_object, which isn't passed in but set as
     self.file_object so that other methods can access it as well. In
     case the uploaded file is a .jpg, .gif or .png, this is an opened
@@ -123,6 +128,16 @@ class ProgressParser(object):
     is the wrong type.  This is because the type of object you get is
     effectively controlled by the user, and therefore untrusted.
 
+    Parsers return a tuple with three elements: success, errors,
+    measurements.
+
+    Success is None if this parser doesn't apply to this file; it's
+    not even wrong.
+
+    If success is True, measurements should be a list of Measurement instances.
+
+    If success is False, errors should be a list of Error instances.
+
     Parse can return three different things:
     - When it finds it is not applicable to the file in question,
       return UnSuccessfulParserResult without any arguments.
@@ -134,33 +149,21 @@ class ProgressParser(object):
       iterable of Measurement objects. The calling view will add the
       full filename of the parsed file and a timestamp to them."""
 
+    FILE_TYPE = FILE_NORMAL
+
     def __init__(self, project, contractor, file_object):
         self.project = project
         self.contractor = contractor
         self.file_object = file_object
+        self.errors = []
 
     def parse(self, check_only=False):
         """Not applicable therefore return default."""
         return UnSuccessfulParserResult()
 
-    def lookahead(self):
-        """
-        Helper method to go through a non-image file line by line.
-        Usage:
-        with self.lookahead() as la:
-            while not la.eof():
-                print la.line
-                print la.line_number
-                la.next()
-        """
-        if not self.file_object or isinstance(self.file_object, ImageFile):
-            raise ValueError("lookahead() was passed PIL.Image object.")
-
-        self.la = LookaheadLine(self.file_object)
-        return self.la
-
     def error(self, key, *args):
-        """Lookup the error message by its key in self.ERRORS, format it
+        """Old-style way of returning an error.
+        Lookup the error message by its key in self.ERRORS, format it
         using *args and add the line number if possible."""
 
         prefix = ''
@@ -183,8 +186,31 @@ class ProgressParser(object):
         return UnSuccessfulParserResult(prefix + message)
 
     def success(self, measurements):
-        """A shortcut with little utility, but if we have self.error()
+        """Old-style way of returning success.
+        A shortcut with little utility, but if we have self.error()
         perhaps we should also have self.success()."""
+        return SuccessfulParserResult(measurements)
+
+    def record_error(self, line_number, error_code, error_message):
+        """Record an error, then continue parsing. Because the error
+        is recorded, self._parser_result() will return an
+        UnSuccessfulParserResult later."""
+        self.errors.append(Error(
+                line=line_number,
+                error_code=error_code,
+                error_message=error_message))
+
+    def _parser_result(self, measurements):
+        """Called by the parser, from the parse() function, after
+        parsing a file using new-style errors. If errors were recorded
+        before this point, this will return an
+        UnSuccessfulParserResult with those errors in it. If there
+        were no errors, this will return a SuccessfulParserResult with
+        the right Measurements set."""
+
+        if self.errors:
+            return UnSuccessfulParserResult(errors=self.errors)
+
         return SuccessfulParserResult(measurements)
 
 
@@ -203,14 +229,29 @@ class SuccessfulParserResult(object):
         self.success = True
         self.measurements = tuple(measurements)
 
+    def __str__(self):
+        return ("SuccessfulParserResult, {0} measurements".
+                format(len(self.measurements)))
+
 
 class UnSuccessfulParserResult(object):
     """
     Returned by an unsuccessful parser. Error is an error message.
     """
-    def __init__(self, error=None):
+    def __init__(self, error=None, errors=None):
         self.success = False
+
+        # A parser should use either the old way of reporting errors,
+        # or the new way.
+
+        # Old way -- one error message, presumed to be at line number 0
         self.error = error
 
+        # New way -- iterable of Error namedtuples, with line /
+        # error_message / error_code
+        self.errors = tuple(errors) if errors else None
+
     def __str__(self):
-        return "UnSuccessfulParserResult: {}".format(self.error)
+        return (
+            "UnSuccessfulParserResult: {}".
+            format(self.error or self.errors))

@@ -301,3 +301,54 @@ class Hydrovak(models.Model):
     class Meta:
         unique_together = ("project", "br_ident")
         verbose_name_plural = "Hydrovakken"
+
+
+class UploadedFile(models.Model):
+    """This model represents a file that was uploaded.
+
+    An uploaded file will first just be stored and recorded in this
+    database table.  Then background tasks will process it -- check
+    it, if successful copy it and record it measurements, if not
+    successful note that and store error messages in here.
+
+    After this processing, the UploadedFile can in principle be
+    deleted. However, it is first kept around so that its status can
+    be shown to the user. The user can then decide to clean up the
+    status view, and at that point the UploadedFile instances can be
+    deleted. The stored uploaded file is deleted at that point as
+    well. However, if uploading was successful, then there is a copy
+    of it in the file system that will be kept. That is beyond the
+    zone of influence of this model."""
+
+    project = models.ForeignKey(Project)
+    contractor = models.ForeignKey(Contractor)
+    uploaded_by = models.ForeignKey(User)
+    uploaded_at = models.DateTimeField()
+
+    path = models.CharField(max_length=255)
+
+    # If ready is True but success is False, uploading was unsuccessful.
+    # In that case, there should be error messages in the UploadedFileError
+    # models.
+
+    ready = models.BooleanField(default=False)
+
+    # Success has no meaning while ready is False
+    success = models.BooleanField(default=False)
+
+    # A file is linelike if it is text and line numbers make sense
+    # (e.g., a .met or .csv file) and False if it is not (like an
+    # image).
+    linelike = models.BooleanField(default=True)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.path)
+
+
+class UploadedFileError(models.Model):
+    uploaded_file = models.ForeignKey(UploadedFile)
+    line = models.IntegerField(default=0)  # Always 0 if file is not linelike
+    error_code = models.CharField(max_length=10)
+    error_message = models.CharField(max_length=300)
+

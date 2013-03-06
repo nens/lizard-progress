@@ -73,6 +73,22 @@ def current_files(measurements):
 
     return set(measurement.filename for measurement in measurements)
 
+class Organization(models.Model):
+    name = models.CharField(max_length=128)
+    description = models.CharField(max_length=256, blank=True, null=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    organization = models.ForeignKey(Organization)
+
+    def __unicode__(self):
+        return "{0} {1}".format(self.user.username,
+                                self.organization.name)
+
 
 class Project(models.Model):
     # "Profielen", "Peilschalen", etc
@@ -103,8 +119,8 @@ class Contractor(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
-    user = models.ForeignKey(User, null=True, blank=True,
-        verbose_name='loginnaam')
+    organization = models.ForeignKey(Organization, null=True, blank=True,
+        verbose_name='organisatie')
 
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)
@@ -353,20 +369,3 @@ class UploadedFileError(models.Model):
     line = models.IntegerField(default=0)  # Always 0 if file is not linelike
     error_code = models.CharField(max_length=10)
     error_message = models.CharField(max_length=300)
-
-
-class Organization(models.Model):
-    name = models.CharField(max_length=128)
-    description = models.CharField(max_length=256, blank=True, null=True)
-
-    def __unicode__(self):
-        return self.name
-
-
-class UserProfile(models.Model):
-    user = models.ForeignKey(User, unique=True)
-    organization = models.ForeignKey(Organization)
-
-    def __unicode__(self):
-        return "{0} {1}".format(self.user.username,
-                                self.organization.name)

@@ -7,7 +7,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.template.defaultfilters import slugify
 from lizard_progress.models import (AvailableMeasurementType, Contractor,
-    Project)
+    Project, UserProfile)
 from lizard_progress.views import UploadShapefilesView
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
@@ -21,6 +21,17 @@ logger = logging.getLogger(__name__)
 
 
 class ProjectForm(forms.ModelForm):
+    name = forms.CharField(max_length=50)
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.get('initial').pop('superuser')
+        super(ProjectForm, self).__init__(*args, **kwargs)
+        organization = UserProfile.objects.get(user=user).organization
+        userprofiles = UserProfile.objects.filter(organization=organization)
+        users = [profile.user for profile in userprofiles] 
+        usernames = [u.username for u in users]
+        self.fields['superuser'].queryset = \
+            User.objects.filter(username__in= usernames)
 
     def clean_name(self):
         """Validates and returns the name of a new project."""
@@ -45,11 +56,6 @@ USER_CHOICES = (
 
 class ContractorForm(forms.ModelForm):
     name = forms.CharField(label='Opdrachtnemer:', max_length=50)
-    user_choice_field = forms.ChoiceField(
-        label='Loginnaam en wachtwoord',
-        widget=forms.RadioSelect,
-        choices=USER_CHOICES
-    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)

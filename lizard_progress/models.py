@@ -1,6 +1,8 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
 # from django.db import models
 
+from __future__ import unicode_literals
+
 RDNEW = 28992
 SRID = RDNEW
 
@@ -352,3 +354,19 @@ class UploadedFileError(models.Model):
     error_code = models.CharField(max_length=10)
     error_message = models.CharField(max_length=300)
 
+
+class Organization(models.Model):
+    name = models.CharField(max_length=128)
+    description = models.CharField(max_length=256, blank=True, null=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    organization = models.ForeignKey(Organization)
+
+    def __unicode__(self):
+        return "{0} {1}".format(self.user.username,
+                                self.organization.name)

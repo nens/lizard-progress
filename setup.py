@@ -15,6 +15,7 @@ install_requires = [
     'django-nose',
     'lizard-ui',
     'lizard-map',
+    'lizard-security',
     'metfilelib',
     'pkginfo',
     'factory_boy',

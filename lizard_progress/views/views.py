@@ -96,8 +96,7 @@ class ProjectsView(AppView):
         """Returns a list of projects the current user has access to."""
         projects = []
         for project in Project.objects.all():
-            if has_access(self.request.user, project):
-                projects.append(project)
+            projects.append(project)
         return projects
 
 

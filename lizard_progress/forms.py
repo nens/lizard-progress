@@ -55,7 +55,7 @@ class ContractorForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super(ContractorForm, self).__init__(*args, **kwargs)
         self.fields['project'].queryset = \
-            Project.objects.filter(superuser=user)
+            Project.objects.all()
 
     class Meta:
         model = Contractor

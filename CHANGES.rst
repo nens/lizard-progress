@@ -5,7 +5,11 @@ Changelog of lizard-progress
 1.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Move document_root and make_uploaded_file_path functions to
+  process_uploaded_file.py, to prevent circular imports.
+
+- Made a Celery task that calls process_uploaded_file, and call this
+  task from the upload view after uploading a file.
 
 
 1.2 (2013-03-05)

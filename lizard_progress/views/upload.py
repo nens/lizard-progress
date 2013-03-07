@@ -23,6 +23,7 @@ from django.views.generic import View
 
 from lizard_map.views import AppView
 from lizard_progress import specifics
+from lizard_progress import tasks
 from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import UploadedFile
@@ -194,12 +195,13 @@ class UploadView(View):
 
 class UploadMeasurementsView(UploadView):
     def process_file(self, path):
-        UploadedFile.objects.create(
+        uploaded_file = UploadedFile.objects.create(
             project=self.project,
             contractor=self.contractor,
             uploaded_by=self.user,
             uploaded_at=datetime.datetime.now(),
             path=path)
+        tasks.process_uploaded_file_task.delay(uploaded_file.id)
 
         return json_response({})
 

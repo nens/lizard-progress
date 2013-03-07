@@ -17,14 +17,57 @@ import time
 import traceback
 
 from django.db import transaction
+from django.conf import settings
 
 from lizard_progress import models
 from lizard_progress import specifics
 from lizard_progress.tools import unique_filename
-from lizard_progress.views.views import document_root
-from lizard_progress.views.views import make_uploaded_file_path
 
 logger = logging.getLogger(__name__)
+
+
+def document_root():
+    """Get the document root for uploaded files as an absolute path.
+    If LIZARD_PROGRESS_ROOT is given in settings, return that,
+    otherwise the directory var/lizard_progress/ under BUILDOUT_DIR.
+    """
+
+    root = getattr(settings, 'LIZARD_PROGRESS_ROOT', None)
+    if root is None:
+        root = os.path.join(settings.BUILDOUT_DIR,
+                            'var', 'lizard_progress')
+    return root
+
+
+def make_uploaded_file_path(root, project, contractor,
+                            measurement_type, filename):
+    """Gives the path to some uploaded file, which depends on the
+    project it is for, the contractor that uploaded it and the
+    measurement type that got its data from this file.
+
+    Project, contractor, measurement_type can each be either a
+    model instance of that type or a string containing the slug
+    of one.
+
+    Can be used both for absolute file paths (pass in document_root()
+    as root) or for URLs that will be passed to Nginx for X-Sendfile
+    (uses /protected/ as the root).
+
+    External URLs should use a reverse() call to the
+    lizard_progress_filedownload view instead of this function."""
+
+    if isinstance(project, models.Project):
+        project = project.slug
+    if isinstance(contractor, models.Contractor):
+        contractor = contractor.slug
+    if isinstance(measurement_type, models.MeasurementType):
+        measurement_type = measurement_type.slug
+
+    return os.path.join(root,
+                        project,
+                        contractor,
+                        measurement_type,
+                        os.path.basename(filename))
 
 
 def process_uploaded_file(uploaded_file_id):

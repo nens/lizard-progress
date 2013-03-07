@@ -11,6 +11,9 @@ from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 
+from lizard_security.manager import FilteredManager
+from lizard_security.models import DataSet
+
 # JSONField was moved for lizard-map 4.0...
 try:
     from jsonfield import JSONField
@@ -79,6 +82,8 @@ class Project(models.Model):
     slug = models.SlugField(max_length=50, unique=True)
     superuser = models.ForeignKey(User, null=True, blank=True,
         verbose_name='projectmanager')
+    data_set = models.ForeignKey(DataSet, null=True, blank=True)
+    objects = FilteredManager()
 
     def __unicode__(self):
         return unicode(self.name)

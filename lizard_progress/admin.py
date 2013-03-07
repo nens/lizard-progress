@@ -8,6 +8,8 @@ from lizard_progress.models import Location
 from lizard_progress.models import MeasurementType
 from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.models import Project
+from lizard_progress.models import Organization
+from lizard_progress.models import UserProfile
 
 admin.site.register(Area)
 admin.site.register(Contractor)
@@ -16,3 +18,5 @@ admin.site.register(Location)
 admin.site.register(AvailableMeasurementType)
 admin.site.register(MeasurementType)
 admin.site.register(Project)
+admin.site.register(Organization)
+admin.site.register(UserProfile)

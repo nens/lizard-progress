@@ -2,9 +2,35 @@
 
 import factory
 
+from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 
 from lizard_progress import models
+
+
+class UserF(factory.Factory):
+    FACTORY_FOR = User
+
+    username = "admin"
+    is_superuser = True
+
+
+class OrganizationF(factory.Factory):
+    """Factory for Organization model."""
+    
+    FACTORY_FOR = models.Organization
+
+    name = "Test organization"
+
+
+class UserProfileF(factory.Factory):
+    """Factory for UserProfile model."""
+
+    FACTORY_FOR = models.UserProfile
+
+    user = factory.SubFactory(UserF)
+    organization = factory.LazyAttribute(lambda a: OrganizationF())
 
 
 class ProjectF(factory.Factory):
@@ -14,6 +40,7 @@ class ProjectF(factory.Factory):
 
     name = "Test project"
     slug = "testproject"
+    superuser = factory.SubFactory(UserF)
 
 
 class ContractorF(factory.Factory):
@@ -23,7 +50,7 @@ class ContractorF(factory.Factory):
     project = factory.LazyAttribute(lambda a: ProjectF())
     name = "Nelen & Schuurmans"
     slug = "nens"
-    user = None
+    organization = None
 
 
 class AreaF(factory.Factory):
@@ -81,6 +108,64 @@ class MeasurementF(factory.Factory):
     scheduled = factory.LazyAttribute(lambda a: ScheduledMeasurementF())
     data = {"testkey": "testvalue"}
     filename = "test.txt"
+
+
+class TestUser(TestCase):
+    """Tests for the User model."""
+    def test_username(self):
+        user = UserF(username="admin")
+        self.assertEquals(user.username, "admin")
+
+
+class TestOrganization(TestCase):
+    """Tests for the Organization model."""
+    def setUp(self):
+        self.organization =OrganizationF(name="test")
+
+    def test_unicode(self):
+        """Test unicode method."""        
+        self.assertEquals(unicode(self.organization), "test")
+
+    def test_users_in_same_organization(self):
+        """Test users_in_same_organization method."""
+        user1 = UserF(username="user1")
+        user2 = UserF(username="user2")
+        userprofile1 = UserProfileF(user=user1,
+                                    organization=self.organization)
+        userprofile2 = UserProfileF(user=user2,
+                                    organization=self.organization)
+        users = self.organization.users_in_same_organization(user1)
+        self.assertEquals(len(users), 2)
+
+
+class TestUserProfile(TestCase):
+    """Tests for the UserProfile model."""
+    def test_unicode(self):
+        """Test unicode method."""
+        userprofile = UserProfileF(
+            user=UserF(username="admin"),
+            organization=OrganizationF(name="test"))
+        self.assertEquals(unicode(userprofile), "admin test")
+
+
+class TestSecurity(TestCase):
+    """Test for security."""
+    def test_has_access_superuser(self):
+        """Test access for superuser to a project."""
+        user = UserF(is_superuser=True)
+        project = ProjectF(superuser=user)
+        has_access = models.has_access(user, project)
+        self.assertEquals(has_access, True)
+
+    def test_has_access_contractor(self):
+        """Test access for contractor to a project."""
+        uploader = UserF(username="uploader", is_superuser=False)
+        uploaderorganization = OrganizationF(name="Uploader organization")
+        uploaderprofile = UserProfileF(user=uploader, organization=uploaderorganization)
+        project = ProjectF(superuser=UserF(is_superuser=True))
+        contractor = ContractorF(project=project, organization=uploaderorganization)
+        has_access = models.has_access(uploader, project, contractor)
+        self.assertEquals(has_access, True)
 
 
 class TestContractor(TestCase):

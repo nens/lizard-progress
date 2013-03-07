@@ -7,7 +7,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.template.defaultfilters import slugify
 from lizard_progress.models import (AvailableMeasurementType, Contractor,
-    Project)
+    Project, UserProfile, Organization)
 from lizard_progress.views import UploadShapefilesView
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
@@ -21,6 +21,16 @@ logger = logging.getLogger(__name__)
 
 
 class ProjectForm(forms.ModelForm):
+    name = forms.CharField(max_length=50)
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.get('initial').pop('superuser')
+        super(ProjectForm, self).__init__(*args, **kwargs)
+        
+        usernames = [u.username for u in
+                     Organization.users_in_same_organization(user)]
+        self.fields['superuser'].queryset = \
+            User.objects.filter(username__in=usernames)
 
     def clean_name(self):
         """Validates and returns the name of a new project."""
@@ -44,12 +54,6 @@ USER_CHOICES = (
 
 
 class ContractorForm(forms.ModelForm):
-    name = forms.CharField(label='Opdrachtnemer:', max_length=50)
-    user_choice_field = forms.ChoiceField(
-        label='Loginnaam en wachtwoord',
-        widget=forms.RadioSelect,
-        choices=USER_CHOICES
-    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -59,55 +63,7 @@ class ContractorForm(forms.ModelForm):
 
     class Meta:
         model = Contractor
-        exclude = ('slug', 'user',)
-
-
-def existing_user_condition(wizard):
-    """Returns False if the ExistingUserForm step should be skipped."""
-    cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
-    return cleaned_data.get('user_choice_field', '1') == '1'
-
-
-class ExistingUserForm(forms.Form):
-    user = forms.ModelChoiceField(
-        label='Loginnaam',
-        queryset=User.objects.all()
-    )
-
-
-def new_user_condition(wizard):
-    """Returns False if the NewUserForm step should be skipped."""
-    cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
-    return cleaned_data.get('user_choice_field', '2') == '2'
-
-
-class NewUserForm(forms.ModelForm):
-    password = forms.CharField(
-        label="Wachtwoord",
-        widget=forms.PasswordInput(attrs={'autocomplete': 'off'}),
-        max_length=128
-    )
-    password_again = forms.CharField(
-        label="Bevestiging wachtwoord",
-        widget=forms.PasswordInput(attrs={'autocomplete': 'off'}),
-        max_length=128,
-        help_text='Vul hetzelfde wachtwoord als hierboven in, ter bevestiging.'
-    )
-
-    def clean(self):
-        cleaned_data = super(NewUserForm, self).clean()
-        password = cleaned_data.get("password")
-        password_again = cleaned_data.get("password_again")
-
-        if password != password_again:
-            msg = "U moet twee keer hetzelfde wachtwoord invoeren."
-            raise forms.ValidationError(msg)
-
-        return cleaned_data
-
-    class Meta:
-        model = User
-        fields = ('username', 'password')
+        exclude = ('slug', 'name',)
 
 
 class ProjectChoiceForm(forms.Form):

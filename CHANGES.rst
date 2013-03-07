@@ -5,7 +5,12 @@ Changelog of lizard-progress
 1.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add UserProfile, Organization models.
+- Replace user with organization in Contractor model.
+- Fix has_access method.
+- Fix wizard's froms ProjectorForm and ContractorForm. 
+- Create method to list users of same organization
+- Removed unused forms.
 
 
 1.2 (2013-03-05)

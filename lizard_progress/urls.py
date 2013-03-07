@@ -73,10 +73,7 @@ urlpatterns = patterns(
         name='lizard_progress_newproject'),
     url('^admin/contractors/new/$',
         login_required(ContractorWizard.as_view(
-            [ContractorForm, ExistingUserForm, NewUserForm],
-        condition_dict={
-                '1': existing_user_condition,
-                '2': new_user_condition})),
+            [ContractorForm])),
         name='lizard_progress_newcontractor'),
     url('^admin/activities/new/$',
         login_required(ActivitiesWizard.as_view(

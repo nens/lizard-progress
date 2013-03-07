@@ -25,13 +25,30 @@ import lizard_progress.specifics
 logger = logging.getLogger(__name__)
 
 
+class Organization(models.Model):
+    name = models.CharField(max_length=128)
+    description = models.CharField(max_length=256, blank=True, null=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    organization = models.ForeignKey(Organization)
+
+    def __unicode__(self):
+        return "{0} {1}".format(self.user.username,
+                                self.organization.name)
+
+
 def has_access(user, project, contractor=None):
     """Test whether user has access to this project (showing data of
     this contractor).
 
     Should probably be implemented using lizard-security but I lack
     the time to figure that out right now."""
-
+    
     if user.is_anonymous():
         # Not logged in
         return False
@@ -43,14 +60,15 @@ def has_access(user, project, contractor=None):
     if project.superuser == user:
         # Project superuser
         return True
-
+    
+    userprofile = UserProfile.objects.get(user=user)
     if contractor:
-        return contractor.user == user
+        return contractor.organization == userprofile.organization
     else:
         # If this is not about some specific contractor's data,
         # all contractors have access.
         for c in project.contractor_set.all():
-            if c.user == user:
+            if c.organization == userprofile.organization:
                 return True
 
     return False
@@ -72,22 +90,6 @@ def current_files(measurements):
     we could end up with many duplicates."""
 
     return set(measurement.filename for measurement in measurements)
-
-class Organization(models.Model):
-    name = models.CharField(max_length=128)
-    description = models.CharField(max_length=256, blank=True, null=True)
-
-    def __unicode__(self):
-        return self.name
-
-
-class UserProfile(models.Model):
-    user = models.ForeignKey(User, unique=True)
-    organization = models.ForeignKey(Organization)
-
-    def __unicode__(self):
-        return "{0} {1}".format(self.user.username,
-                                self.organization.name)
 
 
 class Project(models.Model):

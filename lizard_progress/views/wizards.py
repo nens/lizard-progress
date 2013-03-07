@@ -139,15 +139,8 @@ class ContractorWizard(SessionWizardView):
 
     @transaction.commit_on_success
     def done(self, form_list, **kwargs):
-        if form_list[0].cleaned_data['user_choice_field'] == '1':
-            user = form_list[1].cleaned_data['user']
-        else:
-            user = form_list[1].save(commit=False)
-            user.set_password(user.password)
-            user.save()
         contractor = form_list[0].save(commit=False)
-        contractor.slug = slugify(contractor.name)
-        contractor.user = user
+        contractor.slug = slugify(contractor.organization.name)
         contractor.save()
         if False:
             # For development purposes.
@@ -156,7 +149,7 @@ class ContractorWizard(SessionWizardView):
             })
         else:
             msg = ('Het toekennen van opdrachtnemer "%s" aan project "%s" was '
-                + 'succesvol.') % (contractor.name, contractor.project.name)
+                + 'succesvol.') % (contractor.organization.name, contractor.project.name)
             messages.info(self.request, msg)
             url = reverse('lizard_progress_newactivities')
             msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +

@@ -55,7 +55,6 @@ USER_CHOICES = (
 
 
 class ContractorForm(forms.ModelForm):
-    name = forms.CharField(label='Opdrachtnemer:', max_length=50)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -65,7 +64,7 @@ class ContractorForm(forms.ModelForm):
 
     class Meta:
         model = Contractor
-        exclude = ('slug', 'user',)
+        exclude = ('slug', 'name',)
 
 
 def existing_user_condition(wizard):

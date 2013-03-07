@@ -1,6 +1,8 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
 # from django.db import models
 
+from __future__ import unicode_literals
+
 RDNEW = 28992
 SRID = RDNEW
 
@@ -23,13 +25,35 @@ import lizard_progress.specifics
 logger = logging.getLogger(__name__)
 
 
+class Organization(models.Model):
+    name = models.CharField(max_length=128)
+    description = models.CharField(max_length=256, blank=True, null=True)
+    
+    @classmethod
+    def users_in_same_organization(cls, user):
+        """Returns a list of user in same organization."""
+        organization = UserProfile.objects.get(user=user).organization
+        userprofiles = UserProfile.objects.filter(organization=organization)
+        users = [profile.user for profile in userprofiles]
+        return users
+
+    def __unicode__(self):
+        return self.name
+
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    organization = models.ForeignKey(Organization)
+
+    def __unicode__(self):
+        return "{0} {1}".format(self.user.username,
+                                self.organization.name)
+
+
 def has_access(user, project, contractor=None):
     """Test whether user has access to this project (showing data of
-    this contractor).
-
-    Should probably be implemented using lizard-security but I lack
-    the time to figure that out right now."""
-
+    this contractor)."""
+    
     if user.is_anonymous():
         # Not logged in
         return False
@@ -41,14 +65,15 @@ def has_access(user, project, contractor=None):
     if project.superuser == user:
         # Project superuser
         return True
-
+    
+    userprofile = UserProfile.objects.get(user=user)
     if contractor:
-        return contractor.user == user
+        return contractor.organization == userprofile.organization
     else:
         # If this is not about some specific contractor's data,
         # all contractors have access.
         for c in project.contractor_set.all():
-            if c.user == user:
+            if c.organization == userprofile.organization:
                 return True
 
     return False
@@ -101,8 +126,8 @@ class Contractor(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
-    user = models.ForeignKey(User, null=True, blank=True,
-        verbose_name='loginnaam')
+    organization = models.ForeignKey(Organization, null=True, blank=True,
+        verbose_name='organisatie')
 
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)
@@ -351,4 +376,3 @@ class UploadedFileError(models.Model):
     line = models.IntegerField(default=0)  # Always 0 if file is not linelike
     error_code = models.CharField(max_length=10)
     error_message = models.CharField(max_length=300)
-

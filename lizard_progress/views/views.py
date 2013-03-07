@@ -37,6 +37,7 @@ from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
 from lizard_progress.models import MeasurementType
 from lizard_progress.models import Project
+from lizard_progress.models import UserProfile
 from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.models import has_access
 from lizard_progress.process_uploaded_file import document_root
@@ -56,6 +57,11 @@ class ProjectsView(AppView):
             if has_access(self.request.user, project):
                 projects.append(project)
         return projects
+
+    def organization(self):
+        """Return organization of current user."""
+        userprofile = UserProfile.objects.get(user=self.request.user)
+        return userprofile.organization.name
 
 
 class View(AppView):

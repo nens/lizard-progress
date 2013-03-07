@@ -7,9 +7,14 @@ Changelog of lizard-progress
 
 - Move document_root and make_uploaded_file_path functions to
   process_uploaded_file.py, to prevent circular imports.
-
 - Made a Celery task that calls process_uploaded_file, and call this
   task from the upload view after uploading a file.
+- Add UserProfile, Organization models.
+- Replace user with organization in Contractor model.
+- Fix has_access method.
+- Fix wizard's froms ProjectorForm and ContractorForm.
+- Create method to list users of same organization
+- Removed unused forms.
 
 
 1.2 (2013-03-05)

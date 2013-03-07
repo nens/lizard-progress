@@ -10,7 +10,7 @@
 
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
-  <h2>Projecten</h2>
+  <h2>Projecten van {{ view.organization }}</h2>
   <ul class="without-bullets">
   {% for project in view.projects %}
     <li>

@@ -44,10 +44,7 @@ class UserProfile(models.Model):
 
 def has_access(user, project, contractor=None):
     """Test whether user has access to this project (showing data of
-    this contractor).
-
-    Should probably be implemented using lizard-security but I lack
-    the time to figure that out right now."""
+    this contractor)."""
     
     if user.is_anonymous():
         # Not logged in

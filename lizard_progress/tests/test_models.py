@@ -119,10 +119,23 @@ class TestUser(TestCase):
 
 class TestOrganization(TestCase):
     """Tests for the Organization model."""
+    def setUp(self):
+        self.organization =OrganizationF(name="test")
+
     def test_unicode(self):
-        """Test unicode method."""
-        organization =OrganizationF(name="test")
-        self.assertEquals(unicode(organization), "test")
+        """Test unicode method."""        
+        self.assertEquals(unicode(self.organization), "test")
+
+    def test_users_in_same_organization(self):
+        """Test users_in_same_organization method."""
+        user1 = UserF(username="user1")
+        user2 = UserF(username="user2")
+        userprofile1 = UserProfileF(user=user1,
+                                    organization=self.organization)
+        userprofile2 = UserProfileF(user=user2,
+                                    organization=self.organization)
+        users = self.organization.users_in_same_organization(user1)
+        self.assertEquals(len(users), 2)
 
 
 class TestUserProfile(TestCase):

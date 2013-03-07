@@ -16,15 +16,11 @@ from lizard_map.views import AppView
 from lizard_progress.forms import CalculateForm
 from lizard_progress.forms import ContractorChoiceForm
 from lizard_progress.forms import ContractorForm
-from lizard_progress.forms import ExistingUserForm
 from lizard_progress.forms import MeasurementTypeForm
-from lizard_progress.forms import NewUserForm
 from lizard_progress.forms import ProjectChoiceForm
 from lizard_progress.forms import ProjectForm
 from lizard_progress.forms import ShapefileForm
-from lizard_progress.forms import existing_user_condition
 from lizard_progress.forms import needs_shapefile_condition
-from lizard_progress.forms import new_user_condition
 
 from lizard_progress.views import ActivitiesWizard
 from lizard_progress.views import ComparisonPopupView

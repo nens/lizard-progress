@@ -26,12 +26,11 @@ class ProjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.get('initial').pop('superuser')
         super(ProjectForm, self).__init__(*args, **kwargs)
-        organization = UserProfile.objects.get(user=user).organization
-        userprofiles = UserProfile.objects.filter(organization=organization)
-        users = [profile.user for profile in userprofiles] 
-        usernames = [u.username for u in users]
+        
+        usernames = [u.username for u in
+                     Organization.users_in_same_organization(user)]
         self.fields['superuser'].queryset = \
-            User.objects.filter(username__in= usernames)
+            User.objects.filter(username__in=usernames)
 
     def clean_name(self):
         """Validates and returns the name of a new project."""
@@ -65,54 +64,6 @@ class ContractorForm(forms.ModelForm):
     class Meta:
         model = Contractor
         exclude = ('slug', 'name',)
-
-
-def existing_user_condition(wizard):
-    """Returns False if the ExistingUserForm step should be skipped."""
-    cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
-    return cleaned_data.get('user_choice_field', '1') == '1'
-
-
-class ExistingUserForm(forms.Form):
-    user = forms.ModelChoiceField(
-        label='Loginnaam',
-        queryset=User.objects.all()
-    )
-
-
-def new_user_condition(wizard):
-    """Returns False if the NewUserForm step should be skipped."""
-    cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
-    return cleaned_data.get('user_choice_field', '2') == '2'
-
-
-class NewUserForm(forms.ModelForm):
-    password = forms.CharField(
-        label="Wachtwoord",
-        widget=forms.PasswordInput(attrs={'autocomplete': 'off'}),
-        max_length=128
-    )
-    password_again = forms.CharField(
-        label="Bevestiging wachtwoord",
-        widget=forms.PasswordInput(attrs={'autocomplete': 'off'}),
-        max_length=128,
-        help_text='Vul hetzelfde wachtwoord als hierboven in, ter bevestiging.'
-    )
-
-    def clean(self):
-        cleaned_data = super(NewUserForm, self).clean()
-        password = cleaned_data.get("password")
-        password_again = cleaned_data.get("password_again")
-
-        if password != password_again:
-            msg = "U moet twee keer hetzelfde wachtwoord invoeren."
-            raise forms.ValidationError(msg)
-
-        return cleaned_data
-
-    class Meta:
-        model = User
-        fields = ('username', 'password')
 
 
 class ProjectChoiceForm(forms.Form):

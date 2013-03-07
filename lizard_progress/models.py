@@ -29,6 +29,13 @@ class Organization(models.Model):
     name = models.CharField(max_length=128)
     description = models.CharField(max_length=256, blank=True, null=True)
 
+    def users_in_same_organization(cls, user):
+        """Returns a list of user in same organization."""
+        organization = UserProfile.objects.get(user=user).organization
+        userprofiles = UserProfile.objects.filter(organization=organization)
+        users = [profile.user for profile in userprofiles]
+        return users
+
     def __unicode__(self):
         return self.name
 

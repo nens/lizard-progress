@@ -28,7 +28,8 @@ logger = logging.getLogger(__name__)
 class Organization(models.Model):
     name = models.CharField(max_length=128)
     description = models.CharField(max_length=256, blank=True, null=True)
-
+    
+    @classmethod
     def users_in_same_organization(cls, user):
         """Returns a list of user in same organization."""
         organization = UserProfile.objects.get(user=user).organization

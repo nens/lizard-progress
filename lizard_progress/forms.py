@@ -7,7 +7,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.template.defaultfilters import slugify
 from lizard_progress.models import (AvailableMeasurementType, Contractor,
-    Project, UserProfile)
+    Project, UserProfile, Organization)
 from lizard_progress.views import UploadShapefilesView
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode

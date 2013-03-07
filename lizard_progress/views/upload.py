@@ -21,6 +21,7 @@ from django.utils import simplejson as json
 from django.views.generic import TemplateView
 from django.views.generic import View
 
+from lizard_map.views import UiView
 from lizard_map.views import AppView
 from lizard_progress import specifics
 from lizard_progress import tasks
@@ -387,3 +388,13 @@ class UploadShapefilesView(UploadView):
         shutil.copy(path, dst)
 
         return json_response({})
+
+
+class UploadedFileErrorsView(UiView):
+    template_name = 'lizard_progress/uploaded_file_error_page.html'
+
+    def get(self, request, uploaded_file_id):
+        self.uploaded_file_id = uploaded_file_id
+        self.user = request.user
+
+        return super(UploadedFileErrorsView, self).get(request)

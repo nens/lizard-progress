@@ -1,6 +1,54 @@
-{% extends "lizard_progress/ui_base.html" %}
+<DOCTYPE html>
+<html>
+<head>
+  {# Twitter bootstrap, but with an included #}
+  {# lizard_ui/lizard-bootstrap.less to overrides bootstrap defaults. #}
+  {# Bootstrap must be below jqueryui to avoid overriding. #}
+  <link rel="stylesheet"
+        href="{{ STATIC_URL }}bootstrap/less/bootstrap.css"
+        type="text/css"
+        media="screen, projection" />
+  {# Sprites: all icons (print, info, etc) in one cacheable image. #}
+  <link rel="stylesheet"
+        href="{{ STATIC_URL }}sprites/sprite.css"
+        type="text/css"
+        media="screen, projection" />
+  <link rel="stylesheet"
+    href="{{ STATIC_URL }}lizard_progress/lizard_progress_errors.css" />
+</head>
+<body>
 
-{% block main-area %}
-{{ view.uploaded_file_id }}
+{% if view.errors %}
+<h2>Foutmeldingen voor {{ view.uploaded_file.filename }}</h2>
 
-{% endblock %}
+{% if view.general_errors %}
+<h3>Algemene fouten</h3>
+<ul>
+{% for error in view.general_errors %}
+<li>{{ error }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if view.lines_and_errors %}
+<h3>Fouten per regel</h3>
+<table class="file-errors" cellpadding="1" cellspacing="0">
+{% for line in view.lines_and_errors %}
+  <tr class="file-errors">
+    <td>{{ line.line_number }}</td>
+    <td class="{% if line.has_error %}error{% else %}noerror{% endif %}">
+    {{ line.file_line }}</td>
+    <td>
+    {% for error in line.errors %}
+    {{ error }}
+    {% endfor %}
+    </td>
+  </tr>
+{% endfor %}
+</table>
+{% endif %}
+{% else %}
+<h2>Er zijn geen fouten voor {{ view.uploaded_file.filename }}.</h2>
+{% endif %}
+</body>
+</html>

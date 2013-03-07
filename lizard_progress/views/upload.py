@@ -13,6 +13,7 @@ import time
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
@@ -25,16 +26,13 @@ from lizard_map.views import UiView
 from lizard_map.views import AppView
 from lizard_progress import specifics
 from lizard_progress import tasks
-from lizard_progress.models import Contractor
-from lizard_progress.models import Project
-from lizard_progress.models import UploadedFile
-from lizard_progress.models import has_access
+from lizard_progress import models
 from lizard_progress.tools import unique_filename
 from lizard_progress.views.views import document_root
 from lizard_progress.views.views import make_uploaded_file_path
 
 
-APP_LABEL = Project._meta.app_label
+APP_LABEL = models.Project._meta.app_label
 
 logger = logging.getLogger(__name__)
 
@@ -70,16 +68,17 @@ class UploadHomeView(AppView):
 
     def get(self, request, *args, **kwargs):
         self.project_slug = kwargs.get('project_slug', None)
-        self.project = get_object_or_404(Project, slug=self.project_slug)
+        self.project = get_object_or_404(
+            models.Project, slug=self.project_slug)
 
         try:
-            self.contractor = Contractor.objects.get(
+            self.contractor = models.Contractor.objects.get(
                 project=self.project,
-                user=request.user)
-        except Contractor.DoesNotExist:
+                organization__userprofile__user=request.user)
+        except models.Contractor.DoesNotExist:
             pass
 
-        if has_access(request.user, self.project):
+        if models.has_access(request.user, self.project):
             return super(UploadHomeView, self).get(request, *args, **kwargs)
         else:
             return HttpResponseForbidden()
@@ -121,7 +120,7 @@ class UploadHomeView(AppView):
 
     def files_ready(self):
         if not hasattr(self, '_files_ready'):
-            self._files_ready = list(UploadedFile.objects.filter(
+            self._files_ready = list(models.UploadedFile.objects.filter(
                     project=self.project,
                     contractor=self.contractor,
                     ready=True))
@@ -129,7 +128,7 @@ class UploadHomeView(AppView):
 
     def files_not_ready(self):
         if not hasattr(self, '_files_not_ready'):
-            self._files_not_ready = list(UploadedFile.objects.filter(
+            self._files_not_ready = list(models.UploadedFile.objects.filter(
                     project=self.project,
                     contractor=self.contractor,
                     ready=False))
@@ -145,9 +144,10 @@ class UploadView(View):
         can upload files."""
 
         self.project_slug = kwargs.get('project_slug', None)
-        self.project = get_object_or_404(Project, slug=self.project_slug)
+        self.project = get_object_or_404(
+            models.Project, slug=self.project_slug)
 
-        if not has_access(request.user, self.project):
+        if not models.has_access(request.user, self.project):
             return HttpResponseForbidden()
 
         self.user = request.user
@@ -168,9 +168,10 @@ class UploadView(View):
         # in Javascript because it is buggy.
 
         try:
-            self.contractor = Contractor.objects.get(project=self.project,
-                                                     user=request.user)
-        except Contractor.DoesNotExist:
+            self.contractor = models.Contractor.objects.get(
+                project=self.project,
+                organization__userprofile__user=request.user)
+        except models.Contractor.DoesNotExist:
             return json_response({'error': {
                         'details': "User not allowed to upload files."}})
 
@@ -196,7 +197,7 @@ class UploadView(View):
 
 class UploadMeasurementsView(UploadView):
     def process_file(self, path):
-        uploaded_file = UploadedFile.objects.create(
+        uploaded_file = models.UploadedFile.objects.create(
             project=self.project,
             contractor=self.contractor,
             uploaded_by=self.user,
@@ -394,7 +395,54 @@ class UploadedFileErrorsView(UiView):
     template_name = 'lizard_progress/uploaded_file_error_page.html'
 
     def get(self, request, uploaded_file_id):
-        self.uploaded_file_id = uploaded_file_id
+        self.uploaded_file = models.UploadedFile.objects.get(
+            pk=uploaded_file_id)
+        if self.uploaded_file.uploaded_by != request.user:
+            raise PermissionDenied()
+
         self.user = request.user
 
+        self.errors = self._errors()
+        self.general_errors = self._general_errors()
+        self.lines_and_errors = self._lines_and_errors()
+
         return super(UploadedFileErrorsView, self).get(request)
+
+    def _errors(self):
+        return models.UploadedFileError.objects.filter(
+            uploaded_file=self.uploaded_file).order_by('line')
+
+    def _general_errors(self):
+        """Return the errors that have line number 0."""
+        return [error.error_message
+                for error in self.errors if error.line == 0]
+
+    def _lines_and_errors(self):
+        """Return a line-for-line of the file, with errors.
+
+        Each line is a dictionary:
+        - 'line_number' (1, ...)
+        - 'has_error' (boolean)
+        - 'file_line' (string)
+        - 'errors' (list of strings)
+        """
+
+        errordict = dict()
+        for error in self.errors:
+            if error.line > 0:
+                errordict.setdefault(error.line, []).append(
+                    error.error_message)
+
+        lines = []
+        path = self.uploaded_file.path
+        if errordict and os.path.exists(path):
+            for line_minus_one, line in enumerate(open(path)):
+                line_number = line_minus_one + 1
+                lines.append({
+                        'line_number': line_number,
+                        'has_error': line_number in errordict,
+                        'file_line': line.strip(),
+                        'errors': errordict.get(line_number)
+                        })
+
+        return lines

@@ -1,0 +1,18 @@
+table.file-errors {
+    cell-padding: 0px;
+    cell-spacing: 0px;
+}
+
+tr.file-errors {
+    font-family: Consolas,"Liberation Mono",Courier,monospace;
+    font-size: 12px;
+}
+
+td.noerror {
+    background: #eeffcc;
+}
+
+td.error {
+    background: #ff6666;
+}
+

@@ -15,7 +15,9 @@ Changelog of lizard-progress
 - Fix wizard's froms ProjectorForm and ContractorForm.
 - Create method to list users of same organization
 - Removed unused forms.
-
+- Added an error page. If there are errors with line numbers, it shows
+  the entire file with the erratic lines in red. Errors without line
+  numbers are shown in a simple list.
 
 1.2 (2013-03-05)
 ----------------

@@ -42,6 +42,7 @@ from lizard_progress.views import UploadHomeView
 from lizard_progress.views import UploadMeasurementsView
 from lizard_progress.views import UploadReportsView
 from lizard_progress.views import UploadShapefilesView
+from lizard_progress.views import UploadedFileErrorsView
 from lizard_progress.views import View
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
@@ -144,6 +145,11 @@ urlpatterns = patterns(
         '(?P<filename>[^/]+)$',
         protected_file_download,
         name='lizard_progress_filedownload'),
+
+    # Error messages view
+    url('^errors/(?P<uploaded_file_id>\d+)/$',
+        login_required(UploadedFileErrorsView.as_view()),
+        name='lizard_progress_uploaded_file_error_view'),
 
     # Nieuwe UI voor uploadserver-site
     url('^ui/$',

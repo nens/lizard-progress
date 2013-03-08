@@ -1,7 +1,11 @@
-# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
-# from django.db import models
+# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
+# -*- coding: utf-8 -*-
 
+# Python 3 is coming
 from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 RDNEW = 28992
 SRID = RDNEW
@@ -28,7 +32,7 @@ logger = logging.getLogger(__name__)
 class Organization(models.Model):
     name = models.CharField(max_length=128)
     description = models.CharField(max_length=256, blank=True, null=True)
-    
+
     @classmethod
     def users_in_same_organization(cls, user):
         """Returns a list of user in same organization."""
@@ -53,7 +57,7 @@ class UserProfile(models.Model):
 def has_access(user, project, contractor=None):
     """Test whether user has access to this project (showing data of
     this contractor)."""
-    
+
     if user.is_anonymous():
         # Not logged in
         return False
@@ -65,7 +69,7 @@ def has_access(user, project, contractor=None):
     if project.superuser == user:
         # Project superuser
         return True
-    
+
     userprofile = UserProfile.objects.get(user=user)
     if contractor:
         return contractor.organization == userprofile.organization

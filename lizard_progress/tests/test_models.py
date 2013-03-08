@@ -1,9 +1,9 @@
 """Tests for lizard_progress models."""
 
+import datetime
 import factory
 
 from django.contrib.auth.models import User
-from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 
 from lizard_progress import models
@@ -18,7 +18,6 @@ class UserF(factory.Factory):
 
 class OrganizationF(factory.Factory):
     """Factory for Organization model."""
-    
     FACTORY_FOR = models.Organization
 
     name = "Test organization"
@@ -110,6 +109,28 @@ class MeasurementF(factory.Factory):
     filename = "test.txt"
 
 
+class UploadedFileF(factory.Factory):
+    """Factory for UploadedFile models."""
+    FACTORY_FOR = models.UploadedFile
+
+    project = factory.LazyAttribute(lambda a: ProjectF())
+    contractor = factory.LazyAttribute(lambda a: ContractorF())
+    uploaded_by = factory.LazyAttribute(lambda a: UserF())
+    uploaded_at = datetime.datetime(2013, 3, 8, 10, 0)
+    path = "/path/to/file/file.met"
+    ready = False
+    linelike = True
+
+
+class UploadedFileErrorF(factory.Factory):
+    FACTORY_FOR = models.UploadedFileError
+
+    uploaded_file = factory.LazyAttribute(lambda a: UploadedFileF())
+    line = 0
+    error_code = "NOCODE"
+    error_message = "Some error message"
+
+
 class TestUser(TestCase):
     """Tests for the User model."""
     def test_username(self):
@@ -120,20 +141,20 @@ class TestUser(TestCase):
 class TestOrganization(TestCase):
     """Tests for the Organization model."""
     def setUp(self):
-        self.organization =OrganizationF(name="test")
+        self.organization = OrganizationF(name="test")
 
     def test_unicode(self):
-        """Test unicode method."""        
+        """Test unicode method."""
         self.assertEquals(unicode(self.organization), "test")
 
     def test_users_in_same_organization(self):
         """Test users_in_same_organization method."""
         user1 = UserF(username="user1")
         user2 = UserF(username="user2")
-        userprofile1 = UserProfileF(user=user1,
-                                    organization=self.organization)
-        userprofile2 = UserProfileF(user=user2,
-                                    organization=self.organization)
+        UserProfileF(user=user1,
+                     organization=self.organization)
+        UserProfileF(user=user2,
+                     organization=self.organization)
         users = self.organization.users_in_same_organization(user1)
         self.assertEquals(len(users), 2)
 
@@ -161,9 +182,11 @@ class TestSecurity(TestCase):
         """Test access for contractor to a project."""
         uploader = UserF(username="uploader", is_superuser=False)
         uploaderorganization = OrganizationF(name="Uploader organization")
-        uploaderprofile = UserProfileF(user=uploader, organization=uploaderorganization)
+        UserProfileF(
+            user=uploader, organization=uploaderorganization)
         project = ProjectF(superuser=UserF(is_superuser=True))
-        contractor = ContractorF(project=project, organization=uploaderorganization)
+        contractor = ContractorF(
+            project=project, organization=uploaderorganization)
         has_access = models.has_access(uploader, project, contractor)
         self.assertEquals(has_access, True)
 

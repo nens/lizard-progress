@@ -29,9 +29,15 @@ import lizard_progress.specifics
 logger = logging.getLogger(__name__)
 
 
+class ErrorMessage(models.Model):
+    error_code = models.CharField(max_length=30)
+    error_message = models.CharField(max_length=300)
+
+
 class Organization(models.Model):
     name = models.CharField(max_length=128)
     description = models.CharField(max_length=256, blank=True, null=True)
+    errors = models.ManyToManyField(ErrorMessage)
 
     @classmethod
     def users_in_same_organization(cls, user):
@@ -123,6 +129,11 @@ class Project(models.Model):
             return True
         except MeasurementType.DoesNotExist:
             return False
+
+    @property
+    def organization(self):
+        return Organization.objects.get(
+            userprofile__user=self.superuser)
 
 
 class Contractor(models.Model):
@@ -378,5 +389,5 @@ class UploadedFile(models.Model):
 class UploadedFileError(models.Model):
     uploaded_file = models.ForeignKey(UploadedFile)
     line = models.IntegerField(default=0)  # Always 0 if file is not linelike
-    error_code = models.CharField(max_length=10)
+    error_code = models.CharField(max_length=30)
     error_message = models.CharField(max_length=300)

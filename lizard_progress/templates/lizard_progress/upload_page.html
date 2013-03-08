@@ -25,7 +25,15 @@
 <table class="table">
 <thead><td>Filenaam</td><td>Datum</td></thead>
 {% for f in view.files_ready %}
-<tr class="{% if f.success %}success{% else %}error{% endif %}"><td>{{ f.filename }}</td><td>{{ f.uploaded_at }}</td></tr>
+<tr class="{% if f.success %}success{% else %}error{% endif %}">
+  <td>{{ f.filename }}</td>
+  <td>{{ f.uploaded_at }}</td>
+  <td>
+  {% if not f.success %}
+    <a href="{% url lizard_progress_uploaded_file_error_view f.id %}" target="_">bekijk fouten <i class="icon-list"></i></a>
+  {% endif %}
+  </td>
+</tr>
 {% endfor %}
 </table>
 {% endif %}

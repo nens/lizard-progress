@@ -77,11 +77,10 @@ class MetParser(specifics.ProgressParser):
                             project=self.project,
                             location_code=profile.id)
                     except models.Location.DoesNotExist:
-                        self.record_error(
+                        self.record_error_code(
                             line_number=profile.line_number,
-                            error_code="NO_LOCAT",
-                            error_message=(
-                                "Locatie {0} bestaat niet".format(profile.id)))
+                            error_code="NO_LOCATION",
+                            location_id=profile.id)
                         continue
 
                     try:
@@ -128,6 +127,16 @@ class MetParser(specifics.ProgressParser):
 
     def mtype(self):
         """Return the measurement_type instance for dwarsprofielen"""
-        return models.MeasurementType.objects.get(
-            project=self.project,
-            mtype__slug='dwarsprofiel')
+        try:
+            return models.MeasurementType.objects.get(
+                project=self.project,
+                mtype__slug='dwarsprofiel')
+        except models.MeasurementType.DoesNotExist:
+            self.record_error(
+                0, "MET_NOMEASUREMENTTYPE",
+                "Measurement type 'dwarsprofiel' niet geconfigureerd.")
+
+    def record_error_code(self, line_number, error_code, **kwargs):
+        self.record_error(
+            line_number,
+            *(models.ErrorMessage.format_code(error_code, **kwargs)))

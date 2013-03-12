@@ -33,6 +33,12 @@ class ErrorMessage(models.Model):
     error_code = models.CharField(max_length=30)
     error_message = models.CharField(max_length=300)
 
+    def __unicode__(self):
+        return self.error_code
+
+    def format(self, *args, **kwargs):
+        return self.error_message.format(*args, **kwargs)
+
 
 class Organization(models.Model):
     name = models.CharField(max_length=128)

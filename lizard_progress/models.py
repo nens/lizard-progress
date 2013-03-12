@@ -39,6 +39,18 @@ class ErrorMessage(models.Model):
     def format(self, *args, **kwargs):
         return self.error_message.format(*args, **kwargs)
 
+    @classmethod
+    def format_code(cls, error_code, *args, **kwargs):
+        try:
+            error_message = cls.objects.get(error_code=error_code)
+        except cls.DoesNotExist:
+            return (
+                "UNKNOWNCODE",
+                "Could not get error code {0} from database".format(error_code)
+                )
+
+        return error_code, error_message.format(*args, **kwargs)
+
 
 class Organization(models.Model):
     name = models.CharField(max_length=128)

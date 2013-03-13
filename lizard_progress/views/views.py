@@ -30,6 +30,8 @@ from django.views.static import serve
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
+from lizard_ui.views import UiView
+
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress.models import Area
 from lizard_progress.models import Contractor
@@ -46,12 +48,17 @@ from lizard_progress.process_uploaded_file import make_uploaded_file_path
 logger = logging.getLogger(__name__)
 
 
-class ProjectsView(AppView):
+class ProjectsView(UiView):
     """Displays a list of projects to choose from."""
-    template_name = "lizard_progress/projects.html"
+    template_name = "lizard_progress/progressbase.html"
+
+    def currentproject(self):
+        if hasattr(self, "project_slug"):
+            return self.project_slug
 
     def projects(self):
         """Returns a list of projects the current user has access to."""
+
         projects = []
         for project in Project.objects.all():
             if has_access(self.request.user, project):
@@ -63,6 +70,11 @@ class ProjectsView(AppView):
         userprofile = UserProfile.objects.get(user=self.request.user)
         return userprofile.organization.name
 
+    def user_is_uploader(self):
+        user = self.request.user
+        userprofile = UserProfile.objects.get(user=user)
+        return userprofile.profiletype == UserProfile.CONTRACTOR
+
 
 class View(AppView):
     """The app's root, shows a choice of projects, or a choice of
@@ -73,8 +85,13 @@ class View(AppView):
     template_name = 'lizard_progress/home.html'
 
     def dispatch(self, request, *args, **kwargs):
+
         self.project_slug = kwargs.get('project_slug', None)
-        self.project = get_object_or_404(Project, slug=self.project_slug)
+        if self.project_slug is None:
+            self.project = Project.objects.all()[0]
+            self.project_slug = self.project.slug
+        else:
+            self.project = get_object_or_404(Project, slug=self.project_slug)
 
         if has_access(request.user, self.project):
             self.has_full_access = all(
@@ -110,17 +127,17 @@ class View(AppView):
         return reverse('lizard_progress_comparisonview',
                        kwargs={'project_slug': self.project_slug})
 
+    def admin_url(self):
+        """Returns URL to this project's Comparison view"""
+        return reverse('lizard_progress_admin')
+
     def crumbs(self):
         """Returns a list of breadcrumbs to this project."""
         crumbs = super(View, self).crumbs()
-#       crumbs.append({
-#           'description': 'Projecten',
-#           'url': reverse('lizard_progress_projecten')
-#       })
         crumbs.append({
             'description': self.project.name,
             'url': reverse('lizard_progress_view',
-                kwargs={'project_slug': self.project_slug})
+                           kwargs={'project_slug': self.project_slug})
         })
         return crumbs
 
@@ -133,11 +150,9 @@ class MapView(View):
         """Breadcrumb for this page."""
         crumbs = super(MapView, self).crumbs()
 
-        crumbs.append({
-                'url': self.map_url(),
-                'description': 'Kaartlagen',
-                'title': '%s kaartlagen' % (self.project.name,)
-                })
+        crumbs.append({'url': self.map_url(),
+                       'description': 'Kaartlagen',
+                       'title': '%s kaartlagen' % (self.project.name,)})
 
         return crumbs
 
@@ -421,7 +436,7 @@ class ComparisonPopupView(View):
         return htmls
 
 
-class DashboardView(View):
+class DashboardView(ProjectsView, View):
     """Show the dashboard page. The page offers a popup per area per
     contractor, if the user has access, and also downloads to CSV
     files."""

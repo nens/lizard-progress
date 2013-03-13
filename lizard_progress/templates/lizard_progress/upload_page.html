@@ -1,6 +1,6 @@
-{% extends "lizard_progress/ui_base.html" %}
+{% extends "lizard_progress/progressbase.html" %}
 
-{% block main-area %}
+{% block contentpage %}
 <h1>Upload bestanden</h1>
 
 <div id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
@@ -38,4 +38,4 @@
 </table>
 {% endif %}
 
-{% endblock %}
+{% endblock contentpage %}

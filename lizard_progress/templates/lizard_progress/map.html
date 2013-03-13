@@ -14,6 +14,10 @@
         src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
 {% endblock map-javascript %}
 
+{% block breadcrumbs %}
+&rarr; <a href="{% url lizard_progress_projecten %}" title="Home">Home</a>
+{% endblock breadcrumbs %}
+
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
   <h2>Kaart</h2>

@@ -13,6 +13,7 @@ from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import has_access
 from lizard_progress.views.upload import UploadReportsView
+from lizard_progress.views.views import ProjectsView
 import mimetypes
 import os
 
@@ -20,7 +21,7 @@ import os
 APP_LABEL = Project._meta.app_label
 
 
-class DownloadHomeView(AppView):
+class DownloadHomeView(AppView, ProjectsView):
     """This view offers links to downloadable project artifacts.
 
     If the user does not have sufficient rights,

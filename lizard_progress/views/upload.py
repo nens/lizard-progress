@@ -23,13 +23,14 @@ from django.views.generic import TemplateView
 from django.views.generic import View
 
 from lizard_ui.views import ViewContextMixin
-from lizard_map.views import AppView
 from lizard_progress import specifics
 from lizard_progress import tasks
 from lizard_progress import models
 from lizard_progress.tools import unique_filename
 from lizard_progress.views.views import document_root
 from lizard_progress.views.views import make_uploaded_file_path
+from lizard_progress.views.views import ProjectsView
+from lizard_progress.views.views import View as ProgressView
 
 
 APP_LABEL = models.Project._meta.app_label
@@ -52,7 +53,7 @@ class UploadDialogView(TemplateView):
     template_name = "lizard_progress/upload.html"
 
 
-class UploadHomeView(AppView):
+class UploadHomeView(ProjectsView, ProgressView):
     """The homepage for uploading files.
 
     Within a project, there are various files to be uploaded:
@@ -442,7 +443,6 @@ class UploadedFileErrorsView(ViewContextMixin, TemplateView):
                         'line_number': line_number,
                         'has_error': line_number in errordict,
                         'file_line': line.strip(),
-                        'errors': errordict.get(line_number)
-                        })
+                        'errors': errordict.get(line_number)})
 
         return lines

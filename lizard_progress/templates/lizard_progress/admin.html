@@ -1,4 +1,4 @@
-{% extends "lizard_map/wms.html" %}
+{% extends "lizard_ui/lizardbase.html" %}
 
 {% block css %}
 {{ block.super }}
@@ -13,6 +13,12 @@
         src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
 {% endblock map-javascript %}
 
+{% block breadcrumbs %}
+{{ block.super }}
+&rarr; <a href="{% url lizard_progress_projecten %}" title="Home">Home</a>
+&rarr; <a href="{% url lizard_progress_admin %}" title="Administratieve taken">Admin</a>
+{% endblock breadcrumbs %}
+
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
   <h2>Admin</h2>
@@ -21,9 +27,8 @@
 {% endblock sidebar %}
 
 {% block content %}
-{{ block.super }}
 {% if messages %}
-<div id="messages">
+<div id="messages" class="messages">
   {% for message in messages %}
   <p>{{ message|safe }}</p>
   {% endfor %}

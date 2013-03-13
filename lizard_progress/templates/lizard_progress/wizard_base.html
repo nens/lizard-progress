@@ -15,6 +15,7 @@ div#content {
 
 {% block breadcrumbs %}
 {{ block.super }}
+&rarr; <a href="{% url lizard_progress_projecten %}" title="Home">Home</a>
 &rarr; <a href="{% url lizard_progress_admin %}" rel="tipsy-south" title="Administratieve taken">Admin</a>
 {% endblock breadcrumbs %}
 

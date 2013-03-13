@@ -46,8 +46,17 @@ class Organization(models.Model):
 
 
 class UserProfile(models.Model):
+    CONTRACTOR = 'contractor'
+    PROJECTMANAGER = 'projectmanager'
+    PTYPES = (
+        (CONTRACTOR, CONTRACTOR),
+        (PROJECTMANAGER, PROJECTMANAGER))
+
+
     user = models.ForeignKey(User, unique=True)
     organization = models.ForeignKey(Organization)
+    profiletype = models.CharField(max_length=100, choices=PTYPES,
+                                   null=True, blank=True)
 
     def __unicode__(self):
         return "{0} {1}".format(self.user.username,

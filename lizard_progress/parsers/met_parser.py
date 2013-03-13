@@ -242,8 +242,6 @@ class MetParser(specifics.ProgressParser):
                 "Measurement type 'dwarsprofiel' niet geconfigureerd.")
 
     def record_error_code(self, line_number, error_code, **kwargs):
-        logger.warn("Recording error at {0}, error_code {1}"
-                    .format(line_number, error_code))
         if error_code not in self.error_config:
             return
 

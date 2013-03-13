@@ -27,8 +27,11 @@ from django.shortcuts import render_to_response
 from django.template.defaultfilters import slugify
 from django.utils.decorators import method_decorator
 
+from lizard_ui.views import UiView
+
 from lizard_progress.models import (Area, Hydrovak, Location,
-    MeasurementType, SRID, ScheduledMeasurement)
+                                    MeasurementType, SRID,
+                                    ScheduledMeasurement)
 from lizard_progress.views.upload import UploadShapefilesView
 
 
@@ -77,7 +80,7 @@ class OverwriteStorage(FileSystemStorage):
         return name
 
 
-class ProjectWizard(SessionWizardView):
+class ProjectWizard(UiView, SessionWizardView):
     """Form wizard for creating a new `Project`.
 
     Usage of this wizard requires `lizard_progress.add_project` permission.
@@ -113,12 +116,12 @@ class ProjectWizard(SessionWizardView):
             messages.info(self.request, msg)
             url = reverse('lizard_progress_newcontractor')
             msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
-                'Opdrachtnemer toekennen aan een project</a>') % url
+                   'Opdrachtnemer toekennen aan een project</a>') % url
             messages.info(self.request, msg)
             return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
 
-class ContractorWizard(SessionWizardView):
+class ContractorWizard(UiView, SessionWizardView):
     """Form wizard for creating a new `Contractor`.
 
     Usage of this wizard requires `lizard_progress.add_project` permission.
@@ -148,18 +151,18 @@ class ContractorWizard(SessionWizardView):
                 'form_data': [form.cleaned_data for form in form_list],
             })
         else:
-            msg = ('Het toekennen van opdrachtnemer "%s" aan project "%s" was '
-                + 'succesvol.') % (contractor.organization.name,
-                                   contractor.project.name)
+            msg = ('Het toekennen van opdrachtnemer "%s" aan project "%s"' +
+                   ' was succesvol.') % (contractor.organization.name,
+                                         contractor.project.name)
             messages.info(self.request, msg)
             url = reverse('lizard_progress_newactivities')
             msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
-                'Werkzaamheden toewijzen aan een opdrachtnemer</a>') % url
+                   'Werkzaamheden toewijzen aan een opdrachtnemer</a>') % url
             messages.info(self.request, msg)
             return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
 
-class ActivitiesWizard(SessionWizardView):
+class ActivitiesWizard(UiView, SessionWizardView):
     """Form wizard for creating new activities, i.e. `ScheduledMeasurements`.
 
     Usage of this wizard requires `lizard_progress.add_project` permission.
@@ -211,13 +214,14 @@ class ActivitiesWizard(SessionWizardView):
             })
         else:
             contractor = form_list[1].cleaned_data['contractor']
-            msg = ('Het toewijzen van werkzaamheden aan opdrachtnemer '
-                + '"%s" binnen project "%s" was succesvol.') % (
-                contractor.name, contractor.project.name)
+            msg = ('Het toewijzen van werkzaamheden aan ' +
+                   'opdrachtnemer "%s" binnen project "%s" ' +
+                   'was succesvol.') % (contractor.name,
+                                        contractor.project.name)
             messages.info(self.request, msg)
             url = reverse('lizard_progress_newhydrovakken')
             msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
-                'Hydrovakken uploaden</a>') % url
+                   'Hydrovakken uploaden</a>') % url
             messages.info(self.request, msg)
             return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
@@ -247,9 +251,10 @@ class ActivitiesWizard(SessionWizardView):
             try:
                 MeasurementType.objects.get(project=project, mtype=mtype)
             except MeasurementType.DoesNotExist:
-                MeasurementType(project=project, mtype=mtype,
+                MeasurementType(
+                    project=project, mtype=mtype,
                     icon_missing=mtype.default_icon_missing,
-                    icon_complete=mtype.default_icon_complete).save()
+                    con_complete=mtype.default_icon_complete).save()
 
     # Within a project, locations can be assigned to different
     # areas, for example `North`, `East`, `South`, and `West`.
@@ -260,7 +265,8 @@ class ActivitiesWizard(SessionWizardView):
         """Save area."""
         project = form_list[0].cleaned_data['project']
         self.area, _ = Area.objects.get_or_create(project=project,
-            name=project.name, slug=project.slug)
+                                                  name=project.name,
+                                                  slug=project.slug)
 
     def __save_locations(self, form_list):
         """Save locations."""
@@ -323,7 +329,7 @@ class ActivitiesWizard(SessionWizardView):
 
             # Get the corresponding `Location` objects.
             locations = Location.objects.filter(project=project,
-                location_code__in=difference)
+                                                location_code__in=difference)
 
             # One `Location` for every `ScheduledMeasurement`.
             assert len(difference) == len(locations)
@@ -361,7 +367,7 @@ class ActivitiesWizard(SessionWizardView):
                 shutil.copy(value.file.name, dst)
 
 
-class HydrovakkenWizard(SessionWizardView):
+class HydrovakkenWizard(UiView, SessionWizardView):
     """Form wizard for uploading a shapefile of hydrovakken.
 
     Usage of this wizard requires `lizard_progress.add_project` permission.
@@ -394,12 +400,12 @@ class HydrovakkenWizard(SessionWizardView):
         else:
             project = form_list[0].cleaned_data['project']
             msg = ('Het uploaden van hydrovakken t.b.v. project "%s" '
-                + 'was succesvol.') % project.name
+                   + 'was succesvol.') % project.name
             messages.info(self.request, msg)
             url = reverse('lizard_progress_view',
-                kwargs={'project_slug': project.slug})
+                          kwargs={'project_slug': project.slug})
             msg = ('<a href="%s" tabIndex="-1">' +
-                'Naar de overzichtspagina van dit project</a>') % url
+                   'Naar de overzichtspagina van dit project</a>') % url
             messages.info(self.request, msg)
             return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
@@ -412,9 +418,10 @@ class HydrovakkenWizard(SessionWizardView):
 
         if prj:
             layer_mapping = LayerMapping(Hydrovak,
-                shp.file.name, mapping)
+                                         shp.file.name, mapping)
         else:
-            layer_mapping = LayerMapping(Hydrovak,
+            layer_mapping = LayerMapping(
+                Hydrovak,
                 shp.file.name, mapping,
                 source_srs=SRID)
 
@@ -437,7 +444,7 @@ class HydrovakkenWizard(SessionWizardView):
         # The root directory.
         project = form_list[0].cleaned_data['project']
         dst = os.path.join(settings.BUILDOUT_DIR, 'var',
-            APP_LABEL, project.slug, 'hydrovakken')
+                           APP_LABEL, project.slug, 'hydrovakken')
 
         # The root might not exist yet.
         if not os.path.exists(dst):
@@ -463,7 +470,7 @@ def hydrovak_handler(sender, **kwargs):
             hydrovak.project = PROJECT
 
 
-class ResultsWizard(SessionWizardView):
+class ResultsWizard(UiView, SessionWizardView):
     """Form wizard for calculating/verifying final project results.
 
     Usage of this wizard requires `lizard_progress.add_project` permission.
@@ -506,7 +513,8 @@ class ResultsWizard(SessionWizardView):
 
             # The directory where final results will be stored.
             result_dir = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
-                project.slug, contractor.slug, 'final_results')
+                                      project.slug, contractor.slug,
+                                      'final_results')
 
             # Create it if necessary.
             if not os.path.exists(result_dir):
@@ -545,8 +553,8 @@ class ResultsWizard(SessionWizardView):
 
                     # Move it to the result dir
                     result_path = os.path.join(
-                            result_dir,
-                            os.path.basename(zipshapefile))
+                        result_dir,
+                        os.path.basename(zipshapefile))
                     if os.path.exists(result_path):
                         os.remove(result_path)
                     shutil.move(zipshapefile, result_path)
@@ -567,6 +575,6 @@ class ResultsWizard(SessionWizardView):
 
             # Redirect to downloads page.
             url = reverse('lizard_progress_downloadhomeview',
-                kwargs={'project_slug': project.slug})
+                          kwargs={'project_slug': project.slug})
 
             return HttpResponseRedirect(url)

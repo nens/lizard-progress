@@ -12,6 +12,9 @@ from django.views.generic import TemplateView
 
 from lizard_ui.views import ViewContextMixin
 
+from lizard_progress.views import Project
+from lizard_progress.views import has_access
+
 
 class TestView(ViewContextMixin, TemplateView):
     """Just renders the ui_base template."""

@@ -6,7 +6,7 @@ from itertools import chain
 from django import forms
 from django.contrib.auth.models import User
 from lizard_progress.models import (AvailableMeasurementType, Contractor,
-    Project, Organization)
+                                    Project, Organization)
 from lizard_progress.views import UploadShapefilesView
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
@@ -86,7 +86,7 @@ class ProjectChoiceForm(forms.Form):
 
 class ContractorChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, contractor):
-        return contractor.name
+        return contractor.organization.name
 
 
 class ContractorChoiceForm(forms.Form):
@@ -223,7 +223,7 @@ class ShapefileForm(forms.Form):
             pass
         else:
             msg = ("De geselecteerde bestanden horen "
-                + "niet tot dezelfde shapefile.")
+                   + "niet tot dezelfde shapefile.")
             raise forms.ValidationError(msg)
 
         return cleaned_data
@@ -233,7 +233,7 @@ class CalculateForm(forms.Form):
     """cccc"""
     error_messages = {
         'no_mothershape': (u'De opdrachtnemer heeft nog ' +
-            u'geen (moeder)shapefile geüpload.'),
+                           u'geen (moeder)shapefile geüpload.'),
     }
 
     def __init__(self, *args, **kwargs):

@@ -104,8 +104,8 @@ class ProjectWizard(UiView, SessionWizardView):
     def done(self, form_list, **kwargs):
         # Save the new project.
         project = form_list[0].save(commit=False)
-        project.slug = slugify(project.name)
-        project.save()
+        project.set_slug_and_save()
+
         if False:
             # For development purposes.
             return render_to_response('lizard_progress/done.html', {
@@ -143,8 +143,8 @@ class ContractorWizard(UiView, SessionWizardView):
     @transaction.commit_on_success
     def done(self, form_list, **kwargs):
         contractor = form_list[0].save(commit=False)
-        contractor.slug = slugify(contractor.organization.name)
-        contractor.save()
+        contractor.set_slug_and_save()
+
         if False:
             # For development purposes.
             return render_to_response('lizard_progress/done.html', {

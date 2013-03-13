@@ -12,10 +12,13 @@ SRID = RDNEW
 
 import logging
 import os
+import random
+import string
 
-from django.contrib.gis.db import models
 from django.contrib.auth.models import User
+from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
+from django.template.defaultfilters import slugify
 
 # JSONField was moved for lizard-map 4.0...
 try:
@@ -29,9 +32,33 @@ import lizard_progress.specifics
 logger = logging.getLogger(__name__)
 
 
+class ErrorMessage(models.Model):
+    error_code = models.CharField(max_length=30)
+    error_message = models.CharField(max_length=300)
+
+    def __unicode__(self):
+        return self.error_code
+
+    def format(self, *args, **kwargs):
+        return self.error_message.format(*args, **kwargs)
+
+    @classmethod
+    def format_code(cls, error_code, *args, **kwargs):
+        try:
+            error_message = cls.objects.get(error_code=error_code)
+        except cls.DoesNotExist:
+            return (
+                "UNKNOWNCODE",
+                "Could not get error code {0} from database".format(error_code)
+                )
+
+        return error_code, error_message.format(*args, **kwargs)
+
+
 class Organization(models.Model):
     name = models.CharField(max_length=128)
     description = models.CharField(max_length=256, blank=True, null=True)
+    errors = models.ManyToManyField(ErrorMessage)
 
     @classmethod
     def users_in_same_organization(cls, user):
@@ -121,6 +148,21 @@ class Project(models.Model):
     def __unicode__(self):
         return unicode(self.name)
 
+    def set_slug_and_save(self):
+        """Call on an unsaved project.
+
+        Sets a random slug, saves the project, then sets a new slug
+        based on primary key and name."""
+        chars = list(string.lowercase)
+        random.shuffle(chars)
+        self.slug = ''.join(chars)
+        self.save()
+
+        self.slug = "{id}-{slug}".format(
+            id=self.id,
+            slug=slugify(self.name))
+        self.save()
+
     def specifics(self):
         return lizard_progress.specifics.Specifics(self)
 
@@ -133,6 +175,11 @@ class Project(models.Model):
         except MeasurementType.DoesNotExist:
             return False
 
+    @property
+    def organization(self):
+        return Organization.objects.get(
+            userprofile__user=self.superuser)
+
 
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc
@@ -142,11 +189,26 @@ class Contractor(models.Model):
     organization = models.ForeignKey(Organization, null=True, blank=True,
         verbose_name='organisatie')
 
+    def set_slug_and_save(self):
+        """Call on an unsaved contractor.
+
+        Sets a random slug, saves the project, then sets a new slug
+        based on primary key and name."""
+        chars = list(string.lowercase)
+        random.shuffle(chars)
+        self.slug = ''.join(chars)
+        self.save()
+
+        self.slug = "{id}-{slug}".format(
+            id=self.id,
+            slug=slugify(self.organization.name))
+        self.save()
+
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)
 
     class Meta:
-        unique_together = (("project", "slug"))
+        unique_together = (("project", "organization"))
 
 
 class Area(models.Model):
@@ -387,5 +449,5 @@ class UploadedFile(models.Model):
 class UploadedFileError(models.Model):
     uploaded_file = models.ForeignKey(UploadedFile)
     line = models.IntegerField(default=0)  # Always 0 if file is not linelike
-    error_code = models.CharField(max_length=10)
+    error_code = models.CharField(max_length=30)
     error_message = models.CharField(max_length=300)

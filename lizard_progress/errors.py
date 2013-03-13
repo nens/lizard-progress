@@ -17,10 +17,13 @@ from lizard_progress import models
 
 
 class ErrorConfiguration(object):
-    """A helper object. An instance of this class can be called as if
-    it were a function, with an error code as an argument. It returns
-    True if the check relating to that code should be performed, False
-    if it shouldn't."""
+    """A helper object to decide which error checks should be used.
+
+    To check whether a given error code should be used, use the 'in'
+    operator.
+
+    It returns True if the check relating to that code should be
+    performed, False if it shouldn't."""
 
     def __init__(self, project, measurement_type):
         self.project = project
@@ -36,9 +39,9 @@ class ErrorConfiguration(object):
 
         self.codes_to_check = set(
             error_message.error_code
-            for error_message in self.project.organization.errors_set())
+            for error_message in self.project.organization.errors.all())
 
-    def __call__(self, error_code):
+    def __contains__(self, error_code):
         if self.measurement_type.slug != 'dwarsprofiel':
             # For now, these differentiated checks only exist for MET files.
             # Other measurement types always get True.

@@ -122,7 +122,7 @@ def process(uploaded_file):
             for error in errors:
                 uploaded_file.uploadedfileerror_set.create(
                     line=error.line if uploaded_file.linelike else 0,
-                    error_code=error.error_code,
+                    error_code=error.error_code or "UNKNOWNCODE",
                     error_message=error.error_message)
 
             return

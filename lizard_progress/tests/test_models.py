@@ -1,4 +1,14 @@
+# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
+# -*- coding: utf-8 -*-
+
 """Tests for lizard_progress models."""
+
+# Python 3 is coming
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
 
 import datetime
 import factory
@@ -14,6 +24,13 @@ class UserF(factory.Factory):
 
     username = "admin"
     is_superuser = True
+
+
+class ErrorMessageF(factory.Factory):
+    FACTORY_FOR = models.ErrorMessage
+
+    error_code = "TEST"
+    error_message = "This is a test"
 
 
 class OrganizationF(factory.Factory):
@@ -136,6 +153,34 @@ class TestUser(TestCase):
     def test_username(self):
         user = UserF(username="admin")
         self.assertEquals(user.username, "admin")
+
+
+class TestErrorMessage(TestCase):
+    def test_has_unicode(self):
+        em = ErrorMessageF.build()
+        self.assertTrue(unicode(em))
+
+    def test_format_formats(self):
+        em = ErrorMessageF.build(error_message="Testing {0} {other}")
+        self.assertEquals(
+            em.format("one", other="two"),
+            "Testing one two")
+
+    def test_format_code_using_unknown_code(self):
+        code, error = models.ErrorMessage.format_code(error_code="SOME CODE")
+        self.assertEquals(code, "UNKNOWNCODE")
+        self.assertTrue("SOME CODE" in error)
+
+    def test_format_code_works(self):
+        ErrorMessageF.create(
+            error_code="TEST",
+            error_message="Some {format} string")
+
+        code, error = models.ErrorMessage.format_code(
+            error_code="TEST", format="format")
+
+        self.assertEquals(code, "TEST")
+        self.assertEquals(error, "Some format string")
 
 
 class TestOrganization(TestCase):

@@ -18,6 +18,12 @@ Changelog of lizard-progress
 - Added an error page. If there are errors with line numbers, it shows
   the entire file with the erratic lines in red. Errors without line
   numbers are shown in a simple list.
+- Added error messages for MET files.
+- Added functions to Project and Contractor that make sure their slug
+  is always globally unique (no problems with the same project name
+  in different organizations)
+- Made sure that the combination project/organization as a contractor
+  is always unique
 
 1.2 (2013-03-05)
 ----------------

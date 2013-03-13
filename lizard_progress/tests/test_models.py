@@ -56,6 +56,7 @@ class ProjectF(factory.Factory):
 
     name = "Test project"
     slug = "testproject"
+
     superuser = factory.SubFactory(UserF)
 
 
@@ -236,6 +237,31 @@ class TestSecurity(TestCase):
         self.assertEquals(has_access, True)
 
 
+class TestProject(TestCase):
+    def test_organization(self):
+        organization = OrganizationF.create()
+        user = UserF.create()
+        UserProfileF.create(user=user, organization=organization)
+
+        project = ProjectF.build(superuser=user)
+
+        self.assertEquals(project.organization, organization)
+
+    def test_set_slug_and_save(self):
+        organization = OrganizationF.create()
+        user = UserF.create()
+        UserProfileF.create(user=user, organization=organization)
+
+        project = ProjectF.build(
+            name="Test Project",
+            superuser=user)
+
+        project.set_slug_and_save()
+        self.assertTrue(project.slug)
+        self.assertTrue(unicode(project.id) in project.slug)
+        self.assertTrue("test-project" in project.slug)
+
+
 class TestContractor(TestCase):
     """Tests for the Contractor model."""
     def test_unicode(self):
@@ -243,6 +269,25 @@ class TestContractor(TestCase):
         contractor = ContractorF(
             name="test", project=ProjectF(name="testproject"))
         self.assertEquals(unicode(contractor), "test in testproject")
+
+    def test_set_slug_and_save(self):
+        organization = OrganizationF.create(name="some_org")
+        user = UserF.create(username="whee")
+        UserProfileF.create(
+            user=user,
+            organization=organization)
+        project = ProjectF.create(name="testproject", superuser=user)
+
+        contractor = ContractorF.build(
+            project=project,
+            name="test",
+            organization=organization,
+            slug=None)
+
+        contractor.set_slug_and_save()
+        self.assertTrue(contractor.slug)
+        self.assertTrue(unicode(contractor.id) in contractor.slug)
+        self.assertTrue("some_org" in contractor.slug)
 
 
 class TestArea(TestCase):

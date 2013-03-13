@@ -5,9 +5,8 @@ from itertools import chain
 
 from django import forms
 from django.contrib.auth.models import User
-from django.template.defaultfilters import slugify
 from lizard_progress.models import (AvailableMeasurementType, Contractor,
-    Project, UserProfile, Organization)
+    Project, Organization)
 from lizard_progress.views import UploadShapefilesView
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
@@ -22,13 +21,13 @@ logger = logging.getLogger(__name__)
 
 class ProjectForm(forms.ModelForm):
     name = forms.CharField(max_length=50)
-    
+
     def __init__(self, *args, **kwargs):
-        user = kwargs.get('initial').pop('superuser')
+        self.user = kwargs.get('initial').pop('superuser')
         super(ProjectForm, self).__init__(*args, **kwargs)
-        
+
         usernames = [u.username for u in
-                     Organization.users_in_same_organization(user)]
+                     Organization.users_in_same_organization(self.user)]
         self.fields['superuser'].queryset = \
             User.objects.filter(username__in=usernames)
 
@@ -37,7 +36,10 @@ class ProjectForm(forms.ModelForm):
         # Since the `slug` field is excluded, it will not
         # be checked automatically for uniqueness.
         name = self.cleaned_data['name']
-        if Project.objects.filter(slug=slugify(name)).exists():
+        usernames = list(
+            Organization.users_in_same_organization(self.user))
+        if Project.objects.filter(
+            name=name, superuser__in=usernames).exists():
             msg = "Kies a.u.b. een andere Projectnaam."
             raise forms.ValidationError(msg)
         return name

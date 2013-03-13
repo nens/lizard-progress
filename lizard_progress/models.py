@@ -12,10 +12,13 @@ SRID = RDNEW
 
 import logging
 import os
+import random
+import string
 
-from django.contrib.gis.db import models
 from django.contrib.auth.models import User
+from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
+from django.template.defaultfilters import slugify
 
 # JSONField was moved for lizard-map 4.0...
 try:
@@ -136,6 +139,21 @@ class Project(models.Model):
     def __unicode__(self):
         return unicode(self.name)
 
+    def set_slug_and_save(self):
+        """Call on an unsaved project.
+
+        Sets a random slug, saves the project, then sets a new slug
+        based on primary key and name."""
+        chars = list(string.lowercase)
+        random.shuffle(chars)
+        self.slug = ''.join(chars)
+        self.save()
+
+        self.slug = "{id}-{slug}".format(
+            id=self.id,
+            slug=slugify(self.name))
+        self.save()
+
     def specifics(self):
         return lizard_progress.specifics.Specifics(self)
 
@@ -162,11 +180,26 @@ class Contractor(models.Model):
     organization = models.ForeignKey(Organization, null=True, blank=True,
         verbose_name='organisatie')
 
+    def set_slug_and_save(self):
+        """Call on an unsaved contractor.
+
+        Sets a random slug, saves the project, then sets a new slug
+        based on primary key and name."""
+        chars = list(string.lowercase)
+        random.shuffle(chars)
+        self.slug = ''.join(chars)
+        self.save()
+
+        self.slug = "{id}-{slug}".format(
+            id=self.id,
+            slug=slugify(self.organization.name))
+        self.save()
+
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)
 
     class Meta:
-        unique_together = (("project", "slug"))
+        unique_together = (("project", "organization"))
 
 
 class Area(models.Model):

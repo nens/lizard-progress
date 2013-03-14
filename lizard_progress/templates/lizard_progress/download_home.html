@@ -1,20 +1,6 @@
-{% extends "lizard_map/wms.html" %}
-{% load workspaces %}
+{% extends "lizard_progress/progressbase.html" %}
 
-{% block css %}
-{{ block.super }}
-<link rel="stylesheet"
-      type="text/css"
-      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
-{% endblock css %}
-
-{% block map-javascript %}
-{{ block.super }}
-<script type="text/javascript"
-        src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
-{% endblock map-javascript %}
-
-{% block sidebar %}
+{% block contentpage %}
 <div class="sidebarbox sidebarbox-stretched">
   <h2>Download</h2>
   {% if view.reports or view.results %}
@@ -28,9 +14,5 @@
   </ul>
   {% endif %}
 </div>
-{% if view.workspace_edit.workspace_items.all or view.collage_edit.collage_items.all %}
-{% workspace_edit view.workspace_edit %}
-{% collage_edit view.collage_edit %}
-{% endif %}
 
-{% endblock sidebar %}
+{% endblock contentpage %}

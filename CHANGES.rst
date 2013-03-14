@@ -24,6 +24,13 @@ Changelog of lizard-progress
   in different organizations)
 - Made sure that the combination project/organization as a contractor
   is always unique
+- Create 'progressbase' template.
+- Rebuild template 'dashbord', 'upload', 'download' to extend progressbase template.
+- Fix logou.
+- Order navigation in site.
+- Add field 'profiletype' to UserProfile model to make difference between
+  contractor and projectmanager.
+- Extend views with ProjectsView, UiView, View.
 
 1.2 (2013-03-05)
 ----------------

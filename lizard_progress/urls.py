@@ -11,7 +11,7 @@ from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 
-from lizard_map.views import AppView
+from lizard_ui.views import UiView
 
 from lizard_progress.forms import CalculateForm
 from lizard_progress.forms import ContractorChoiceForm
@@ -43,7 +43,6 @@ from lizard_progress.views import UploadMeasurementsView
 from lizard_progress.views import UploadReportsView
 from lizard_progress.views import UploadShapefilesView
 from lizard_progress.views import UploadedFileErrorsView
-from lizard_progress.views import View
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
@@ -63,7 +62,7 @@ urlpatterns = patterns(
         name='lizard_progress_projecten'),
     url('^admin/$',
         login_required(
-            AppView.as_view(template_name='lizard_progress/admin.html')),
+            UiView.as_view(template_name='lizard_progress/admin.html')),
         name='lizard_progress_admin'),
     url('^admin/projects/new/$',
         login_required(ProjectWizard.as_view([ProjectForm])),
@@ -87,7 +86,8 @@ urlpatterns = patterns(
         login_required(ResultsWizard.as_view(
             [ProjectChoiceForm, ContractorChoiceForm, CalculateForm])),
         name='lizard_progress_results'),
-    url('^projects/(?P<project_slug>[^/]+)/$', login_required(View.as_view()),
+    url('^projects/(?P<project_slug>[^/]+)/$',
+        login_required(ProjectsView.as_view()),
         name='lizard_progress_view'),
     url('^projects/(?P<project_slug>[^/]+)/map/$',
         login_required(MapView.as_view()),
@@ -126,10 +126,12 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/download/$',
         login_required(DownloadHomeView.as_view()),
         name='lizard_progress_downloadhomeview'),
-    url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/reports/(?P<report>[^/]+)/$',
+    url('^projects/(?P<project_slug>[^/]+)/' +
+        '(?P<contractor_slug>[^/]+)/reports/(?P<report>[^/]+)/$',
         login_required(DownloadReportsView.as_view()),
         name='lizard_progress_downloadreportsview'),
-    url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/results/(?P<report>[^/]+)/$',
+    url('^projects/(?P<project_slug>[^/]+)/' +
+        '(?P<contractor_slug>[^/]+)/results/(?P<report>[^/]+)/$',
         login_required(DownloadResultsView.as_view()),
         name='lizard_progress_downloadresultsview'),
     url('^(?P<project_slug>[^/]+)/dashboard/' +
@@ -154,5 +156,6 @@ urlpatterns = patterns(
     # Nieuwe UI voor uploadserver-site
     url('^ui/$',
         ui.TestView.as_view()),
-    )
+)
+
 urlpatterns += debugmode_urlpatterns()

@@ -68,6 +68,13 @@ class Organization(models.Model):
         users = [profile.user for profile in userprofiles]
         return users
 
+    @classmethod
+    def get_by_user(cls, user):
+        user_profile = UserProfile.get_by_user(user)
+        if user_profile is not None:
+            return user_profile.organization
+        return None
+
     def __unicode__(self):
         return self.name
 
@@ -79,11 +86,17 @@ class UserProfile(models.Model):
         (CONTRACTOR, CONTRACTOR),
         (PROJECTMANAGER, PROJECTMANAGER))
 
-
     user = models.ForeignKey(User, unique=True)
     organization = models.ForeignKey(Organization)
     profiletype = models.CharField(max_length=100, choices=PTYPES,
                                    null=True, blank=True)
+
+    @classmethod
+    def get_by_user(cls, user):
+        try:
+            return cls.objects.get(user=user)
+        except cls.DoesNotExist:
+            return None
 
     def __unicode__(self):
         return "{0} {1}".format(self.user.username,

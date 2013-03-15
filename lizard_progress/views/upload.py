@@ -15,6 +15,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.http import HttpResponseRedirect
+from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
@@ -23,6 +25,7 @@ from django.views.generic import TemplateView
 from django.views.generic import View
 
 from lizard_ui.views import ViewContextMixin
+from lizard_ui.layout import Action
 from lizard_progress import specifics
 from lizard_progress import tasks
 from lizard_progress import models
@@ -43,6 +46,38 @@ def json_response(obj):
     return HttpResponse(json.dumps(obj), mimetype="application/json")
 
 
+def remove_uploaded_file_view(request, **kwargs):
+    user = request.user
+    organization = models.Organization.get_by_user(user)
+
+    if not organization:
+        raise PermissionDenied()
+
+    project_slug = kwargs.get('project_slug')
+    try:
+        project = models.Project.objects.get(slug=project_slug)
+    except models.project.DoesNotExist:
+        raise Http404()
+
+    try:
+        contractor = models.Contractor.objects.get(
+            project=project,
+            organization=organization)
+    except models.Contractor.DoesNotExist:
+        raise PermissionDenied()
+
+    uploaded_file_id = kwargs.get('uploaded_file_id')
+    uploaded_file = models.UploadedFile.objects.get(pk=uploaded_file_id)
+    if (uploaded_file.contractor != contractor
+        or uploaded_file.project != project):
+        raise PermissionDenied()
+
+    uploaded_file.delete()
+    return HttpResponseRedirect(
+        reverse('lizard_progress_uploadhomeview',
+                kwargs={'project_slug': project_slug}))
+
+
 class DummyException(BaseException):
     "Only used for triggering transaction fail"
     pass
@@ -53,7 +88,7 @@ class UploadDialogView(TemplateView):
     template_name = "lizard_progress/upload.html"
 
 
-class UploadHomeView(ProjectsView, ProgressView):
+class UploadHomeView(ProjectsView):
     """The homepage for uploading files.
 
     Within a project, there are various files to be uploaded:
@@ -77,7 +112,7 @@ class UploadHomeView(ProjectsView, ProgressView):
                 project=self.project,
                 organization__userprofile__user=request.user)
         except models.Contractor.DoesNotExist:
-            pass
+            self.contractor = None
 
         if models.has_access(request.user, self.project):
             return super(UploadHomeView, self).get(request, *args, **kwargs)
@@ -104,22 +139,26 @@ class UploadHomeView(ProjectsView, ProgressView):
         return reverse('lizard_progress_uploadshapefilesview',
                        kwargs={'project_slug': self.project_slug})
 
-    def crumbs(self):
-        """Returns a list of breadcrumbs."""
-        crumbs = super(UploadHomeView, self).crumbs()
-        crumbs.append({
-            'description': self.project.name,
-            'url': reverse('lizard_progress_view',
-                kwargs={'project_slug': self.project_slug})
-        })
-        crumbs.append({
-            'description': 'Upload',
-            'url': reverse('lizard_progress_uploadhomeview',
-                kwargs={'project_slug': self.project_slug})
-        })
+    @property
+    def breadcrumbs(self):
+        """Breadcrumbs for this page."""
+        crumbs = super(UploadHomeView, self).breadcrumbs
+
+        crumbs.append(
+            Action(
+                description=("Uploads for {project}"
+                             .format(project=self.project.name)),
+                name="Upload",
+                url=reverse(
+                    'lizard_progress_uploadhomeview',
+                    kwargs={'project_slug': self.project_slug})))
+
         return crumbs
 
     def files_ready(self):
+        if not self.contractor:
+            return []
+
         if not hasattr(self, '_files_ready'):
             self._files_ready = list(models.UploadedFile.objects.filter(
                     project=self.project,
@@ -128,6 +167,9 @@ class UploadHomeView(ProjectsView, ProgressView):
         return self._files_ready
 
     def files_not_ready(self):
+        if not self.contractor:
+            return []
+
         if not hasattr(self, '_files_not_ready'):
             self._files_not_ready = list(models.UploadedFile.objects.filter(
                     project=self.project,

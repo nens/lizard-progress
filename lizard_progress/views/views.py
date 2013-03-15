@@ -30,6 +30,7 @@ from django.views.static import serve
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
+from lizard_ui.layout import Action
 from lizard_ui.views import UiView
 
 from lizard_progress.layers import ProgressAdapter
@@ -48,13 +49,26 @@ from lizard_progress.process_uploaded_file import make_uploaded_file_path
 logger = logging.getLogger(__name__)
 
 
-class ProjectsView(UiView):
-    """Displays a list of projects to choose from."""
-    template_name = "lizard_progress/progressbase.html"
+class ProjectsMixin(object):
+    """Helper functions for working with projects in views"""
+    project_slug = None
+    project = None
 
-    def currentproject(self):
-        if hasattr(self, "project_slug"):
-            return self.project_slug
+    def dispatch(self, request, *args, **kwargs):
+        self.project_slug = kwargs.get('project_slug')
+        if self.project_slug:
+            self.project = get_object_or_404(Project, slug=self.project_slug)
+            if has_access(request.user, self.project):
+                self.has_full_access = all(
+                    has_access(request.user, self.project, contractor)
+                    for contractor in self.project.contractor_set.all())
+            else:
+                raise PermissionDenied()
+        else:
+            self.project = None
+
+        return super(
+            ProjectsMixin, self).dispatch(request, *args, **kwargs)
 
     def projects(self):
         """Returns a list of projects the current user has access to."""
@@ -75,86 +89,56 @@ class ProjectsView(UiView):
         userprofile = UserProfile.objects.get(user=user)
         return userprofile.profiletype == UserProfile.CONTRACTOR
 
+    def user_is_manager(self):
+        user = self.request.user
+        userprofile = UserProfile.objects.get(user=user)
+        return userprofile.profiletype == UserProfile.PROJECTMANAGER
 
-class View(AppView):
+    def project_home_url(self):
+        if not self.project_slug:
+            return reverse('lizard_progress_projecten')
+
+        if self.user_is_uploader():
+            return reverse('lizard_progress_uploadhomeview',
+                           kwargs={'project_slug': self.project_slug})
+        else:
+            return reverse('lizard_progress_dashboardview',
+                           kwargs={'project_slug': self.project_slug})
+
+    @property
+    def breadcrumbs(self):
+        """Returns a list of breadcrumbs to this project."""
+        crumbs = [
+            Action(
+                description="Home",
+                name="Home",
+                url="/")]
+
+        if self.project:
+            crumbs.append(
+                Action(
+                    description=self.project.name,
+                    name=self.project.name,
+                    url=self.project_home_url()))
+
+        return crumbs
+
+
+class ProjectsView(ProjectsMixin, UiView):
+    """Displays a list of projects to choose from."""
+    template_name = "lizard_progress/progressbase.html"
+
+
+class View(ProjectsMixin, AppView):
     """The app's root, shows a choice of projects, or a choice of
     dashboard / upload / map layer pages if a project is chosen."""
 
-    project_slug = None
-    project = None
     template_name = 'lizard_progress/home.html'
-
-    def dispatch(self, request, *args, **kwargs):
-
-        self.project_slug = kwargs.get('project_slug', None)
-        if self.project_slug is None:
-            self.project = Project.objects.all()[0]
-            self.project_slug = self.project.slug
-        else:
-            self.project = get_object_or_404(Project, slug=self.project_slug)
-
-        if has_access(request.user, self.project):
-            self.has_full_access = all(
-                has_access(request.user, self.project, contractor)
-                for contractor in self.project.contractor_set.all())
-
-            return super(View, self).dispatch(request, *args, **kwargs)
-        else:
-            raise PermissionDenied()
-
-    def upload_home_url(self):
-        """Returns URL to this project's Upload view"""
-        return reverse('lizard_progress_uploadhomeview',
-                       kwargs={'project_slug': self.project_slug})
-
-    def download_home_url(self):
-        """Returns URL to this project's Download view"""
-        return reverse('lizard_progress_downloadhomeview',
-                       kwargs={'project_slug': self.project_slug})
-
-    def dashboard_url(self):
-        """Returns URL to this project's Dashboard view"""
-        return reverse('lizard_progress_dashboardview',
-                       kwargs={'project_slug': self.project_slug})
-
-    def map_url(self):
-        """Returns URL to this project's Map view"""
-        return reverse('lizard_progress_mapview',
-                       kwargs={'project_slug': self.project_slug})
-
-    def comparison_url(self):
-        """Returns URL to this project's Comparison view"""
-        return reverse('lizard_progress_comparisonview',
-                       kwargs={'project_slug': self.project_slug})
-
-    def admin_url(self):
-        """Returns URL to this project's Comparison view"""
-        return reverse('lizard_progress_admin')
-
-    def crumbs(self):
-        """Returns a list of breadcrumbs to this project."""
-        crumbs = super(View, self).crumbs()
-        crumbs.append({
-            'description': self.project.name,
-            'url': reverse('lizard_progress_view',
-                           kwargs={'project_slug': self.project_slug})
-        })
-        return crumbs
 
 
 class MapView(View):
     """View that can show a project's locations as map layers."""
     template_name = 'lizard_progress/map.html'
-
-    def crumbs(self):
-        """Breadcrumb for this page."""
-        crumbs = super(MapView, self).crumbs()
-
-        crumbs.append({'url': self.map_url(),
-                       'description': 'Kaartlagen',
-                       'title': '%s kaartlagen' % (self.project.name,)})
-
-        return crumbs
 
     def available_layers(self):
         """List of layers available to draw. Per contractor per area,
@@ -201,6 +185,22 @@ class MapView(View):
             })
 
         return layers
+
+    @property
+    def breadcrumbs(self):
+        """Breadcrumbs for this page."""
+
+        crumbs = super(MapView, self).breadcrumbs
+
+        crumbs.append(
+            Action(
+                name="Kaartlagen",
+                description=("De kaartlagen van {project} in Lizard"
+                             .format(project=self.project.name)),
+                url=reverse('lizard_progress_mapview',
+                            kwargs={'project_slug': self.project_slug})))
+
+        return crumbs
 
 
 class ComparisonView(View):
@@ -436,23 +436,27 @@ class ComparisonPopupView(View):
         return htmls
 
 
-class DashboardView(ProjectsView, View):
+class DashboardView(ProjectsView):
     """Show the dashboard page. The page offers a popup per area per
     contractor, if the user has access, and also downloads to CSV
     files."""
 
     template_name = 'lizard_progress/dashboard.html'
 
-    def crumbs(self):
+    @property
+    def breadcrumbs(self):
         """Breadcrumbs for this page."""
 
-        crumbs = super(DashboardView, self).crumbs()
+        crumbs = super(DashboardView, self).breadcrumbs
 
-        crumbs.append({
-                'url': self.dashboard_url(),
-                'description': 'Dashboard',
-                'title': '%s dashboard' % (self.project.name,)
-                })
+        crumbs.append(
+            Action(
+                name="Dashboard",
+                description=("{project} dashboard"
+                             .format(project=self.project.name)),
+                url=reverse(
+                    'lizard_progress_dashboardview',
+                    kwargs={'project_slug': self.project_slug})))
 
         return crumbs
 
@@ -472,24 +476,6 @@ class DashboardView(ProjectsView, View):
                                     'area_slug': area.slug})))
 
         return areas
-
-    def csv(self):
-        """Links to CSV downloads. One per contractor."""
-
-        csvs = []
-
-        for contractor in Contractor.objects.filter(project=self.project):
-            if has_access(self.request.user, self.project, contractor):
-                url = reverse(
-                    'lizard_progress_dashboardcsvview',
-                    kwargs={
-                        'project_slug': self.project_slug,
-                        'contractor_slug': contractor.slug,
-                        })
-
-                csvs.append((contractor, url))
-
-        return csvs
 
 
 class DashboardAreaView(View):
@@ -669,7 +655,11 @@ def dashboard_graph(request, project_slug, contractor_slug,
         raise PermissionDenied()
 
     fig = ScreenFigure(600, 350)  # in pixels
-    fig.text(0.5, 0.85, 'Uitgevoerde werkzaamheden', fontsize=14, ha='center')
+    fig.text(
+        0.5, 0.85,
+        ('Uitgevoerde werkzaamheden {contractor}'
+         .format(contractor=contractor.organization.name)),
+        fontsize=14, ha='center')
     fig.subplots_adjust(left=0.05, right=0.95)  # smaller margins
     y_title = -0.2  # a bit lower
 

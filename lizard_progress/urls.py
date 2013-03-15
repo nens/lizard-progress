@@ -46,6 +46,8 @@ from lizard_progress.views import UploadedFileErrorsView
 from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
+from lizard_progress import views
+
 from lizard_progress.views import ui
 
 from lizard_ui.urls import debugmode_urlpatterns
@@ -114,6 +116,9 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/upload/$',
         login_required(UploadHomeView.as_view()),
         name='lizard_progress_uploadhomeview'),
+    url('^projects/(?P<project_slug>[^/]+)/upload/remove_uploaded_file/(?P<uploaded_file_id>\d+)/$',
+        login_required(views.remove_uploaded_file_view),
+        name='lizard_progress_remove_uploaded_file'),
     url('^projects/(?P<project_slug>[^/]+)/upload/measurements/$',
         login_required(UploadMeasurementsView.as_view()),
         name='lizard_progress_uploadmeasurementsview'),

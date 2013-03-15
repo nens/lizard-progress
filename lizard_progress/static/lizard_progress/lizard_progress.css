@@ -56,3 +56,33 @@ p.admin {
     margin-top: 20px;
     margin-bottom: 10px;
 }
+
+div#contentpage {
+    margin-left: 10px;
+    margin-top: 10px;
+    right: 0;
+}
+
+div#actions {
+    background-color: #7FA9AE;
+    height: 18px;
+    border-bottom: solid 1px #7FA9AE;
+    padding-bottom: 4.4px;
+    padding-top: 4.4px;
+}
+
+div#actions a {
+    margin-right: 10px;
+    color: #000;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+table#files_processed {
+    max-width: 98%;
+}
+
+p.small {
+    font-size: 80%;
+    font-style: italic;
+}

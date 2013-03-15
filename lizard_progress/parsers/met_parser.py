@@ -86,6 +86,7 @@ class MetParser(specifics.ProgressParser):
                 m, created = models.Measurement.objects.get_or_create(
                     scheduled=scheduled_measurement)
                 m.date = profile.date_measurement
+
                 m.data = [{
                         'x': float(measurement.x),
                         'y': float(measurement.y),
@@ -146,6 +147,7 @@ class MetParser(specifics.ProgressParser):
         if len(profile.measurements) >= 2:
             m1 = profile.measurements[0]
             m2 = profile.measurements[-1]
+
             if m1.z1 != m2.z1 or m1.z2 != m2.z2:
                 self.record_error_code(
                     profile.line_number, 'MET_LEFTRIGHTEQUAL')
@@ -209,12 +211,17 @@ class MetParser(specifics.ProgressParser):
                 project=self.project,
                 location_code=profile.id)
         except models.Location.DoesNotExist:
-            self.record_error_code(
-                line_number=profile.line_number,
-                error_code="NO_LOCATION",
-                location_id=profile.id)
-            return None
-
+            if "NO_LOCATION" in self.error_config:
+                self.record_error_code(
+                    line_number=profile.line_number,
+                    error_code="NO_LOCATION",
+                    location_id=profile.id)
+                return None
+            else:
+                location = models.Location.objects.create(
+                    project=self.project,
+                    location_code=profile.id,
+                    the_geom=Point(profile.x, profile.y))
         try:
             scheduled_measurement = (
                 models.ScheduledMeasurement.objects.
@@ -223,10 +230,18 @@ class MetParser(specifics.ProgressParser):
                     location=location,
                     measurement_type=self.mtype()))
         except models.ScheduledMeasurement.DoesNotExist:
-            self.record_error_code(
-                line_number=profile.line_number,
-                error_code="NO_SCHEDULED")
-            return None
+            if "NO_SCHEDULED" in self.error_config:
+                self.record_error_code(
+                    line_number=profile.line_number,
+                    error_code="NO_SCHEDULED")
+                return None
+            else:
+                scheduled_measurement = (
+                    models.ScheduledMeasurement.objects.create(
+                        project=self.project,
+                        contractor=self.contractor,
+                        location=location,
+                        measuremet_type=self.mtype()))
 
         return scheduled_measurement
 

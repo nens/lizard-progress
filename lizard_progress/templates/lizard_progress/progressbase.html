@@ -14,17 +14,31 @@
 Navigation
 {% endblock %}
 
-{% block site-actions %} 
+{% block css %}
+  {{ block.super }}
+  <link rel="stylesheet"
+    href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
+{% endblock css %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock javascript %}
+{% block site-actions %}
   {{ block.super }}
   {{ view.currentproject }}
 {% endblock site-actions %}
 
-{% block breadcrumbs %}
-&rarr; <a href="{% url lizard_progress_projecten %}" title="Home">Home</a>
-{% endblock breadcrumbs %}
-
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
+{% if view.user_is_manager %}
+  <h2>Beheer</h2>
+  <ul class="without-bullets">
+  <li>
+    <a href="{% url lizard_progress_admin %}">Beheer projecten</a>
+  </li>
+  </ul>
+{% endif %}
   <h2>Projecten</h2>
   <ul class="without-bullets">
   {% for project in view.projects %}
@@ -35,24 +49,28 @@ Navigation
 	<a href="{% url lizard_progress_dashboardview project.slug %}">{{ project }}</a>
       {% endif %}
     </li>
+  {% empty %}
+  <p class="small">(Er zijn nog geen projecten)</p>
   {% endfor %}
   </ul>
 </div>
 {% endblock sidebar %}
 
 {% block content %}
-{{ project_slug }}
-{% if view.currentproject %}
-  {% if view.user_is_uploader %}
-    {% include "lizard_progress/contractor_actions.html" %}
-  {% else %}
-    {% include "lizard_progress/manager_actions.html" %}
-  {% endif %}
+<div id="actions" class="sidebar-inner">
+{% if view.project %}
+<a title="Dashboard" href="{% url lizard_progress_dashboardview project_slug=view.project_slug %}">Dashboard</a>
+<a title="Upload files" href="{% url lizard_progress_uploadhomeview project_slug=view.project_slug %}">Upload</a>
+<a title="Download files" href="{% url lizard_progress_downloadhomeview project_slug=view.project_slug %}">Download</a>
+<a title="Kaartlagen" href="{% url lizard_progress_mapview project_slug=view.project_slug %}">Kaartlagen</a>
 {% else %}
-<h1>Kies een project.</h1>
+<p class="small">(Kies een project)</p>
 {% endif %}
+</div>
 
+<div id="contentpage">
 {% block contentpage %}
 {% endblock contentpage %}
+</div>
 
 {% endblock content %}

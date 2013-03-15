@@ -31,6 +31,22 @@ Changelog of lizard-progress
 - Add field 'profiletype' to UserProfile model to make difference between
   contractor and projectmanager.
 - Extend views with ProjectsView, UiView, View.
+- Helper methods "get_by_user" for Organization, UserProfile.
+- Fix breadcrumbs (now using standard Lizard functions)
+- Fix links to project pages (now using {% url %} template tags)
+- Improve layout of project pages
+- Add remove link to uploaded files
+- Hopefully fix bug with plupload (issue lizard_progress #16) (add an
+  extra refresh() call after it becomes visible)
+- Create locations if they don't exist yet and organizations wants that
+- Create scheduled measurements if they don't exist yet and organization wants
+  that
+- Move CSV download to downloads instead of dashboard
+- Move project admin into the sidebar
+- Sort out view subclassing
+- Add contractor to progress graph
+- Update lizard versions for testing
+
 
 1.2 (2013-03-05)
 ----------------

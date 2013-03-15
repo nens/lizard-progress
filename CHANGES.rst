@@ -31,6 +31,7 @@ Changelog of lizard-progress
 - Add field 'profiletype' to UserProfile model to make difference between
   contractor and projectmanager.
 - Extend views with ProjectsView, UiView, View.
+- Helper methods "get_by_user" for Organization, UserProfile.
 
 1.2 (2013-03-05)
 ----------------

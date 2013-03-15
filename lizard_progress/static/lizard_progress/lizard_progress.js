@@ -27,6 +27,7 @@ $().ready(function () {
         uploader.settings.url = $(this).attr('data-upload-url');
         uploader.splice(); // Clean the queue
         $dialog.dialog('open');
+        uploader.refresh();
         // prevent the default action, e.g., following a link
         return false;
     });

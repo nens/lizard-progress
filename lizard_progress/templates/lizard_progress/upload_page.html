@@ -4,7 +4,7 @@
 <h1>Upload bestanden</h1>
 
 <div id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
-<button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_measurements_url }}"><i class="icon-upload"></i> Upload bestanden</button>
+<button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_measurements_url }}"><i class="icon-upload"></i> Upload metingen</button>
 <button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_shapefiles_url }}"><i class="icon-upload"></i> Upload moedershapefile</button>
 <button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_reports_url }}"><i class="icon-upload"></i> Upload eindrapportages</button>
 </div>
@@ -12,7 +12,7 @@
 
 {% if view.files_not_ready %}
 <h3>Nog niet verwerkte bestanden</h3>
-<table class="table table-striped">
+<table id="files_not_processed" class="table table-striped">
 <thead><td>Filenaam</td><td>Datum</td></thead>
 {% for f in view.files_not_ready %}
 <tr><td>{{ f.filename }}</td><td>{{ f.uploaded_at }}</td></tr>
@@ -22,16 +22,20 @@
 
 {% if view.files_ready %}
 <h3>Verwerkte bestanden</h3>
-<table class="table">
-<thead><td>Filenaam</td><td>Datum</td></thead>
+<table id="files_processed" class="table">
+<thead><td>Filenaam</td><td>Geupload door</td><td>Datum</td><td>Fouten</td><td>Verwijderen</td></thead>
 {% for f in view.files_ready %}
 <tr class="{% if f.success %}success{% else %}error{% endif %}">
   <td>{{ f.filename }}</td>
+  <td>{{ f.uploaded_by }}</td>
   <td>{{ f.uploaded_at }}</td>
   <td>
   {% if not f.success %}
     <a href="{% url lizard_progress_uploaded_file_error_view f.id %}" target="_">bekijk fouten <i class="icon-list"></i></a>
   {% endif %}
+  </td>
+  <td>
+  <a href="{% url lizard_progress_remove_uploaded_file project_slug=view.project_slug uploaded_file_id=f.id %}">verwijder</a>
   </td>
 </tr>
 {% endfor %}

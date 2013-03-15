@@ -1,21 +1,10 @@
 {% extends "lizard_progress/progressbase.html" %}
 
 {% block contentpage %}
-<div class="sidebarbox sidebarbox-stretched">
-  <h2>Dashboard</h2>
+  <h2>Dashboard {{ view.project.name }}</h2>
   <ul class="without-bullets">
 {% for contractor, area, url in view.areas %}
-    <li class="dashboard" data-contractor-slug="{{ contractor.slug }}"
-	data-contractor-name="{{ contractor.name }}"
-	data-area-slug="{{ area.slug }}" data-area-name="{{ area.name }}"
-	data-dashboard-url="{{ url }}">Voortgang {{ contractor.name }} {{ area.name }}
+<img src="{% url lizard_progress_dashboardgraphview project_slug=view.project_slug contractor_slug=contractor.slug area_slug=area.slug %}" title="Voortgang {{ contractor.organization.name }}"/>
 {% endfor %}
   </ul>
-  <h2>CSV bestanden</h2>
-  <ul class="without-bullets">
-{% for contractor, url in view.csv %}
-    <li><a href="{{ url }}">CSV file voortgang {{ contractor.name }}</li>
-{% endfor %}
-  </ul>
-</div>
 {% endblock contentpage %}

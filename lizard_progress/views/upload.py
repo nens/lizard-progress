@@ -25,6 +25,7 @@ from django.views.generic import TemplateView
 from django.views.generic import View
 
 from lizard_ui.views import ViewContextMixin
+from lizard_ui.layout import Action
 from lizard_progress import specifics
 from lizard_progress import tasks
 from lizard_progress import models
@@ -87,7 +88,7 @@ class UploadDialogView(TemplateView):
     template_name = "lizard_progress/upload.html"
 
 
-class UploadHomeView(ProjectsView, ProgressView):
+class UploadHomeView(ProjectsView):
     """The homepage for uploading files.
 
     Within a project, there are various files to be uploaded:
@@ -138,19 +139,20 @@ class UploadHomeView(ProjectsView, ProgressView):
         return reverse('lizard_progress_uploadshapefilesview',
                        kwargs={'project_slug': self.project_slug})
 
-    def crumbs(self):
-        """Returns a list of breadcrumbs."""
-        crumbs = super(UploadHomeView, self).crumbs()
-        crumbs.append({
-            'description': self.project.name,
-            'url': reverse('lizard_progress_view',
-                kwargs={'project_slug': self.project_slug})
-        })
-        crumbs.append({
-            'description': 'Upload',
-            'url': reverse('lizard_progress_uploadhomeview',
-                kwargs={'project_slug': self.project_slug})
-        })
+    @property
+    def breadcrumbs(self):
+        """Breadcrumbs for this page."""
+        crumbs = super(UploadHomeView, self).breadcrumbs
+
+        crumbs.append(
+            Action(
+                description=("Uploads for {project}"
+                             .format(project=self.project.name)),
+                name="Upload",
+                url=reverse(
+                    'lizard_progress_uploadhomeview',
+                    kwargs={'project_slug': self.project_slug})))
+
         return crumbs
 
     def files_ready(self):

@@ -1,9 +1,15 @@
 {% extends "lizard_progress/progressbase.html" %}
 
 {% block contentpage %}
-<div class="sidebarbox sidebarbox-stretched">
-  <h2>Download</h2>
+
+  <h2>CSV bestanden</h2>
+  <ul class="without-bullets">
+{% for contractor, url in view.csv %}
+    <li><a href="{{ url }}">CSV file voortgang {{ contractor.organization.name }}</a></li>
+{% endfor %}
+  </ul>
   {% if view.reports or view.results %}
+  <h2>Download</h2>
   <ul class="without-bullets">
     {% for report in view.reports %}
     <li><a href="{{ report.url }}" title="{{ report.contractor }}">{{ report.name }}</a></li>
@@ -12,7 +18,7 @@
     <li><a href="{{ report.url }}" title="{{ report.contractor }}">{{ report.name }}</a></li>
     {% endfor %}
   </ul>
+  {% else %}
+  <p class="small">(Er zijn nog geen rapporten of resultaten te downloaden)</p>
   {% endif %}
-</div>
-
 {% endblock contentpage %}

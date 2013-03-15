@@ -24,7 +24,6 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
-from django.template.defaultfilters import slugify
 from django.utils.decorators import method_decorator
 
 from lizard_ui.views import UiView
@@ -216,7 +215,7 @@ class ActivitiesWizard(UiView, SessionWizardView):
             contractor = form_list[1].cleaned_data['contractor']
             msg = ('Het toewijzen van werkzaamheden aan ' +
                    'opdrachtnemer "%s" binnen project "%s" ' +
-                   'was succesvol.') % (contractor.name,
+                   'was succesvol.') % (contractor.organization.name,
                                         contractor.project.name)
             messages.info(self.request, msg)
             url = reverse('lizard_progress_newhydrovakken')
@@ -254,7 +253,7 @@ class ActivitiesWizard(UiView, SessionWizardView):
                 MeasurementType(
                     project=project, mtype=mtype,
                     icon_missing=mtype.default_icon_missing,
-                    con_complete=mtype.default_icon_complete).save()
+                    icon_complete=mtype.default_icon_complete).save()
 
     # Within a project, locations can be assigned to different
     # areas, for example `North`, `East`, `South`, and `West`.

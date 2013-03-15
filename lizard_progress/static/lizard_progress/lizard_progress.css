@@ -81,3 +81,8 @@ div#actions a {
 table#files_processed {
     max-width: 98%;
 }
+
+p.small {
+    font-size: 80%;
+    font-style: italic;
+}

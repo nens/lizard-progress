@@ -8,20 +8,24 @@ from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
-from lizard_progress.views.views import View as ProgressView
 from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import has_access
 from lizard_progress.views.upload import UploadReportsView
 from lizard_progress.views.views import ProjectsView
+from lizard_ui.layout import Action
+
+import logging
 import mimetypes
 import os
+
+logger = logging.getLogger(__name__)
 
 
 APP_LABEL = Project._meta.app_label
 
 
-class DownloadHomeView(ProjectsView, ProgressView):
+class DownloadHomeView(ProjectsView):
     """This view offers links to downloadable project artifacts.
 
     If the user does not have sufficient rights,
@@ -70,6 +74,24 @@ class DownloadHomeView(ProjectsView, ProgressView):
 
         return reports
 
+    def csv(self):
+        """Links to CSV downloads. One per contractor."""
+
+        csvs = []
+
+        for contractor in Contractor.objects.filter(project=self.project):
+            if has_access(self.request.user, self.project, contractor):
+                url = reverse(
+                    'lizard_progress_dashboardcsvview',
+                    kwargs={
+                        'project_slug': self.project_slug,
+                        'contractor_slug': contractor.slug,
+                        })
+
+                csvs.append((contractor, url))
+
+        return csvs
+
     # TODO: too much code repetition here.
     def results(self):
 
@@ -101,6 +123,22 @@ class DownloadHomeView(ProjectsView, ProgressView):
                                 'url': url
                             })
         return results
+
+    @property
+    def breadcrumbs(self):
+        """Breadcrumbs for this page."""
+        crumbs = super(DownloadHomeView, self).breadcrumbs
+
+        crumbs.append(
+            Action(
+                description=("Downloads for {project}"
+                             .format(project=self.project.name)),
+                name="Download",
+                url=reverse(
+                    'lizard_progress_downloadhomeview',
+                    kwargs={'project_slug': self.project_slug})))
+
+        return crumbs
 
 
 class DownloadReportsView(View):

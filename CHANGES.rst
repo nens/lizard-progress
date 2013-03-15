@@ -38,6 +38,14 @@ Changelog of lizard-progress
 - Add remove link to uploaded files
 - Hopefully fix bug with plupload (issue lizard_progress #16) (add an
   extra refresh() call after it becomes visible)
+- Create locations if they don't exist yet and organizations wants that
+- Create scheduled measurements if they don't exist yet and organization wants
+  that
+- Move CSV download to downloads instead of dashboard
+- Move project admin into the sidebar
+- Sort out view subclassing
+- Add contractor to progress graph
+- Update lizard versions for testing
 
 
 1.2 (2013-03-05)

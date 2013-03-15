@@ -15,6 +15,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.http import HttpResponseRedirect
+from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
@@ -41,6 +43,38 @@ logger = logging.getLogger(__name__)
 def json_response(obj):
     """Return a HttpResponse with obj serialized as JSON as content"""
     return HttpResponse(json.dumps(obj), mimetype="application/json")
+
+
+def remove_uploaded_file_view(request, **kwargs):
+    user = request.user
+    organization = models.Organization.get_by_user(user)
+
+    if not organization:
+        raise PermissionDenied()
+
+    project_slug = kwargs.get('project_slug')
+    try:
+        project = models.Project.objects.get(slug=project_slug)
+    except models.project.DoesNotExist:
+        raise Http404()
+
+    try:
+        contractor = models.Contractor.objects.get(
+            project=project,
+            organization=organization)
+    except models.Contractor.DoesNotExist:
+        raise PermissionDenied()
+
+    uploaded_file_id = kwargs.get('uploaded_file_id')
+    uploaded_file = models.UploadedFile.objects.get(pk=uploaded_file_id)
+    if (uploaded_file.contractor != contractor
+        or uploaded_file.project != project):
+        raise PermissionDenied()
+
+    uploaded_file.delete()
+    return HttpResponseRedirect(
+        reverse('lizard_progress_uploadhomeview',
+                kwargs={'project_slug': project_slug}))
 
 
 class DummyException(BaseException):
@@ -77,7 +111,7 @@ class UploadHomeView(ProjectsView, ProgressView):
                 project=self.project,
                 organization__userprofile__user=request.user)
         except models.Contractor.DoesNotExist:
-            pass
+            self.contractor = None
 
         if models.has_access(request.user, self.project):
             return super(UploadHomeView, self).get(request, *args, **kwargs)
@@ -120,6 +154,9 @@ class UploadHomeView(ProjectsView, ProgressView):
         return crumbs
 
     def files_ready(self):
+        if not self.contractor:
+            return []
+
         if not hasattr(self, '_files_ready'):
             self._files_ready = list(models.UploadedFile.objects.filter(
                     project=self.project,
@@ -128,6 +165,9 @@ class UploadHomeView(ProjectsView, ProgressView):
         return self._files_ready
 
     def files_not_ready(self):
+        if not self.contractor:
+            return []
+
         if not hasattr(self, '_files_not_ready'):
             self._files_not_ready = list(models.UploadedFile.objects.filter(
                     project=self.project,

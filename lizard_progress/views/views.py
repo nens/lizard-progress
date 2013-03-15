@@ -30,6 +30,7 @@ from django.views.static import serve
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
+from lizard_ui.layout import Action
 from lizard_ui.views import UiView
 
 from lizard_progress.layers import ProgressAdapter
@@ -52,9 +53,24 @@ class ProjectsView(UiView):
     """Displays a list of projects to choose from."""
     template_name = "lizard_progress/progressbase.html"
 
-    def currentproject(self):
-        if hasattr(self, "project_slug"):
-            return self.project_slug
+    project_slug = None
+    project = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.project_slug = kwargs.get('project_slug')
+        if self.project_slug:
+            self.project = get_object_or_404(Project, slug=self.project_slug)
+            if has_access(request.user, self.project):
+                self.has_full_access = all(
+                    has_access(request.user, self.project, contractor)
+                    for contractor in self.project.contractor_set.all())
+            else:
+                raise PermissionDenied()
+        else:
+            self.project = None
+
+        return super(
+            ProjectsView, self).dispatch(request, *args, **kwargs)
 
     def projects(self):
         """Returns a list of projects the current user has access to."""
@@ -75,6 +91,35 @@ class ProjectsView(UiView):
         userprofile = UserProfile.objects.get(user=user)
         return userprofile.profiletype == UserProfile.CONTRACTOR
 
+    def project_home_url(self):
+        if not self.project_slug:
+            return reverse('lizard_progress_projecten')
+
+        if self.user_is_uploader():
+            return reverse('lizard_progress_uploadhomeview',
+                           kwargs={'project_slug': self.project_slug})
+        else:
+            return reverse('lizard_progress_dashboardview',
+                           kwargs={'project_slug': self.project_slug})
+
+    @property
+    def breadcrumbs(self):
+        """Returns a list of breadcrumbs to this project."""
+        crumbs = [
+            Action(
+                description="Home",
+                name="Home",
+                url="/")]
+
+        if self.project:
+            crumbs.append(
+                Action(
+                    description=self.project.name,
+                    name=self.project.name,
+                    url=self.project_home_url()))
+
+        return crumbs
+
 
 class View(AppView):
     """The app's root, shows a choice of projects, or a choice of
@@ -93,14 +138,14 @@ class View(AppView):
         else:
             self.project = get_object_or_404(Project, slug=self.project_slug)
 
-        if has_access(request.user, self.project):
-            self.has_full_access = all(
-                has_access(request.user, self.project, contractor)
-                for contractor in self.project.contractor_set.all())
+            if has_access(request.user, self.project):
+                self.has_full_access = all(
+                    has_access(request.user, self.project, contractor)
+                    for contractor in self.project.contractor_set.all())
+            else:
+                raise PermissionDenied()
 
-            return super(View, self).dispatch(request, *args, **kwargs)
-        else:
-            raise PermissionDenied()
+        return super(View, self).dispatch(request, *args, **kwargs)
 
     def upload_home_url(self):
         """Returns URL to this project's Upload view"""
@@ -131,30 +176,29 @@ class View(AppView):
         """Returns URL to this project's Comparison view"""
         return reverse('lizard_progress_admin')
 
-    def crumbs(self):
+    @property
+    def breadcrumbs(self):
         """Returns a list of breadcrumbs to this project."""
-        crumbs = super(View, self).crumbs()
-        crumbs.append({
-            'description': self.project.name,
-            'url': reverse('lizard_progress_view',
-                           kwargs={'project_slug': self.project_slug})
-        })
+        crumbs = [
+            Action(
+                description="Home",
+                name="Home",
+                url="/")]
+
+        if self.project:
+            crumbs.append(
+                Action(
+                    description=self.project.name,
+                    name=self.project.name,
+                    url=reverse('lizard_progress_view',
+                                kwargs={'project_slug': self.project_slug})))
+
         return crumbs
 
 
 class MapView(View):
     """View that can show a project's locations as map layers."""
     template_name = 'lizard_progress/map.html'
-
-    def crumbs(self):
-        """Breadcrumb for this page."""
-        crumbs = super(MapView, self).crumbs()
-
-        crumbs.append({'url': self.map_url(),
-                       'description': 'Kaartlagen',
-                       'title': '%s kaartlagen' % (self.project.name,)})
-
-        return crumbs
 
     def available_layers(self):
         """List of layers available to draw. Per contractor per area,

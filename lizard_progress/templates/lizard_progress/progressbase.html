@@ -14,14 +14,20 @@
 Navigation
 {% endblock %}
 
-{% block site-actions %} 
+{% block css %}
+  {{ block.super }}
+  <link rel="stylesheet"
+    href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
+{% endblock css %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock javascript %}
+{% block site-actions %}
   {{ block.super }}
   {{ view.currentproject }}
 {% endblock site-actions %}
-
-{% block breadcrumbs %}
-&rarr; <a href="{% url lizard_progress_projecten %}" title="Home">Home</a>
-{% endblock breadcrumbs %}
 
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
@@ -41,8 +47,7 @@ Navigation
 {% endblock sidebar %}
 
 {% block content %}
-{{ project_slug }}
-{% if view.currentproject %}
+{% if view.project %}
   {% if view.user_is_uploader %}
     {% include "lizard_progress/contractor_actions.html" %}
   {% else %}
@@ -52,7 +57,9 @@ Navigation
 <h1>Kies een project.</h1>
 {% endif %}
 
+<div id="contentpage">
 {% block contentpage %}
 {% endblock contentpage %}
+</div>
 
 {% endblock content %}

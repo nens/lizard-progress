@@ -32,6 +32,13 @@ Changelog of lizard-progress
   contractor and projectmanager.
 - Extend views with ProjectsView, UiView, View.
 - Helper methods "get_by_user" for Organization, UserProfile.
+- Fix breadcrumbs (now using standard Lizard functions)
+- Fix links to project pages (now using {% url %} template tags)
+- Improve layout of project pages
+- Add remove link to uploaded files
+- Hopefully fix bug with plupload (issue lizard_progress #16) (add an
+  extra refresh() call after it becomes visible)
+
 
 1.2 (2013-03-05)
 ----------------

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.3 (unreleased)
+1.3 (2013-03-15)
 ----------------
 
 - Move document_root and make_uploaded_file_path functions to

@@ -19,15 +19,18 @@ $().ready(function () {
         width: 500
     });
 
+    var uploader;
+
     $('.upload').click(function () {
-        var uploader = $('#uploader').plupload('getUploader');
+        uploader = uploader || $('#uploader').plupload('getUploader');
+        $dialog.dialog('open');
         //Next line seems to solve a problem with the "Add Files"
         //button in Chrome when using a modal dialog.
         //$('#uploader > div.plupload').css('z-index','99999');
         uploader.settings.url = $(this).attr('data-upload-url');
         uploader.splice(); // Clean the queue
-        $dialog.dialog('open');
         uploader.refresh();
+
         // prevent the default action, e.g., following a link
         return false;
     });

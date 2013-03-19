@@ -366,6 +366,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         # Otherwise just use the default template (give implementing
         # sites the chance to just implement image)
         return super(ProgressAdapter, self).html_default(
+            template='lizard_progress/html_default.html',
             identifiers=identifiers,
             layout_options=layout_options,
         )

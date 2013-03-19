@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix dwarsprofiel graph, was broken in latest Lizard
 
 
 1.3 (2013-03-15)

@@ -13,9 +13,13 @@
 {% if view.files_not_ready %}
 <h3>Nog niet verwerkte bestanden</h3>
 <table id="files_not_processed" class="table table-striped">
-<thead><td>Filenaam</td><td>Datum</td></thead>
+<thead><td>Filenaam</td><td>Geupload door</td><td>Datum</td></thead>
 {% for f in view.files_not_ready %}
-<tr><td>{{ f.filename }}</td><td>{{ f.uploaded_at }}</td></tr>
+  <tr>
+    <td>{{ f.filename }}</td>
+    <td>{{ f.uploaded_by }}</td>
+    <td>{{ f.uploaded_at }}</td>
+  </tr>
 {% endfor %}
 </table>
 {% endif %}

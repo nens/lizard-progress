@@ -97,10 +97,11 @@ class MetParser(specifics.ProgressParser):
                           for measurement in profile.measurements
                           ]
 
-                # Use x, y of first point
-                m.the_geom = Point(
-                    m.data[0]['x'], m.data[0]['y'], srid=models.SRID)
-                m.save()
+                if len(m.data) > 0:
+                    # Use x, y of first point
+                    m.the_geom = Point(
+                        m.data[0]['x'], m.data[0]['y'], srid=models.SRID)
+                    m.save()
 
                 scheduled_measurement.complete = True
                 scheduled_measurement.save()

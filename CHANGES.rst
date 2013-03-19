@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.4 (unreleased)
+1.4 (2013-03-19)
 ----------------
 
 - Fix dwarsprofiel graph, was broken in latest Lizard

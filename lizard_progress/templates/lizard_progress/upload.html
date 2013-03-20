@@ -1,30 +1,15 @@
 <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/base/jquery-ui.css" type="text/css" />
 <link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
 
-{% comment %}
-JQuery is already included by lizard. Including it twice will cause CSRF errors.
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-{% endcomment %}
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
 <script type="text/javascript" src="http://bp.yahooapis.com/2.4.21/browserplus-min.js"></script>
 
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
-{% comment %}
-Skip javascript corresponding to disabled runtimes.
-Uncomment `flash_swf_url` when using Flash.
-Uncomment `silverlight_xap_url` when using Silverlight.
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.gears.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.silverlight.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.flash.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.browserplus.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html4.js"></script>
-{% endcomment %}
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
 
 <div id="uploader">
-  {# <p>You browser doesn't have HTML5, Flash, Silverlight, Gears, BrowserPlus or support.</p> #}
-  <p>You browser doesn't have HTML5 support.</p>
+  <p>Your browser doesn't have HTML5 support.</p>
 </div>
 
 <script type="text/javascript">
@@ -77,12 +62,6 @@ $(function () {
         u.settings.multipart_params.filename = f.name;
     });
 
-    //alert(foo.plupload('getUploader').runtime);
-    //alert(uploader.runtime);
-    //uploader.bind('beforeUpload', function(u, f) { alert(plupload.File.name); });
-    //uploader.settings.multipart_params.myfilename = 'xyz';
-    //uploader.settings.multipart_params['X-CSRFToken'] = '{{csrf_token}}';
-
     // Client side form validation
     $('form').submit(function (e) {
         var uploader = $('#uploader').plupload('getUploader');
@@ -118,11 +97,5 @@ $(function () {
             });
         }
     });
-
-    //
-    uploader.bind('UploadComplete', function (up, files) {
-        refreshWorkspaceLayers();
-    });
-
 });
 </script>

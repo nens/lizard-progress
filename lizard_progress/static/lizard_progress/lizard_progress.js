@@ -22,8 +22,8 @@ $().ready(function () {
     var uploader;
 
     $('.upload').click(function () {
-        uploader = uploader || $('#uploader').plupload('getUploader');
         $dialog.dialog('open');
+        uploader = uploader || $('#uploader').plupload('getUploader');
         //Next line seems to solve a problem with the "Add Files"
         //button in Chrome when using a modal dialog.
         //$('#uploader > div.plupload').css('z-index','99999');

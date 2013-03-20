@@ -243,8 +243,6 @@ def path_for_uploaded_file(uploaded_file, measurement_type):
     seq = 0
     while True:
         new_filename = unique_filename(orig_filename, seq)
-        new_filename = ('%s-%d-%s' % (time.strftime('%Y%m%d-%H%M%S'),
-                                      seq, orig_filename))
         if not os.path.exists(os.path.join(dirname, new_filename)):
             break
         # Increase sequence number if filename exists

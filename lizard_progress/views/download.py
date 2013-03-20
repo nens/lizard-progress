@@ -8,6 +8,9 @@ from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
+from django.views.static import serve
+from lizard_progress import models
+from lizard_progress import tasks
 from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import has_access
@@ -18,6 +21,7 @@ from lizard_ui.layout import Action
 import logging
 import mimetypes
 import os
+import platform
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +128,10 @@ class DownloadHomeView(ProjectsView):
                             })
         return results
 
+    def exports(self):
+        return models.ExportRun.all_in_project(
+            self.project, self.request.user)
+
     @property
     def breadcrumbs(self):
         """Breadcrumbs for this page."""
@@ -208,3 +216,73 @@ class DownloadResultsView(View):
         response['Content-Type'] = mimetypes.guess_type(filename)
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
         return response
+
+
+def start_export_run_view(request, project_slug, export_run_id):
+    if request.method != "POST":
+        logger.debug("method is not POST, but {0}".format(request.method))
+        return HttpResponseForbidden()
+
+    try:
+        export_run = models.ExportRun.objects.get(pk=export_run_id)
+    except models.ExportRun.DoesNotExist:
+        logger.debug("No such export run")
+        return HttpResponseForbidden()
+
+    if export_run.project.slug != project_slug:
+        logger.debug("Wrong project slug")
+        return HttpResponseForbidden()
+
+    if not models.has_access(
+        request.user, export_run.project, export_run.contractor):
+        logger.debug("No access")
+        return HttpResponseForbidden()
+
+    # Clear existing export
+    export_run.clear()
+    export_run.export_running = True
+    export_run.save()
+
+    # Start the Celery task
+    tasks.start_export_run.delay(export_run.id, request.user)
+
+    return HttpResponse()
+
+
+def protected_download_export_run(request, project_slug, export_run_id):
+    """
+    Copied from views.protected_file_download, see there.
+    No Apache support, only Nginx.
+    """
+
+    try:
+        export_run = models.ExportRun.objects.get(pk=export_run_id)
+    except models.ExportRun.DoesNotExist:
+        return HttpResponseForbidden()
+
+    if export_run.project.slug != project_slug:
+        return HttpResponseForbidden()
+
+    if not has_access(request.user, export_run.project, export_run.contractor):
+        return HttpResponseForbidden()
+
+    file_path = export_run.file_path
+    logger.debug("File path: " + file_path)
+
+    nginx_path = '/'.join([
+            '/protected', 'export',
+            export_run.project.organization.name,
+            os.path.basename(file_path)])
+
+    # This is where the magic takes place.
+    response = HttpResponse()
+    response['X-Accel-Redirect'] = nginx_path  # Nginx
+
+    # Unset the Content-Type as to allow for the webserver
+    # to determine it.
+    response['Content-Type'] = ''
+
+    # Only works for Apache and Nginx, under Linux right now
+    if settings.DEBUG or not platform.system() == 'Linux':
+        return serve(request, file_path, '/')
+    return response

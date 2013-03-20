@@ -113,3 +113,36 @@ $().ready(function () {
         return false;
     });
 });
+
+$().ready(function () {
+    $(".export-run-button").click(function () {
+        var export_run_id = $(this).attr('data-export-run-id');
+        var post_to_url = $(this).attr('data-export-run-url');
+        var loader_gif = $(this).attr('data-loader-gif');
+
+        // Clear relevant table cells
+        $("td#present-" + export_run_id).html(
+            "<img src=\"" + loader_gif + "\">");
+        $("td#uptodate-" + export_run_id).html("");
+        $("td#download-" + export_run_id).html("");
+
+        // Post to url
+        $.post(post_to_url);
+
+        // Reload page after 1 sec
+        setTimeout(function () {
+            location.reload();
+        }, 1000);
+    });
+});
+
+$().ready(function () {
+    // If there is a table row with class "please-reload-me", reload
+    // the page after 1 second.
+    if ($("tr.please-reload-me").length > 0) {
+        // Reload page after 1 sec
+        setTimeout(function () {
+            location.reload();
+        }, 1000);
+    }
+});

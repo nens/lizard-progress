@@ -9,6 +9,7 @@ from __future__ import division
 from celery.task import task
 
 from lizard_progress import process_uploaded_file
+from lizard_progress import exports
 
 
 @task
@@ -21,3 +22,9 @@ def add(x, y):
 def process_uploaded_file_task(uploaded_file_id):
     """Call the process_uploaded_file function."""
     process_uploaded_file.process_uploaded_file(uploaded_file_id)
+
+
+@task
+def start_export_run(export_run_id, user):
+    """Start the given export run."""
+    exports.start_run(export_run_id, user)

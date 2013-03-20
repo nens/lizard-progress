@@ -158,9 +158,13 @@ urlpatterns = patterns(
         login_required(UploadedFileErrorsView.as_view()),
         name='lizard_progress_uploaded_file_error_view'),
 
-    # Nieuwe UI voor uploadserver-site
-    url('^ui/$',
-        ui.TestView.as_view()),
+    # Start an export run
+  url('^projects/(?P<project_slug>[^/]+)/export_run/(?P<export_run_id>[\d]+)/$',
+        login_required(views.start_export_run_view),
+        name="lizard_progress_start_export_run_view"),
+  url('^projects/(?P<project_slug>[^/]+)/export_run/(?P<export_run_id>[\d]+)/download/',
+        login_required(views.protected_download_export_run),
+        name="lizard_progress_download_export_run_view"),
 )
 
 urlpatterns += debugmode_urlpatterns()

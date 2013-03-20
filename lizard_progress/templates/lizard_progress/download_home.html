@@ -2,6 +2,33 @@
 
 {% block contentpage %}
 
+  <h2>Export bestanden</h2>
+<table class="table table-bordered table-hover" style="width: 95%">
+  <thead>
+    <th>Opdrachtnemer</th>
+    <th>Soort meting</th>
+    <th>Soort file</th>
+    <th>Gegenereerd</th>
+    <th>Up to date</th>
+    <th>Bestand</th>
+    <th>Start</th>
+  </thead>
+{% for export_run in view.exports %}
+  <tr {% if not export_run.present and export_run.export_running %}class="please-reload-me"{% endif %}>
+    <td>{{ export_run.contractor.organization }}</td>
+    <td>{{ export_run.measurement_type }}</td>
+    <td>
+{% if export_run.exporttype == "allfiles" %}ZIP bestand
+{% elif export_run.exporttype == "met" %}MET bestand
+{% else %}Onbekend{% endif%}</td>
+    <td id="present-{{ export_run.id }}">{% if export_run.present %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">{% endif %}</td>
+    <td id="uptodate-{{ export_run.id }}">{% if export_run.present %}{% if export_run.up_to_date %}Ja{% else %}Nee{% endif %}{% endif %}</td>
+    <td id="download-{{ export_run.id }}">{% if export_run.present %}<a href="{% url lizard_progress_download_export_run_view project_slug=export_run.project.slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>{% endif %}</td>
+    <td><button type="button" data-export-run-url="{% url lizard_progress_start_export_run_view project_slug=export_run.project.slug export_run_id=export_run.id %}" data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif" data-export-run-id="{{ export_run.id }}" class="export-run-button btn btn-primary">Genereer</button></td>
+  </tr>
+{% endfor %}
+</table>
+
   <h2>CSV bestanden</h2>
   <ul class="without-bullets">
 {% for contractor, url in view.csv %}

@@ -10,11 +10,13 @@ from __future__ import division
 RDNEW = 28992
 SRID = RDNEW
 
+import datetime
 import logging
 import os
 import random
 import string
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse
@@ -464,3 +466,123 @@ class UploadedFileError(models.Model):
     line = models.IntegerField(default=0)  # Always 0 if file is not linelike
     error_code = models.CharField(max_length=30)
     error_message = models.CharField(max_length=300)
+
+
+class ExportRun(models.Model):
+    """There can be one export run per combination of project,
+    contractor, measurement type, exporttype.
+
+    exporttype is usually 'allfiles', but may sometimes be something else
+    like 'met' or 'autocad' to make it possilbe to have different ways to
+    export the same data."""
+
+    project = models.ForeignKey(Project)
+    contractor = models.ForeignKey(Contractor)
+    measurement_type = models.ForeignKey(AvailableMeasurementType)
+    exporttype = models.CharField(max_length=20)
+
+    created_at = models.DateTimeField(null=True, blank=True, default=None)
+    created_by = models.ForeignKey(User, null=True, blank=True, default=None)
+    file_path = models.CharField(max_length=300, null=True, default=None)
+    ready_for_download = models.BooleanField(default=False)
+    export_running = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = (
+            'project', 'contractor', 'measurement_type', 'exporttype')
+
+    def __unicode__(self):
+        return ("Export '{exporttype}' of all data of type "
+                "'{measurement_type}' by {contractor} in {project}"
+                ).format(
+            exporttype=self.exporttype,
+            contractor=self.contractor.organization,
+            project=self.project,
+            measurement_type=self.measurement_type)
+
+    @property
+    def filename(self):
+        return self.file_path and os.path.basename(self.file_path)
+
+    @classmethod
+    def get_or_create(cls, project, contractor, measurement_type, exporttype):
+        instance, created = cls.objects.get_or_create(
+            project=project, contractor=contractor,
+            measurement_type=measurement_type, exporttype=exporttype)
+        return instance
+
+    @classmethod
+    def all_in_project(cls, project, user):
+        """Yield all the export runs user has access to in this
+        project."""
+        mtypes = MeasurementType.objects.filter(project=project)
+        contractors = Contractor.objects.filter(project=project)
+
+        for mtype in mtypes:
+            for contractor in contractors:
+                if has_access(user, project, contractor):
+                    #if mtype.slug == 'dwarsprofiel':
+                        #yield cls.get_or_create(
+                        #    project, contractor, mtype.mtype, 'met')
+                    #    pass
+                    #else:
+                    yield cls.get_or_create(
+                        project, contractor, mtype.mtype, 'allfiles')
+
+    @property
+    def present(self):
+        return bool(self.file_path and self.ready_for_download
+                    and os.path.exists(self.file_path))
+
+    def clear(self):
+        """Make current data unavailable."""
+        self.ready_for_download = False
+        if self.file_path and os.path.exists(self.file_path):
+            os.remove(self.file_path)
+        self.file_path = None
+        self.save()
+
+    def record_start(self, user):
+        self.created_by = user
+        self.created_at = datetime.datetime.now()
+        self.export_running = True
+        self.save()
+
+    def set_ready_for_download(self):
+        self.ready_for_download = bool(
+            self.file_path and os.path.exists(self.file_path))
+        self.export_running = False
+        self.save()
+
+    @property
+    def up_to_date(self):
+        return self.present and self.created_at > max(
+            measurement.date for measurement in self.measurements_to_export())
+
+    def measurements_to_export(self):
+        return Measurement.objects.filter(
+            scheduled__project=self.project,
+            scheduled__contractor=self.contractor,
+            scheduled__measurement_type__mtype=self.measurement_type,
+            scheduled__complete=True)
+
+    def files_to_export(self):
+        return set(
+            measurement.filename
+            for measurement in self.measurements_to_export())
+
+    def export_filename(
+        self,
+        export_root=os.path.join(
+            settings.BUILDOUT_DIR, 'var',
+            'lizard_progress', 'export'),
+        extension="zip"):
+        """Return the filename that the result file should use."""
+        return ("{export_root}/{organization}/"
+                "{project}-{contractor}-{mtype}.{extension}").format(
+            export_root=export_root,
+            organization=self.project.organization.name,
+            project=self.project.slug,
+            contractor=self.contractor.slug,
+            mtype=self.measurement_type.slug,
+            extension=extension).encode('utf8')

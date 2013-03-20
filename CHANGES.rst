@@ -7,6 +7,11 @@ Changelog of lizard-progress
 
 - Implement checks for Waternet profile_point_type rules.
 
+- Add export possibility. An export overview is on the Download page
+  of a project. From there export runs can be started, that run as
+  Celery tasks. One type of export is implemented: a zip file
+  containing the most up to date uploaded files. Files can be
+  downloaded.
 
 1.4 (2013-03-19)
 ----------------

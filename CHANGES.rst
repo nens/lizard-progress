@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.5 (unreleased)
+1.5 (2013-03-21)
 ----------------
 
 - Implement checks for Waternet profile_point_type rules.

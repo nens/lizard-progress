@@ -2,6 +2,18 @@
 functions in hdsr.progress.py return the function in this file to
 lizard-progress, which then calls them."""
 
+# Codes not in migrations yet:
+
+# MET_ONE_1_CODE {0}
+# MET_ONE_2_CODE {0}
+# MET_TWO_22_CODES {0}
+# MET_ONE_7_CODE {0}
+# MET_EXPECTED_CODE_2
+# MET_EXPECTED_CODE_1
+# MET_EXPECTED_CODE_1_OR_2
+# MET_CODE_7_IN_BETWEEN_22
+# MET_WRONG_PROFILE_POINT_TYPE
+
 import logging
 import math
 
@@ -14,38 +26,6 @@ from lizard_progress import specifics
 from lizard_progress import errors
 
 logger = logging.getLogger(__name__)
-
-
-class MetProfiel(object):
-    """Class holding the results of parsing a <profiel> METfile
-    section."""
-    def __init__(self, location, scheduled, date, measurements):
-        self.location = location
-        self.scheduled = scheduled
-        self.date = date
-        self.measurements = measurements
-
-    def save(self):
-        """Save the measurements represented by this object into the
-        database."""
-
-        # For this measurement type there is a single
-        # Measurement per ScheduledMeasurement, we can
-        # use get.
-        m, _ = (models.Measurement.objects.
-                get_or_create(scheduled=self.scheduled))
-        m.data = self.measurements
-        m.date = self.date
-        # Use xy of the first point
-        m.the_geom = Point(self.measurements[0]['x'],
-                           self.measurements[0]['y'],
-                           srid=models.SRID)
-        m.save()
-
-        self.scheduled.complete = True
-        self.scheduled.save()
-
-        return m
 
 
 class MetParser(specifics.ProgressParser):
@@ -250,7 +230,7 @@ class MetParser(specifics.ProgressParser):
                 else:
                     self.record_error(
                         measurements[-1].line_number,
-                        'MET_EXPECTED_CODE_2')
+                        'MET_EXPECTED_CODE_1')
                     success_so_far = False
             else:
                 self.record_error(measurements[0].line_number,

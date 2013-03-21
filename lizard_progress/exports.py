@@ -24,6 +24,9 @@ from __future__ import division
 import os
 import zipfile
 
+from metfilelib.util import retrieve_profile
+from metfilelib import exporters
+
 from lizard_progress import models
 from lizard_progress import tools
 
@@ -38,7 +41,11 @@ def start_run(export_run_id, user):
 
     export_run.clear()
     export_run.record_start(user)
-    export_all_files(export_run)
+
+    if export_run.exporttype == "met":
+        export_as_metfile(export_run)
+    else:
+        export_all_files(export_run)
     export_run.set_ready_for_download()
 
 
@@ -58,4 +65,31 @@ def export_all_files(export_run):
                 tools.orig_from_unique_filename(os.path.basename(file_path)))
 
     export_run.file_path = zipfile_path
+    export_run.save()
+
+
+def export_as_metfile(export_run):
+    """Export a set of measurements as one combined MET file.
+
+    This works by _retrieving the original <PROFIEL> sections from the
+    originally uploaded files_. So no processing is done on them."""
+
+    metfile_path = export_run.export_filename(extension="met")
+
+    if not os.path.isdir(os.path.dirname(metfile_path)):
+        os.makedirs(os.path.dirname(metfile_path))
+
+    measurements = export_run.measurements_to_export()
+
+    metfile = retrieve_profile.recreate_metfile([
+            (measurement.filename,
+             measurement.scheduled.location.location_code)
+            for measurement in measurements])
+
+    exporter = exporters.MetfileExporter()
+
+    with open(metfile_path, "w") as f:
+        f.write(exporter.export_metfile(metfile))
+
+    export_run.file_path = metfile_path
     export_run.save()

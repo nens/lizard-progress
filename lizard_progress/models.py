@@ -521,11 +521,10 @@ class ExportRun(models.Model):
         for mtype in mtypes:
             for contractor in contractors:
                 if has_access(user, project, contractor):
-                    #if mtype.slug == 'dwarsprofiel':
-                        #yield cls.get_or_create(
-                        #    project, contractor, mtype.mtype, 'met')
-                    #    pass
-                    #else:
+                    if mtype.slug == 'dwarsprofiel':
+                        yield cls.get_or_create(
+                            project, contractor, mtype.mtype, 'met')
+
                     yield cls.get_or_create(
                         project, contractor, mtype.mtype, 'allfiles')
 

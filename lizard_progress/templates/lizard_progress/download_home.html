@@ -18,13 +18,34 @@
     <td>{{ export_run.contractor.organization }}</td>
     <td>{{ export_run.measurement_type }}</td>
     <td>
-{% if export_run.exporttype == "allfiles" %}ZIP bestand
-{% elif export_run.exporttype == "met" %}MET bestand
-{% else %}Onbekend{% endif%}</td>
-    <td id="present-{{ export_run.id }}">{% if export_run.present %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">{% endif %}</td>
-    <td id="uptodate-{{ export_run.id }}">{% if export_run.present %}{% if export_run.up_to_date %}Ja{% else %}Nee{% endif %}{% endif %}</td>
-    <td id="download-{{ export_run.id }}">{% if export_run.present %}<a href="{% url lizard_progress_download_export_run_view project_slug=export_run.project.slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>{% endif %}</td>
-    <td><button type="button" data-export-run-url="{% url lizard_progress_start_export_run_view project_slug=export_run.project.slug export_run_id=export_run.id %}" data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif" data-export-run-id="{{ export_run.id }}" class="export-run-button btn btn-primary">Genereer</button></td>
+      {% if export_run.exporttype == "allfiles" %}ZIP bestand
+      {% elif export_run.exporttype == "met" %}MET bestand
+      {% else %}Onbekend{% endif%}
+    </td>
+    <td id="present-{{ export_run.id }}">
+      {% if export_run.present %}{{ export_run.created_at }}{% elif export_run.export_running %}
+        <img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">
+      {% endif %}
+    </td>
+    <td id="uptodate-{{ export_run.id }}">
+      {% if export_run.present %}{% if export_run.up_to_date %}Ja{% else %}Nee{% endif %}{% endif %}
+    </td>
+    <td id="download-{{ export_run.id }}">
+      {% if export_run.present %}
+        <a href="{% url lizard_progress_download_export_run_view project_slug=export_run.project.slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>
+      {% endif %}
+    </td>
+    <td>
+      <button type="button"
+              autocomplete="off" {# So it doesn't stay disabled after reloading in Firefox #}
+              {% if export_run.export_running %}disabled="disabled"{% endif %}
+              data-export-run-url="{% url lizard_progress_start_export_run_view project_slug=export_run.project.slug export_run_id=export_run.id %}"
+              data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif"
+              data-export-run-id="{{ export_run.id }}"
+              class="export-run-button btn btn-primary">
+        Genereer
+      </button>
+    </td>
   </tr>
 {% endfor %}
 </table>

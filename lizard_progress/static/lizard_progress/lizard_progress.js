@@ -126,6 +126,9 @@ $().ready(function () {
         $("td#uptodate-" + export_run_id).html("");
         $("td#download-" + export_run_id).html("");
 
+        // Disable this button
+        $(this).attr('disabled', 'disabled');
+
         // Post to url
         $.post(post_to_url);
 

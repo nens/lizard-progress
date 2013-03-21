@@ -13,6 +13,9 @@ Changelog of lizard-progress
   containing the most up to date uploaded files. Files can be
   downloaded.
 
+- Added exports as MET file.
+
+
 1.4 (2013-03-19)
 ----------------
 

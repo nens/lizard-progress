@@ -524,6 +524,10 @@ class ExportRun(models.Model):
                     if mtype.slug == 'dwarsprofiel':
                         yield cls.get_or_create(
                             project, contractor, mtype.mtype, 'met')
+                        yield cls.get_or_create(
+                            project, contractor, mtype.mtype, 'dxf')
+                        yield cls.get_or_create(
+                            project, contractor, mtype.mtype, 'csv')
 
                     yield cls.get_or_create(
                         project, contractor, mtype.mtype, 'allfiles')
@@ -563,7 +567,7 @@ class ExportRun(models.Model):
             scheduled__project=self.project,
             scheduled__contractor=self.contractor,
             scheduled__measurement_type__mtype=self.measurement_type,
-            scheduled__complete=True)
+            scheduled__complete=True).select_related()
 
     def files_to_export(self):
         return set(

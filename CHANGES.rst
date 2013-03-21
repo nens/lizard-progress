@@ -15,6 +15,8 @@ Changelog of lizard-progress
 
 - Added exports as MET file.
 
+- Added CSV, DXF exports.
+
 
 1.4 (2013-03-19)
 ----------------

@@ -23,7 +23,8 @@ install_requires = [
     'metfilelib',
     'pkginfo',
     'factory_boy',
-    'mock'
+    'mock',
+    'dxfwrite'
     ],
 
 tests_require = [

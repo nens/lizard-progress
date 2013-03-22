@@ -2,18 +2,7 @@
 functions in hdsr.progress.py return the function in this file to
 lizard-progress, which then calls them."""
 
-# Codes not in migrations yet:
-
-# MET_ONE_1_CODE {0}
-# MET_ONE_2_CODE {0}
-# MET_TWO_22_CODES {0}
-# MET_ONE_7_CODE {0}
-# MET_EXPECTED_CODE_2
-# MET_EXPECTED_CODE_1
-# MET_EXPECTED_CODE_1_OR_2
-# MET_CODE_7_IN_BETWEEN_22
-# MET_WRONG_PROFILE_POINT_TYPE
-
+import itertools
 import logging
 import math
 
@@ -26,6 +15,13 @@ from lizard_progress import specifics
 from lizard_progress import errors
 
 logger = logging.getLogger(__name__)
+
+
+def pairs(iterable):
+    helper_iter = iter(iterable)
+    helper_iter.next()
+
+    return itertools.izip(iterable, helper_iter)
 
 
 class MetParser(specifics.ProgressParser):
@@ -74,7 +70,7 @@ class MetParser(specifics.ProgressParser):
                         'top': measurement.z1,
                         'bottom': measurement.z2
                         }
-                          for measurement in profile.measurements
+                          for measurement in profile.sorted_measurements
                           ]
 
                 if len(m.data) > 0:
@@ -96,9 +92,10 @@ class MetParser(specifics.ProgressParser):
 
     def check_series(self, series):
         for profile in series.profiles:
-            self.check_profile(profile)
+            self.check_profile(
+                profile, series.id, series.start_x, series.start_y)
 
-    def check_profile(self, profile):
+    def check_profile(self, profile, series_id, start_x, start_y):
         if profile.level_type != 'NAP':
             self.record_error_code(
                 profile.line_number, 'MET_NAP')
@@ -122,6 +119,22 @@ class MetParser(specifics.ProgressParser):
         if len(profile.measurements) < 2:
             self.record_error_code(
                 profile.line_number, 'MET_2MEASUREMENTS')
+
+        if '_' not in profile.id:
+            self.record_error_code(
+                profile.line_number, 'MET_UNDERSCORE_IN_PROFILE_ID')
+        else:
+            parts = profile.id.split('_')
+            first_part = parts[0]
+            second_part = "_".join(parts[1:])
+
+            if first_part != series_id:
+                self.record_error_code(
+                    profile.line_number, 'MET_SERIES_ID_IN_PROFILE_ID')
+
+            if profile.description != "Profiel_{0}".format(second_part):
+                self.record_error_code(
+                    profile.line_number, 'MET_PROFILE_NUMBER_IN_DESC')
 
         max_z1 = max_z2 = None
 
@@ -149,6 +162,10 @@ class MetParser(specifics.ProgressParser):
                     max_z1 = m2.z1
                     max_z2 = m2.z2
 
+            if m1.x != start_x or m1.y != start_y:
+                self.record_error_code(
+                    m1.line_number, "MET_XY_METING_IS_PROFILE")
+
             for measurement in profile.measurements[1:-1]:
                 if max_z1 is not None and measurement.z1 > max_z1:
                     self.record_error_code(
@@ -161,20 +178,57 @@ class MetParser(specifics.ProgressParser):
                     self.record_error_code(
                         measurement.line_number, 'MET_99INSIDE')
 
-            # Points should be close to each other. We set the limit
-            # at 5m because of measurement inaccuracy.
-            limit = 5
-
-            distances = [
-                (self.distance(
-                    profile.measurements[i], profile.measurements[i + 1]),
-                 profile.measurements[i].line_number)
-                for i in range(0, len(profile.measurements) - 1)]
-            for distance, line_number in distances:
-                if distance > limit:
+            x_descending = None
+            y_descending = None
+            for m1, m2 in pairs(profile.measurements):
+                # Points should be close to each other. We set the limit
+                # at 5m because of measurement inaccuracy.
+                if m1.point.distance(m2.point) > 5:
                     self.record_error_code(
-                        line_number,
-                        'MET_DISTANCETOOLARGE', distance=limit)
+                        m2.line_number,
+                        'MET_DISTANCETOOLARGE', distance=5)
+
+                # We don't know yet if x and y are descending or not
+                if m1.x == m2.x or m1.y == m2.y:
+                    self.record_error_code(
+                        m2.line_number,
+                        'MET_XY_STRICT_ASCDESC')
+                    continue
+
+                if x_descending is None:
+                    x_descending = m2.x < m1.x
+                elif x_descending != m2.x < m1.x:
+                    self.record_error_code(
+                        m2.line_number,
+                        'MET_XY_STRICT_ASCDESC')
+
+                if y_descending is None:
+                    y_descending = m2.y < m1.y
+                elif y_descending != m2.y < m1.y:
+                    self.record_error_code(
+                        m2.line_number,
+                        'MET_XY_STRICT_ASCDESC')
+
+                x_difference = abs(m2.x - m1.x)
+                y_difference = abs(m2.y - m1.y)
+
+                if x_difference < 0.01 or y_difference < 0.01:
+                    self.record_error_code(
+                        m2.line_number,
+                        'MET_XY_ASCDESC_1CM')
+
+            # XXX
+            # For _Almere_, we do this check on the _sorted_ measurement lines.
+            for m1, m2 in pairs(profile.sorted_measurements):
+                # The difference in z values should not be too large (<= 1m)
+                if abs(m1.z1 - m2.z1) > 1:
+                    self.record_error_code(
+                        m2.line_number,
+                        'MET_Z1_DIFFERENCE_TOO_LARGE')
+                if abs(m1.z2 - m2.z2) > 1:
+                    self.record_error_code(
+                        m2.line_number,
+                        'MET_Z2_DIFFERENCE_TOO_LARGE')
 
         if len(profile.measurements) >= 1:
             for measurement in profile.measurements:
@@ -203,6 +257,14 @@ class MetParser(specifics.ProgressParser):
                 self.record_error_code(
                     profile.line_number, error_code, found_amount)
                 correct_so_far = False
+
+        if count_codes(measurements, '5') < 1:
+            self.record_error_code(
+                profile.line_number, 'MET_AT_LEAST_ONE_5_CODE')
+
+        if count_codes(measurements, '6') < 1:
+            self.record_error_code(
+                profile.line_number, 'MET_AT_LEAST_ONE_6_CODE')
 
         if not correct_so_far:
             return
@@ -243,8 +305,8 @@ class MetParser(specifics.ProgressParser):
         # We now know the codes 1, 2, 22 and 7 have the right amounts, and
         # 1 and 2 occur at the right places. Now:
         # - in between 1 and 22, we may only see 99
-        # - in between 22 and 7, we may only see 5
-        # - in between 7 and 22, we may only see 6
+        # - in between 22 and 7, we may only see 5 and 99
+        # - in between 7 and 22, we may only see 6 and 99
         # - in between 22 and 2, we may only see 99
         indices_22 = [i for i, m in enumerate(measurements)
                       if m.profile_point_type == '22']
@@ -257,18 +319,18 @@ class MetParser(specifics.ProgressParser):
                 'MET_CODE_7_IN_BETWEEN_22')
             return
 
-        def check_codes(measurements, code):
+        def check_codes(measurements, codes):
             for m in measurements:
-                if m.profile_point_type != code:
+                if m.profile_point_type not in codes:
                     self.record_error_code(
                         m.line_number,
                         'MET_WRONG_PROFILE_POINT_TYPE',
                         code=code)
 
-        check_codes(measurements[1:indices_22[0]], '99')
-        check_codes(measurements[indices_22[0] + 1:index_7[0]], '5')
-        check_codes(measurements[index_7[0] + 1:indices_22[1]], '6')
-        check_codes(measurements[indices_22[1] + 1:-1], '99')
+        check_codes(measurements[1:indices_22[0]], ['99'])
+        check_codes(measurements[indices_22[0] + 1:index_7[0]], ['5', '99'])
+        check_codes(measurements[index_7[0] + 1:indices_22[1]], ['6', '99'])
+        check_codes(measurements[indices_22[1] + 1:-1], ['99'])
 
     def check_two_22_codes_with_z1z2_equal(self, profile):
         if len(profile.measurements) >= 2:
@@ -292,6 +354,11 @@ class MetParser(specifics.ProgressParser):
             self.record_error_code(
                 measurement.line_number,
                 'MET_Z1GREATERTHANZ2')
+        else:
+            if abs(measurement.z2 - measurement.z1) > 1:
+                self.record_error_code(
+                    measurement.line_number,
+                    'MET_DIFFERENCE_Z1Z2_MAX_1M')
 
     def get_scheduled_measurement(self, profile):
         try:

@@ -7,6 +7,16 @@ Changelog of lizard-progress
 
 - Only Contractors get to see a project's Upload page.
 
+- Add more Waternet checks, including checks on measurements in pairs
+  (difference between consecutive Z1 values, ordering of X values,
+  etc).
+
+- Add checks that work on _sorted_ measurement rows, for Almere, where rows
+  are not in the right order.
+
+- Data is now saved sorted in the database, so graphs should come out right in
+  most cases.
+
 
 1.5 (2013-03-21)
 ----------------

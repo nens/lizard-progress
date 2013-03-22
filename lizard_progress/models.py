@@ -195,6 +195,14 @@ class Project(models.Model):
         return Organization.objects.get(
             userprofile__user=self.superuser)
 
+    def can_upload(self, user):
+        """User can upload if he is the superuser or with one of the
+        contractors.  Slightly different from has_access, because
+        admin isn't included."""
+
+        return (user == self.superuser or Contractor.objects.filter(
+                project=self, organization__userprofile__user=user).exists())
+
 
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc

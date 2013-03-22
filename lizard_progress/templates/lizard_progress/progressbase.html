@@ -60,7 +60,9 @@ Navigation
 <div id="actions" class="sidebar-inner">
 {% if view.project %}
 <a title="Dashboard" href="{% url lizard_progress_dashboardview project_slug=view.project_slug %}">Dashboard</a>
+{% if view.user_is_uploader %}
 <a title="Upload files" href="{% url lizard_progress_uploadhomeview project_slug=view.project_slug %}">Upload</a>
+{% endif %}
 <a title="Download files" href="{% url lizard_progress_downloadhomeview project_slug=view.project_slug %}">Download</a>
 <a title="Kaartlagen" href="{% url lizard_progress_mapview project_slug=view.project_slug %}">Kaartlagen</a>
 {% else %}

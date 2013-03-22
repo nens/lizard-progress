@@ -107,6 +107,9 @@ class UploadHomeView(ProjectsView):
         self.project = get_object_or_404(
             models.Project, slug=self.project_slug)
 
+        if not self.project.can_upload(request.user):
+            return HttpResponseForbidden()
+
         try:
             self.contractor = models.Contractor.objects.get(
                 project=self.project,

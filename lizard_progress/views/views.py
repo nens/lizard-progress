@@ -84,6 +84,11 @@ class ProjectsMixin(object):
         userprofile = UserProfile.objects.get(user=self.request.user)
         return userprofile.organization.name
 
+    def user_can_upload_to_project(self):
+        if not self.project:
+            return False
+        return self.project.can_upload(self.request.user)
+
     def user_is_uploader(self):
         user = self.request.user
         userprofile = UserProfile.objects.get(user=user)

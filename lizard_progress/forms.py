@@ -60,8 +60,8 @@ class ContractorForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(ContractorForm, self).__init__(*args, **kwargs)
-        self.fields['project'].queryset = \
-            Project.objects.filter(superuser=user)
+        self.fields['project'].queryset = (
+            Project.objects.filter(superuser=user))
 
     class Meta:
         model = Contractor

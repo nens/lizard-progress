@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Only Contractors get to see a project's Upload page.
 
 
 1.5 (2013-03-21)

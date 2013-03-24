@@ -16,6 +16,9 @@ Changelog of lizard-progress
   whether locations can be predefined at the project management
   screen.
 
+- Being uploader or project owner is now a property of Organizations,
+  not of users.
+
 
 1.6.1 (2013-03-22)
 ------------------

@@ -56,7 +56,6 @@ USER_CHOICES = (
 
 
 class ContractorForm(forms.ModelForm):
-
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(ContractorForm, self).__init__(*args, **kwargs)
@@ -163,8 +162,11 @@ class MeasurementTypeForm(forms.Form):
 def needs_shapefile_condition(wizard):
     """Returns False if the ShapeFileForm step should be skipped."""
     cleaned_data = wizard.get_cleaned_data_for_step('2') or {}
+    project = (wizard.get_cleaned_data_for_step('0') or {}).get('project')
+    if not project:
+        return True
 
-    return any(measurement_type.needs_predefined_locations
+    return any(project.needs_predefined_locations(measurement_type)
                for measurement_type in
                cleaned_data.get('measurement_types', ()))
 

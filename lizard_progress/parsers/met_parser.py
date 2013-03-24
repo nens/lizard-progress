@@ -366,7 +366,7 @@ class MetParser(specifics.ProgressParser):
                 project=self.project,
                 location_code=profile.id)
         except models.Location.DoesNotExist:
-            if "NO_LOCATION" in self.error_config:
+            if self.project.needs_predefined_locations(self.mtype().mtype):
                 self.record_error_code(
                     line_number=profile.line_number,
                     error_code="NO_LOCATION",
@@ -385,7 +385,7 @@ class MetParser(specifics.ProgressParser):
                     location=location,
                     measurement_type=self.mtype()))
         except models.ScheduledMeasurement.DoesNotExist:
-            if "NO_SCHEDULED" in self.error_config:
+            if self.project.needs_predefined_locations(self.mtype().mtype):
                 self.record_error_code(
                     line_number=profile.line_number,
                     error_code="NO_SCHEDULED")

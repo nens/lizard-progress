@@ -5,7 +5,16 @@ Changelog of lizard-progress
 1.6.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Dwarsprofielen is a measurement type that doesn't _need_ predefined
+  locations. But it _can_ still use them, and give error messages if
+  an uploaded profile doesn't correspond with a predefined location.
+
+  Therefore, it's got "likes_predefined_locations" True. It is then up
+  to the Organization whose project this is to decide what they want;
+  for that purpose, an Organization has a
+  "allows_non_predefined_locations" setting. This also controls
+  whether locations can be predefined at the project management
+  screen.
 
 
 1.6.1 (2013-03-22)

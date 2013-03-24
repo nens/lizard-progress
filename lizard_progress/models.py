@@ -62,6 +62,13 @@ class Organization(models.Model):
     description = models.CharField(max_length=256, blank=True, null=True)
     errors = models.ManyToManyField(ErrorMessage)
 
+    # Dwarsprofielen usually want predefined locations (and thus need
+    # a shapefile to be uploaded first), but some organizations want
+    # to allow them to work without predefining anyway. Other
+    # measurement types may allow the same thing later. For such
+    # organizations, set this to True.
+    allows_non_predefined_locations = models.BooleanField(default=False)
+
     @classmethod
     def users_in_same_organization(cls, user):
         """Returns a list of user in same organization."""
@@ -195,6 +202,17 @@ class Project(models.Model):
         return Organization.objects.get(
             userprofile__user=self.superuser)
 
+    @property
+    def needs_predefined_locations(self, available_measurement_type):
+        if available_measurement_type.needs_predefined_locations:
+            return True
+
+        if (available_measurement_type.likes_predefined_locations and not
+            self.organization.allows_non_predefined_locations):
+            return True
+
+        return False
+
     def can_upload(self, user):
         """User can upload if he is the superuser or with one of the
         contractors.  Slightly different from has_access, because
@@ -283,6 +301,11 @@ class AvailableMeasurementType(models.Model):
     # and a shape doesn't have to be uploaded before measurements can
     # be uploaded. For most types, however, it'll be True.
     needs_predefined_locations = models.BooleanField(default=True)
+
+    # If needs_predefined_locations is False, but
+    # likes_predefined_locations is True, then it depends on the
+    # Organization's allows_non_predefined_locations attribute.
+    likes_predefined_locations = models.BooleanField(default=False)
 
     # For most measurement types, there will first be a number of scheduled
     # measurements that will be "filled in" by uploaded measurements. However.

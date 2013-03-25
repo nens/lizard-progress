@@ -2,16 +2,15 @@ Stavaza 25 maart 2013
 
 Wat is er gebeurd:
 
-- Gebruikers horen bij een organisatie, meerdere organisaties op 1
-site die elkaars files, data en dergelijke niet zien
+- Gebruikers horen bij een organisatie, meerdere organisaties op 1 site die elkaars files, data en dergelijke niet zien
 
 - User interface veranderd, niet meer elke pagina een kaart
 
 - Veranderingen aan de checks bij de uploads:
-  - Het checken op fouten op de achtergrond, niet direct bij upload
-  - Meer dan 1 foutmelding, dus foutmeldingen moeten opgeslagen worden en daarna moet het checken doorgaan
-  - Foutmeldingenoverzicht
-  - Foutmeldingen moeten per organisatie geconfigureerd worden
+  * Het checken op fouten op de achtergrond, niet direct bij upload
+  * Meer dan 1 foutmelding, dus foutmeldingen moeten opgeslagen worden en daarna moet het checken doorgaan
+  * Foutmeldingenoverzicht
+  * Foutmeldingen moeten per organisatie geconfigureerd worden
 
   (deze twee aanpassingen samen zorgden dat dit onderdeel helemaal
   opnieuw gemaakt moest worden, voor alle metingtypes)

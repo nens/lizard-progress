@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.6.2 (unreleased)
-------------------
+1.7 (2013-03-25)
+----------------
 
 - Dwarsprofielen is a measurement type that doesn't _need_ predefined
   locations. But it _can_ still use them, and give error messages if

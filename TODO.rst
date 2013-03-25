@@ -2,31 +2,27 @@ Stavaza 25 maart 2013
 
 Wat is er gebeurd:
 
-Gebruikers horen bij een organisatie, meerdere organisaties op 1 site
-die elkaars files, data en dergelijke niet zien
+- Gebruikers horen bij een organisatie, meerdere organisaties op 1
+site die elkaars files, data en dergelijke niet zien
 
-User interface veranderd, niet meer elke pagina een kaart
+- User interface veranderd, niet meer elke pagina een kaart
 
-Veranderingen aan de checks bij de uploads:
-- Het checken op fouten op de achtergrond, niet direct bij upload
-- Meer dan 1 foutmelding, dus foutmeldingen moeten opgeslagen worden
-  en daarna moet het checken doorgaan
-- Foutmeldingenoverzicht
-- Foutmeldingen moeten per organisatie geconfigureerd worden
+- Veranderingen aan de checks bij de uploads:
+  - Het checken op fouten op de achtergrond, niet direct bij upload
+  - Meer dan 1 foutmelding, dus foutmeldingen moeten opgeslagen worden en daarna moet het checken doorgaan
+  - Foutmeldingenoverzicht
+  - Foutmeldingen moeten per organisatie geconfigureerd worden
 
-(deze twee aanpassingen samen zorgden dat dit onderdeel helemaal
-opnieuw gemaakt moest worden, voor alle metingtypes)
+  (deze twee aanpassingen samen zorgden dat dit onderdeel helemaal
+  opnieuw gemaakt moest worden, voor alle metingtypes)
 
-Het is nu mogelijk om bestanden te uploaden waarvoor geen metingen
-gepland waren, en om zulke projecten ook aan te maken zonder shape.
+- Het is nu mogelijk om bestanden te uploaden waarvoor geen metingen gepland waren, en om zulke projecten ook aan te maken zonder shape.
 
-Er is een export mogelijkheid, er zijn op dit moment vier formaten
-waarin data geexporteerd kan worden -- zipfile, CSV, MET, DXF.
+- Er is een export mogelijkheid, er zijn op dit moment vier formaten waarin data geexporteerd kan worden -- zipfile, CSV, MET, DXF.
 
-Er zijn veel checks toegevoegd, vooral van Waternet, een van Almere
-maar die had wel voeten in de aarde.
+- Er zijn veel checks toegevoegd, vooral van Waternet, een van Almere maar die had wel voeten in de aarde.
 
-We hebben nu een overzicht van bestaande checks
+- We hebben nu een overzicht van bestaande checks
 
 
 Wat staat er nog open?

@@ -19,6 +19,11 @@ Changelog of lizard-progress
 - Being uploader or project owner is now a property of Organizations,
   not of users.
 
+- There is now an overview of the work of contractors on the Dashboard
+  page
+
+- Show which organization is logged in, besides the icon saying which
+  user is logged in
 
 1.6.1 (2013-03-22)
 ------------------

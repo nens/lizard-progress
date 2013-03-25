@@ -1,7 +1,27 @@
 {% extends "lizard_progress/progressbase.html" %}
 
 {% block contentpage %}
-  <h2>Dashboard {{ view.project.name }}</h2>
+<h2>Werkzaamheden {{ view.project.name }}</h2>
+<table class="table table-bordered table-hover" style="width: 95%">
+<thead>
+  <th>Uitvoerder</th>
+  <th>Werkzaamheid</th>
+  <th>Geplande metingen</th>
+  <th>Ingevoerde metingen</th>
+  <th>Laatste upload</th>
+</thead>
+{% for workinfo in view.project.work_to_do %}
+<tr>
+  <td>{{ workinfo.contractor.organization }}</td>
+  <td>{{ workinfo.measurement_type.name }}</td>
+  <td>{{ workinfo.scheduled_measurements }}</td>
+  <td>{{ workinfo.num_measurements }}</td>
+  <td>{{ workinfo.last_measurement }}</td>
+</tr>
+{% endfor %}
+</thead>
+</table>
+
   <ul class="without-bullets">
 {% for contractor, area, url in view.areas %}
 <img src="{% url lizard_progress_dashboardgraphview project_slug=view.project_slug contractor_slug=contractor.slug area_slug=area.slug %}" title="Voortgang {{ contractor.organization.name }}"/>

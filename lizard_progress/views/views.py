@@ -26,6 +26,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.utils import simplejson as json
+from django.utils.translation import ugettext as _
 from django.views.static import serve
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
@@ -82,7 +83,7 @@ class ProjectsMixin(object):
     def organization(self):
         """Return organization of current user."""
         userprofile = UserProfile.objects.get(user=self.request.user)
-        return userprofile.organization.name
+        return userprofile and userprofile.organization.name
 
     def user_can_upload_to_project(self):
         if not self.project:
@@ -90,14 +91,12 @@ class ProjectsMixin(object):
         return self.project.can_upload(self.request.user)
 
     def user_is_uploader(self):
-        user = self.request.user
-        userprofile = UserProfile.objects.get(user=user)
-        return userprofile.profiletype == UserProfile.CONTRACTOR
+        userprofile = UserProfile.get_by_user(self.request.user)
+        return userprofile and not userprofile.organization.is_project_owner
 
     def user_is_manager(self):
-        user = self.request.user
-        userprofile = UserProfile.objects.get(user=user)
-        return userprofile.profiletype == UserProfile.PROJECTMANAGER
+        userprofile = UserProfile.get_by_user(self.request.user)
+        return userprofile and userprofile.organization.is_project_owner
 
     def project_home_url(self):
         if not self.project_slug:
@@ -132,6 +131,20 @@ class ProjectsMixin(object):
 class ProjectsView(ProjectsMixin, UiView):
     """Displays a list of projects to choose from."""
     template_name = "lizard_progress/progressbase.html"
+
+    @property
+    def site_actions(self):
+        actions = super(ProjectsView, self).site_actions
+        organization = self.organization()
+        if organization:
+            actions[0:0] = [
+                Action(
+                    icon='icon-briefcase',
+                    name=organization,
+                    description=(_("Your current organization")))
+                ]
+
+        return actions
 
 
 class View(ProjectsMixin, AppView):

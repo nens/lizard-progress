@@ -69,6 +69,9 @@ class Organization(models.Model):
     # organizations, set this to True.
     allows_non_predefined_locations = models.BooleanField(default=False)
 
+    # Organizations are _either_ project owners or uploaders, never both
+    is_project_owner = models.BooleanField(default=False)
+
     @classmethod
     def users_in_same_organization(cls, user):
         """Returns a list of user in same organization."""
@@ -89,16 +92,8 @@ class Organization(models.Model):
 
 
 class UserProfile(models.Model):
-    CONTRACTOR = 'contractor'
-    PROJECTMANAGER = 'projectmanager'
-    PTYPES = (
-        (CONTRACTOR, CONTRACTOR),
-        (PROJECTMANAGER, PROJECTMANAGER))
-
     user = models.ForeignKey(User, unique=True)
     organization = models.ForeignKey(Organization)
-    profiletype = models.CharField(max_length=100, choices=PTYPES,
-                                   null=True, blank=True)
 
     @classmethod
     def get_by_user(cls, user):
@@ -202,7 +197,6 @@ class Project(models.Model):
         return Organization.objects.get(
             userprofile__user=self.superuser)
 
-    @property
     def needs_predefined_locations(self, available_measurement_type):
         if available_measurement_type.needs_predefined_locations:
             return True
@@ -220,6 +214,48 @@ class Project(models.Model):
 
         return (user == self.superuser or Contractor.objects.filter(
                 project=self, organization__userprofile__user=user).exists())
+
+    def work_to_do(self):
+        """Returns list of contractor/measurement type combinations
+        and some statistics about them."""
+
+        contractors = self.contractor_set.all()
+        measurement_types = self.measurementtype_set.all()
+
+        info = []
+
+        for m in measurement_types:
+            for c in contractors:
+                if self.needs_predefined_locations(m.mtype):
+                    scheduled_measurements = len(
+                        ScheduledMeasurement.objects.filter(
+                            project=self,
+                            contractor=c,
+                            measurement_type=m))
+                else:
+                    scheduled_measurements = "N/A"
+
+                measurements = ScheduledMeasurement.objects.filter(
+                    project=self,
+                    contractor=c,
+                    measurement_type=m,
+                    complete=True).order_by('timestamp')
+
+                num_m = len(measurements)
+                if num_m > 0:
+                    last_m = measurements[0].timestamp
+                else:
+                    last_m = None
+
+                info.append({
+                        'contractor': c,
+                        'measurement_type': m,
+                        'scheduled_measurements': scheduled_measurements,
+                        'num_measurements': num_m,
+                        'last_measurement': last_m
+                        })
+
+        return info
 
 
 class Contractor(models.Model):

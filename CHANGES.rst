@@ -7,6 +7,8 @@ Changelog of lizard-progress
 
 - Automatically test example MET files.
 
+- Fix bug with generating some types of exports.
+
 
 1.7 (2013-03-25)
 ----------------

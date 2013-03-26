@@ -48,9 +48,9 @@ def start_run(export_run_id, user):
 
     if export_run.exporttype == "met":
         export_as_metfile(export_run)
-    if export_run.exporttype == "dxf":
+    elif export_run.exporttype == "dxf":
         export_as_dxf(export_run)
-    if export_run.exporttype == "csv":
+    elif export_run.exporttype == "csv":
         export_as_csv(export_run)
     else:
         export_all_files(export_run)

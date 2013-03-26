@@ -9,6 +9,8 @@ Changelog of lizard-progress
 
 - Fix bug with generating some types of exports.
 
+- Fix some obvious bugs in met_parser brought to light by tests
+
 
 1.7 (2013-03-25)
 ----------------

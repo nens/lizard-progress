@@ -162,7 +162,7 @@ class MetParser(specifics.ProgressParser):
                     max_z1 = m2.z1
                     max_z2 = m2.z2
 
-            if m1.x != start_x or m1.y != start_y:
+            if m1.x != profile.start_x or m1.y != profile.start_y:
                 self.record_error_code(
                     m1.line_number, "MET_XY_METING_IS_PROFILE")
 
@@ -281,7 +281,7 @@ class MetParser(specifics.ProgressParser):
                 self.record_error(
                     measurements[-1].line_number,
                     'MET_EXPECTED_CODE_2')
-                success_so_far = False
+                correct_so_far = False
         else:
             if measurements[0].profile_point_type == '2':
                 # Then last must be 1
@@ -293,13 +293,13 @@ class MetParser(specifics.ProgressParser):
                     self.record_error(
                         measurements[-1].line_number,
                         'MET_EXPECTED_CODE_1')
-                    success_so_far = False
+                    correct_so_far = False
             else:
                 self.record_error(measurements[0].line_number,
                                   'MET_EXPECTED_CODE_1_OR_2')
-                success_so_far = False
+                correct_so_far = False
 
-        if not success_so_far:
+        if not correct_so_far:
             return
 
         # We now know the codes 1, 2, 22 and 7 have the right amounts, and

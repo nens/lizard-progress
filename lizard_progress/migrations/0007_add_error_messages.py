@@ -23,14 +23,22 @@ MESSAGES = (
     ('MET_Z1GREATERTHANZ2', 'Z1 mag niet groter zijn dan Z2'),
 )
 
+
+# XXX We need to call this code from our tests, because tests don't
+# work well with data migrations!  See
+# http://stackoverflow.com/questions/6584671/django-1-3-and-south-migrations
+def add_more_error_codes(model):
+    for error_code, error_message in MESSAGES:
+        em, created = model.objects.get_or_create(
+            error_code=error_code)
+        em.error_message = error_message
+        em.save()
+
+
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        for error_code, error_message in MESSAGES:
-            em, created = orm['lizard_progress.ErrorMessage'].objects.get_or_create(
-                error_code=error_code,
-                error_message=error_message)
-            em.save()
+        add_more_error_codes(orm['lizard_progress.ErrorMessage'])
 
     def backwards(self, orm):
         "Write your backwards methods here."

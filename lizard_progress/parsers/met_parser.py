@@ -93,9 +93,9 @@ class MetParser(specifics.ProgressParser):
     def check_series(self, series):
         for profile in series.profiles:
             self.check_profile(
-                profile, series.id, series.start_x, series.start_y)
+                profile, series.id)
 
-    def check_profile(self, profile, series_id, start_x, start_y):
+    def check_profile(self, profile, series_id):
         if profile.level_type != 'NAP':
             self.record_error_code(
                 profile.line_number, 'MET_NAP')

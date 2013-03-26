@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Automatically test example MET files.
 
 
 1.7 (2013-03-25)

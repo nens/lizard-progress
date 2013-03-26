@@ -534,6 +534,14 @@ class UploadedFileError(models.Model):
     error_code = models.CharField(max_length=30)
     error_message = models.CharField(max_length=300)
 
+    def __unicode__(self):
+        return (
+            "{file} {line}: {error_code} {error_message}".
+            format(file=os.path.basename(self.uploaded_file.path),
+                   line=self.line,
+                   error_code=self.error_code,
+                   error_message=self.error_message))
+
 
 class ExportRun(models.Model):
     """There can be one export run per combination of project,

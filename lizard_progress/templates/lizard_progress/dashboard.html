@@ -16,7 +16,7 @@
   <td>{{ workinfo.measurement_type.name }}</td>
   <td>{{ workinfo.scheduled_measurements }}</td>
   <td>{{ workinfo.num_measurements }}</td>
-  <td>{{ workinfo.last_measurement }}</td>
+  <td>{% if workinfo.last_measurement %}{{ workinfo.last_measurement }}{% endif %}</td>
 </tr>
 {% endfor %}
 </thead>

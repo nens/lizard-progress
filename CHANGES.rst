@@ -11,6 +11,8 @@ Changelog of lizard-progress
 
 - Fix some obvious bugs in met_parser brought to light by tests
 
+- Show project owner's organization in the project list for uploaders
+
 
 1.7 (2013-03-25)
 ----------------

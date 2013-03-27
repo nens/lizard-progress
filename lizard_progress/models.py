@@ -90,6 +90,11 @@ class Organization(models.Model):
     def __unicode__(self):
         return self.name
 
+    def set_error_codes(self, codes):
+        for code in codes:
+            error = ErrorMessage.objects.get(error_code=code)
+            self.errors.add(error)
+
 
 class UserProfile(models.Model):
     user = models.ForeignKey(User, unique=True)

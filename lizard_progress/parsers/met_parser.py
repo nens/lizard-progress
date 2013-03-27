@@ -196,23 +196,20 @@ class MetParser(specifics.ProgressParser):
                     continue
 
                 if x_descending is None:
-                    x_descending = m2.x < m1.x
-                elif x_descending != m2.x < m1.x:
+                    x_descending = (m2.x < m1.x)
+                elif x_descending != (m2.x < m1.x):
                     self.record_error_code(
                         m2.line_number,
                         'MET_XY_STRICT_ASCDESC')
 
                 if y_descending is None:
-                    y_descending = m2.y < m1.y
-                elif y_descending != m2.y < m1.y:
+                    y_descending = (m2.y < m1.y)
+                elif y_descending != (m2.y < m1.y):
                     self.record_error_code(
                         m2.line_number,
                         'MET_XY_STRICT_ASCDESC')
 
-                x_difference = abs(m2.x - m1.x)
-                y_difference = abs(m2.y - m1.y)
-
-                if x_difference < 0.01 or y_difference < 0.01:
+                if m1.point.distance(m2.point) < 0.01:
                     self.record_error_code(
                         m2.line_number,
                         'MET_XY_ASCDESC_1CM')
@@ -285,7 +282,7 @@ class MetParser(specifics.ProgressParser):
         else:
             if measurements[0].profile_point_type == '2':
                 # Then last must be 1
-                if measurements.profile_point_type == '1':
+                if measurements[-1].profile_point_type == '1':
                     # Okay. Apparently they're the other way around, so we
                     # reverse the list for the last check.
                     measurements = list(reversed(measurements))

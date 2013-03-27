@@ -24,7 +24,11 @@ install_requires = [
     'pkginfo',
     'factory_boy',
     'mock',
-    'dxfwrite'
+    'dxfwrite',
+    # The following are for connecting to FEWS
+    'lizard-shape',
+    'lizard-fewsjdbc',
+    'lizard-datasource',
     ],
 
 tests_require = [

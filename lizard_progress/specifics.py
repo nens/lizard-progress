@@ -194,7 +194,16 @@ class ProgressParser(object):
     def record_error(self, line_number, error_code, error_message):
         """Record an error, then continue parsing. Because the error
         is recorded, self._parser_result() will return an
-        UnSuccessfulParserResult later."""
+        UnSuccessfulParserResult later.
+
+        Don't record an error on a line that already has one. Usually
+        if there is an error on some line, that automatically leads to
+        more errors in later checks."""
+
+        for error in self.errors:
+            if error.line == line_number:
+                return
+
         self.errors.append(Error(
                 line=line_number,
                 error_code=error_code,

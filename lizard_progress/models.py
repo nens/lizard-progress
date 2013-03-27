@@ -639,8 +639,14 @@ class ExportRun(models.Model):
 
     @property
     def up_to_date(self):
-        return self.present and self.created_at > max(
-            measurement.date for measurement in self.measurements_to_export())
+        measurement_dates = [
+            measurement.date
+            for measurement in self.measurements_to_export()
+            ]
+
+        return (self.present and
+                (not measurement_dates
+                 or self.created_at > max(measurement_dates)))
 
     def measurements_to_export(self):
         return Measurement.objects.filter(

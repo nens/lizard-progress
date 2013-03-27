@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.9 (unreleased)
-----------------
+1.8.1 (2013-03-27)
+------------------
 
 - Fix for download page: it crashed if there were no measurements to
   download yet.

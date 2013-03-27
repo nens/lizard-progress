@@ -102,6 +102,8 @@ class UserProfile(models.Model):
 
     @classmethod
     def get_by_user(cls, user):
+        if not user.is_authenticated():
+            return None
         try:
             return cls.objects.get(user=user)
         except cls.DoesNotExist:

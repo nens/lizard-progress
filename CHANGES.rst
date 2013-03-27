@@ -8,6 +8,12 @@ Changelog of lizard-progress
 - Improve DXF rendering: add the water line, a title and the z1 values
   at each measurement.
 
+- Admin can't login anymore to the normal pages; you need to be part
+  of some Organization, or there are too many pages that don't make
+  any sense.
+
+- Fixed showing Organization everywhere.
+
 
 1.8.1 (2013-03-27)
 ------------------

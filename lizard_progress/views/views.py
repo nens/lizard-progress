@@ -23,11 +23,12 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.utils import simplejson as json
 from django.utils.translation import ugettext as _
 from django.views.static import serve
+from django import http
+from django.contrib import auth
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
@@ -35,6 +36,7 @@ from lizard_ui.layout import Action
 from lizard_ui.views import UiView
 
 from lizard_progress.layers import ProgressAdapter
+from lizard_progress import models
 from lizard_progress.models import Area
 from lizard_progress.models import Contractor
 from lizard_progress.models import Hydrovak
@@ -128,26 +130,39 @@ class ProjectsMixin(object):
         return crumbs
 
 
-class ProjectsView(ProjectsMixin, UiView):
-    """Displays a list of projects to choose from."""
-    template_name = "lizard_progress/progressbase.html"
+class KickOutMixin(object):
+    def dispatch(self, request, *args, **kwargs):
+        """You can only get here if you are part of some organization.
+        So admin can't."""
+        logger.debug("HIER!!")
+        self.organization = models.Organization.get_by_user(
+            request.user)
+        if not self.organization:
+            auth.logout(request)
+            return http.HttpResponseRedirect('/')
+
+        return super(KickOutMixin, self).dispatch(request, *args, **kwargs)
 
     @property
     def site_actions(self):
-        actions = super(ProjectsView, self).site_actions
-        organization = self.organization()
-        if organization:
-            actions[0:0] = [
-                Action(
-                    icon='icon-briefcase',
-                    name=organization,
-                    description=(_("Your current organization")))
-                ]
+        actions = super(KickOutMixin, self).site_actions
+
+        actions[0:0] = [
+            Action(
+                icon='icon-briefcase',
+                name=self.organization,
+                description=(_("Your current organization")))
+            ]
 
         return actions
 
 
-class View(ProjectsMixin, AppView):
+class ProjectsView(KickOutMixin, ProjectsMixin, UiView):
+    """Displays a list of projects to choose from."""
+    template_name = "lizard_progress/progressbase.html"
+
+
+class View(KickOutMixin, ProjectsMixin, AppView):
     """The app's root, shows a choice of projects, or a choice of
     dashboard / upload / map layer pages if a project is chosen."""
 
@@ -569,7 +584,7 @@ class DashboardCsvView(DashboardAreaView):
         type."""
 
         # Setup HttpResponse and a CSV writer
-        response = HttpResponse(content_type="text/csv")
+        response = http.HttpResponse(content_type="text/csv")
         writer = csv.writer(response)
 
         filename = '%s_%s.csv' % (self.project.slug, self.contractor.slug)
@@ -728,7 +743,7 @@ def dashboard_graph(request, project_slug, contractor_slug,
         ax.set_aspect('equal')  # circle
 
     # Create the response
-    response = HttpResponse(content_type='image/png')
+    response = http.HttpResponse(content_type='image/png')
     canvas = FigureCanvas(fig)
     canvas.print_png(response)
     return response
@@ -763,11 +778,11 @@ def protected_file_download(request, project_slug, contractor_slug,
     if '/' in filename or '\\' in filename:
         # Trickery?
         logger.warn("Returned Forbidden on suspect path %s" % (filename,))
-        return HttpResponseForbidden()
+        return http.HttpResponseForbidden()
 
     if not has_access(request.user, project, contractor):
         logger.warn("Not allowed to access %s", filename)
-        return HttpResponseForbidden()
+        return http.HttpResponseForbidden()
 
     file_path = make_uploaded_file_path(document_root(), project, contractor,
                                         mtype, filename)
@@ -775,7 +790,7 @@ def protected_file_download(request, project_slug, contractor_slug,
                                         mtype, filename)
 
     # This is where the magic takes place.
-    response = HttpResponse()
+    response = http.HttpResponse()
     response['X-Sendfile'] = file_path  # Apache
     response['X-Accel-Redirect'] = nginx_path  # Nginx
 

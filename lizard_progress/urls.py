@@ -48,8 +48,6 @@ from lizard_progress.views import protected_file_download
 
 from lizard_progress import views
 
-from lizard_progress.views import ui
-
 from lizard_ui.urls import debugmode_urlpatterns
 
 admin.autodiscover()
@@ -64,7 +62,7 @@ urlpatterns = patterns(
         name='lizard_progress_projecten'),
     url('^admin/$',
         login_required(
-            UiView.as_view(template_name='lizard_progress/admin.html')),
+            views.View.as_view(template_name='lizard_progress/admin.html')),
         name='lizard_progress_admin'),
     url('^admin/projects/new/$',
         login_required(ProjectWizard.as_view([ProjectForm])),

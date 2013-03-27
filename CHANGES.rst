@@ -14,6 +14,11 @@ Changelog of lizard-progress
 
 - Fixed showing Organization everywhere.
 
+- Improvements to dwarsprofiel graphs:
+  - Sort data points based on their projection on the baseline
+  - Show distances to the midpoint on the X axis
+  - Show the water level
+  - Show project name, contractor name
 
 1.8.1 (2013-03-27)
 ------------------

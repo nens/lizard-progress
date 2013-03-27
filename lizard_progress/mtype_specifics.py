@@ -10,6 +10,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from django.http import HttpResponse
 
+from metfilelib.util.linear_algebra import Line, Point
+
 import lizard_progress.parsers.met_parser
 import lizard_progress.parsers.oeverfoto_parser
 import lizard_progress.parsers.oeverkenmerk_parser
@@ -21,7 +23,6 @@ from lizard_progress.models import Measurement
 from lizard_progress.views import ScreenFigure
 
 logger = logging.getLogger(__name__)
-
 
 FILE_IMAGE = object()
 FILE_NORMAL = object()
@@ -106,37 +107,73 @@ class MetfileSpecifics(GenericSpecifics):
             return
 
         data = m.data
-
-        # First x and y are stored in m.the_geom
-        x0 = m.the_geom.x
-        y0 = m.the_geom.y
+        baseline, left, right, waterlevel = self.find_base_line(data)
+        data = self.sort_data(data, baseline)
 
         distances, tops, bottoms = [], [], []
         for measurement in data:
             x = float(measurement['x'])
             y = float(measurement['y'])
-            d = sqrt((x - x0) ** 2 + (y - y0) ** 2)
-            distances.append(d)
+
+            distances.append(baseline.distance_to_midpoint(Point(x=x, y=y)))
             tops.append(float(measurement['top']))
             bottoms.append(float(measurement['bottom']))
 
         fig = ScreenFigure(525, 300)
         ax = fig.add_subplot(111)
-        ax.set_title('Dwarsprofiel %s, gemeten %s'
-                     % (sm.location.location_code,
-                        m.date.strftime("%d/%m/%y")))
-        ax.set_xlabel('Afstand (m)')
+        ax.set_title(
+            'Dwarsprofiel {code}, project {project}, {contractor} {date}'
+            .format(code=sm.location.location_code,
+                    project=sm.project,
+                    contractor=sm.contractor.organization,
+                    date=m.date.strftime("%d/%m/%y")))
+
+        ax.set_xlabel('Afstand tot middelpunt watergang (m)')
         ax.set_ylabel('Hoogte (m NAP)')
-        ax.plot(distances, tops, 'o-', label='Z1-waarde', linewidth=0.8)
-        ax.plot(distances, bottoms, 'o-', label='Z2-waarde', linewidth=0.8)
+        ax.plot(distances, bottoms, '.-',
+                label='Zachte bodem (z2)', linewidth=1.0, color='#663300')
+        ax.plot(distances, tops, '.-',
+                label='Harde bodem (z1)', linewidth=1.5, color='k')
+        ax.plot([baseline.distance_to_midpoint(left),
+                 baseline.distance_to_midpoint(right)],
+                [waterlevel, waterlevel],
+                label='Waterlijn',
+                linewidth=2,
+                color='b')
+
         ax.legend(bbox_to_anchor=(0.5, 0.9), loc="center")
-        ax.set_xlim(-1)
+        ax.set_xlim([distances[0] - 1, distances[-1] + 1])
         ax.grid(True)
 
         response = HttpResponse(content_type='image/png')
         canvas = FigureCanvas(fig)
         canvas.print_png(response)
         return response
+
+    def sort_data(self, data, baseline):
+        data = list(data)
+        data.sort(
+            key=lambda d: baseline.distance_to_midpoint(Point(d['x'], d['y'])))
+        return data
+
+    def find_base_line(self, data):
+        codes_22 = [d for d in data
+                    if d['type'] == '22']
+
+        if len(codes_22) == 2:
+            p1 = codes_22[0]
+            p2 = codes_22[1]
+        else:
+            # It's hopeless if they aren't there, do something
+            p1 = data[0]
+            p2 = data[-1]
+
+        left = Point(x=p1['x'], y=p1['y'])
+        right = Point(x=p2['x'], y=p2['y'])
+        line = Line(
+            start=left,
+            end=right)
+        return line, left, right, p1['bottom']
 
 
 class OeverfotoSpecifics(GenericSpecifics):

@@ -5,7 +5,8 @@ Changelog of lizard-progress
 1.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Improve DXF rendering: add the water line, a title and the z1 values
+  at each measurement.
 
 
 1.8.1 (2013-03-27)

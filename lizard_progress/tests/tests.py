@@ -59,24 +59,6 @@ class AdapterTest(TestCase):
                 }, project, contractor, measurement_type)
 
 
-class TestViews(TestCase):
-    def test_document_root(self):
-        # Test if document_root uses the setting
-        old_settings = getattr(settings, 'LIZARD_PROGRESS_ROOT', None)
-        testroot = '/some/ weird path/'
-        settings.LIZARD_PROGRESS_ROOT = testroot
-        self.assertEqual(views.document_root(), testroot)
-
-        # Test if it uses buildout dir
-        old_buildout = getattr(settings, 'BUILDOUT_DIR', None)
-        settings.LIZARD_PROGRESS_ROOT = None
-        settings.BUILDOUT_DIR = ''
-        self.assertEqual(views.document_root(), 'var/lizard_progress')
-
-        settings.LIZARD_PROGRESS_ROOT = old_settings
-        settings.BUILDOUT_DIR = old_buildout
-
-
 class TestParsers(TestCase):
     class MockParser(ProgressParser):
         ERRORS = {'key': 'value %s'}

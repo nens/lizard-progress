@@ -26,14 +26,13 @@ from django.views.generic import View
 
 from lizard_ui.views import ViewContextMixin
 from lizard_ui.layout import Action
+
 from lizard_progress import specifics
 from lizard_progress import tasks
 from lizard_progress import models
+from lizard_progress.util import directories
 from lizard_progress.tools import unique_filename
-from lizard_progress.views.views import document_root
-from lizard_progress.views.views import make_uploaded_file_path
 from lizard_progress.views.views import ProjectsView
-from lizard_progress.views.views import View as ProgressView
 
 
 APP_LABEL = models.Project._meta.app_label
@@ -352,14 +351,11 @@ class OldUploadMeasurementsView(UploadView):
         """Create dirname based on project etc. Guaranteed not to
         exist yet at the time of checking."""
 
-        dirname = os.path.dirname(make_uploaded_file_path(
-                document_root(),
+        dirname = directories.mk(os.path.dirname(
+            directories.make_uploaded_file_path(
+                directories.BASE_DIR,
                 self.project, self.contractor,
-                measurement_type, 'dummy'))
-
-        # Create directory if does not exist yet
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
+                measurement_type, 'dummy')))
 
         # Figure out a filename that doesn't exist yet
         orig_filename = os.path.basename(uploaded_path)
@@ -382,8 +378,7 @@ class UploadReportsView(UploadView):
 
     @staticmethod
     def get_directory(contractor):
-        return os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
-            contractor.project.slug, contractor.slug, 'reports')
+        return directories.reports_dir(contractor.project, contractor)
 
     def process_file(self, path):
 
@@ -395,10 +390,6 @@ class UploadReportsView(UploadView):
         # The destination directory.
         dst = UploadReportsView.get_directory(self.contractor)
 
-        # Create it if necessary.
-        if not os.path.exists(dst):
-            os.makedirs(dst)
-
         # Copy the report.
         shutil.copy(path, dst)
 
@@ -409,13 +400,7 @@ class UploadShapefilesView(UploadView):
 
     exts = [".dbf", ".prj", ".sbn", ".sbx", ".shp", ".shx", ".xml"]
 
-    @staticmethod
-    def get_directory(contractor):
-        return os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
-            contractor.project.slug, contractor.slug, 'shapefile')
-
     def process_file(self, path):
-
         ext = os.path.splitext(path)[1].lower()
         if not ext in self.exts:
             msg = "Allowed file types: %s." % self.exts
@@ -425,11 +410,8 @@ class UploadShapefilesView(UploadView):
         # the shapefile to its permanent location?
 
         # The destination directory.
-        dst = UploadShapefilesView.get_directory(self.contractor)
-
-        # Create it if necessary.
-        if not os.path.exists(dst):
-            os.makedirs(dst)
+        dst = directories.shapefile_dir(
+            self.contractor.project, self.contractor)
 
         # Copy the report.
         shutil.copy(path, dst)

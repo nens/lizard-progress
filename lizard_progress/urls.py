@@ -11,8 +11,6 @@ from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 
-from lizard_ui.views import UiView
-
 from lizard_progress.forms import CalculateForm
 from lizard_progress.forms import ContractorChoiceForm
 from lizard_progress.forms import ContractorForm
@@ -30,8 +28,7 @@ from lizard_progress.views import DashboardAreaView
 from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DashboardView
 from lizard_progress.views import DownloadHomeView
-from lizard_progress.views import DownloadReportsView
-from lizard_progress.views import DownloadResultsView
+from lizard_progress.views import DownloadView
 from lizard_progress.views import HydrovakkenWizard
 from lizard_progress.views import MapView
 from lizard_progress.views import ProjectWizard
@@ -129,14 +126,10 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/download/$',
         login_required(DownloadHomeView.as_view()),
         name='lizard_progress_downloadhomeview'),
-    url('^projects/(?P<project_slug>[^/]+)/' +
-        '(?P<contractor_slug>[^/]+)/reports/(?P<report>[^/]+)/$',
-        login_required(DownloadReportsView.as_view()),
-        name='lizard_progress_downloadreportsview'),
-    url('^projects/(?P<project_slug>[^/]+)/' +
-        '(?P<contractor_slug>[^/]+)/results/(?P<report>[^/]+)/$',
-        login_required(DownloadResultsView.as_view()),
-        name='lizard_progress_downloadresultsview'),
+    url('^download/(?P<filetype>[^/]+)/(?P<project_slug>[^/]+)/' +
+        '(?P<contractor_slug>[^/]+)/(?P<filename>[^/]+)',
+        login_required(DownloadView.as_view()),
+        name='lizard_progress_downloadview'),
     url('^(?P<project_slug>[^/]+)/dashboard/' +
         '(?P<contractor_slug>[^/]+)/(?P<area_slug>.+)/graph/$',
         dashboard_graph,

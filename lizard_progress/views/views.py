@@ -46,8 +46,7 @@ from lizard_progress.models import Project
 from lizard_progress.models import UserProfile
 from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.models import has_access
-from lizard_progress.process_uploaded_file import document_root
-from lizard_progress.process_uploaded_file import make_uploaded_file_path
+from lizard_progress.util import directories
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +57,8 @@ class ProjectsMixin(object):
     project = None
 
     def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        self.user = request.user
         self.project_slug = kwargs.get('project_slug')
         if self.project_slug:
             self.project = get_object_or_404(Project, slug=self.project_slug)
@@ -791,10 +792,12 @@ def protected_file_download(request, project_slug, contractor_slug,
         logger.warn("Not allowed to access %s", filename)
         return http.HttpResponseForbidden()
 
-    file_path = make_uploaded_file_path(document_root(), project, contractor,
-                                        mtype, filename)
-    nginx_path = make_uploaded_file_path('/protected', project, contractor,
-                                        mtype, filename)
+    file_path = directories.make_uploaded_file_path(
+        directories.BASE_DIR, project, contractor,
+        mtype, filename)
+    nginx_path = directories.make_uploaded_file_path(
+        '/protected', project, contractor,
+        mtype, filename)
 
     # This is where the magic takes place.
     response = http.HttpResponse()

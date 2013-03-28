@@ -40,6 +40,13 @@ Changelog of lizard-progress
 
 - Some minor layout fixes
 
+- Cleaned up a lot of code to do with directories, put it in
+  util/directories.py
+
+- Put hydrovakken, location shapefiles, organization files, result
+  files and contractor reports all in the same table on the Downloads
+  page
+
 1.8.1 (2013-03-27)
 ------------------
 

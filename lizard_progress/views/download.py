@@ -2,26 +2,30 @@
 
 """Views concerned with downloading files."""
 
+import logging
+import mimetypes
+import os
+import platform
+
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django import http
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
 from django.views.static import serve
+
+from lizard_ui.layout import Action
+
 from lizard_progress import models
 from lizard_progress import tasks
+from lizard_progress.util import directories
 from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import has_access
 from lizard_progress.views.upload import UploadReportsView
 from lizard_progress.views.views import ProjectsView
-from lizard_ui.layout import Action
-
-import logging
-import mimetypes
-import os
-import platform
 
 logger = logging.getLogger(__name__)
 
@@ -37,49 +41,93 @@ class DownloadHomeView(ProjectsView):
     """
     template_name = "lizard_progress/download_home.html"
 
-    def __init__(self, *args, **kwargs):
-        super(DownloadHomeView, self).__init__(*args, **kwargs)
-        self.project = None
-        self.user = None
+    def _make_url(self, filetype, project, contractor, path):
+        return reverse('lizard_progress_downloadview', kwargs={
+                'filetype': filetype,
+                'project_slug': project.slug,
+                'contractor_slug': contractor.slug if contractor else 'x',
+                'filename': os.path.basename(path)
+                })
 
-    def reports(self):
-        """Returns a list of links to project reports.
+    def _organization_files(self):
+        for path in directories.files_in(
+            directories.organization_files_dir(self.project.organization)):
+            yield {
+                'type': 'Handleidingen e.d.',
+                'filename': os.path.basename(path),
+                'size': directories.human_size(path),
+                'url': self._make_url('organization',
+                                      self.project,
+                                      None,
+                                      path)
+                }
 
-        Reports the user is not allowed to see are
-        excluded from the list.
-        """
-        if not self.project:
-            return []
-
-        reports = []
-
+    def _reports_files(self):
         for contractor in self.project.contractor_set.all():
             if has_access(self.user, self.project, contractor):
-                directory = UploadReportsView.get_directory(contractor)
-                if os.path.isdir(directory):
-                    for filename in os.listdir(directory):
-                        fullname = os.path.join(directory, filename)
-                        if os.path.isfile(fullname):
-                            ext = os.path.splitext(filename)[1].lower()
-                            if ext in UploadReportsView.exts:
-                                url = reverse(
-                                    'lizard_progress_downloadreportsview',
-                                    kwargs={
-                                        'project_slug': self.project.slug,
-                                        'contractor_slug': contractor.slug,
-                                        'report': filename
-                                    }
-                                )
-                                reports.append({
-                                    'contractor': contractor.name,
-                                    'name': filename,
-                                    'url': url
-                                })
+                for path in directories.files_in(
+                    directories.reports_dir(self.project, contractor)):
+                        yield {
+                        'type': 'Rapporten {0}'.format(
+                            contractor.organization.name),
+                        'filename': os.path.basename(path),
+                        'size': directories.human_size(path),
+                        'url': self._make_url('reports',
+                                              self.project,
+                                              contractor,
+                                              path)
+                        }
 
-        return reports
+    def _results_files(self):
+        for contractor in self.project.contractor_set.all():
+            if has_access(self.user, self.project, contractor):
+                for path in directories.files_in(
+                    directories.results_dir(self.project, contractor)):
+                        yield {
+                        'type': 'Resultaten {0}'.format(
+                            contractor.organization.name),
+                        'filename': os.path.basename(path),
+                        'size': directories.human_size(path),
+                        'url': self._make_url('results',
+                                              self.project,
+                                              contractor,
+                                              path)
+                        }
+
+    def _location_shapefile_files(self):
+        for contractor in self.project.contractor_set.all():
+            if has_access(self.user, self.project, contractor):
+                for path in directories.files_in(
+                    directories.location_shapefile_dir(
+                        self.project, contractor)):
+                        yield {
+                            'type': 'Meetlocatie shapefile '.format(
+                                contractor.organization.name),
+                            'filename': os.path.basename(path),
+                            'size': directories.human_size(path),
+                            'url': self._make_url('organization',
+                                                  self.project,
+                                                  contractor,
+                                                  path)
+                        }
+
+    def files(self):
+        if not hasattr(self, '_files'):
+            try:
+                self._files = (
+                    list(self._organization_files()) +
+                    list(self._reports_files()) +
+                    list(self._results_files()) +
+                    list(self._location_shapefile_files()))
+            except Exception as e:
+                logger.debug(e)
+        return self._files
 
     def csv(self):
         """Links to CSV downloads. One per contractor."""
+
+        if hasattr(self, '_csvs'):
+            return self._csvs
 
         csvs = []
 
@@ -94,39 +142,8 @@ class DownloadHomeView(ProjectsView):
 
                 csvs.append((contractor, url))
 
+        self._csvs = csvs
         return csvs
-
-    # TODO: too much code repetition here.
-    def results(self):
-
-        if not self.project:
-            return []
-
-        results = []
-
-        for contractor in self.project.contractor_set.all():
-            if has_access(self.user, self.project, contractor):
-                directory = os.path.join(
-                    settings.BUILDOUT_DIR, 'var', APP_LABEL,
-                    contractor.project.slug, contractor.slug, 'final_results')
-                if os.path.isdir(directory):
-                    for filename in os.listdir(directory):
-                        fullname = os.path.join(directory, filename)
-                        if os.path.isfile(fullname):
-                            url = reverse(
-                                'lizard_progress_downloadresultsview',
-                                kwargs={
-                                    'project_slug': self.project.slug,
-                                    'contractor_slug': contractor.slug,
-                                    'report': filename
-                                }
-                            )
-                            results.append({
-                                'contractor': contractor.name,
-                                'name': filename,
-                                'url': url
-                            })
-        return results
 
     def exports(self):
         return models.ExportRun.all_in_project(
@@ -149,73 +166,37 @@ class DownloadHomeView(ProjectsView):
         return crumbs
 
 
-class DownloadReportsView(View):
-    """A view for downloading project reports."""
+class DownloadView(View):
+    """Downloading files."""
 
-    def get(self, request, *args, **kwargs):
-        """Returns the requested project report.
-
-        Throws a `HttpResponseForbidden` if the user
-        is not allowed to view the report.
-        """
-
-        project_slug = kwargs.pop('project_slug', None)
+    def get(self, request, filetype, project_slug,
+            contractor_slug, filename):
         project = get_object_or_404(Project, slug=project_slug)
-        contractor_slug = kwargs.pop('contractor_slug', None)
-        contractor = get_object_or_404(Contractor,
-            project=project, slug=contractor_slug)
+        if contractor_slug == 'x':
+            contractor = None
+        else:
+            contractor = get_object_or_404(Contractor, slug=contractor_slug)
+
         if not has_access(request.user, project, contractor):
             return HttpResponseForbidden()
 
-        filename = os.path.basename(kwargs.pop('report', None))
-        ext = os.path.splitext(filename)[1].lower()
-        if not ext in UploadReportsView.exts:
+        if type == 'reports':
+            directory = directories.reports_dir(project, contractor)
+        elif type == 'results':
+            directory = directories.reports_dir(project, contractor)
+        elif type == 'locations':
+            directory = directories.location_shapefile_dir(project, contractor)
+        elif type == 'organization':
+            directory = directories.organization_files_dir(
+                project.organization)
+        else:
             return HttpResponseForbidden()
 
-        directory = UploadReportsView.get_directory(contractor)
-        fullname = os.path.join(directory, filename)
-        if not os.path.isfile(fullname):
-            return HttpResponseForbidden()
+        path = os.path.join(directory, filename)
+        if not os.path.exists(path):
+            raise http.Http404()
 
-        # TODO: let nginx serve the file
-        response = HttpResponse(file(fullname).read())
-        response['Content-Type'] = mimetypes.guess_type(filename)
-        response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        return response
-
-
-class DownloadResultsView(View):
-    """A view for downloading project reports."""
-
-    # TODO: too much code repetition here.
-    def get(self, request, *args, **kwargs):
-        """Returns the requested project report.
-
-        Throws a `HttpResponseForbidden` if the user
-        is not allowed to view the report.
-        """
-
-        project_slug = kwargs.pop('project_slug', None)
-        project = get_object_or_404(Project, slug=project_slug)
-        contractor_slug = kwargs.pop('contractor_slug', None)
-        contractor = get_object_or_404(Contractor,
-            project=project, slug=contractor_slug)
-        if not has_access(request.user, project, contractor):
-            return HttpResponseForbidden()
-
-        filename = os.path.basename(kwargs.pop('report', None))
-
-        directory = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
-            contractor.project.slug, contractor.slug, 'final_results')
-        fullname = os.path.join(directory, filename)
-        if not os.path.isfile(fullname):
-            return HttpResponseForbidden()
-
-        # TODO: let nginx serve the file
-        response = HttpResponse(file(fullname).read())
-        response['Content-Type'] = mimetypes.guess_type(filename)
-        response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        return response
+        return serve(request, path, '/')
 
 
 def start_export_run_view(request, project_slug, export_run_id):

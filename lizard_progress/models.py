@@ -30,6 +30,7 @@ except ImportError:
     from lizard_map.models import JSONField
 
 import lizard_progress.specifics
+from lizard_progress.util import directories
 
 logger = logging.getLogger(__name__)
 
@@ -702,17 +703,12 @@ class ExportRun(models.Model):
             measurement.filename
             for measurement in self.measurements_to_export())
 
-    def export_filename(
-        self,
-        export_root=os.path.join(
-            settings.BUILDOUT_DIR, 'var',
-            'lizard_progress', 'export'),
-        extension="zip"):
+    def export_filename(self, extension="zip"):
         """Return the filename that the result file should use."""
-        return ("{export_root}/{organization}/"
-                "{project}-{contractor}-{mtype}.{extension}").format(
-            export_root=export_root,
-            organization=self.project.organization.name,
+        directory = directories.exports_dir(self.project, self.contractor)
+        return os.path.join(
+            directory,
+            "{project}-{contractor}-{mtype}.{extension}").format(
             project=self.project.slug,
             contractor=self.contractor.slug,
             mtype=self.measurement_type.slug,

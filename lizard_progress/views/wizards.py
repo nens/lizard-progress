@@ -32,18 +32,11 @@ from lizard_progress.models import (Area, Hydrovak, Location,
                                     MeasurementType, SRID,
                                     ScheduledMeasurement)
 from lizard_progress.views.upload import UploadShapefilesView
-
+from lizard_progress.util import directories
 
 logger = logging.getLogger(__name__)
 
 APP_LABEL = Area._meta.app_label
-
-
-def location_shapefile_directory(project, contractor):
-    return os.path.join(
-        settings.BUILDOUT_DIR, 'var',
-        APP_LABEL, project.slug,
-        contractor.slug, 'locations')
 
 
 def all_files_in(path, extension=None):
@@ -351,11 +344,7 @@ class ActivitiesWizard(UiView, SessionWizardView):
         contractor = form_list[1].cleaned_data['contractor']
 
         # The root directory.
-        dst = location_shapefile_directory(project, contractor)
-
-        # The root might not exist yet.
-        if not os.path.exists(dst):
-            os.makedirs(dst)
+        dst = directories.location_shapefile_dir(project, contractor)
 
         # Create a unique subdirectory in the root.
         dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
@@ -442,12 +431,7 @@ class HydrovakkenWizard(UiView, SessionWizardView):
 
         # The root directory.
         project = form_list[0].cleaned_data['project']
-        dst = os.path.join(settings.BUILDOUT_DIR, 'var',
-                           APP_LABEL, project.slug, 'hydrovakken')
-
-        # The root might not exist yet.
-        if not os.path.exists(dst):
-            os.makedirs(dst)
+        dst = directories.hydrovakken_dir(project)
 
         # Create a unique subdirectory in the root.
         dst = tempfile.mkdtemp(prefix='upload-', dir=dst)
@@ -511,13 +495,7 @@ class ResultsWizard(UiView, SessionWizardView):
             contractor = form_list[1].cleaned_data['contractor']
 
             # The directory where final results will be stored.
-            result_dir = os.path.join(settings.BUILDOUT_DIR, 'var', APP_LABEL,
-                                      project.slug, contractor.slug,
-                                      'final_results')
-
-            # Create it if necessary.
-            if not os.path.exists(result_dir):
-                os.makedirs(result_dir)
+            result_dir = directories.results_dir(project, contractor)
 
             # "Moedershape" / "Hydrovakkenshape"
             shapedir = UploadShapefilesView.get_directory(contractor)
@@ -535,7 +513,7 @@ class ResultsWizard(UiView, SessionWizardView):
 
                 # Realtech controle, klopt het aantal kuubs
                 location_shape = newest_file_in(
-                    location_shapefile_directory(project, contractor),
+                    directories.location_shapefile_dir(project, contractor),
                     extension='.shp')
 
                 if shapefilename and location_shape:

@@ -3,7 +3,7 @@
 {% block contentpage %}
 
   <h2>Export bestanden</h2>
-<table class="table table-bordered table-hover" style="width: 95%">
+<table class="table table-bordered progressbase">
   <thead>
     <th>Opdrachtnemer</th>
     <th>Soort meting</th>
@@ -52,23 +52,37 @@
 {% endfor %}
 </table>
 
-  <h2>CSV bestanden</h2>
-  <ul class="without-bullets">
+{% if view.csv %}
+  <h3>Voortgang CSV bestanden</h3>
+  <table class="table table-bordered">
+  <thead>
+    <th>Opdrachtnemer</th>
+    <th>CSV bestand</th>
+  </thead>
 {% for contractor, url in view.csv %}
-    <li><a href="{{ url }}">CSV file voortgang {{ contractor.organization.name }}</a></li>
+  <tr>
+    <td>{{ contractor.organization.name }}</td>
+    <td><a href="{{ url }}">CSV file voortgang</a></td>
+  </tr>
 {% endfor %}
-  </ul>
-  {% if view.reports or view.results %}
-  <h2>Download</h2>
-  <ul class="without-bullets">
-    {% for report in view.reports %}
-    <li><a href="{{ report.url }}" title="{{ report.contractor }}">{{ report.name }}</a></li>
-    {% endfor %}
-    {% for report in view.results %}
-    <li><a href="{{ report.url }}" title="{{ report.contractor }}">{{ report.name }}</a></li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p class="small">(Er zijn nog geen rapporten of resultaten te downloaden)</p>
-  {% endif %}
+  </table>
+{% endif %}
+
+{% if view.files %}
+  <h3>Overige bestanden</h3>
+  <table class="table table-bordered">
+  <thead>
+    <th>Type</th>
+    <th>Filenaam</th>
+    <th>Download</th>
+  </thead>
+  {% for file in view.files %}
+  <tr>
+    <td>{{ file.type }}</td>
+    <td>{{ file.filename }} ({{ file.size }})</td>
+    <td><a href="{{ file.url }}">download</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+{% endif %}
 {% endblock contentpage %}

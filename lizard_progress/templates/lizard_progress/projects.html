@@ -1,26 +1,37 @@
-{% extends "lizard_map/wms.html" %}
-{% load workspaces %}
+{% extends "lizard_progress/progressbase.html" %}
 
-{% block css %}
-{{ block.super }}
-<link rel="stylesheet"
-      type="text/css"
-      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css"/>
-{% endblock css %}
+{% block contentpage %}
+<h2>Laatste uploads</h2>
+<table class="table table-bordered table-hover progressbase">
+<thead>
+  <th>Project</th>
+  <th>Laatste upload</th>
+  <th>Soort</th>
+  <th>Door</th>
+  <th>Aantal</th>
+  <th>Totaal nu</th>
+  <th>%</th>
+</thead>
+{% for project in view.projects %}
+<tr class="clickable" data-url="{% url lizard_progress_dashboardview project.slug %}">
+  <td>{{ project.name }}</td>
+  {% if project.latest_log %}
+  <td>{{ project.latest_log.when }}</td>
+  <td>{{ project.latest_log.mtype }}</td>
+  <td>{{ project.latest_log.uploading_organization }}</td>
+  <td>{{ project.latest_log.num_measurements }}</td>
+  <td>{{ project.number_of_complete_scheduled_measurements }}</td>
+  <td>{{ project.percentage_done }}</td>
+  {% else %}
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  {% endif %}
+</tr>
+{% endfor %}
+</table>
 
-{% block sidebar %}
-<div class="sidebarbox sidebarbox-stretched">
-  <h2>Projecten van {{ view.organization }}</h2>
-  <ul class="without-bullets">
-  {% for project in view.projects %}
-    <li>
-      <a href="{% url lizard_progress_view project.slug %}">{{ project }}</a>
-    </li>
-  {% endfor %}
-  </ul>
-</div>
-{% if view.workspace_edit.workspace_items.all or view.collage_edit.collage_items.all %}
-{% workspace_edit view.workspace_edit %}
-{% collage_edit view.collage_edit %}
-{% endif %}
-{% endblock sidebar %}
+{% endblock contentpage %}

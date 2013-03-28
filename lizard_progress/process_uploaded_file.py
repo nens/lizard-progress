@@ -179,6 +179,9 @@ def try_parser(uploaded_file, parser):
                     m.filename = target_path
                     m.save()
 
+                # Log success
+                uploaded_file.log_success(parseresult.measurements)
+
                 return True, []
 
             elif parseresult.success:

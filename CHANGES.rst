@@ -20,6 +20,26 @@ Changelog of lizard-progress
   - Show the water level
   - Show project name, contractor name
 
+- Add a log database model that logs each upload. For now, use it to show
+  a 'latest uploads' table on the front page.
+
+- Remove all content buttons except for 'zoom to default location'
+
+- Make styling of the tables in the interface more consistent
+
+- table-hover makes it look like rows can be clicked. In the cases
+  that that makes sense (project list on the front page, uploaded
+  files with errors) we make them clickable, in other tables remove
+  table-hover.
+
+- Update site title, no longer just HDSR Upload Server
+
+- Remove collage edit from Kaartlagen page
+
+- Uploaders and project organizations go to the same project page
+
+- Some minor layout fixes
+
 1.8.1 (2013-03-27)
 ------------------
 

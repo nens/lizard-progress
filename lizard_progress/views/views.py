@@ -159,7 +159,7 @@ class KickOutMixin(object):
 
 class ProjectsView(KickOutMixin, ProjectsMixin, UiView):
     """Displays a list of projects to choose from."""
-    template_name = "lizard_progress/progressbase.html"
+    template_name = "lizard_progress/projects.html"
 
 
 class View(KickOutMixin, ProjectsMixin, AppView):
@@ -218,6 +218,13 @@ class MapView(View):
             })
 
         return layers
+
+    @property
+    def content_actions(self):
+        """Hide everything but the zoom to start location action"""
+        return [action for action in
+                super(MapView, self).content_actions
+                if 'load-default-location' in action.klass]
 
     @property
     def breadcrumbs(self):

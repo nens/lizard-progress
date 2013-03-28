@@ -264,6 +264,32 @@ class Project(models.Model):
 
         return info
 
+    def number_of_scheduled_measurements(self):
+        return ScheduledMeasurement.objects.filter(
+            project=self).count()
+
+    def number_of_complete_scheduled_measurements(self):
+        return ScheduledMeasurement.objects.filter(
+            project=self, complete=True).count()
+
+    def percentage_done(self):
+        if any(not self.needs_predefined_locations(available_measurement_type)
+               for available_measurement_type in
+               AvailableMeasurementType.objects.filter(
+                measurementtype__project=self)):
+            return "N/A"
+
+        percentage = ((100 * self.number_of_scheduled_measurements()) /
+                      self.number_of_complete_scheduled_measurements())
+        return "{percentage:2.0f}%".format(percentage=percentage)
+
+    def latest_log(self):
+        if not hasattr(self, '_latest_log'):
+            latest_log = UploadLog.latest(self)
+            self._latest_log = latest_log[0] if latest_log else None
+
+        return self._latest_log
+
 
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc
@@ -534,6 +560,20 @@ class UploadedFile(models.Model):
     def filename(self):
         return os.path.basename(self.path)
 
+    def log_success(self, measurements):
+        num_measurements = len(measurements)
+
+        if num_measurements > 0:
+            # What can we log... project, contractor, the time, the
+            # filename, measurement type, number of measurements
+            UploadLog.objects.create(
+                project=self.project,
+                uploading_organization=self.contractor.organization,
+                when=datetime.datetime.now(),
+                filename=self.filename,
+                mtype=measurements[0].scheduled.measurement_type.mtype,
+                num_measurements=num_measurements)
+
 
 class UploadedFileError(models.Model):
     uploaded_file = models.ForeignKey(UploadedFile)
@@ -677,3 +717,26 @@ class ExportRun(models.Model):
             contractor=self.contractor.slug,
             mtype=self.measurement_type.slug,
             extension=extension).encode('utf8')
+
+
+class UploadLog(models.Model):
+    """Log that a file was correctly uploaded, to show on the front page"""
+
+    project = models.ForeignKey(Project)
+    uploading_organization = models.ForeignKey(Organization)
+    mtype = models.ForeignKey(AvailableMeasurementType)
+
+    when = models.DateTimeField()
+    filename = models.CharField(max_length=50)
+    num_measurements = models.IntegerField()
+
+    class Meta:
+        ordering = ('when',)
+
+    @classmethod
+    def latest(cls, project, amount=1):
+        queryset = cls.objects.filter(project=project)
+        if queryset.exists():
+            return queryset[:amount]
+        else:
+            return None

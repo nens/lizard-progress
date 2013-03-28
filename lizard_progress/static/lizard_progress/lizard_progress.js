@@ -149,3 +149,12 @@ $().ready(function () {
         }, 1000);
     }
 });
+
+// Make table rows clickable
+$("tr.clickable").click(function () {
+    url = $(this).attr('data-url');
+
+    if (url) {
+        window.location = url;
+    }
+});

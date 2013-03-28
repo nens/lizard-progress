@@ -44,7 +44,7 @@ Navigation
   {% for project in view.projects %}
     <li>
       {% if view.user_is_uploader %}
-        <a href="{% url lizard_progress_uploadhomeview project.slug %}">{{ project }} ({{ project.organization.name }})</a>
+        <a href="{% url lizard_progress_dashboardview project.slug %}">{{ project }} ({{ project.organization.name }})</a>
       {% else %}
 	<a href="{% url lizard_progress_dashboardview project.slug %}">{{ project }}</a>
       {% endif %}

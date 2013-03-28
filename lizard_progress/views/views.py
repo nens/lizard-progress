@@ -135,7 +135,6 @@ class KickOutMixin(object):
     def dispatch(self, request, *args, **kwargs):
         """You can only get here if you are part of some organization.
         So admin can't."""
-        logger.debug("HIER!!")
         self.organization = models.Organization.get_by_user(
             request.user)
         if not self.organization:
@@ -814,5 +813,4 @@ def protected_file_download(request, project_slug, contractor_slug,
             "With DEBUG off, we'd serve the programfile via webserver: \n%s",
             response)
         return serve(request, file_path, '/')
-    logger.debug("Serving programfile %s via webserver.", file_path)
     return response

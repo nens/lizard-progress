@@ -16,7 +16,6 @@ import os
 import random
 import string
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.core.urlresolvers import reverse

@@ -180,19 +180,20 @@ class DownloadView(View):
         if not has_access(request.user, project, contractor):
             return HttpResponseForbidden()
 
-        if type == 'reports':
+        if filetype == 'reports':
             directory = directories.reports_dir(project, contractor)
-        elif type == 'results':
+        elif filetype == 'results':
             directory = directories.reports_dir(project, contractor)
-        elif type == 'locations':
+        elif filetype == 'locations':
             directory = directories.location_shapefile_dir(project, contractor)
-        elif type == 'organization':
+        elif filetype == 'organization':
             directory = directories.organization_files_dir(
                 project.organization)
         else:
             return HttpResponseForbidden()
 
         path = os.path.join(directory, filename)
+
         if not os.path.exists(path):
             raise http.Http404()
 

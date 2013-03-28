@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.10 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix bug with downloading files, mistyped a variable.
 
 
 1.9 (2013-03-28)

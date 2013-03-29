@@ -11,6 +11,9 @@ Changelog of lizard-progress
   water, water level is calculated from the 22 points, code could be
   made shorter a bit.
 
+- Have we finally fixed the upload dialog button bug? It appears to
+  have been some sort of Jquery UI version conflict
+
 1.9.1 (2013-03-29)
 ------------------
 

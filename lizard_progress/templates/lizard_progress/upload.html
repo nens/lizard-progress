@@ -1,12 +1,3 @@
-<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/base/jquery-ui.css" type="text/css" />
-<link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
-
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
-<script type="text/javascript" src="http://bp.yahooapis.com/2.4.21/browserplus-min.js"></script>
-
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
 
 <div id="uploader">
   <p>Your browser doesn't have HTML5 support.</p>
@@ -16,13 +7,8 @@
 // Convert div to queue widget when the DOM is ready
 $(function () {
     $("#uploader").plupload({
-        // General settings
-        //runtimes : 'html4,flash,browserplus,silverlight,gears,html5',
         runtimes : 'html5',
-        //url will be set dynamically. see lizard_progress.js
-        //url : '{{ view.upload_url }}',
         max_file_size : '4mb',
-        //max_file_count : 20, // user can add no more than 20 files at a time
 // With chunking on, we get two bugs:
 // - Upload stops after two error messages, can be restarted with 'Start upload'
 // - Chunks are send with the wrong filename, for files that are in the queue right
@@ -31,9 +17,6 @@ $(function () {
         unique_names : true,
         multiple_queues : true,
 
-        //resize : {width : 320, height : 240, quality : 90},
-
-        //headers : {'X-Requested-With' : 'XMLHttpRequest', 'X-CSRFToken' : '{{csrf_token}}'},
         headers : {'X-CSRFToken' : '{{ csrf_token }}'},
 
         // This will be used below to send the filename.
@@ -44,12 +27,6 @@ $(function () {
 
         // Sort files
         sortable: true,
-
-        // Flash settings
-        //flash_swf_url : '{{ STATIC_URL }}plupload/js/plupload.flash.swf',
-
-        // Silverlight settings
-        //silverlight_xap_url : '{{ STATIC_URL }}plupload/js/plupload.silverlight.xap'
     });
 
     // When sending a large file in chunks, the original filename is lost.

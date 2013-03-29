@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.10 (unreleased)
+1.10 (2013-03-29)
 -----------------
 
 - Make it possible to export MET files with sorted measurements.

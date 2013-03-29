@@ -7,6 +7,9 @@ Changelog of lizard-progress
 
 - Make it possible to export MET files with sorted measurements.
 
+- Improve CSV export: XY coordinates are now the midpoint of the
+  water, water level is calculated from the 22 points, code could be
+  made shorter a bit.
 
 1.9.1 (2013-03-29)
 ------------------

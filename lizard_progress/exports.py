@@ -279,10 +279,10 @@ def create_csv(measurement, temp):
     with open(filepath, 'w') as f:
         writer = csv.writer(f)
         writer.writerow(["Location:", location_code])
-        writer.writerow(["X-coordinaat:", profile.start_x])
-        writer.writerow(["Y-coordinaat:", profile.start_y])
+        writer.writerow(["X-coordinaat:", profile.midpoint.x])
+        writer.writerow(["Y-coordinaat:", profile.midpoint.y])
         writer.writerow(["Streefpeil:", -999])
-        writer.writerow(["Gemeten waterstand:", profile.level_value])
+        writer.writerow(["Gemeten waterstand:", profile.waterlevel])
         writer.writerow([])
         writer.writerow([
                 "Afstand tot midden (m)",
@@ -290,12 +290,7 @@ def create_csv(measurement, temp):
                 "Hoogte zachte bodem (m NAP)"])
 
         for m in profile.sorted_measurements:
-            projected_point = base_line.project(m.point)
-            distance = midpoint.subtract(projected_point).size
-
-            # One side has negative numbers
-            if base_line.scaled_scalar_projection(m.point) < 0.5:
-                distance = -distance
+            distance = base_line.distance_to_midpoint(m.point)
 
             writer.writerow([
                     "{0:.2f}".format(distance),

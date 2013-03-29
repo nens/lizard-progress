@@ -31,8 +31,14 @@ from dxfwrite import DXFEngine as dxf
 from metfilelib.util import retrieve_profile
 from metfilelib import exporters
 
+from lizard_progress import errors
 from lizard_progress import models
 from lizard_progress import tools
+
+
+def dwarsprofiel_mtype():
+    return models.AvailableMeasurementType.objects.get(
+        slug='dwarsprofiel')
 
 
 def start_run(export_run_id, user):
@@ -80,7 +86,13 @@ def export_as_metfile(export_run):
     """Export a set of measurements as one combined MET file.
 
     This works by _retrieving the original <PROFIEL> sections from the
-    originally uploaded files_. So no processing is done on them."""
+    originally uploaded files_. So no processing is done on them.
+
+    EXCEPT if this is for Almere -- that is, if the organization this
+    file belongs to wants to sort its measurements. Or more exactly,
+    if this organization checks for the MET_Z1_DIFFERENCE_TOO_LARGE
+    error. If it does, we assume they want to sort its measurements
+    before exporting them."""
 
     metfile_path = export_run.export_filename(extension="met")
 
@@ -89,12 +101,18 @@ def export_as_metfile(export_run):
 
     measurements = export_run.measurements_to_export()
 
-    metfile = retrieve_profile.recreate_metfile([
+    want_sorted_measurements = errors.ErrorConfiguration(
+        project=export_run.project, measurement_type=dwarsprofiel_mtype()
+        ).wants_sorted_measurements()
+
+    metfile = retrieve_profile.recreate_metfile(
+        [
             (measurement.filename,
              measurement.scheduled.location.location_code)
-            for measurement in measurements])
+            for measurement in measurements],
+        want_sorted_measurements)
 
-    exporter = exporters.MetfileExporter()
+    exporter = exporters.MetfileExporter(want_sorted_measurements)
 
     with open(metfile_path, "w") as f:
         f.write(exporter.export_metfile(metfile))

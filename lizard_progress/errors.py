@@ -53,3 +53,15 @@ class ErrorConfiguration(object):
             return True
 
         return error_code in self.codes_to_check
+
+    def wants_sorted_measurements(self):
+        """This is a specific method used for Dwarsprofiel measurements.
+
+        Sometimes <meting> lines are not assumed to be in the right
+        order, and code has to sort them themselves. Whether it does
+        so or not is controlled by the presence of the check on
+        MET_Z1_DIFFERENCE_TOO_LARGE in this configuration, because
+        that is a check that always does this sorting. The rule is: if
+        a project uses that check, then it must like sorting."""
+
+        return 'MET_Z1_DIFFERENCE_TOO_LARGE' in self

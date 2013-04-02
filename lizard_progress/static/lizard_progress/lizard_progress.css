@@ -83,6 +83,19 @@ table.progressbase {
     max-width: 100%;
 }
 
+table.fixed {
+    table-layout: fixed;
+    max-width: 600px;
+}
+
+td.filename {
+    width: 500px;
+}
+
+td.download {
+    width: 100px;
+}
+
 p.small {
     font-size: 80%;
     font-style: italic;

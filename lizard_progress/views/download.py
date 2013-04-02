@@ -114,11 +114,12 @@ class DownloadHomeView(ProjectsView):
     def files(self):
         if not hasattr(self, '_files'):
             try:
-                self._files = (
-                    list(self._organization_files()) +
-                    list(self._reports_files()) +
-                    list(self._results_files()) +
-                    list(self._location_shapefile_files()))
+                self._files = {
+                    'organization': list(self._organization_files()),
+                    'reports': list(self._reports_files()),
+                    'results': list(self._results_files()),
+                    'shapefile': list(self._location_shapefile_files())
+                    }
             except Exception as e:
                 logger.debug(e)
         return self._files

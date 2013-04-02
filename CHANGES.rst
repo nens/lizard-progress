@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.12 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- The downloadable files are under separate headers now, issue #41.
 
 
 1.11 (2013-04-02)

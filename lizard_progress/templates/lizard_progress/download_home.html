@@ -1,8 +1,31 @@
 {% extends "lizard_progress/progressbase.html" %}
 
 {% block contentpage %}
+<h3>Projectdocumenten</h3>
 
-  <h2>Export bestanden</h2>
+{% if view.files.organization or view.files.shapefile %}
+  <table class="table table-bordered fixed">
+  <thead>
+    <th>Filenaam</th>
+    <th>Download</th>
+  </thead>
+  {% for file in view.files.organization %}
+  <tr>
+    <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+    <td class="download"><a href="{{ file.url }}">download</a></td>
+  </tr>
+  {% endfor %}
+  {% for file in view.files.shapefile %}
+  <tr>
+    <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+    <td class="download"><a href="{{ file.url }}">download</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+{% endif %}
+
+<h3>Resultaten</h3>
+
 <table class="table table-bordered progressbase">
   <thead>
     <th>Opdrachtnemer</th>
@@ -53,36 +76,54 @@
 </table>
 
 {% if view.csv %}
-  <h3>Voortgang CSV bestanden</h3>
-  <table class="table table-bordered">
+  <table class="table table-bordered" style="max-width: 600px;">
   <thead>
     <th>Opdrachtnemer</th>
     <th>CSV bestand</th>
   </thead>
 {% for contractor, url in view.csv %}
   <tr>
-    <td>{{ contractor.organization.name }}</td>
-    <td><a href="{{ url }}">CSV file voortgang</a></td>
+    <td class="filename">{{ contractor.organization.name }}</td>
+    <td class="download"><a href="{{ url }}">CSV file voortgang</a></td>
   </tr>
 {% endfor %}
   </table>
 {% endif %}
 
-{% if view.files %}
-  <h3>Overige bestanden</h3>
-  <table class="table table-bordered">
+<h3>Rapportages</h3>
+
+{% if view.files.reports %}
+  <table class="table table-bordered fixed">
   <thead>
-    <th>Type</th>
     <th>Filenaam</th>
     <th>Download</th>
   </thead>
-  {% for file in view.files %}
+  {% for file in view.files.reports %}
   <tr>
-    <td>{{ file.type }}</td>
-    <td>{{ file.filename }} ({{ file.size }})</td>
-    <td><a href="{{ file.url }}">download</a></td>
+    <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+    <td class="download"><a href="{{ file.url }}">download</a></td>
   </tr>
   {% endfor %}
   </table>
 {% endif %}
+
+<h3>Berekende resultaten</h3>
+
+{% if view.files.results %}
+  <table class="table table-bordered fixed">
+  <thead>
+    <th>Filenaam</th>
+    <th>Download</th>
+  </thead>
+  {% for file in view.files.results %}
+  <tr>
+    <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+    <td class="download"><a href="{{ file.url }}">download</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+{% endif %}
+
+
+
 {% endblock contentpage %}

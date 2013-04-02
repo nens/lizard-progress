@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.11 (unreleased)
+1.11 (2013-04-02)
 -----------------
 
 - Upload page overview tables now run on Javascript, an URL that

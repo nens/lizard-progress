@@ -239,6 +239,12 @@ class TestWaternet(TestOrganization):
                     (3, 'MET_PROFIELELEMENTS'),
                     ]))
 
+    def test_zevende_element_2(self, *args):
+        self.try_file(
+            'waternet/b/4d Zevende_element_2.met',
+            set([
+                    ]))
+
     def test_correct_files(self, *args):
         filenames = (
             'waternet/b/Metfile_Goed.met',
@@ -255,7 +261,6 @@ class TestWaternet(TestOrganization):
             'waternet/b/4a Vierde_element_0.met',
             'waternet/b/4b Vijfde_element_NAP.met',
             'waternet/b/4c Zesde_element_ABS.met',
-            'waternet/b/4d Zevende_element_2.met',
             'waternet/b/4e Achtste_element_XY.met',
             'waternet/b/5 Coordinaat_startpunt_meetpunt1_gelijk.met',
             'waternet/c/1 Aantal_profielcodes.met',

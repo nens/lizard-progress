@@ -62,6 +62,8 @@ $(function () {
 
     // Display error messages returned by the server
     uploader.bind('FileUploaded', function (up, file, response) {
+        // Always refresh the uploaded file tables
+        upload_page_functions.refresh_uploaded_file_tables();
 
         response = $.parseJSON(response.response);
 

@@ -105,12 +105,17 @@ urlpatterns = patterns(
     url('^dashboardcsv/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/$',
         login_required(DashboardCsvView.as_view()),
         name='lizard_progress_dashboardcsvview'),
+
     url('^upload/$',
         login_required(UploadDialogView.as_view()),
         name='lizard_progress_uploaddialogview'),
     url('^projects/(?P<project_slug>[^/]+)/upload/$',
         login_required(UploadHomeView.as_view()),
         name='lizard_progress_uploadhomeview'),
+    # API for the tables
+    url('^projects/(?P<project_slug>[^/]+)/upload/uploaded_files/$',
+        login_required(views.UploadedFilesView.as_view()),
+        name='lizard_progress_uploaded_files_api'),
     url('^projects/(?P<project_slug>[^/]+)/upload/remove_uploaded_file/(?P<uploaded_file_id>\d+)/$',
         login_required(views.remove_uploaded_file_view),
         name='lizard_progress_remove_uploaded_file'),
@@ -123,6 +128,7 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/upload/shapefiles/$',
         login_required(UploadShapefilesView.as_view()),
         name='lizard_progress_uploadshapefilesview'),
+
     url('^projects/(?P<project_slug>[^/]+)/download/$',
         login_required(DownloadHomeView.as_view()),
         name='lizard_progress_downloadhomeview'),

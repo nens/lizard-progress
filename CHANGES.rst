@@ -5,7 +5,10 @@ Changelog of lizard-progress
 1.11 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Upload page overview tables now run on Javascript, an URL that
+  returns the list of uploaded files as JSON, and an URL that can be
+  POSTed to to delete them. Tables can be reloaded quite naturally,
+  without refreshing the page.
 
 
 1.10 (2013-03-29)

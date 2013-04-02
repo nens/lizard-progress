@@ -27,11 +27,9 @@ from django.views.generic import View
 from lizard_ui.views import ViewContextMixin
 from lizard_ui.layout import Action
 
-from lizard_progress import specifics
 from lizard_progress import tasks
 from lizard_progress import models
 from lizard_progress.util import directories
-from lizard_progress.tools import unique_filename
 from lizard_progress.views.views import ProjectsView
 
 
@@ -71,10 +69,14 @@ def remove_uploaded_file_view(request, **kwargs):
         or uploaded_file.project != project):
         raise PermissionDenied()
 
-    uploaded_file.delete()
-    return HttpResponseRedirect(
-        reverse('lizard_progress_uploadhomeview',
-                kwargs={'project_slug': project_slug}))
+    uploaded_file.delete_self()
+
+    if request.method == 'POST':
+        return HttpResponse("Uploaded file deleted.")
+    else:
+        return HttpResponseRedirect(
+            reverse('lizard_progress_uploadhomeview',
+                    kwargs={'project_slug': project_slug}))
 
 
 class DummyException(BaseException):
@@ -180,6 +182,39 @@ class UploadHomeView(ProjectsView):
         return self._files_not_ready
 
 
+class UploadedFilesView(UploadHomeView):
+    """Return uploaded files as a JSON array."""
+    def get(self, request, *args, **kwargs):
+        self.project_slug = kwargs.get('project_slug', None)
+        self.project = get_object_or_404(
+            models.Project, slug=self.project_slug)
+
+        if not self.project.can_upload(request.user):
+            return HttpResponseForbidden()
+
+        try:
+            self.contractor = models.Contractor.objects.get(
+                project=self.project,
+                organization__userprofile__user=request.user)
+        except models.Contractor.DoesNotExist:
+            self.contractor = None
+
+        if not models.has_access(request.user, self.project):
+            return HttpResponseForbidden()
+
+        if not self.contractor:
+            return []
+
+        return HttpResponse(
+            json.dumps([
+                    uploaded_file.as_dict()
+                    for uploaded_file in
+                    models.UploadedFile.objects.filter(
+                        project=self.project,
+                        contractor=self.contractor)]),
+            content_type="application/json")
+
+
 class UploadView(View):
 
     def dispatch(self, request, *args, **kwargs):
@@ -251,125 +286,6 @@ class UploadMeasurementsView(UploadView):
         tasks.process_uploaded_file_task.delay(uploaded_file.id)
 
         return json_response({})
-
-
-class OldUploadMeasurementsView(UploadView):
-    """Handles file upload, file validation, entering data into the
-    database and moving files to their destination.
-
-    XXX: This will all now be handled by a background Celery task."""
-
-    def process_file(self, path):
-        """Find parsers for the uploaded file and see if they accept it."""
-
-        filename = os.path.basename(path)
-
-        for parser in self.project.specifics().parsers(filename):
-            # Try_parser takes care of moving the file to its correct
-            # destination if successful, and all database operations.
-            success, errors = self.try_parser(parser, path)
-
-            if success:
-                return json_response({})
-            if errors:
-                return json_response(errors)
-
-        # Found no suitable parsers
-        return json_response({
-                'error': {'details': "Unknown filetype or empty file."}})
-
-    def try_parser(self, parser, path):
-        """Tries a particular parser. Wraps everything in a database
-        transaction so that nothing is changed in the database in case
-        of an error message. Moves the file to the current location
-        and updates its taken measurements with the new filename in
-        case of success."""
-
-        errors = {}
-
-        try:
-            with transaction.commit_on_success():
-                # Call the parser.
-                parseresult = self.call_parser(parser, path)
-
-                if (parseresult.success
-                    and hasattr(parseresult, 'measurements')
-                    and parseresult.measurements):
-                    # Get mtype from the parser result, for use in pathname
-                    mtype = (parseresult.measurements[0].
-                             scheduled.measurement_type)
-
-                    # Move the file.
-                    target_path = self.path_for_uploaded_file(mtype, path)
-                    shutil.move(path, target_path)
-
-                    # Update measurements.
-                    for m in parseresult.measurements:
-                        m.filename = target_path
-                        m.save()
-
-                    return True, {}
-                elif parseresult.success:
-                    # Success, but no results.  Don't count this as
-                    # success, so that other parsers may be tried.
-                    parseresult.success = False
-                    # Prevent database change.
-                    raise DummyException()
-                else:
-                    # Unsuccess. Were there errors? Then set
-                    # them.
-                    if parseresult.error:
-                        errors = {'error':
-                                      {'details': parseresult.error}}
-
-                    # We raise a dummy exception so that
-                    # commit_on_success doesn't commit whatever
-                    # was done to our database in the meantime.
-                    raise DummyException()
-        except DummyException:
-            pass
-
-        return False, errors
-
-    def call_parser(self, parser, path):
-        """Actually call the parser. Open files. Return result."""
-
-        parser_instance = specifics.parser_factory(
-            parser,
-            self.project,
-            self.contractor,
-            path)
-        parseresult = parser_instance.parse()
-        return parseresult
-
-    def upload_url(self):
-        """Is this used?"""
-        return reverse('lizard_progress_uploadview',
-                       kwargs={'project_slug': self.project_slug})
-
-    def path_for_uploaded_file(self, measurement_type, uploaded_path):
-        """Create dirname based on project etc. Guaranteed not to
-        exist yet at the time of checking."""
-
-        dirname = directories.mk(os.path.dirname(
-            directories.make_uploaded_file_path(
-                directories.BASE_DIR,
-                self.project, self.contractor,
-                measurement_type, 'dummy')))
-
-        # Figure out a filename that doesn't exist yet
-        orig_filename = os.path.basename(uploaded_path)
-        seq = 0
-        while True:
-            new_filename = unique_filename(orig_filename, seq)
-            new_filename = ('%s-%d-%s' % (time.strftime('%Y%m%d-%H%M%S'),
-                                          seq, orig_filename))
-            if not os.path.exists(os.path.join(dirname, new_filename)):
-                break
-            # Increase sequence number if filename exists
-            seq += 1
-
-        return os.path.join(dirname, new_filename)
 
 
 class UploadReportsView(UploadView):

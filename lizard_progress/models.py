@@ -574,6 +574,31 @@ class UploadedFile(models.Model):
                 mtype=measurements[0].scheduled.measurement_type.mtype,
                 num_measurements=num_measurements)
 
+    def delete_self(self):
+        if os.path.exists(self.path):
+            os.remove(self.path)
+        self.delete()
+
+    def as_dict(self):
+        """This will be turned into JSON to send to the UI."""
+        return {
+            'id': self.id,
+            'project_id': self.project.id,
+            'contractor_id': self.contractor.id,
+            'uploaded_by': self.uploaded_by.get_full_name(),
+            'uploaded_at': unicode(self.uploaded_at),
+            'filename': os.path.basename(self.path),
+            'ready': self.ready,
+            'success': self.success,
+            'error_url': reverse(
+                'lizard_progress_uploaded_file_error_view', args=(self.id,)),
+            'delete_url': reverse(
+                'lizard_progress_remove_uploaded_file', kwargs={
+                    'project_slug': self.project.slug,
+                    'uploaded_file_id': self.id
+                    })
+            }
+
 
 class UploadedFileError(models.Model):
     uploaded_file = models.ForeignKey(UploadedFile)

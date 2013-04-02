@@ -12,6 +12,7 @@
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/upload_page.js"></script>
 {% endblock javascript %}
 
 {% block contentpage %}
@@ -23,41 +24,21 @@
 <button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_reports_url }}"><i class="icon-upload"></i> Upload eindrapportages</button>
 </div>
 
+<div id="uploaded_files_not_ready" data-refresh-url="{% url lizard_progress_uploaded_files_api project_slug=view.project.slug %}" hidden="true">
+  <h3>Nog niet verwerkte bestanden</h3>
+  <table id="files_not_processed" class="table table-bordered progressbase uploadedfiletable">
+    <thead><th>Filenaam</th><th>Geupload door</th><th>Datum</th></thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-{% if view.files_not_ready %}
-<h3>Nog niet verwerkte bestanden</h3>
-<table id="files_not_processed" class="table table-bordered progressbase">
-<thead><th>Filenaam</th><th>Geupload door</th><th>Datum</th></thead>
-{% for f in view.files_not_ready %}
-  <tr>
-    <td>{{ f.filename }}</td>
-    <td>{{ f.uploaded_by }}</td>
-    <td>{{ f.uploaded_at }}</td>
-  </tr>
-{% endfor %}
-</table>
-{% endif %}
-
-{% if view.files_ready %}
-<h3>Verwerkte bestanden</h3>
-<table id="files_processed" class="table table-bordered progressbase">
-<thead><th>Filenaam</th><th>Geupload door</th><th>Datum</th><th>Fouten</th><th>Verwijderen</th></thead>
-{% for f in view.files_ready %}
-<tr class="{% if f.success %}success{% else %}error clickable{% endif %}" {% if not f.success %}data-url="{% url lizard_progress_uploaded_file_error_view f.id %}"{% endif %}>
-  <td>{{ f.filename }}</td>
-  <td>{{ f.uploaded_by }}</td>
-  <td>{{ f.uploaded_at }}</td>
-  <td>
-  {% if not f.success %}
-    <a href="{% url lizard_progress_uploaded_file_error_view f.id %}" target="_">bekijk fouten <i class="icon-list"></i></a>
-  {% endif %}
-  </td>
-  <td>
-  <a href="{% url lizard_progress_remove_uploaded_file project_slug=view.project_slug uploaded_file_id=f.id %}">verwijder</a>
-  </td>
-</tr>
-{% endfor %}
-</table>
-{% endif %}
-
+<div id="uploaded_files_ready" hidden="true">
+  <h3>Verwerkte bestanden</h3>
+  <p class="small">Deze kunnen veilig verwijderd worden, het gaat hier alleen om de melding
+  van het resultaat van de upload. Gegevens van succesvol geuploade bestanden blijven opgeslagen.</p>
+  <table id="files_processed" class="table table-bordered progressbase uploadedfiletable">
+    <thead><th>Filenaam</th><th>Geupload door</th><th>Datum</th><th>Fouten</th><th>Verwijderen</th></thead>
+    <tbody></tbody>
+  </table>
+</div>
 {% endblock contentpage %}

@@ -1,9 +1,9 @@
 {% extends "lizard_progress/progressbase.html" %}
 
 {% block contentpage %}
+{% if view.files.organization or view.files.shapefile or view.files.hydrovakken %}
 <h3>Projectdocumenten</h3>
 
-{% if view.files.organization or view.files.shapefile %}
   <table class="table table-bordered fixed">
   <thead>
     <th>Filenaam</th>
@@ -16,6 +16,12 @@
   </tr>
   {% endfor %}
   {% for file in view.files.shapefile %}
+  <tr>
+    <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+    <td class="download"><a href="{{ file.url }}">download</a></td>
+  </tr>
+  {% endfor %}
+  {% for file in view.files.hydrovakken %}
   <tr>
     <td class="filename">{{ file.filename }} ({{ file.size }})</td>
     <td class="download"><a href="{{ file.url }}">download</a></td>
@@ -90,9 +96,9 @@
   </table>
 {% endif %}
 
+{% if view.files.reports or view.files.contractor_hydrovakken %}
 <h3>Rapportages</h3>
 
-{% if view.files.reports %}
   <table class="table table-bordered fixed">
   <thead>
     <th>Filenaam</th>
@@ -104,12 +110,18 @@
     <td class="download"><a href="{{ file.url }}">download</a></td>
   </tr>
   {% endfor %}
+  {% for file in view.files.contractor_hydrovakken %}
+  <tr>
+    <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+    <td class="download"><a href="{{ file.url }}">download</a></td>
+  </tr>
+  {% endfor %}
   </table>
 {% endif %}
 
+{% if view.files.results %}
 <h3>Berekende resultaten</h3>
 
-{% if view.files.results %}
   <table class="table table-bordered fixed">
   <thead>
     <th>Filenaam</th>

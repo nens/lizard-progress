@@ -5,7 +5,9 @@ Changelog of lizard-progress
 1.13 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix MET file export (#45).
+
+- Get all downloads to actually work (#41, #46).
 
 
 1.12 (2013-04-02)

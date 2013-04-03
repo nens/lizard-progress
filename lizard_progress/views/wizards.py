@@ -10,7 +10,6 @@ import re
 import shutil
 import tempfile
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.formtools.wizard.views import SessionWizardView
@@ -37,22 +36,6 @@ from lizard_progress.util import directories
 logger = logging.getLogger(__name__)
 
 APP_LABEL = Area._meta.app_label
-
-
-def all_files_in(path, extension=None):
-    for directory, dirnames, filenames in os.walk(path):
-        for filename in filenames:
-            if extension is None or filename.endswith(extension):
-                yield os.path.join(directory, filename)
-
-
-def newest_file_in(path, extension=None):
-    mtime = lambda fn: os.stat(os.path.join(path, fn)).st_mtime
-    filenames = sorted(all_files_in(path, extension), key=mtime)
-    if filenames:
-        return filenames[-1].encode('utf8')
-    else:
-        return None
 
 
 class OverwriteStorage(FileSystemStorage):
@@ -499,7 +482,8 @@ class ResultsWizard(UiView, SessionWizardView):
 
             # "Moedershape" / "Hydrovakkenshape"
             shapedir = UploadShapefilesView.get_directory(contractor)
-            shapefilename = newest_file_in(shapedir, extension='.shp')
+            shapefilename = directories.newest_file_in(
+                shapedir, extension='.shp')
 
             if ScheduledMeasurement.objects.filter(
                     project=project,
@@ -512,7 +496,7 @@ class ResultsWizard(UiView, SessionWizardView):
                     generate_metfile(project, contractor, metfile)
 
                 # Realtech controle, klopt het aantal kuubs
-                location_shape = newest_file_in(
+                location_shape = directories.newest_file_in(
                     directories.location_shapefile_dir(project, contractor),
                     extension='.shp')
 

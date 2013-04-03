@@ -109,8 +109,7 @@ def export_as_metfile(export_run):
         [
             (measurement.filename,
              measurement.scheduled.location.location_code)
-            for measurement in measurements],
-        want_sorted_measurements)
+            for measurement in measurements])
 
     exporter = exporters.MetfileExporter(want_sorted_measurements)
 

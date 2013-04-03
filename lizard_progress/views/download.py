@@ -97,7 +97,7 @@ class DownloadHomeView(ProjectsView):
     def _location_shapefile_files(self):
         for contractor in self.project.contractor_set.all():
             if has_access(self.user, self.project, contractor):
-                for path in directories.files_in(
+                for path in directories.all_files_in(
                     directories.location_shapefile_dir(
                         self.project, contractor)):
                         yield {
@@ -105,11 +105,42 @@ class DownloadHomeView(ProjectsView):
                                 contractor.organization.name),
                             'filename': os.path.basename(path),
                             'size': directories.human_size(path),
-                            'url': self._make_url('organization',
+                            'url': self._make_url('locations',
                                                   self.project,
                                                   contractor,
                                                   path)
                         }
+
+    def _shapefile_files(self):
+        for contractor in self.project.contractor_set.all():
+            if has_access(self.user, self.project, contractor):
+                for path in directories.all_files_in(
+                    directories.shapefile_dir(
+                        self.project, contractor)):
+                        yield {
+                            'type': 'Ingevulde hydrovakken shapefile '.format(
+                                contractor.organization.name),
+                            'filename': os.path.basename(path),
+                            'size': directories.human_size(path),
+                            'url': self._make_url('contractor_hydrovakken',
+                                                  self.project,
+                                                  contractor,
+                                                  path)
+                        }
+
+    def _hydrovakken_files(self):
+        if has_access(self.user, self.project):
+            for path in directories.all_files_in(
+                directories.hydrovakken_dir(self.project)):
+                yield {
+                    'type': 'Hydrovakken shapefile',
+                    'filename': os.path.basename(path),
+                    'size': directories.human_size(path),
+                    'url': self._make_url('hydrovakken',
+                                          self.project,
+                                          None,
+                                          path)
+                    }
 
     def files(self):
         if not hasattr(self, '_files'):
@@ -118,7 +149,9 @@ class DownloadHomeView(ProjectsView):
                     'organization': list(self._organization_files()),
                     'reports': list(self._reports_files()),
                     'results': list(self._results_files()),
-                    'shapefile': list(self._location_shapefile_files())
+                    'location_shapefile': list(self._location_shapefile_files()),
+                    'contractor_hydrovakken': list(self._shapefile_files()),
+                    'hydrovakken': list(self._hydrovakken_files()),
                     }
             except Exception as e:
                 logger.debug(e)
@@ -186,10 +219,35 @@ class DownloadView(View):
         elif filetype == 'results':
             directory = directories.reports_dir(project, contractor)
         elif filetype == 'locations':
+            logger.debug("Looking for {0}".format(filename))
             directory = directories.location_shapefile_dir(project, contractor)
+            logger.debug("Trying in {0}".format(directory))
+            for path in directories.all_files_in(directory):
+                logger.debug("... {0}".format(path))
+                if os.path.basename(path) == filename:
+                    directory = os.path.dirname(path)
+                    break
+            else:
+                raise http.Http404()
         elif filetype == 'organization':
             directory = directories.organization_files_dir(
                 project.organization)
+        elif filetype == 'hydrovakken':
+            directory = directories.hydrovakken_dir(project)
+            for path in directories.all_files_in(directory):
+                if os.path.basename(path) == filename:
+                    directory = os.path.dirname(path)
+                    break
+            else:
+                raise http.Http404()
+        elif filetype == 'contractor_hydrovakken':
+            directory = directories.shapefile_dir(project, contractor)
+            for path in directories.all_files_in(directory):
+                if os.path.basename(path) == filename:
+                    directory = os.path.dirname(path)
+                    break
+            else:
+                raise http.Http404()
         else:
             return HttpResponseForbidden()
 

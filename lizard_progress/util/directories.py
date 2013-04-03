@@ -136,6 +136,22 @@ def files_in(d):
             yield os.path.join(d, f)
 
 
+def all_files_in(path, extension=None):
+    for directory, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            if extension is None or filename.endswith(extension):
+                yield os.path.join(directory, filename)
+
+
+def newest_file_in(path, extension=None):
+    mtime = lambda fn: os.stat(os.path.join(path, fn)).st_mtime
+    filenames = sorted(all_files_in(path, extension), key=mtime)
+    if filenames:
+        return filenames[-1].encode('utf8')
+    else:
+        return None
+
+
 def human_size(path):
     size = os.stat(path).st_size
 

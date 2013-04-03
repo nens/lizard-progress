@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.13 (unreleased)
+1.13 (2013-04-03)
 -----------------
 
 - Fix MET file export (#45).

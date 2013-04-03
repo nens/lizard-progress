@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.14 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix bug with calling record_error_code() (#54).
 
 
 1.13 (2013-04-03)

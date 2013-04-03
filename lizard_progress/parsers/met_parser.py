@@ -275,7 +275,7 @@ class MetParser(specifics.ProgressParser):
                 # Okay
                 pass
             else:
-                self.record_error(
+                self.record_error_code(
                     measurements[-1].line_number,
                     'MET_EXPECTED_CODE_2')
                 correct_so_far = False
@@ -287,12 +287,12 @@ class MetParser(specifics.ProgressParser):
                     # reverse the list for the last check.
                     measurements = list(reversed(measurements))
                 else:
-                    self.record_error(
+                    self.record_error_code(
                         measurements[-1].line_number,
                         'MET_EXPECTED_CODE_1')
                     correct_so_far = False
             else:
-                self.record_error(measurements[0].line_number,
+                self.record_error_code(measurements[0].line_number,
                                   'MET_EXPECTED_CODE_1_OR_2')
                 correct_so_far = False
 

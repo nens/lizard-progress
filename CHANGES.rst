@@ -5,7 +5,12 @@ Changelog of lizard-progress
 1.15 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Remove the option to upload a .prj file with shapefiles, because it
+  didn't really work. Basically using RD_New shapefiles is mandatory
+  now.
+
+- If new Hydrovakken are uploaded, this project's old Hydrovakken are first
+  discarded.
 
 
 1.14 (2013-04-03)

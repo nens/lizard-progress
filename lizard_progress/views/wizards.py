@@ -383,18 +383,12 @@ class HydrovakkenWizard(UiView, SessionWizardView):
     @staticmethod
     def __import_geoms(form_list):
 
-        prj = form_list[1].cleaned_data.get('prj', None)
         shp = form_list[1].cleaned_data['shp']
         mapping = {'br_ident': 'BR_IDENT', 'the_geom': 'LINESTRING'}
 
-        if prj:
-            layer_mapping = LayerMapping(Hydrovak,
-                                         shp.file.name, mapping)
-        else:
-            layer_mapping = LayerMapping(
-                Hydrovak,
-                shp.file.name, mapping,
-                source_srs=SRID)
+        layer_mapping = LayerMapping(Hydrovak,
+                                     shp.file.name, mapping,
+                                     source_srs=SRID)
 
         try:
             # TODO: `LayerMapping` offers no means of setting extra
@@ -404,6 +398,11 @@ class HydrovakkenWizard(UiView, SessionWizardView):
             # robust way. Bear with me.
             global PROJECT
             PROJECT = form_list[0].cleaned_data['project']
+
+            # First, empty the previous Hydrovakken of this project,
+            # because LayerMapping has no way to update them.
+            Hydrovak.objects.filter(project=PROJECT).delete()
+
             layer_mapping.save(strict=True)
         finally:
             PROJECT = None

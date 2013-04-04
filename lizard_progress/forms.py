@@ -195,7 +195,6 @@ class ShapefileForm(forms.Form):
     """Form for uploading a shapefile."""
 
     dbf = ExtFileField(exts=[".dbf"])
-    prj = ExtFileField(exts=[".prj"], required=False, help_text="(Optioneel)")
     shp = ExtFileField(exts=[".shp"])
     shx = ExtFileField(exts=[".shx"])
 

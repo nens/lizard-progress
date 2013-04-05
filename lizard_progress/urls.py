@@ -162,6 +162,15 @@ urlpatterns = patterns(
   url('^projects/(?P<project_slug>[^/]+)/export_run/(?P<export_run_id>[\d]+)/download/',
         login_required(views.protected_download_export_run),
         name="lizard_progress_download_export_run_view"),
+
+    # Configuration
+    url('^projects/(?P<project_slug>[^/]+)/config/$',
+        login_required(views.ConfigurationView.as_view()),
+        name="lizard_progress_project_configuration_view"),
+
+    url('^projects/(?P<project_slug>[^/]+)/config/$',
+        login_required(views.ConfigurationView.as_view()),
+        name="lizard_progress_project_configuration_post"),
 )
 
 urlpatterns += debugmode_urlpatterns()

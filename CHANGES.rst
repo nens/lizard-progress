@@ -15,6 +15,12 @@ Changelog of lizard-progress
 - Add per-organization and per-project configuration, and a screen to edit
   the per-project config options.
 
+- Add new checks (MET_WATERWAY_TOO_WIDE, MET_Z_TOO_LOW,
+  MET_INSIDE_EXTENT, MET_MEAN_MEASUREMENT_DISTANCE)
+
+- Make checks depend on the config options (for instance, what the
+  maximum allowed waterway width is)
+
 1.14 (2013-04-03)
 -----------------
 

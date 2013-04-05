@@ -65,6 +65,9 @@ Navigation
 {% endif %}
 <a title="Download files" href="{% url lizard_progress_downloadhomeview project_slug=view.project_slug %}">Download</a>
 <a title="Kaartlagen" href="{% url lizard_progress_mapview project_slug=view.project_slug %}">Kaartlagen</a>
+{% if view.user_is_manager %}
+<a title="Configuratie" href="{% url lizard_progress_project_configuration_view project_slug=view.project_slug %}">Configuratie</a>
+{% endif %}
 {% else %}
 <p class="small">(Kies een project)</p>
 {% endif %}

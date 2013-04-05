@@ -101,6 +101,11 @@ p.small {
     font-style: italic;
 }
 
+span.small {
+    font-size: 80%;
+    font-style: italic;
+}
+
 tr.clickable:hover {
     cursor: pointer;
     *cursor: hand;

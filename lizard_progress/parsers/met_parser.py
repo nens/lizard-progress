@@ -10,11 +10,19 @@ from django.contrib.gis.geos import Point
 
 from metfilelib.parser import parse_metfile
 
+from lizard_progress import configuration
 from lizard_progress import models
 from lizard_progress import specifics
 from lizard_progress import errors
 
 logger = logging.getLogger(__name__)
+
+# NEW ERROR CODES:
+
+# MET_WATERWAY_TOO_WIDE
+# MET_Z_TOO_LOW
+# MET_INSIDE_EXTENT
+# MET_MEAN_MEASUREMENT_DISTANCE
 
 
 def pairs(iterable):
@@ -141,10 +149,56 @@ class MetParser(specifics.ProgressParser):
         self.check_waternet_profile_point_types(profile)
         self.check_two_22_codes_with_z1z2_equal(profile)
 
+        # Inside extent
+        min_x = self.config_value('minimum_x_coordinate')
+        max_x = self.config_value('maximum_x_coordinate')
+        min_y = self.config_value('minimum_y_coordinate')
+        max_y = self.config_value('maximum_y_coordinate')
+
+        # Max mean distance
+        if profile.line:
+            distance = profile.line.length
+
+            # If there is a line, there must also be a
+            # water_measurements of at least length 2
+            measurements = len(profile.water_measurements)
+
+            mean_distance = distance / (measurements - 1)
+            max_mean_distance = self.config_value(
+                'maximum_mean_distance_between_points')
+            if mean_distance > max_mean_distance:
+                self.record_error_code(
+                    profile.line_number,
+                    'MET_MEAN_MEASUREMENT_DISTANCE',
+                    mean_distance,
+                    max_mean_distance)
+
+        if not (min_x <= profile.start_x <= max_x):
+            self.record_error_code(
+                profile.line_number,
+                'MET_INSIDE_EXTENT',
+                min_x, max_x)
+
+        if not (min_y <= profile.start_y <= max_y):
+            self.record_error_code(
+                profile.line_number,
+                'MET_INSIDE_EXTENT',
+                min_y, max_y)
+
         if len(profile.measurements) >= 2:
             # Checks on the leftmost and rightmost measurement
             m1 = profile.measurements[0]
             m2 = profile.measurements[-1]
+
+            baseline = profile.line
+            if baseline is not None:
+                width = baseline.length
+                max_width = self.config_value('maximum_waterway_width')
+                if width > max_width:
+                    self.record_error_code(
+                        profile.line_number,
+                        'MET_WATERWAY_TOO_WIDE',
+                        max_width)
 
             if m1.x == m2.x and m1.y == m2.y:
                 self.record_error_code(
@@ -352,10 +406,18 @@ class MetParser(specifics.ProgressParser):
                 measurement.line_number,
                 'MET_Z1GREATERTHANZ2')
         else:
-            if abs(measurement.z2 - measurement.z1) > 1:
+            if (abs(measurement.z2 - measurement.z1) >
+                self.config_value('maximum_z1z2_difference')):
                 self.record_error_code(
                     measurement.line_number,
                     'MET_DIFFERENCE_Z1Z2_MAX_1M')
+
+        lowest_allowed = self.config_value("lowest_z_value_allowed")
+        if measurement.z1 < lowest_allowed or measurement.z2 < lowest_allowed:
+            self.record_error_code(
+                measurement.line_number,
+                'MET_Z_TOO_LOW',
+                lowest_allowed)
 
     def get_scheduled_measurement(self, profile):
         try:
@@ -415,6 +477,11 @@ class MetParser(specifics.ProgressParser):
         self.record_error(
             line_number,
             *(models.ErrorMessage.format_code(error_code, *args, **kwargs)))
+
+    def config_value(self, key):
+        project = self.project
+        config = configuration.Configuration(project=project)
+        return config.get(key)
 
     def distance(self, m1, m2):
         try:

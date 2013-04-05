@@ -1,0 +1,29 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block contentpage %}
+<h2>Projectconfiguratie {{ view.project }}</h2>
+
+<form method="post" action="{% url lizard_progress_project_configuration_post project_slug=view.project.slug %}">
+<table class="table table-bordered progressbase">
+<thead>
+<th>Optie</th>
+<th>Type</th>
+<th>Waarde</th>
+</thead>
+{% for option, current_value in view.config_options %}
+<tr>
+  <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
+  <td>{% if option.type == "float" %}Decimaal getal{% elif option.type == "int" %}Geheel getal{% elif option.type == "boolean" %}Ja / Nee{% else %}Tekst{% endif %}</td>
+  <td>
+{% if option.type == "boolean" %}
+<input type="checkbox" name="{{ option.option }}" {% if current_value %}checked="checked"{% endif %}
+{% else %}
+<input type="text" name="{{ option.option }}" value="{{ current_value }}"></td>
+{% endif %}
+</li>
+{% endfor %}
+</table>
+<input type="submit" value="Opslaan">
+{% csrf_token %}
+</form>
+{% endblock contentpage %}

@@ -12,6 +12,8 @@ Changelog of lizard-progress
 - If new Hydrovakken are uploaded, this project's old Hydrovakken are first
   discarded.
 
+- Add per-organization and per-project configuration, and a screen to edit
+  the per-project config options.
 
 1.14 (2013-04-03)
 -----------------

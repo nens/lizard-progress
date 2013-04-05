@@ -38,7 +38,6 @@ class OrganizationF(factory.Factory):
     FACTORY_FOR = models.Organization
 
     name = "Test organization"
-    allows_non_predefined_locations = False
     is_project_owner = True
 
 

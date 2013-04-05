@@ -62,13 +62,6 @@ class Organization(models.Model):
     description = models.CharField(max_length=256, blank=True, null=True)
     errors = models.ManyToManyField(ErrorMessage)
 
-    # Dwarsprofielen usually want predefined locations (and thus need
-    # a shapefile to be uploaded first), but some organizations want
-    # to allow them to work without predefining anyway. Other
-    # measurement types may allow the same thing later. For such
-    # organizations, set this to True.
-    allows_non_predefined_locations = models.BooleanField(default=False)
-
     # Organizations are _either_ project owners or uploaders, never both
     is_project_owner = models.BooleanField(default=False)
 
@@ -208,9 +201,12 @@ class Project(models.Model):
         if available_measurement_type.needs_predefined_locations:
             return True
 
-        if (available_measurement_type.likes_predefined_locations and not
-            self.organization.allows_non_predefined_locations):
-            return True
+        if available_measurement_type.likes_predefined_locations:
+            # We only import configuration here, because it imports this module
+            # for the OrganizationConfig and ProjectConfig models below.
+            from lizard_progress import configuration
+            config = configuration.Configuration(project=self)
+            return config.get('use_predefined_locations')
 
         return False
 
@@ -395,8 +391,6 @@ class AvailableMeasurementType(models.Model):
     @classmethod
     def dwarsprofiel(cls):
         return cls.objects.get(slug='dwarsprofiel')
-
-
 
 
 class MeasurementType(models.Model):

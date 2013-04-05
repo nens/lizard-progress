@@ -17,15 +17,15 @@ migration_0007 = importlib.import_module(
     'lizard_progress.migrations.0007_add_error_messages')
 migration_0011 = importlib.import_module(
     'lizard_progress.migrations.0011_add_more_error_codes')
+migration_0016 = importlib.import_module(
+    'lizard_progress.migrations.0016_add_new_error_codes')
 
 
-def create_org_and_user(
-    orgname, username, is_project_owner,
-    allows_non_predefined_locations=False):
+def create_org_and_user(orgname, username, is_project_owner):
     organization = test_models.OrganizationF.create(
         name=orgname,
-        is_project_owner=is_project_owner,
-        allows_non_predefined_locations=allows_non_predefined_locations)
+        is_project_owner=is_project_owner)
+
     user = test_models.UserF.create(username=username, is_superuser=False)
     test_models.UserProfileF.create(user=user, organization=organization)
 
@@ -51,6 +51,7 @@ class TestOrganization(TestCase):
         # http://stackoverflow.com/questions/6584671/django-1-3-and-south-migrations
         migration_0007.add_more_error_codes(models.ErrorMessage)
         migration_0011.add_more_error_codes(models.ErrorMessage)
+        migration_0016.add_more_error_codes(models.ErrorMessage)
 
     def get_errors(self, uploaded_file):
         return list(uploaded_file.uploadedfileerror_set.all())
@@ -120,8 +121,7 @@ class TestWaternet(TestOrganization):
         super(TestWaternet, self).setUp()
 
         self.project_org, self.project_user = create_org_and_user(
-            'Waternet', 'waternet', True,
-            allows_non_predefined_locations=True)
+            'Waternet', 'waternet', True)
 
         self.project_org.set_error_codes((
                 'MET_NAP',

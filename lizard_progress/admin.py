@@ -13,6 +13,11 @@ from lizard_progress.models import Organization
 from lizard_progress.models import Project
 from lizard_progress.models import UserProfile
 
+
+class OrganizationAdmin(admin.ModelAdmin):
+    filter_horizontal = ['errors']
+
+
 admin.site.register(Area)
 admin.site.register(Contractor)
 admin.site.register(Hydrovak)
@@ -20,6 +25,6 @@ admin.site.register(Location)
 admin.site.register(AvailableMeasurementType)
 admin.site.register(MeasurementType)
 admin.site.register(Project)
-admin.site.register(Organization)
+admin.site.register(Organization, OrganizationAdmin)
 admin.site.register(UserProfile)
 admin.site.register(ErrorMessage)

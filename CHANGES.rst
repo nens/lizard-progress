@@ -24,6 +24,11 @@ Changelog of lizard-progress
 - Foutmeldingen aangepast zodat zo zoveel mogelijk de ingestelde waarden laten
   zien in de foutmelding
 
+- Remove the organization's allow_non_predefined_locations setting -
+  we use configuration for that now.
+
+- Make choosing errors for an organization in the admin interface easier.
+
 
 1.14 (2013-04-03)
 -----------------

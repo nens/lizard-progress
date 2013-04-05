@@ -760,3 +760,17 @@ class UploadLog(models.Model):
             return queryset[:amount]
         else:
             return None
+
+
+### Models for configuration
+
+class OrganizationConfig(models.Model):
+    organization = models.ForeignKey(Organization)
+    config_option = models.CharField(max_length=50)
+    value = models.CharField(max_length=50, null=True)
+
+
+class ProjectConfig(models.Model):
+    project = models.ForeignKey(Project)
+    config_option = models.CharField(max_length=50)
+    value = models.CharField(max_length=50, null=True)

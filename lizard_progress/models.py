@@ -392,6 +392,12 @@ class AvailableMeasurementType(models.Model):
     def __unicode__(self):
         return self.name
 
+    @classmethod
+    def dwarsprofiel(cls):
+        return cls.objects.get(slug='dwarsprofiel')
+
+
+
 
 class MeasurementType(models.Model):
     """The way this is implemented now, there is basically a

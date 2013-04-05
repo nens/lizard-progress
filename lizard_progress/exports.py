@@ -36,11 +36,6 @@ from lizard_progress import models
 from lizard_progress import tools
 
 
-def dwarsprofiel_mtype():
-    return models.AvailableMeasurementType.objects.get(
-        slug='dwarsprofiel')
-
-
 def start_run(export_run_id, user):
     """Start the given export run."""
     try:
@@ -102,7 +97,8 @@ def export_as_metfile(export_run):
     measurements = export_run.measurements_to_export()
 
     want_sorted_measurements = errors.ErrorConfiguration(
-        project=export_run.project, measurement_type=dwarsprofiel_mtype()
+        project=export_run.project,
+        measurement_type=models.AvailableMeasurementType.dwarsprofiel()
         ).wants_sorted_measurements()
 
     metfile = retrieve_profile.recreate_metfile(

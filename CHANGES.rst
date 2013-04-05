@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.15 (unreleased)
+1.15 (2013-04-05)
 -----------------
 
 - Remove the option to upload a .prj file with shapefiles, because it

@@ -17,13 +17,6 @@ from lizard_progress import errors
 
 logger = logging.getLogger(__name__)
 
-# NEW ERROR CODES:
-
-# MET_WATERWAY_TOO_WIDE
-# MET_Z_TOO_LOW
-# MET_INSIDE_EXTENT
-# MET_MEAN_MEASUREMENT_DISTANCE
-
 
 def pairs(iterable):
     helper_iter = iter(iterable)
@@ -177,13 +170,13 @@ class MetParser(specifics.ProgressParser):
             self.record_error_code(
                 profile.line_number,
                 'MET_INSIDE_EXTENT',
-                min_x, max_x)
+                'X', min_x, max_x)
 
         if not (min_y <= profile.start_y <= max_y):
             self.record_error_code(
                 profile.line_number,
                 'MET_INSIDE_EXTENT',
-                min_y, max_y)
+                'Y', min_y, max_y)
 
         if len(profile.measurements) >= 2:
             # Checks on the leftmost and rightmost measurement
@@ -235,12 +228,14 @@ class MetParser(specifics.ProgressParser):
             x_descending = None
             y_descending = None
             for m1, m2 in pairs(profile.measurements):
-                # Points should be close to each other. We set the limit
-                # at 5m because of measurement inaccuracy.
-                if m1.point.distance(m2.point) > 5:
+                # Points should be close to each other.
+                max_measurement_distance = self.config_value(
+                    'max_measurement_distance')
+                if m1.point.distance(m2.point) > max_measurement_distance:
                     self.record_error_code(
                         m2.line_number,
-                        'MET_DISTANCETOOLARGE', distance=5)
+                        'MET_DISTANCETOOLARGE',
+                        distance=max_measurement_distance)
 
                 # We don't know yet if x and y are descending or not
                 if m1.x == m2.x or m1.y == m2.y:
@@ -406,11 +401,13 @@ class MetParser(specifics.ProgressParser):
                 measurement.line_number,
                 'MET_Z1GREATERTHANZ2')
         else:
+            max_z1z2_difference = self.config_value('maximum_z1z2_difference')
             if (abs(measurement.z2 - measurement.z1) >
-                self.config_value('maximum_z1z2_difference')):
+                max_z1z2_difference):
                 self.record_error_code(
                     measurement.line_number,
-                    'MET_DIFFERENCE_Z1Z2_MAX_1M')
+                    'MET_DIFFERENCE_Z1Z2_MAX_1M',
+                    max_z1z2_difference)
 
         lowest_allowed = self.config_value("lowest_z_value_allowed")
         if measurement.z1 < lowest_allowed or measurement.z2 < lowest_allowed:

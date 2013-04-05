@@ -21,6 +21,10 @@ Changelog of lizard-progress
 - Make checks depend on the config options (for instance, what the
   maximum allowed waterway width is)
 
+- Foutmeldingen aangepast zodat zo zoveel mogelijk de ingestelde waarden laten
+  zien in de foutmelding
+
+
 1.14 (2013-04-03)
 -----------------
 

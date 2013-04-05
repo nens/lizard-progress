@@ -115,6 +115,15 @@ CONFIG_OPTIONS = {
         default='2',
         only_for_error='MET_MEAN_MEASUREMENT_DISTANCE',
         ),
+    'max_measurement_distance': Option(
+        option='max_measurement_distance',
+        short_description=(
+            'Maximale afstand tussen profielpunten (m)'),
+        long_description='Zowel binnen de watergang als op de oever',
+        type='float',
+        default='2.5',
+        only_for_error='MET_DISTANCETOOLARGE',
+        ),
 }
 
 

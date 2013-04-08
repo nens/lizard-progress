@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.16 (unreleased)
+1.16 (2013-04-08)
 -----------------
 
 - Make the fields used in location and hydrovakken shapefiles

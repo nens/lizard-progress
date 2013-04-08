@@ -5,7 +5,8 @@ Changelog of lizard-progress
 1.16 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Make the fields used in location and hydrovakken shapefiles
+  configurable.
 
 
 1.15 (2013-04-05)

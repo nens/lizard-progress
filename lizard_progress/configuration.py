@@ -29,7 +29,10 @@ class Option(namedtuple(
             return int(value)
         if self.type == 'boolean':
             return bool(value)
-        return value
+        if self.type == 'text':
+            return value
+
+        raise ValueError("Unknown Option type: {0}".format(self.type))
 
     def to_unicode(self, value):
         if self.type == 'boolean':
@@ -124,6 +127,24 @@ CONFIG_OPTIONS = {
         default='2.5',
         only_for_error='MET_DISTANCETOOLARGE',
         ),
+    'hydrovakken_id_field': Option(
+        option='hydrovakken_id_field',
+        short_description=(
+            'Veld dat ID bevat in hydrovakken shapefile'),
+        long_description=(
+            'Daarnaast moeten de shapes bestaan uit lijnen'),
+        type='text',
+        default='BR_IDENT',
+        only_for_error=None),
+    'location_id_field': Option(
+        option='location_id_field',
+        short_description=(
+            'Veld dat ID bevat in locatie shapefile'),
+        long_description=(
+            'Daarnaast moeten de shapes bestaan uit punten'),
+        type='text',
+        default='ID_DWP',
+        only_for_error=None),
 }
 
 
@@ -196,3 +217,9 @@ class Configuration(object):
             if (option.only_for_error is None or
                 option.only_for_error in error_config):
                     yield (option, self.get(option.option))
+
+
+def get(project, config_option):
+    """Helper function, this is a common way to use this module."""
+    configuration = Configuration(project=project)
+    return configuration.get(config_option)

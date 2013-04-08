@@ -32,6 +32,7 @@ from lizard_progress.models import (Area, Hydrovak, Location,
                                     ScheduledMeasurement)
 from lizard_progress.views.upload import UploadShapefilesView
 from lizard_progress.util import directories
+from lizard_progress import configuration
 
 logger = logging.getLogger(__name__)
 
@@ -173,6 +174,7 @@ class ActivitiesWizard(UiView, SessionWizardView):
         has_shapefile = ((len(form_list) > 3) and
                          'shp' in form_list[3].cleaned_data)
 
+        self.project = form_list[0].cleaned_data['project']
         self.__save_measurement_types(form_list)
 
         if has_shapefile:
@@ -214,20 +216,20 @@ class ActivitiesWizard(UiView, SessionWizardView):
         layer = shapefile.GetLayer(0)
         for feature_num in range(layer.GetFeatureCount()):
             feature = layer.GetFeature(feature_num)
-            location_code = feature.GetField("ID_DWP")
+            location_code = feature.GetField(
+                configuration.get('location_id_field'))
             location_codes.append(location_code)
         self.location_codes = set(location_codes)
 
-    @staticmethod
-    def __save_measurement_types(form_list):
+    def __save_measurement_types(self, form_list):
         """Save measurement types."""
-        project = form_list[0].cleaned_data['project']
         for mtype in form_list[2].cleaned_data['measurement_types']:
             try:
-                MeasurementType.objects.get(project=project, mtype=mtype)
+                MeasurementType.objects.get(
+                    project=self.project, mtype=mtype)
             except MeasurementType.DoesNotExist:
                 MeasurementType(
-                    project=project, mtype=mtype,
+                    project=self.project, mtype=mtype,
                     icon_missing=mtype.default_icon_missing,
                     icon_complete=mtype.default_icon_complete).save()
 
@@ -382,23 +384,25 @@ class HydrovakkenWizard(UiView, SessionWizardView):
 
     @staticmethod
     def __import_geoms(form_list):
+        # TODO: `LayerMapping` offers no means of setting extra
+        # model fields: only feature properties can be mapped.
+        # To set the required `Project` foreign key, the pre_
+        # save signal will be used in a fishy, by no means
+        # robust way. Bear with me.
+        global PROJECT
+        PROJECT = form_list[0].cleaned_data['project']
 
         shp = form_list[1].cleaned_data['shp']
-        mapping = {'br_ident': 'BR_IDENT', 'the_geom': 'LINESTRING'}
+        mapping = {
+            'br_ident': configuration.get(PROJECT, 'hydrovakken_id_field'),
+            'the_geom': 'LINESTRING'
+            }
 
         layer_mapping = LayerMapping(Hydrovak,
                                      shp.file.name, mapping,
                                      source_srs=SRID)
 
         try:
-            # TODO: `LayerMapping` offers no means of setting extra
-            # model fields: only feature properties can be mapped.
-            # To set the required `Project` foreign key, the pre_
-            # save signal will be used in a fishy, by no means
-            # robust way. Bear with me.
-            global PROJECT
-            PROJECT = form_list[0].cleaned_data['project']
-
             # First, empty the previous Hydrovakken of this project,
             # because LayerMapping has no way to update them.
             Hydrovak.objects.filter(project=PROJECT).delete()

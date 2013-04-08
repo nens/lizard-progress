@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.17 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Small change, add a default error message if it is missing.
 
 
 1.16 (2013-04-08)

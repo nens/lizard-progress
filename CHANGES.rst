@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.16.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix bug with finding config option for location_id.
 
 
 1.16.1 (2013-04-08)

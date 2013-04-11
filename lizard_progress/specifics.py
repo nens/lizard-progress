@@ -201,7 +201,7 @@ class ProgressParser(object):
         more errors in later checks."""
 
         for error in self.errors:
-            if error.line == line_number:
+            if error.line > 0 and error.line == line_number:
                 return
 
         self.errors.append(Error(

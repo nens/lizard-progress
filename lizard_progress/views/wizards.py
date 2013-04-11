@@ -217,7 +217,7 @@ class ActivitiesWizard(UiView, SessionWizardView):
         for feature_num in range(layer.GetFeatureCount()):
             feature = layer.GetFeature(feature_num)
             location_code = feature.GetField(
-                configuration.get('location_id_field'))
+                configuration.get(self.project, 'location_id_field'))
             location_codes.append(location_code)
         self.location_codes = set(location_codes)
 

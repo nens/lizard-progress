@@ -99,7 +99,10 @@ class ProjectsMixin(object):
 
     def user_is_manager(self):
         userprofile = UserProfile.get_by_user(self.request.user)
-        return userprofile and userprofile.organization.is_project_owner
+        return (
+            userprofile and
+            userprofile.organization.is_project_owner and
+            self.request.user.has_perm('lizard_progress.add_project'))
 
     def project_home_url(self):
         if not self.project_slug:

@@ -7,6 +7,9 @@ Changelog of lizard-progress
 
 - Fix issue where configured ID in measurement shapefile didn't work.
 
+- Users without add_project permission don't get to see the Beheer and
+  Configuratie screens.
+
 
 1.16.2 (2013-04-11)
 -------------------

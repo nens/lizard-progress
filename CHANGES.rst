@@ -10,6 +10,10 @@ Changelog of lizard-progress
 - Users without add_project permission don't get to see the Beheer and
   Configuratie screens.
 
+- Organization config can now be changed in the admin (onder Organization).
+
+- After creating a project, user is redirected to the configuration page.
+
 
 1.16.2 (2013-04-11)
 -------------------

@@ -90,11 +90,13 @@ class ProjectWizard(UiView, SessionWizardView):
         else:
             msg = 'Het aanmaken van project "%s" was succesvol.' % project.name
             messages.info(self.request, msg)
-            url = reverse('lizard_progress_newcontractor')
-            msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
-                   'Opdrachtnemer toekennen aan een project</a>') % url
+            msg = ('U kunt hier eventueel de configuratie '
+                   'van dit project aanpassen.')
             messages.info(self.request, msg)
-            return HttpResponseRedirect(reverse('lizard_progress_admin'))
+            return HttpResponseRedirect(
+                reverse(
+                    'lizard_progress_project_configuration_view',
+                    kwargs={"project_slug": project.slug}))
 
 
 class ContractorWizard(UiView, SessionWizardView):

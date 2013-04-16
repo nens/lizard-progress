@@ -2,29 +2,25 @@
 
 from django.contrib import admin
 
-from lizard_progress.models import Area
-from lizard_progress.models import AvailableMeasurementType
-from lizard_progress.models import Contractor
-from lizard_progress.models import ErrorMessage
-from lizard_progress.models import Hydrovak
-from lizard_progress.models import Location
-from lizard_progress.models import MeasurementType
-from lizard_progress.models import Organization
-from lizard_progress.models import Project
-from lizard_progress.models import UserProfile
+from lizard_progress import models
+
+
+class OrganizationConfigurationInline(admin.TabularInline):
+    model = models.OrganizationConfig
 
 
 class OrganizationAdmin(admin.ModelAdmin):
     filter_horizontal = ['errors']
+    inlines = [OrganizationConfigurationInline]
 
 
-admin.site.register(Area)
-admin.site.register(Contractor)
-admin.site.register(Hydrovak)
-admin.site.register(Location)
-admin.site.register(AvailableMeasurementType)
-admin.site.register(MeasurementType)
-admin.site.register(Project)
-admin.site.register(Organization, OrganizationAdmin)
-admin.site.register(UserProfile)
-admin.site.register(ErrorMessage)
+admin.site.register(models.Area)
+admin.site.register(models.Contractor)
+admin.site.register(models.Hydrovak)
+admin.site.register(models.Location)
+admin.site.register(models.AvailableMeasurementType)
+admin.site.register(models.MeasurementType)
+admin.site.register(models.Project)
+admin.site.register(models.Organization, OrganizationAdmin)
+admin.site.register(models.UserProfile)
+admin.site.register(models.ErrorMessage)

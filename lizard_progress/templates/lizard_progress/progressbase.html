@@ -78,4 +78,11 @@ Navigation
 {% endblock contentpage %}
 </div>
 
+{% if messages %}
+<div id="messages" class="messages">
+  {% for message in messages %}
+  <p>{{ message|safe }}</p>
+  {% endfor %}
+</div>
+{% endif %}
 {% endblock content %}

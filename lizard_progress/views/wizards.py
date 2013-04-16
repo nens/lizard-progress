@@ -217,7 +217,8 @@ class ActivitiesWizard(UiView, SessionWizardView):
         for feature_num in range(layer.GetFeatureCount()):
             feature = layer.GetFeature(feature_num)
             location_code = feature.GetField(
-                configuration.get(self.project, 'location_id_field'))
+                configuration.get(self.project, 'location_id_field')
+                .encode('utf8'))
             location_codes.append(location_code)
         self.location_codes = set(location_codes)
 
@@ -257,7 +258,9 @@ class ActivitiesWizard(UiView, SessionWizardView):
             layer = shapefile.GetLayer(layer_num)
             for feature_num in range(layer.GetFeatureCount()):
                 feature = layer.GetFeature(feature_num)
-                location_code = feature.GetField("ID_DWP")
+                location_code = feature.GetField(
+                    configuration.get(self.project, 'location_id_field')
+                    .encode('utf8'))
                 if not location_code in location_codes:
                     geometry = feature.GetGeometryRef()
                     location = Location(

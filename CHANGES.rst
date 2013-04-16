@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.17 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix issue where configured ID in measurement shapefile didn't work.
 
 
 1.16.2 (2013-04-11)

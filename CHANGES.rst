@@ -5,7 +5,8 @@ Changelog of lizard-progress
 1.18 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Call hydrovakken layer "Hydrovakken <project name>" instead of just
+  Hydrovakken.
 
 
 1.17 (2013-04-16)

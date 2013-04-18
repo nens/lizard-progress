@@ -215,7 +215,8 @@ class MapView(View):
 
         if Hydrovak.objects.filter(project=self.project).exists():
             layers.append({
-                'name': 'Hydrovakken',
+                'name': 'Hydrovakken {projectname}'
+                .format(projectname=self.project.name),
                 'adapter': 'adapter_hydrovak',
                 'json': json.dumps({"project_slug": self.project_slug})
             })

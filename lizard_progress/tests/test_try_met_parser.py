@@ -105,6 +105,7 @@ class TestOrganization(TestCase):
 
         if expected_errors is True:
             self.assertFalse(uploaded_file.success)
+            self.assertTrue(len(errors) > 0)
         elif not expected_errors:
             self.assertTrue(uploaded_file.success)
             self.assertEquals(len(errors), 0)
@@ -260,7 +261,7 @@ class TestWaternet(TestOrganization):
             'waternet/b/5 Coordinaat_startpunt_meetpunt1_gelijk.met',
             'waternet/c/1 Aantal_profielcodes.met',
             'waternet/c/2 Overige_profielcodes_ingevuld.met',
-#            'waternet/c/3 Profielpuntcodes_999.met',
+            'waternet/c/3 Profielpuntcodes_999.met',
             'waternet/c/4 Inpeilingen_tussen_waterlijnen.met',
             'waternet/d/1 Coordinaatvolgorde.met',
             'waternet/d/2 Dubbele_coordinaten.met',

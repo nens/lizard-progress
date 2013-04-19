@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.18 (unreleased)
+1.18 (2013-04-19)
 -----------------
 
 - Call hydrovakken layer "Hydrovakken <project name>" instead of just

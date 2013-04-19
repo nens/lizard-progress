@@ -707,7 +707,7 @@ class ExportRun(models.Model):
     @property
     def up_to_date(self):
         measurement_dates = [
-            measurement.date
+            measurement.timestamp
             for measurement in self.measurements_to_export()
             ]
 

@@ -16,6 +16,9 @@ Changelog of lizard-progress
 
 - Hydrovakken map lines are now thicker and blue (#67).
 
+- Fix ExportRun up_to_date property (now uses Measurement's timestamp,
+  instead of measurement date)
+
 
 1.17 (2013-04-16)
 -----------------

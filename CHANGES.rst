@@ -14,6 +14,8 @@ Changelog of lizard-progress
   the bug where a file would have errors, but then they couldn't be
   found in the database.
 
+- Hydrovakken map lines are now thicker and blue (#67).
+
 
 1.17 (2013-04-16)
 -----------------

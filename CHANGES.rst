@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.19 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Show which project and which page are currently selected.
 
 
 1.18 (2013-04-19)

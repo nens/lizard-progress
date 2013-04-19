@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ConfigurationView(ProjectsView):
     template_name = 'lizard_progress/project_configuration_page.html'
+    active_menu = "config"
 
     def config_options(self):
         config = configuration.Configuration(

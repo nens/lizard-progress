@@ -40,6 +40,7 @@ class DownloadHomeView(ProjectsView):
     a `HttpResponseForbidden` is returned.
     """
     template_name = "lizard_progress/download_home.html"
+    active_menu = "download"
 
     def _make_url(self, filetype, project, contractor, path):
         return reverse('lizard_progress_downloadview', kwargs={

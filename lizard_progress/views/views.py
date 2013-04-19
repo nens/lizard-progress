@@ -486,6 +486,7 @@ class DashboardView(ProjectsView):
     files."""
 
     template_name = 'lizard_progress/dashboard.html'
+    active_menu = "dashboard"
 
     @property
     def breadcrumbs(self):

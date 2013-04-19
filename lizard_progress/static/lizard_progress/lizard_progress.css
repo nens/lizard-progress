@@ -3,7 +3,14 @@
 }
 
 #sidebar a {
-    color: black;
+    color: #115E67;
+}
+
+#sidebar li.active a {
+    color: #fafaf9;
+}
+div#actions li.active a {
+    color: #fafaf9;
 }
 
 .sidebarbox-stretched .without-bullets {
@@ -68,8 +75,13 @@ div#actions {
     background-color: #7FA9AE;
     height: 18px;
     border-bottom: solid 1px #7FA9AE;
-    padding-bottom: 4.4px;
-    padding-top: 4.4px;
+    padding-bottom: 15px;
+    padding-top: 0;
+}
+
+#sidebar h2 {
+    padding-top: 7px;
+    padding-bottom: 8px;
 }
 
 div#actions a {

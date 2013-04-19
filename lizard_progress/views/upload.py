@@ -97,6 +97,7 @@ class UploadHomeView(ProjectsView):
     starting point for a contractor who has to upload data.
     """
     template_name = "lizard_progress/upload_page.html"
+    active_menu = "upload"
 
     def __init__(self, *args, **kwargs):
         super(UploadHomeView, self).__init__(*args, **kwargs)

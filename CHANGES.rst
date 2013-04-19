@@ -8,6 +8,12 @@ Changelog of lizard-progress
 - Call hydrovakken layer "Hydrovakken <project name>" instead of just
   Hydrovakken.
 
+- Add an extent to normal layers (gives them the zoom icon).
+
+- Increased length of error_code database field -- this probably fixes
+  the bug where a file would have errors, but then they couldn't be
+  found in the database.
+
 
 1.17 (2013-04-16)
 -----------------

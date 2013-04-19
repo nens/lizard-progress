@@ -2,7 +2,7 @@
 returns the expected errors."""
 
 
-from django.test import TestCase
+from django.test import TransactionTestCase
 
 import importlib
 import mock
@@ -42,7 +42,7 @@ def dwarsprofiel_available_mtype():
     return amt
 
 
-class TestOrganization(TestCase):
+class TestOrganization(TransactionTestCase):
     """No actual tests in this, just helper functions. Subclasses
     below for Waternet, etc."""
     def setUp(self):

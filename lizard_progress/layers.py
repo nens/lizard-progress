@@ -376,7 +376,24 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         Returns extent {'west':.., 'south':.., 'east':.., 'north':..}
         in google projection. None for each key means unknown.
         """
-        return super(ProgressAdapter, self).extent(identifiers)
+        if not self.project or not self.contractor:
+            return {'west': None, 'south': None, 'east': None, 'north': None}
+
+        locations = Location.objects.filter(
+            project=self.project,
+            scheduledmeasurement__contractor=self.contractor)
+
+        if self.measurement_type:
+            locations = locations.filter(
+                scheduledmeasurement__measurement_type=self.measurement_type)
+
+        if not locations.exists():
+            return {'west': None, 'south': None, 'east': None, 'north': None}
+
+        west, south, east, north = locations.only("the_geom").extent()
+        west, south = rd_to_google(west, south)
+        east, north = rd_to_google(east, north)
+        return {'west': west, 'south': south, 'east': east, 'north': north}
 
     def image(self, identifiers=None, start_date=None, end_date=None,
               width=None, height=None, layout_extra=None):

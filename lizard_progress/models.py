@@ -603,7 +603,7 @@ class UploadedFile(models.Model):
 class UploadedFileError(models.Model):
     uploaded_file = models.ForeignKey(UploadedFile)
     line = models.IntegerField(default=0)  # Always 0 if file is not linelike
-    error_code = models.CharField(max_length=30)
+    error_code = models.CharField(max_length=100)
     error_message = models.CharField(max_length=300)
 
     def __unicode__(self):

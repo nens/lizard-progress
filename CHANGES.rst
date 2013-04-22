@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.20 (unreleased)
+1.20 (2013-04-22)
 -----------------
 
 - Instead of crashing, we now give error messages in case an expected

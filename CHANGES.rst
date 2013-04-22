@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.19 (unreleased)
+1.19 (2013-04-22)
 -----------------
 
 - Show which project and which page are currently selected.

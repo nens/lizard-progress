@@ -307,10 +307,12 @@ class MetParser(specifics.ProgressParser):
         if count_codes(measurements, '5') < 1:
             self.record_error_code(
                 profile.line_number, 'MET_AT_LEAST_ONE_5_CODE')
+            correct_so_far = False
 
         if count_codes(measurements, '6') < 1:
             self.record_error_code(
                 profile.line_number, 'MET_AT_LEAST_ONE_6_CODE')
+            correct_so_far = False
 
         if not correct_so_far:
             return
@@ -327,25 +329,11 @@ class MetParser(specifics.ProgressParser):
                 self.record_error_code(
                     measurements[-1].line_number,
                     'MET_EXPECTED_CODE_2')
-                correct_so_far = False
+                return
         else:
-            if measurements[0].profile_point_type == '2':
-                # Then last must be 1
-                if measurements[-1].profile_point_type == '1':
-                    # Okay. Apparently they're the other way around, so we
-                    # reverse the list for the last check.
-                    measurements = list(reversed(measurements))
-                else:
-                    self.record_error_code(
-                        measurements[-1].line_number,
-                        'MET_EXPECTED_CODE_1')
-                    correct_so_far = False
-            else:
-                self.record_error_code(measurements[0].line_number,
-                                  'MET_EXPECTED_CODE_1_OR_2')
-                correct_so_far = False
-
-        if not correct_so_far:
+            self.record_error_code(
+                measurements[-1].line_number,
+                'MET_EXPECTED_CODE_1')
             return
 
         # We now know the codes 1, 2, 22 and 7 have the right amounts, and

@@ -268,6 +268,7 @@ class TestWaternet(TestOrganization):
 #            'waternet/d/4 Meetpunten_1_lijn.met',
             'waternet/e/1 Z1_groter_Z2.met',
             'waternet/e/2 Verschil_Z1_Z2.met',
+            'waternet/W61-6 Bethunepolder_LG 2014 v2.met',
             )
 
         for filename in filenames:

@@ -7,6 +7,8 @@ Changelog of lizard-progress
 
 - Show which project and which page are currently selected.
 
+- Fix bug where a wrong date format resulted in an infinite loop.
+
 
 1.18 (2013-04-19)
 -----------------

@@ -10,11 +10,13 @@ import re
 import shutil
 import tempfile
 
+from django import db
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.contrib.gis.geos import fromstr
 from django.contrib.gis.utils import LayerMapping
+from django.contrib.gis.utils import LayerMapError
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
 from django.core.urlresolvers import reverse
@@ -179,19 +181,17 @@ class ActivitiesWizard(UiView, SessionWizardView):
         self.project = form_list[0].cleaned_data['project']
         self.__save_measurement_types(form_list)
 
+        success = True
         if has_shapefile:
-            self.__process_shapefile(form_list)
-            self.__save_area(form_list)
-            self.__save_locations(form_list)
-            self.__save_scheduled_measurements(form_list)
-            self.__save_uploads(form_list)
+            success = self.__process_shapefile(form_list)
 
-        if False:
-            # For development purposes.
-            return render_to_response('lizard_progress/done.html', {
-                'form_data': [form.cleaned_data for form in form_list],
-            })
-        else:
+            if success:
+                self.__save_area(form_list)
+                self.__save_locations(form_list)
+                self.__save_scheduled_measurements(form_list)
+                self.__save_uploads(form_list)
+
+        if success:
             contractor = form_list[1].cleaned_data['contractor']
             msg = ('Het toewijzen van werkzaamheden aan ' +
                    'opdrachtnemer "%s" binnen project "%s" ' +
@@ -202,7 +202,7 @@ class ActivitiesWizard(UiView, SessionWizardView):
             msg = ('Volgende stap: <a href="%s" tabIndex="-1">' +
                    'Hydrovakken uploaden</a>') % url
             messages.info(self.request, msg)
-            return HttpResponseRedirect(reverse('lizard_progress_admin'))
+        return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
     def __process_shapefile(self, form_list):
         """Process shapefile.
@@ -218,11 +218,18 @@ class ActivitiesWizard(UiView, SessionWizardView):
         layer = shapefile.GetLayer(0)
         for feature_num in range(layer.GetFeatureCount()):
             feature = layer.GetFeature(feature_num)
-            location_code = feature.GetField(
-                configuration.get(self.project, 'location_id_field')
-                .encode('utf8'))
+            id_field_name = configuration.get(
+                self.project, 'location_id_field')
+            try:
+                location_code = feature.GetField(id_field_name)
+            except ValueError:
+                messages.info(self.request,
+                  ("Inlezen van de locaties mislukt! Het veld {name} "
+                  "bestaat niet in de shapefile.").format(name=id_field_name))
+                return False
             location_codes.append(location_code)
         self.location_codes = set(location_codes)
+        return True
 
     def __save_measurement_types(self, form_list):
         """Save measurement types."""
@@ -368,14 +375,9 @@ class HydrovakkenWizard(UiView, SessionWizardView):
 
     @transaction.commit_on_success
     def done(self, form_list, **kwargs):
-        self.__import_geoms(form_list)
+        success = self.__import_geoms(form_list)
         self.__save_uploads(form_list)
-        if False:
-            # For development purposes.
-            return render_to_response('lizard_progress/done.html', {
-                'form_data': [form.cleaned_data for form in form_list],
-            })
-        else:
+        if success:
             project = form_list[0].cleaned_data['project']
             msg = ('Het uploaden van hydrovakken t.b.v. project "%s" '
                    + 'was succesvol.') % project.name
@@ -385,36 +387,54 @@ class HydrovakkenWizard(UiView, SessionWizardView):
             msg = ('<a href="%s" tabIndex="-1">' +
                    'Naar de overzichtspagina van dit project</a>') % url
             messages.info(self.request, msg)
-            return HttpResponseRedirect(reverse('lizard_progress_admin'))
 
-    @staticmethod
-    def __import_geoms(form_list):
+        return HttpResponseRedirect(reverse('lizard_progress_admin'))
+
+    def __import_geoms(self, form_list):
         # TODO: `LayerMapping` offers no means of setting extra
         # model fields: only feature properties can be mapped.
         # To set the required `Project` foreign key, the pre_
         # save signal will be used in a fishy, by no means
         # robust way. Bear with me.
+        success = True
+
         global PROJECT
         PROJECT = form_list[0].cleaned_data['project']
 
         shp = form_list[1].cleaned_data['shp']
+
+        id_field_name = configuration.get(PROJECT, 'hydrovakken_id_field')
         mapping = {
-            'br_ident': configuration.get(PROJECT, 'hydrovakken_id_field'),
+            'br_ident': id_field_name,
             'the_geom': 'LINESTRING'
             }
 
-        layer_mapping = LayerMapping(Hydrovak,
-                                     shp.file.name, mapping,
-                                     source_srs=SRID)
-
         try:
+            layer_mapping = LayerMapping(Hydrovak,
+                                         shp.file.name, mapping,
+                                         source_srs=SRID)
+
             # First, empty the previous Hydrovakken of this project,
             # because LayerMapping has no way to update them.
             Hydrovak.objects.filter(project=PROJECT).delete()
 
             layer_mapping.save(strict=True)
+        except db.IntegrityError:
+            # IDs weren't unique.
+            messages.info(self.request,
+                    "Het uploaden van hydrovakken was NIET succesvol! "
+                    "De IDs van de hydrovakken zijn niet uniek.")
+            success = False
+        except LayerMapError:
+            # ID field is wrong
+            messages.info(self.request,
+          "Het uploaden van hydrovakken was NIET succesvol! "
+          "Waarschijnlijk is het veld '{name}' niet aanwezig in de shapefile."
+                          .format(name=id_field_name))
+            success = False
         finally:
             PROJECT = None
+            return success
 
     @staticmethod
     def __save_uploads(form_list):

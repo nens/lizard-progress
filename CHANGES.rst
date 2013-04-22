@@ -5,7 +5,11 @@ Changelog of lizard-progress
 1.20 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Instead of crashing, we now give error messages in case an expected
+  shapefile field doesn't exist. Both when uploading measurement
+  location shapefiles and hydrovakken shapefiles.
+
+- There is also an error message in case of duplicate hydrovak IDs.
 
 
 1.19 (2013-04-22)

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.22 (unreleased)
+1.22 (2013-04-23)
 -----------------
 
 - Added a check to see if Z1/Z2 aren't too low _compared to the

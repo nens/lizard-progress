@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.21 (unreleased)
+1.21 (2013-04-23)
 -----------------
 
 - It's now possible to save an Organization in the admin without

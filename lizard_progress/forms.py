@@ -111,7 +111,7 @@ class MtypeCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
             value = []
         has_id = attrs and 'id' in attrs
         final_attrs = self.build_attrs(attrs, name=name)
-        output = [u'<ul>']
+        output = [u'<table class="table table-bordered progressbase">']
 
         # Normalize to strings
         str_values = set([force_unicode(v) for v in value])
@@ -135,11 +135,11 @@ class MtypeCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
             rendered_cb = cb.render(name, option_value)
             option_label = conditional_escape(force_unicode(option_label))
             output.append(
-                u'''<li><label%s>%s %s</label><br>
+                u'''<tr><td><label%s>%s %s</label><br>
                        <span><i>%s</i></span>
-                    </li>''' %
+                    </td></tr>''' %
                 (label_for, rendered_cb, option_label, mtype.description))
-        output.append(u'</ul>')
+        output.append(u'</table>')
         return mark_safe(u'\n'.join(output))
 
     def id_for_label(self, id_):

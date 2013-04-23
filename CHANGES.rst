@@ -5,8 +5,11 @@ Changelog of lizard-progress
 1.21 (unreleased)
 -----------------
 
-- Het is nu mogelijk om een Organisatie te saven in de admin zonder
-  alle configuratie opties in te vullen.
+- It's now possible to save an Organization in the admin without
+  filling in all the config options.
+
+- Layout of the 'werkzaamheden toevoegen' wizard is slightly more clear,
+  but really those pages should be refactored entirely.
 
 
 1.20 (2013-04-22)

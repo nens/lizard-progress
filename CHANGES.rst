@@ -5,7 +5,8 @@ Changelog of lizard-progress
 1.21 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Het is nu mogelijk om een Organisatie te saven in de admin zonder
+  alle configuratie opties in te vullen.
 
 
 1.20 (2013-04-22)

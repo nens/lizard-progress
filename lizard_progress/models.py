@@ -767,7 +767,9 @@ class UploadLog(models.Model):
 class OrganizationConfig(models.Model):
     organization = models.ForeignKey(Organization)
     config_option = models.CharField(max_length=50)
-    value = models.CharField(max_length=50, null=True)
+    value = models.CharField(
+        'Bij ja/nee opties, voer 1 in voor ja, en niets voor nee.',
+        max_length=50, null=True, blank=True)
 
 
 class ProjectConfig(models.Model):

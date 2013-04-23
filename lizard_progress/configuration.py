@@ -145,6 +145,24 @@ CONFIG_OPTIONS = {
         type='text',
         default='ID_DWP',
         only_for_error=None),
+    'lowest_below_water_allowed': Option(
+        option='lowest_below_water_allowed',
+        short_description=(
+            'Laagst toegestane Z1/Z2 waarde, gemeten vanaf het waterniveau'),
+        long_description=('Altijd een negatief getal'),
+        type='float',
+        default='-50',
+        only_for_error='MET_Z_TOO_LOW_BELOW_WATER'),
+    'max_distance_to_midline': Option(
+        option='max_distance_to_midline',
+        short_description=(
+            'Maximale afstand van een punt tot aan de middellijn'),
+        long_description=(
+            'De middellijn is de denkbeeldige lijn die door de 22 codes loopt'
+            ),
+        type='float',
+        default='1',
+        only_for_error='MET_DISTANCE_TO_MIDLINE'),
 }
 
 

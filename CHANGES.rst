@@ -5,7 +5,11 @@ Changelog of lizard-progress
 1.22 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added a check to see if Z1/Z2 aren't too low _compared to the
+  waterlevel_ instead of NAP (MET_Z_TOO_LOW_BELOW_WATER).
+
+- Added a check to see if a measurement point is not too far away from
+  the line between the 22 codes (MET_DISTANCE_TO_MIDLINE).
 
 
 1.21 (2013-04-23)

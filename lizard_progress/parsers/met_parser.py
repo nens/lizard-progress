@@ -278,7 +278,8 @@ class MetParser(specifics.ProgressParser):
 
         if len(profile.measurements) >= 1:
             for measurement in profile.measurements:
-                self.check_measurement(measurement, max_z1, max_z2)
+                self.check_measurement(
+                    measurement, max_z1, max_z2, profile)
 
     def check_waternet_profile_point_types(self, profile):
         ## For Waternet, code checks are pretty involved:
@@ -383,7 +384,7 @@ class MetParser(specifics.ProgressParser):
                     self.record_error_code(
                         profile.line_number, 'MET_LEFTRIGHTEQUAL')
 
-    def check_measurement(self, measurement, max_z1, max_z2):
+    def check_measurement(self, measurement, max_z1, max_z2, profile):
         if measurement.z2 < measurement.z1:
             self.record_error_code(
                 measurement.line_number,
@@ -403,6 +404,26 @@ class MetParser(specifics.ProgressParser):
                 measurement.line_number,
                 'MET_Z_TOO_LOW',
                 lowest_allowed)
+
+        if profile.waterlevel is not None:
+            lowest_below_water_allowed = self.config_value(
+                "lowest_below_water_allowed")
+            lowest_allowed = lowest_below_water_allowed + profile.waterlevel
+            if (measurement.z1 < lowest_allowed or
+                measurement.z2 < lowest_allowed):
+                self.record_error_code(
+                    measurement.line_number,
+                    'MET_Z_TOO_LOW_BELOW_WATER',
+                    lowest_allowed)
+
+        if profile.line is not None and measurement.point is not None:
+            distance = profile.line.distance(measurement.point)
+            max_allowed_distance = self.config_value("max_distance_to_midline")
+            if (distance > max_allowed_distance):
+                self.record_error_code(
+                    measurement.line_number,
+                    'MET_DISTANCE_TO_MIDLINE',
+                    distance, max_allowed_distance)
 
     def get_scheduled_measurement(self, profile):
         try:

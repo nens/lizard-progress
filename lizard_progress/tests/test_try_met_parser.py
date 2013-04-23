@@ -19,6 +19,8 @@ migration_0011 = importlib.import_module(
     'lizard_progress.migrations.0011_add_more_error_codes')
 migration_0016 = importlib.import_module(
     'lizard_progress.migrations.0016_add_new_error_codes')
+migration_0019 = importlib.import_module(
+    'lizard_progress.migrations.0019_add_even_more_error_messages')
 
 
 def create_org_and_user(orgname, username, is_project_owner):
@@ -52,6 +54,7 @@ class TestOrganization(TransactionTestCase):
         migration_0007.add_more_error_codes(models.ErrorMessage)
         migration_0011.add_more_error_codes(models.ErrorMessage)
         migration_0016.add_more_error_codes(models.ErrorMessage)
+        migration_0019.add_more_error_codes(models.ErrorMessage)
 
     def get_errors(self, uploaded_file):
         return list(uploaded_file.uploadedfileerror_set.all())

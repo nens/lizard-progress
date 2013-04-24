@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.24 (unreleased)
+1.24 (2013-04-24)
 -----------------
 
 - Location shapefiles didn't show up because the view called them

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.23 (unreleased)
+1.23 (2013-04-24)
 -----------------
 
 - Fixed bug #83 -- osgeo.ogr can't handle Unicode field names.

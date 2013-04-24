@@ -20,7 +20,7 @@ def check_mothershape(project, contractor, shape_path, report_file):
         report_file.write("Geen features gevonden.")
         return
 
-    if layer.GetFeature(0).GetField("MONSTERVAK") is None:
+    if layer.GetFeature(0).GetField(b"MONSTERVAK") is None:
         report_file.write(
             "Veld 'monstervak' niet aangetroffen in de shape, "
             "geen controle uitgevoerd.")
@@ -28,7 +28,7 @@ def check_mothershape(project, contractor, shape_path, report_file):
 
     for feature_num in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(feature_num)
-        location_code = feature.GetField("MONSTERVAK")
+        location_code = feature.GetField(b"MONSTERVAK")
 
         if not location_code:
             # Skip? I guess
@@ -50,7 +50,7 @@ def check_mothershape(project, contractor, shape_path, report_file):
                 for what, data in measurement.data.items():
                     what = what.upper()
                     try:
-                        filled_in = feature.GetField(str(what))
+                        filled_in = feature.GetField(what.encode('utf8'))
                         if unicode(filled_in) != data['amount']:
                             errordict['errors'].append(
                                 ("Hydrovak {hydrovak}, meetwaarde voor"

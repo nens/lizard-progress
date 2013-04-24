@@ -221,7 +221,7 @@ class ActivitiesWizard(UiView, SessionWizardView):
             id_field_name = configuration.get(
                 self.project, 'location_id_field')
             try:
-                location_code = feature.GetField(id_field_name)
+                location_code = feature.GetField(id_field_name.encode('utf8'))
             except ValueError:
                 messages.info(self.request,
                   ("Inlezen van de locaties mislukt! Het veld {name} "

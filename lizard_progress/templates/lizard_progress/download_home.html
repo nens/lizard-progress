@@ -15,7 +15,7 @@
     <td class="download"><a href="{{ file.url }}">download</a></td>
   </tr>
   {% endfor %}
-  {% for file in view.files.shapefile %}
+  {% for file in view.files.location_shapefile %}
   <tr>
     <td class="filename">{{ file.filename }} ({{ file.size }})</td>
     <td class="download"><a href="{{ file.url }}">download</a></td>

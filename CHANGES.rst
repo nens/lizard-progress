@@ -5,7 +5,8 @@ Changelog of lizard-progress
 1.24 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Location shapefiles didn't show up because the view called them
+  "location_shapefiles" and the template looked for "shapefiles"...
 
 
 1.23 (2013-04-24)

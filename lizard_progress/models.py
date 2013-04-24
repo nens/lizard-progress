@@ -313,6 +313,14 @@ class Contractor(models.Model):
             slug=slugify(self.organization.name))
         self.save()
 
+    def show_measurement_type(self, measurement_type):
+        """Only show that measurement type for this contractor if there are
+        scheduled measurements for it."""
+        return ScheduledMeasurement.objects.filter(
+            project=self.project,
+            contractor=self,
+            measurement_type=measurement_type).exists()
+
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)
 

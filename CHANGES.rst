@@ -7,6 +7,14 @@ Changelog of lizard-progress
 
 - Projects are now ordered by name.
 
+- Both map layers and exports are now only shown if there are actual
+  scheduled measurements for this contractor/measurement type
+  combination.
+
+- Only show the 'all measurement types' map layer if there is more
+  than 1 measurement type for this contractor/measurement type
+  combination.
+
 
 1.24 (2013-04-24)
 -----------------

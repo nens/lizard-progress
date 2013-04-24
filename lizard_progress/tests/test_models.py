@@ -290,6 +290,13 @@ class TestContractor(TestCase):
         self.assertTrue(unicode(contractor.id) in contractor.slug)
         self.assertTrue("some_org" in contractor.slug)
 
+    def test_show_measurement_type(self):
+        """Just checking that it doesn't crash"""
+        contractor = ContractorF.create()
+        measurement_type = MeasurementTypeF.create(
+            project=contractor.project)
+        contractor.show_measurement_type(measurement_type)
+
 
 class TestArea(TestCase):
     """Tests for the Area model."""

@@ -150,7 +150,7 @@ class DownloadHomeView(ProjectsView):
                     'organization': list(self._organization_files()),
                     'reports': list(self._reports_files()),
                     'results': list(self._results_files()),
-                    'location_shapefile': list(self._location_shapefile_files()),
+                 'location_shapefile': list(self._location_shapefile_files()),
                     'contractor_hydrovakken': list(self._shapefile_files()),
                     'hydrovakken': list(self._hydrovakken_files()),
                     }
@@ -181,8 +181,13 @@ class DownloadHomeView(ProjectsView):
         return csvs
 
     def exports(self):
-        return models.ExportRun.all_in_project(
-            self.project, self.request.user)
+        return [
+            exportrun
+            for exportrun in models.ExportRun.all_in_project(
+                self.project, self.request.user)
+            if exportrun.contractor.show_measurement_type(
+                exportrun.measurement_type)
+            ]
 
     @property
     def breadcrumbs(self):

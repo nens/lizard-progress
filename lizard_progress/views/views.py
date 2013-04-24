@@ -186,19 +186,12 @@ class MapView(View):
         layers = []
         for contractor in self.project.contractor_set.all():
             if has_access(self.request.user, self.project, contractor):
-                layers.append({
-                        'name': '%s %s Alle metingen'
-                        % (self.project.name, contractor.name),
-                        'adapter': 'adapter_progress',
-                        'json': json.dumps({
-                                "contractor_slug":
-                                    contractor.slug,
-                                "project_slug":
-                                    self.project.slug})
-                        })
+                mtype_layers = []
                 for measurement_type in self.project.measurementtype_set.all():
-                    if measurement_type.mtype.can_be_displayed:
-                        layers.append({
+                    if (measurement_type.mtype.can_be_displayed
+                        and contractor.show_measurement_type(
+                            measurement_type)):
+                        mtype_layers.append({
                                 'name': '%s %s %s' %
                                 (self.project.name,
                                  contractor.name,
@@ -212,6 +205,19 @@ class MapView(View):
                                         "project_slug":
                                             self.project.slug}),
                                 })
+
+                if len(mtype_layers) > 1:
+                    layers.append({
+                            'name': '%s %s Alle metingen'
+                            % (self.project.name, contractor.name),
+                            'adapter': 'adapter_progress',
+                            'json': json.dumps({
+                                    "contractor_slug":
+                                        contractor.slug,
+                                    "project_slug":
+                                        self.project.slug})
+                            })
+                layers += mtype_layers
 
         if Hydrovak.objects.filter(project=self.project).exists():
             layers.append({

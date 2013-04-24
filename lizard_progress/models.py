@@ -162,6 +162,9 @@ class Project(models.Model):
     superuser = models.ForeignKey(User, null=True, blank=True,
         verbose_name='projectmanager')
 
+    class Meta:
+        ordering = ('name',)
+
     def __unicode__(self):
         return unicode(self.name)
 

@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.25 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Projects are now ordered by name.
 
 
 1.24 (2013-04-24)

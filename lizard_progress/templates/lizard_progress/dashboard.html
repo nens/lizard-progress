@@ -12,9 +12,9 @@
 </thead>
 {% for workinfo in view.project.work_to_do %}
 <tr>
-  <td>{{ workinfo.contractor.organization }}</td>
-  <td>{{ workinfo.measurement_type.name }}</td>
-  <td>{{ workinfo.scheduled_measurements }}</td>
+  <td>{% if workinfo.contractor %}{{ workinfo.contractor.organization }}{% endif %}</td>
+  <td>{% if workinfo.measurement_type %}{{ workinfo.measurement_type.name }}{% endif %}</td>
+  <td>{% if workinfo.scheduled_measurements %}{{ workinfo.scheduled_measurements }}{% endif %}</td>
   <td>{{ workinfo.num_measurements }}</td>
   <td>{% if workinfo.last_measurement %}{{ workinfo.last_measurement }}{% endif %}</td>
 </tr>

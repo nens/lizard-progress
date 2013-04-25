@@ -230,8 +230,12 @@ class Project(models.Model):
 
         info = []
 
-        for m in measurement_types:
-            for c in contractors:
+        for c in contractors:
+            info_for_contractor = []
+            for m in measurement_types:
+                if not c.show_measurement_type(m):
+                    continue
+
                 if self.needs_predefined_locations(m.mtype):
                     scheduled_measurements = len(
                         ScheduledMeasurement.objects.filter(
@@ -253,14 +257,23 @@ class Project(models.Model):
                 else:
                     last_m = None
 
-                info.append({
+                info_for_contractor.append({
                         'contractor': c,
                         'measurement_type': m,
                         'scheduled_measurements': scheduled_measurements,
                         'num_measurements': num_m,
                         'last_measurement': last_m
                         })
-
+            if info_for_contractor:
+                info += info_for_contractor
+            else:
+                info.append({
+                        'contractor': c,
+                        'measurement_type': None,
+                        'scheduled_measurements': None,
+                        'num_measurements': 0,
+                        'last_measurement': None
+                        })
         return info
 
     def number_of_scheduled_measurements(self):

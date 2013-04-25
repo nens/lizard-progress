@@ -5,7 +5,8 @@ Changelog of lizard-progress
 1.26 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Some more tweaks to various templates, so that they still look
+  reasonable if nothing has been uploaded yet.
 
 
 1.25 (2013-04-24)

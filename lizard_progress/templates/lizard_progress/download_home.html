@@ -30,8 +30,10 @@
   </table>
 {% endif %}
 
+{% if view.exports or view.csv %}
 <h3>Resultaten</h3>
 
+{% if view.exports %}
 <table class="table table-bordered progressbase">
   <thead>
     <th>Opdrachtnemer</th>
@@ -80,7 +82,7 @@
   </tr>
 {% endfor %}
 </table>
-
+{% endif %}
 {% if view.csv %}
   <table class="table table-bordered" style="max-width: 600px;">
   <thead>
@@ -94,6 +96,7 @@
   </tr>
 {% endfor %}
   </table>
+{% endif %}
 {% endif %}
 
 {% if view.files.reports or view.files.contractor_hydrovakken %}

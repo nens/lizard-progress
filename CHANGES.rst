@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.26 (unreleased)
------------------
+1.25.1 (2013-04-25)
+-------------------
 
 - Some more tweaks to various templates, so that they still look
   reasonable if nothing has been uploaded yet.

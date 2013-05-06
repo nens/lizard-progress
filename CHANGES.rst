@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.26 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Add handy impersonate middleware.
 
 
 1.25.1 (2013-04-25)

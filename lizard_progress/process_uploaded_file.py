@@ -28,11 +28,21 @@ logger = logging.getLogger(__name__)
 def process_uploaded_file(uploaded_file_id):
     try:
         uploaded_file = models.UploadedFile.objects.get(pk=uploaded_file_id)
+        uploaded_file.wait_until_path_exists()
         process_capturing_errors(uploaded_file)
     except models.UploadedFile.DoesNotExist:
         # What can we do? Don't even have a good place to log errors
         logger.warn("uploaded_file_id not found in task: {0}".
                     format(uploaded_file_id))
+    except models.UploadedFile.PathDoesNotExist:
+        uploaded_file.ready = True
+        uploaded_file.success = False
+        uploaded_file.linelike = False
+        uploaded_file.save()
+        uploaded_file.uploadedfileerror_set.create(
+            line=0,
+            error_code="EXCEPTION",
+            error_message="File lijkt verdwenen, onbekend probleem.")
 
 
 def process_capturing_errors(uploaded_file):

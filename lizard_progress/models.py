@@ -80,6 +80,11 @@ class Organization(models.Model):
             return user_profile.organization
         return None
 
+    def contains_user(self, user):
+        """Returns true if user is in this organization."""
+        user_profile = UserProfile.get_by_user(user)
+        return user_profile is not None and user_profile.organization == self
+
     def __unicode__(self):
         return self.name
 
@@ -329,6 +334,7 @@ class Contractor(models.Model):
     def show_measurement_type(self, measurement_type):
         """Only show that measurement type for this contractor if there are
         scheduled measurements for it."""
+
         return ScheduledMeasurement.objects.filter(
             project=self.project,
             contractor=self,
@@ -580,9 +586,28 @@ class UploadedFile(models.Model):
     # image).
     linelike = models.BooleanField(default=True)
 
+    class PathDoesNotExist(Exception):
+        pass
+
     @property
     def filename(self):
         return os.path.basename(self.path)
+
+    def wait_until_path_exists(self, tries=10):
+        """Do NOT call from web code! Sleeps up to 10 seconds. Use in
+        background tasks."""
+        tries_so_far = 0
+        while tries_so_far < tries:
+            try:
+                open(self.path)
+                return
+            except IOError:
+                # We're probably trying too soon, it's not there yet
+                tries_so_far += 1
+            import time
+            time.sleep(1)
+
+        raise UploadedFile.PathDoesNotExist()
 
     def log_success(self, measurements):
         num_measurements = len(measurements)

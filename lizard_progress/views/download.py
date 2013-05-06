@@ -186,7 +186,7 @@ class DownloadHomeView(ProjectsView):
             for exportrun in models.ExportRun.all_in_project(
                 self.project, self.request.user)
             if exportrun.contractor.show_measurement_type(
-                exportrun.measurement_type)
+                exportrun.measurement_type_in_project)
             ]
 
     @property

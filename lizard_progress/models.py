@@ -697,6 +697,16 @@ class ExportRun(models.Model):
             measurement_type=self.measurement_type)
 
     @property
+    def measurement_type_in_project(self):
+        """Returns the MeasurementType connected to this export run's project
+        and AvailableMeasurementType."""
+        try:
+            return MeasurementType.objects.get(
+                project=self.project, mtype=self.measurement_type)
+        except MeasurementType.DoesNotExist:
+            return None
+
+    @property
     def filename(self):
         return self.file_path and os.path.basename(self.file_path)
 

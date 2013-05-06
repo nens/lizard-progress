@@ -11,7 +11,10 @@ Changelog of lizard-progress
   seems a problem with uploaded files crashing is caused by a race
   condition: the file is closed and then the task is started, but it's
   not immediately visible to other processes yet. Sleeps at most 10
-  seconds, then marks the file as failed.
+  seconds, then marks the file as failed. Hopefully fixes #88.
+
+- Call show_measurement_type() with the right kind of measurement type.
+  Fixes #89.
 
 
 1.25.1 (2013-04-25)

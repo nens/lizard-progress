@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.27 (unreleased)
+1.27 (2013-05-07)
 -----------------
 
 - Add an "Export to Lizard". This uses a LizardConfiguration model

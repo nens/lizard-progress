@@ -53,6 +53,7 @@
       {% elif export_run.exporttype == "met" %}MET bestand
       {% elif export_run.exporttype == "dxf" %}Zipped DXF
       {% elif export_run.exporttype == "csv" %}Zipped CSV
+      {% elif export_run.exporttype == "lizard" %}Lizard
       {% else %}Onbekend{% endif%}
     </td>
     <td id="present-{{ export_run.id }}">

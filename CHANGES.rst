@@ -5,7 +5,11 @@ Changelog of lizard-progress
 1.27 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Add an "Export to Lizard". This uses a LizardConfiguration model
+  that stores information about a Geoserver database and an FTP
+  server, generates DXF, CSV and PNG representations of the profiles
+  and puts them on the FTP server, then updates the geoserver database
+  with the new information.
 
 
 1.26 (2013-05-06)

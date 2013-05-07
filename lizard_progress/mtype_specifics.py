@@ -79,7 +79,9 @@ class MetfileSpecifics(GenericSpecifics):
     parser = lizard_progress.parsers.met_parser.MetParser
     linelike = True
 
-    def image_handler(self, scheduled_measurements):
+    # Note that the response_object argument is used from exports.py, to
+    # save images to a file instead of an HTTP response.
+    def image_handler(self, scheduled_measurements, response_object=None):
         if not scheduled_measurements:
             # Should not happen
             logger.critical(
@@ -145,7 +147,7 @@ class MetfileSpecifics(GenericSpecifics):
         ax.set_xlim([distances[0] - 1, distances[-1] + 1])
         ax.grid(True)
 
-        response = HttpResponse(content_type='image/png')
+        response = response_object or HttpResponse(content_type='image/png')
         canvas = FigureCanvas(fig)
         canvas.print_png(response)
         return response

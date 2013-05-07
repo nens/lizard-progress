@@ -26,13 +26,14 @@ import os
 import tempfile
 import zipfile
 
-from dxfwrite import DXFEngine as dxf
+from metfilelib.util import dxf
 
 from metfilelib.util import retrieve_profile
 from metfilelib import exporters
 
 from lizard_progress import errors
 from lizard_progress import models
+from lizard_progress import lizard_export
 from lizard_progress import tools
 
 
@@ -53,6 +54,8 @@ def start_run(export_run_id, user):
         export_as_dxf(export_run)
     elif export_run.exporttype == "csv":
         export_as_csv(export_run)
+    elif export_run.exporttype == "lizard":
+        export_to_lizard(export_run)
     else:
         export_all_files(export_run)
     export_run.set_ready_for_download()
@@ -145,86 +148,18 @@ def export_as_dxf(export_run):
     export_run.save()
 
 
-def draw_z(drawing, line, measurement):
-    x = line.distance_to_midpoint(measurement.point)
-    y = measurement.z1 - 0.2
-
-    text = "({x:.2f}, z1={y:.2f})".format(x=x, y=measurement.z1)
-
-    drawing.add(dxf.text(
-            text,
-            insert=(x, y),
-            height=0.1))
-
-
 def create_dxf(measurement, temp):
     series_id, series_name, profile = retrieve_profile.retrieve(
         measurement.filename,
         measurement.scheduled.location.location_code)
 
-    line = profile.line
-    if line is None:
-        # No base line. Skip!
-        return
-    midpoint = line.midpoint
-
-    leftmost = profile.sorted_measurements[0]
-
     filename = "{id}.dxf".format(
         id=measurement.scheduled.location.location_code)
     filepath = os.path.join(temp, filename)
 
-    drawing = dxf.drawing(filepath)
+    success = dxf.save_as_dxf(profile, filepath)
 
-    measurements = profile.sorted_measurements
-
-    x = line.distance_to_midpoint(leftmost.point)
-
-    # Draw location code to the left of the profile, 1m above the
-    # highest z1/z2 there
-    drawing.add(dxf.text(
-            '{location_code} ({x}, {y}) {date}'.format(
-                location_code=profile.id,
-                x=midpoint.x,
-                y=midpoint.y,
-                date=profile.date_measurement),
-            insert=(x, max([leftmost.z1, leftmost.z2]) + 1),
-            height=0.4))  # 40cm high
-
-    previous = None
-    previous_z1 = None
-    previous_z2 = None
-    previous_x = None
-    for m in measurements:
-        projected_m = line.project(m.point)
-
-        draw_z(drawing, line, m)
-
-        if previous is not None:
-            # Add distance between previous and this one to x
-            # projected on the line
-            p_m = line.project(m.point)
-            x += p_m.distance(previous)
-
-            drawing.add(dxf.line((previous_x, previous_z1),
-                                 (x, m.z1)))
-            drawing.add(dxf.line((previous_x, previous_z2),
-                                 (x, m.z2)))
-
-        previous = projected_m
-        previous_z1 = m.z1
-        previous_z2 = m.z2
-        previous_x = x
-
-    # Draw water line
-    waterlevel = profile.waterlevel
-    if waterlevel is not None:
-        drawing.add(dxf.line(
-                (-line.start.distance(line.midpoint), waterlevel),
-                (line.end.distance(line.midpoint), waterlevel)))
-
-    drawing.save()
-    return filepath
+    return filepath if success else None
 
 
 def export_as_csv(export_run):
@@ -266,7 +201,8 @@ def create_csv(measurement, temp):
     midpoint = profile.midpoint
     if base_line is None or midpoint is None:
         # No base line. Skip!
-        return
+        return    # Get a tmp dir
+    temp = tempfile.mkdtemp()
 
     filename = "{id}.csv".format(id=location_code)
     filepath = os.path.join(temp, filename)
@@ -293,3 +229,51 @@ def create_csv(measurement, temp):
                     "{0:.2f}".format(m.z2)])
 
     return filepath
+
+
+def create_png(measurement, temp):
+    from lizard_progress import mtype_specifics
+    handler = mtype_specifics.MetfileSpecifics(
+        measurement.scheduled.project,
+        measurement.scheduled.measurement_type,
+        measurement.scheduled.contractor)
+    location_code = measurement.scheduled.location.location_code
+    filename = "{id}.png".format(id=location_code)
+    filepath = os.path.join(temp, filename)
+
+    handler.image_handler([measurement.scheduled], open(filepath, 'wb'))
+    return filepath
+
+
+def export_to_lizard(export_run):
+    """Save measurement data to a Geoserver database table and to
+    files on some location that is served by a webserver, so that
+    Lizard-wms can show the data."""
+
+    measurements = list(export_run.measurements_to_export())
+    # Save CSV and DXF files for those measurements to an FTP server
+    # Get a tmp dir
+    temp = tempfile.mkdtemp()
+
+    # Create files for the relevant measurements
+    for measurement in measurements:
+        measurement.dxf = create_dxf(measurement, temp)
+        measurement.csv = create_csv(measurement, temp)
+        measurement.png = create_png(measurement, temp)
+        lizard_export.upload(measurement)
+
+    # Save measurements data to a database table, for Geoserver, including
+    # links to the previously saved files
+    present_in_database = lizard_export.existing_profiles(
+        export_run.project.organization.lizard_config
+        )
+    for measurement in measurements:
+        scheduled = measurement.scheduled
+        if (scheduled.project.name,
+            scheduled.contractor.organization.name,
+            scheduled.location.location_code) not in present_in_database:
+            lizard_export.insert(measurement)
+
+    # We don't record a downloadable file, so no need to do anything
+    # else, just return
+    return

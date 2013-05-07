@@ -20,7 +20,7 @@ install_requires = [
     'django-nose',
     'lizard-ui',
     'lizard-map',
-    'metfilelib >= 0.11',
+    'metfilelib >= 0.12',
     'pkginfo',
     'factory_boy',
     'mock',
@@ -29,6 +29,9 @@ install_requires = [
     'lizard-shape',
     'lizard-fewsjdbc',
     'lizard-datasource',
+    # This is for the export to Lizard functionality
+    'sqlalchemy >= 0.8',
+    'geoalchemy2',
     ],
 
 tests_require = [

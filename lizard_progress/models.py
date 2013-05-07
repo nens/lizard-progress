@@ -65,6 +65,9 @@ class Organization(models.Model):
     # Organizations are _either_ project owners or uploaders, never both
     is_project_owner = models.BooleanField(default=False)
 
+    lizard_config = models.ForeignKey(
+        'LizardConfiguration', blank=True, null=True)
+
     @classmethod
     def users_in_same_organization(cls, user):
         """Returns a list of user in same organization."""
@@ -735,6 +738,13 @@ class ExportRun(models.Model):
                         yield cls.get_or_create(
                             project, contractor, mtype.mtype, 'csv')
 
+                        # Export to Lizard for Almere superusers
+                        organization = project.organization
+                        if (organization.lizard_config and
+                            project.superuser == user):
+                            yield cls.get_or_create(
+                                project, contractor, mtype.mtype, 'lizard')
+
                     yield cls.get_or_create(
                         project, contractor, mtype.mtype, 'allfiles')
 
@@ -835,3 +845,15 @@ class ProjectConfig(models.Model):
     project = models.ForeignKey(Project)
     config_option = models.CharField(max_length=50)
     value = models.CharField(max_length=50, null=True)
+
+
+# Export to Lizard
+
+class LizardConfiguration(models.Model):
+    geoserver_database_engine = models.CharField(max_length=300)
+    geoserver_table_name = models.CharField(max_length=50)
+    upload_config = models.CharField(max_length=300)
+    upload_url_template = models.CharField(max_length=300)
+
+    def __unicode__(self):
+        return self.geoserver_database_engine

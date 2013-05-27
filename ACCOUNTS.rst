@@ -27,6 +27,10 @@ Creating a project owner organization
 
 5. Save.
 
+6. On the next page, it is possible to change this organization's default values
+   for all the config options.
+
+
 Creating an uploading organization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

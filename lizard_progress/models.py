@@ -850,10 +850,11 @@ class ProjectConfig(models.Model):
 # Export to Lizard
 
 class LizardConfiguration(models.Model):
+    name = models.CharField(max_length=50)
     geoserver_database_engine = models.CharField(max_length=300)
     geoserver_table_name = models.CharField(max_length=50)
     upload_config = models.CharField(max_length=300)
     upload_url_template = models.CharField(max_length=300)
 
     def __unicode__(self):
-        return self.geoserver_database_engine
+        return self.name or self.geoserver_database_engine

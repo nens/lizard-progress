@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.28 (unreleased)
+1.28 (2013-05-31)
 -----------------
 
 - Add a name field to LizardConfiguration for ease of use.

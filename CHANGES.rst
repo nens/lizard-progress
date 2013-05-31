@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.29 (unreleased)
+1.29 (2013-05-31)
 -----------------
 
 - Improved Export to Lizard: now updates (not just inserts) database

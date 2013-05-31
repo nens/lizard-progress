@@ -264,15 +264,8 @@ def export_to_lizard(export_run):
 
     # Save measurements data to a database table, for Geoserver, including
     # links to the previously saved files
-    present_in_database = lizard_export.existing_profiles(
-        export_run.project.organization.lizard_config
-        )
     for measurement in measurements:
-        scheduled = measurement.scheduled
-        if (scheduled.project.name,
-            scheduled.contractor.organization.name,
-            scheduled.location.location_code) not in present_in_database:
-            lizard_export.insert(measurement)
+        lizard_export.insert(measurement)
 
     # We don't record a downloadable file, so no need to do anything
     # else, just return

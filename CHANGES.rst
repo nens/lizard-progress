@@ -5,7 +5,9 @@ Changelog of lizard-progress
 1.29 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Improved Export to Lizard: now updates (not just inserts) database
+  information, and saving to a directory (on some share) is supported
+  as well.
 
 
 1.28 (2013-05-31)

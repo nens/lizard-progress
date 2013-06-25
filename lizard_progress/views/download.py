@@ -3,7 +3,6 @@
 """Views concerned with downloading files."""
 
 import logging
-import mimetypes
 import os
 import platform
 
@@ -24,7 +23,6 @@ from lizard_progress.util import directories
 from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import has_access
-from lizard_progress.views.upload import UploadReportsView
 from lizard_progress.views.views import ProjectsView
 
 logger = logging.getLogger(__name__)
@@ -150,7 +148,7 @@ class DownloadHomeView(ProjectsView):
                     'organization': list(self._organization_files()),
                     'reports': list(self._reports_files()),
                     'results': list(self._results_files()),
-                 'location_shapefile': list(self._location_shapefile_files()),
+               'location_shapefile': list(self._location_shapefile_files()),
                     'contractor_hydrovakken': list(self._shapefile_files()),
                     'hydrovakken': list(self._hydrovakken_files()),
                     }

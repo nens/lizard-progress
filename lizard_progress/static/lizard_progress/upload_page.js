@@ -40,7 +40,7 @@ var upload_page_functions = upload_page_functions || (function () {
                   .append($("<td>").append(uploaded_file.uploaded_at))
         );
         $(id_not_ready_div).fadeIn();
-    }
+    };
 
     var refresh_uploaded_file_tables = function () {
         refresh_url = $(id_not_ready_div).attr("data-refresh-url");

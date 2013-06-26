@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.30 (unreleased)
+1.30 (2013-06-26)
 -----------------
 
 - Fix missing location shapefiles.

@@ -7,6 +7,9 @@ Changelog of lizard-progress
 
 - Fix missing location shapefiles.
 
+- Initially upload files to a newly created tempdir in
+  BUILDOUT_DIR/var/lizard_progress/uploaded_files, instead of in
+  /tmp. /tmp is periodically cleaned up leading to loss of files.
 
 1.29 (2013-05-31)
 -----------------

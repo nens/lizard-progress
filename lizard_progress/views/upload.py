@@ -9,6 +9,7 @@ import datetime
 import logging
 import os
 import shutil
+import tempfile
 import time
 
 from django.conf import settings
@@ -260,7 +261,15 @@ class UploadView(View):
         filename = request.POST['filename']
         chunk = int(request.POST.get('chunk', 0))
         chunks = int(request.POST.get('chunks', 1))
-        path = os.path.join('/tmp', filename)
+
+        # Create a temp dir in which our file definitely doesn't exist yet
+        basedir = os.path.join(
+            settings.BUILDOUT_DIR, 'var', 'lizard_progress', 'uploaded_files')
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
+        tmpdir = tempfile.mkdtemp(dir=basedir)
+
+        path = os.path.join(tmpdir, filename)
 
         with open(path, 'wb' if chunk == 0 else 'ab') as f:
             for chunk_bytes in uploaded_file.chunks():

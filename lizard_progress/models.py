@@ -629,6 +629,12 @@ class UploadedFile(models.Model):
     def delete_self(self):
         if os.path.exists(self.path):
             os.remove(self.path)
+        # Try to remove empty directory
+        try:
+            os.rmdir(os.path.basename(self.path))
+        except IOError:
+            pass
+
         self.delete()
 
     def as_dict(self):

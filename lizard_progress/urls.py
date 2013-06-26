@@ -36,6 +36,7 @@ from lizard_progress.views import dashboard_graph
 from lizard_progress.views import protected_file_download
 
 from lizard_progress import views
+from lizard_progress.views import organization_admin
 
 from lizard_ui.urls import debugmode_urlpatterns
 
@@ -43,15 +44,20 @@ admin.autodiscover()
 
 urlpatterns = patterns(
     '',
+    # Homepage
     url('^$',
         login_required(ProjectsView.as_view()),
         name='lizard_progress_projecten'),
+    # "Projects" page is basically same as homepage
     url('^projects/$',
         login_required(ProjectsView.as_view()),
         name='lizard_progress_projecten'),
+
     url('^newproject/$',
         login_required(views.NewProjectView.as_view()),
         name='lizard_progress_newproject'),
+
+    # Admin pages
     url('^admin/$',
         login_required(
             views.View.as_view(template_name='lizard_progress/admin.html')),
@@ -76,12 +82,21 @@ urlpatterns = patterns(
             [forms.ProjectChoiceForm, forms.ContractorChoiceForm,
              forms.CalculateForm])),
         name='lizard_progress_results'),
+
+    url('^admin/organization/$',
+        login_required(organization_admin.OrganizationAdminView.as_view()),
+        name='lizard_progress_admin_organization'),
+
+    # Project page per project
     url('^projects/(?P<project_slug>[^/]+)/$',
         login_required(ProjectsView.as_view()),
         name='lizard_progress_view'),
+    # Kaartlagen view
     url('^projects/(?P<project_slug>[^/]+)/map/$',
         login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
+
+    # Comparison view -- old hack that can probably be removed
     url('^projects/(?P<project_slug>[^/]+)/comparison/$',
         login_required(ComparisonView.as_view()),
         name='lizard_progress_comparisonview'),
@@ -92,6 +107,8 @@ urlpatterns = patterns(
         '(?P<mtype_slug>[^/]+)/(?P<location_code>[^/]+)/$',
         login_required(ComparisonPopupView.as_view()),
         name='lizard_progress_comparisonpopup'),
+
+    # Dashboard page, is this still used?
     url('^projects/(?P<project_slug>[^/]+)/dashboard/$',
         login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),
@@ -102,23 +119,30 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/(?P<mtype_slug>[^/]+)/planning$',
         login_required(views.PlanningView.as_view()),
         name='lizard_progress_planningview'),
+
+    # CSV file generation
     url('^dashboardcsv/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/$',
         login_required(DashboardCsvView.as_view()),
         name='lizard_progress_dashboardcsvview'),
 
+    # This is where uploads happend
     url('^upload/$',
         login_required(UploadDialogView.as_view()),
         name='lizard_progress_uploaddialogview'),
+    # The upload page
     url('^projects/(?P<project_slug>[^/]+)/upload/$',
         login_required(UploadHomeView.as_view()),
         name='lizard_progress_uploadhomeview'),
-    # API for the tables
+
+    # API for the tables that refresh when processing uploaded files
     url('^projects/(?P<project_slug>[^/]+)/upload/uploaded_files/$',
         login_required(views.UploadedFilesView.as_view()),
         name='lizard_progress_uploaded_files_api'),
+    # Remove an uploaded file
     url('^projects/(?P<project_slug>[^/]+)/upload/remove_uploaded_file/(?P<uploaded_file_id>\d+)/$',
         login_required(views.remove_uploaded_file_view),
         name='lizard_progress_remove_uploaded_file'),
+    # Various uploads
     url('^projects/(?P<project_slug>[^/]+)/upload/measurements/$',
         login_required(UploadMeasurementsView.as_view()),
         name='lizard_progress_uploadmeasurementsview'),

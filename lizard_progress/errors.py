@@ -1,7 +1,9 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 # -*- coding: utf-8 -*-
 
-"""Helper functions and classes for error handling.
+"""Helper functions and classes for error handling. This module knows
+which error checks should be used for some project; configuration.py
+knows configuration options for each check.
 
 We implement many checks on MET files. Some of these checks are
 relevant to all organizations that receive MET files, but others only
@@ -25,8 +27,18 @@ class ErrorConfiguration(object):
     It returns True if the check relating to that code should be
     performed, False if it shouldn't."""
 
-    def __init__(self, project, measurement_type):
+    def __init__(self, project, organization, measurement_type):
+        """Give either a project or an organization, not both.
+
+        The usual situation is that the parsers wants to know which
+        checks to use, in that case it will give the project. The
+        project is also given when the options need to be shown for
+        configuring inside some project. The organization is used when
+        configuring the default values for some organization; we need
+        to know which checks to show the configuration for there."""
+
         self.project = project
+        self.organization = organization
         self.measurement_type = measurement_type
         self.init_error_sets()
 
@@ -37,9 +49,10 @@ class ErrorConfiguration(object):
             error_message.error_code
             for error_message in models.ErrorMessage.objects.all())
 
+        organization = self.organization or self.project.organization
         self.codes_to_check = set(
             error_message.error_code
-            for error_message in self.project.organization.errors.all())
+            for error_message in organization.errors.all())
 
     def __contains__(self, error_code):
         if self.measurement_type.slug != 'dwarsprofiel':

@@ -86,6 +86,9 @@ urlpatterns = patterns(
     url('^admin/organization/$',
         login_required(organization_admin.OrganizationAdminView.as_view()),
         name='lizard_progress_admin_organization'),
+    url('^admin/organization/errorconfiguration/$',
+        login_required(organization_admin.OrganizationAdminConfiguration.as_view()),
+        name='lizard_progress_admin_organization_errorconfiguration'),
 
     # Project page per project
     url('^projects/(?P<project_slug>[^/]+)/$',

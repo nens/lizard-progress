@@ -1,1 +1,17 @@
 {% extends "lizard_progress/progressbase.html" %}
+
+{% block sidebar %}
+<h2>Beheer {{ view.organization }}</h2>
+<ul class="without-bullets">
+<li>Gebruikers</li>
+<li>Controles</li>
+<li>Attachments</li>
+<li><a href="{% url lizard_progress_admin_organization_errorconfiguration %}">Configuratie</a></li>
+</ul>
+{% endblock sidebar %}
+
+{% block content %}
+{% comment %}
+Hier gaan we nog een soort organisatie dashboard maken, lijkt me
+{% endcomment %}
+{% endblock content %}

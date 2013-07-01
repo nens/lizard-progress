@@ -20,7 +20,8 @@ B1;2802;0cChangelog of lizard-progress
 
 - Upload and delete organization files.
 
-- Hydrovakken can also be uploaded again.
+- Added a page where organizations can edit the default values for
+  configuration values of checks.
 
 
 1.38 (2013-10-18)

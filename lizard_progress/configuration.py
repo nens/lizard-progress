@@ -212,15 +212,28 @@ class Configuration(object):
         return option.translate(project_config.value)
 
     def set(self, option, value):
+        """Save some configuration option to this value, and save it"""
         if self.project:
             return self.set_project(option, value)
+        else:
+            return self.set_organization(option, value)
 
     def set_project(self, option, value):
+        """Save a configuration option that was set for a project"""
         project_config, created = models.ProjectConfig.objects.get_or_create(
             project=self.project,
             config_option=option.option)
         project_config.value = option.to_unicode(value)
         project_config.save()
+
+    def set_organization(self, option, value):
+        """Save a configuration option that was set for an organization"""
+        organization_config, created = (
+            models.OrganizationConfig.objects.get_or_create(
+                organization=self.organization,
+                config_option=option.option))
+        organization_config.value = option.to_unicode(value)
+        organization_config.save()
 
     def options(self):
         """Return only the options that are relevant for this project,
@@ -229,6 +242,7 @@ class Configuration(object):
 
         error_config = errors.ErrorConfiguration(
             project=self.project,
+            organization=self.organization,
             measurement_type=models.AvailableMeasurementType.dwarsprofiel())
 
         for (option_key, option) in sorted(CONFIG_OPTIONS.iteritems()):

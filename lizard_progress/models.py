@@ -253,11 +253,10 @@ class Project(models.Model):
                 else:
                     scheduled_measurements = "N/A"
 
-                measurements = ScheduledMeasurement.objects.filter(
-                    project=self,
-                    contractor=c,
-                    measurement_type=m,
-                    complete=True).order_by('timestamp')
+                measurements = Measurement.objects.filter(
+                    scheduled__project=self,
+                    scheduled__contractor=c,
+                    scheduled__measurement_type=m).order_by('timestamp')
 
                 num_m = len(measurements)
                 if num_m > 0:

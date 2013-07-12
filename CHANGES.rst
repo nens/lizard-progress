@@ -17,6 +17,11 @@ Changelog of lizard-progress
   uses that, except for the Download link, which still needs a
   'present' file.
 
+- Date of latest update is now based on the latest timestamp of
+  Measurement, not ScheduledMeasurement. Because measurements can be
+  updated and then the ScheduledMeasurement doesn't get a new
+  timestamp.
+
 
 1.30 (2013-06-26)
 -----------------

@@ -5,7 +5,22 @@ Changelog of lizard-progress
 1.31 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Export runs that don't generate files can now also show that they
+  have run and whether they are up to date.
+
+  It used to be the case that all export runs generated a file, and
+  the check to see if they had run successfully some time in the past
+  looked for the presence of this file. But the 'Export to Lizard'
+  export run exports data to elsewhere, and doesn't have a file. There
+  is now a new property, 'available', and for runs without generated
+  files it merely checks for a created_at date. User interface now
+  uses that, except for the Download link, which still needs a
+  'present' file.
+
+- Date of latest update is now based on the latest timestamp of
+  Measurement, not ScheduledMeasurement. Because measurements can be
+  updated and then the ScheduledMeasurement doesn't get a new
+  timestamp.
 
 
 1.30 (2013-06-26)

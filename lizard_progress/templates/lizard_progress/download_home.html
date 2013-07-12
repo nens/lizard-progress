@@ -57,12 +57,12 @@
       {% else %}Onbekend{% endif%}
     </td>
     <td id="present-{{ export_run.id }}">
-      {% if export_run.present %}{{ export_run.created_at }}{% elif export_run.export_running %}
+      {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}
         <img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">
       {% endif %}
     </td>
     <td id="uptodate-{{ export_run.id }}">
-      {% if export_run.present %}{% if export_run.up_to_date %}Ja{% else %}Nee{% endif %}{% endif %}
+      {% if export_run.available %}{% if export_run.up_to_date %}Ja{% else %}Nee{% endif %}{% endif %}
     </td>
     <td id="download-{{ export_run.id }}">
       {% if export_run.present %}

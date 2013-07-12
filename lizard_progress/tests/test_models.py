@@ -150,6 +150,22 @@ class UploadedFileErrorF(factory.Factory):
     error_message = "Some error message"
 
 
+class ExportRunF(factory.Factory):
+    FACTORY_FOR = models.ExportRun
+
+    project = factory.LazyAttribute(lambda a: ProjectF())
+    contractor = factory.LazyAttribute(lambda a: ContractorF())
+    measurement_type = factory.LazyAttribute(
+        lambda a: AvailableMeasurementTypeF())
+    exporttype = "someexporttype"
+    generates_file = True
+    created_at = None
+    created_by = None
+    file_path = None
+    ready_for_download = False
+    export_running = False
+
+
 class TestUser(TestCase):
     """Tests for the User model."""
     def test_username(self):
@@ -351,10 +367,9 @@ class TestScheduledMeasurement(TestCase):
         """Two measurements for one scheduled should mean that the measurement
         property fails."""
         scheduled = ScheduledMeasurementF()
-        m1 = MeasurementF(scheduled=scheduled)
-        m2 = MeasurementF(scheduled=scheduled)
+        MeasurementF(scheduled=scheduled)
+        MeasurementF(scheduled=scheduled)
         self.assertRaises(Exception, lambda: scheduled.measurement)
-        m1, m2  # pyflakes
 
 
 class TestMeasurement(TestCase):
@@ -364,3 +379,25 @@ class TestMeasurement(TestCase):
         measurement = MeasurementF()
         url = measurement.url
         self.assertTrue(url)
+
+
+class TestExportRun(TestCase):
+    def test_exportrun_without_file_is_not_available(self):
+        project = ProjectF.create()
+        contractor = ContractorF.create(project=project)
+        run = ExportRunF.build(
+            project=project,
+            contractor=contractor,
+            file_path="/some/nonexisting/path",
+            generates_file=True)
+        self.assertFalse(run.available)
+
+    def test_exportrun_has_run_doesnt_generate_file_is_available(self):
+        project = ProjectF.create()
+        contractor = ContractorF.create(project=project)
+        run = ExportRunF.build(
+            project=project,
+            contractor=contractor,
+            generates_file=False,
+            created_at=datetime.datetime(1980, 1, 1))
+        self.assertTrue(run.available)

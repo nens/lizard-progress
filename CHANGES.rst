@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.31 (unreleased)
+1.31 (2013-07-12)
 -----------------
 
 - Export runs that don't generate files can now also show that they

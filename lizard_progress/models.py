@@ -754,6 +754,7 @@ class ExportRun(models.Model):
                                 project, contractor, mtype.mtype, 'lizard')
                             exportrun.generates_file = False
                             exportrun.save()
+                            yield exportrun
 
                     yield cls.get_or_create(
                         project, contractor, mtype.mtype, 'allfiles')

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.33 (unreleased)
+1.33 (2013-08-13)
 -----------------
 
 - Increase max size of uploaded files (4mb to 1000mb -- don't know if

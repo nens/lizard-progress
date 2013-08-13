@@ -300,7 +300,7 @@ class UploadMeasurementsView(UploadView):
 
 class UploadReportsView(UploadView):
 
-    exts = [".pdf"]
+    exts = [".pdf", ".doc", ".zip"]
 
     @staticmethod
     def get_directory(contractor):

@@ -5,7 +5,8 @@ Changelog of lizard-progress
 1.32 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Uploaded report files can now also have .zip and .doc extensions, instead
+  of only .pdf.
 
 
 1.31 (2013-07-12)

@@ -143,14 +143,23 @@ class DownloadHomeView(ProjectsView):
 
     def files(self):
         if not hasattr(self, '_files'):
+            def sorted_on_filename(iterable):
+                return sorted(
+                    iterable,
+                    key=lambda f: f.get('filename', '').lower())
+
             try:
                 self._files = {
-                    'organization': list(self._organization_files()),
-                    'reports': list(self._reports_files()),
-                    'results': list(self._results_files()),
-               'location_shapefile': list(self._location_shapefile_files()),
-                    'contractor_hydrovakken': list(self._shapefile_files()),
-                    'hydrovakken': list(self._hydrovakken_files()),
+                    'organization': sorted_on_filename(
+                        self._organization_files()),
+                    'reports': sorted_on_filename(self._reports_files()),
+                    'results': sorted_on_filename(self._results_files()),
+                    'location_shapefile': sorted_on_filename(
+                        self._location_shapefile_files()),
+                    'contractor_hydrovakken': sorted_on_filename(
+                        self._shapefile_files()),
+                    'hydrovakken': sorted_on_filename(
+                        self._hydrovakken_files()),
                     }
             except Exception as e:
                 logger.debug(e)

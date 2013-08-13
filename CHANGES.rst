@@ -8,6 +8,8 @@ Changelog of lizard-progress
 - Uploaded report files can now also have .zip and .doc extensions, instead
   of only .pdf.
 
+- Sort downloadable files.
+
 
 1.31 (2013-07-12)
 -----------------

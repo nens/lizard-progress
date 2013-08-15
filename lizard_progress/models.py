@@ -97,9 +97,28 @@ class Organization(models.Model):
             self.errors.add(error)
 
 
+class UserRole(models.Model):
+    ROLE_MANAGER = "manager"  # Can make new projects, configure running projects
+    # ROLE_VIEWER = "viewer"  # This role is commented out because right now I *think* we
+                              # can keep this implicit -- all members of an organization
+                              # are viewers.
+    ROLE_UPLOADER = "uploader"  # Can upload measurements and reports if user's organization
+                                # is a contractor in the project
+    ROLE_ADMIN = "admin"  # Can assign roles to people in the organization, create and delete
+                          # user accounts belonging to this organization.
+
+    # Rows according to those roles are entered into the database by means of a data migration.
+    code = models.CharField(max_length=10)
+    description = models.CharField(max_length=100)
+
+    def __unicode__(self):
+        return self.description
+
+
 class UserProfile(models.Model):
     user = models.ForeignKey(User, unique=True)
     organization = models.ForeignKey(Organization)
+    roles = models.ManyToManyField(UserRole)
 
     @classmethod
     def get_by_user(cls, user):

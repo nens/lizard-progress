@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.39 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Add user roles. A userprofile can now have one or more roles.
 
 
 1.38 (2013-10-18)

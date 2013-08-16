@@ -7,6 +7,9 @@ Changelog of lizard-progress
 
 - Add user roles. A userprofile can now have one or more roles.
 
+- Organization is now a property of a project. Before, the
+  organization of the project's superuser was used.
+
 
 1.38 (2013-10-18)
 -----------------

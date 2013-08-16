@@ -133,29 +133,30 @@ class UserProfile(models.Model):
         return "{0} {1}".format(self.user.username,
                                 self.organization.name)
 
+    def has_role(self, role_code):
+        return self.roles.filter(code=role_code).exists()
+
 
 def has_access(user, project, contractor=None):
     """Test whether user has access to this project (showing data of
     this contractor)."""
 
-    if user.is_anonymous():
-        # Not logged in
+    userprofile = UserProfile.get_by_user(user)
+    if userprofile is None:
         return False
 
-    if user.is_superuser:
-        # Site superuser
+    if (userprofile.organization ==
+        project.organization):
+        # Everybody in the project's organization can see it.
         return True
 
-    if project.superuser == user:
-        # Project superuser
-        return True
-
-    userprofile = UserProfile.objects.get(user=user)
     if contractor:
+        # If it is about one contractor's data in this project,
+        # it's only visible for that contractor.
         return contractor.organization == userprofile.organization
     else:
         # If this is not about some specific contractor's data,
-        # all contractors have access.
+        # all contractors also have access.
         for c in project.contractor_set.all():
             if c.organization == userprofile.organization:
                 return True
@@ -186,6 +187,9 @@ class Project(models.Model):
     name = models.CharField(max_length=50, unique=True,
         verbose_name='projectnaam')
     slug = models.SlugField(max_length=50, unique=True)
+    organization = models.ForeignKey(Organization, null=False)
+
+    # Deprecated
     superuser = models.ForeignKey(User, null=True, blank=True,
         verbose_name='projectmanager')
 
@@ -221,11 +225,6 @@ class Project(models.Model):
             return True
         except MeasurementType.DoesNotExist:
             return False
-
-    @property
-    def organization(self):
-        return Organization.objects.get(
-            userprofile__user=self.superuser)
 
     def needs_predefined_locations(self, available_measurement_type):
         if available_measurement_type.needs_predefined_locations:

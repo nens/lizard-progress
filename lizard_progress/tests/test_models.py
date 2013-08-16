@@ -58,6 +58,7 @@ class ProjectF(factory.Factory):
     name = "Test project"
     slug = "testproject"
 
+    organization = factory.SubFactory(OrganizationF)
     superuser = factory.SubFactory(UserF)
 
 
@@ -231,23 +232,34 @@ class TestUserProfile(TestCase):
             organization=OrganizationF(name="test"))
         self.assertEquals(unicode(userprofile), "admin test")
 
+    def test_has_role_false(self):
+        userprofile = UserProfileF(
+            user=UserF(username="admin"),
+            organization=OrganizationF(name="test"))
+        self.assertFalse(userprofile.has_role(models.UserRole.ROLE_ADMIN))
+
+    def test_has_role_true(self):
+        userprofile = UserProfileF(
+            user=UserF(username="admin"),
+            organization=OrganizationF(name="test"))
+        userprofile.roles.add(
+            models.UserRole.objects.get(code=models.UserRole.ROLE_ADMIN))
+        self.assertTrue(userprofile.has_role(models.UserRole.ROLE_ADMIN))
+
 
 class TestSecurity(TestCase):
     """Test for security."""
-    def test_has_access_superuser(self):
-        """Test access for superuser to a project."""
-        user = UserF(is_superuser=True)
-        project = ProjectF(superuser=user)
-        has_access = models.has_access(user, project)
-        self.assertEquals(has_access, True)
-
     def test_has_access_contractor(self):
         """Test access for contractor to a project."""
-        uploader = UserF(username="uploader", is_superuser=False)
-        uploaderorganization = OrganizationF(name="Uploader organization")
-        UserProfileF(
+        uploader = UserF.create(username="uploader", is_superuser=False)
+        uploaderorganization = OrganizationF.create(name="Uploader organization")
+        UserProfileF.create(
             user=uploader, organization=uploaderorganization)
-        project = ProjectF(superuser=UserF(is_superuser=True))
+        projectorganization = OrganizationF.create(name="organization")
+        projectuser = UserF(is_superuser=True)
+        project = ProjectF.create(superuser=projectuser)
+        UserProfileF.create(
+            user=projectuser, organization=projectorganization)
         contractor = ContractorF(
             project=project, organization=uploaderorganization)
         has_access = models.has_access(uploader, project, contractor)
@@ -255,23 +267,12 @@ class TestSecurity(TestCase):
 
 
 class TestProject(TestCase):
-    def test_organization(self):
-        organization = OrganizationF.create()
-        user = UserF.create()
-        UserProfileF.create(user=user, organization=organization)
-
-        project = ProjectF.build(superuser=user)
-
-        self.assertEquals(project.organization, organization)
-
     def test_set_slug_and_save(self):
         organization = OrganizationF.create()
-        user = UserF.create()
-        UserProfileF.create(user=user, organization=organization)
 
         project = ProjectF.build(
             name="Test Project",
-            superuser=user)
+            organization=organization)
 
         project.set_slug_and_save()
         self.assertTrue(project.slug)

@@ -95,14 +95,11 @@ class ProjectsMixin(object):
 
     def user_is_uploader(self):
         userprofile = UserProfile.get_by_user(self.request.user)
-        return userprofile and not userprofile.organization.is_project_owner
+        return userprofile and userprofile.has_role(models.UserRole.ROLE_UPLOADER)
 
     def user_is_manager(self):
         userprofile = UserProfile.get_by_user(self.request.user)
-        return (
-            userprofile and
-            userprofile.organization.is_project_owner and
-            self.request.user.has_perm('lizard_progress.add_project'))
+        return userprofile and userprofile.has_role(models.UserRole.ROLE_MANAGER)
 
     def project_home_url(self):
         if not self.project_slug:

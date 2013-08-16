@@ -75,7 +75,8 @@ class ProjectWizard(UiView, SessionWizardView):
         """Returns a dictionary with initial form data for the current step."""
         form_initial = super(ProjectWizard, self).get_form_initial(step)
         if step == "0":
-            form_initial['superuser'] = self.request.user
+            form_initial['organization'] = Organization.get_by_user(
+                self.request.user)
         return form_initial
 
     def get_template_names(self):

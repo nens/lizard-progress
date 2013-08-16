@@ -1,13 +1,11 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
 """Tests that don't belong elsewhere"""
 
-from django.conf import settings
 from django.test import TestCase
 
-from lizard_progress import views
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress.models import Project, Contractor,\
-    MeasurementType, AvailableMeasurementType
+    MeasurementType, AvailableMeasurementType, Organization
 from lizard_map.models import WorkspaceEdit, WorkspaceEditItem
 from lizard_progress.specifics import ProgressParser, UnSuccessfulParserResult
 
@@ -41,7 +39,8 @@ class AdapterTest(TestCase):
             ValueError, self.init_adapter, None, None, None, None)
 
     def test_full_adapter(self):
-        project = Project(slug='test')
+        project = Project(
+            slug='test', organization=Organization.objects.create(name="test"))
         project.save()
         contractor = Contractor(slug='contractor')
         contractor.project = project

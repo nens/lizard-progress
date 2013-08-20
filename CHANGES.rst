@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.34 (unreleased)
+1.34 (2013-08-20)
 -----------------
 
 - Fix wrong percentage (b/a instead of a/b)

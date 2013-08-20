@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 
 from lizard_progress.views.views import ProjectsView
 
+from lizard_progress import models
 from lizard_progress import configuration
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class ConfigurationView(ProjectsView):
                 "lizard_progress_project_configuration_view",
                 kwargs={'project_slug': self.project.slug}))
 
-        if self.project.superuser != self.user:
+        if not self.project.is_manager(self.user):
             return redirect
 
         for key in configuration.CONFIG_OPTIONS:

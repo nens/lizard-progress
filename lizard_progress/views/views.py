@@ -43,10 +43,11 @@ from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
 from lizard_progress.models import MeasurementType
 from lizard_progress.models import Project
-from lizard_progress.models import UserProfile
 from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
+
+from lizard_progress import forms
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,8 @@ class ProjectsMixin(object):
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         self.user = request.user
+        self.profile = models.UserProfile.get_by_user(self.user)
+
         self.project_slug = kwargs.get('project_slug')
         if self.project_slug:
             self.project = get_object_or_404(Project, slug=self.project_slug)
@@ -84,9 +87,8 @@ class ProjectsMixin(object):
         return projects
 
     def organization(self):
-        """Return organization of current user."""
-        userprofile = UserProfile.objects.get(user=self.request.user)
-        return userprofile and userprofile.organization.name
+        """Return organization name of current user."""
+        return self.profile and self.profile.organization.name
 
     def user_can_upload_to_project(self):
         if not self.project:
@@ -94,12 +96,10 @@ class ProjectsMixin(object):
         return self.project.can_upload(self.request.user)
 
     def user_is_uploader(self):
-        userprofile = UserProfile.get_by_user(self.request.user)
-        return userprofile and userprofile.has_role(models.UserRole.ROLE_UPLOADER)
+        return self.profile and self.profile.has_role(models.UserRole.ROLE_UPLOADER)
 
     def user_is_manager(self):
-        userprofile = UserProfile.get_by_user(self.request.user)
-        return userprofile and userprofile.has_role(models.UserRole.ROLE_MANAGER)
+        return self.profile and self.profile.has_role(models.UserRole.ROLE_MANAGER)
 
     def project_home_url(self):
         if not self.project_slug:
@@ -822,3 +822,15 @@ def protected_file_download(request, project_slug, contractor_slug,
             response)
         return serve(request, file_path, '/')
     return response
+
+
+class NewProjectView(ProjectsView):
+    template_name = "lizard_progress/newproject.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method == 'POST':
+            self.form = forms.NewProjectForm(request.POST)
+        else:
+            self.form = forms.NewProjectForm()
+
+        return super(NewProjectView, self).dispatch(request, *args, **kwargs)

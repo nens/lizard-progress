@@ -4,10 +4,8 @@
 from itertools import chain
 
 from django import forms
-from django.contrib.auth.models import User
 from lizard_progress.models import (AvailableMeasurementType, Contractor,
-                                    Project, Organization)
-from lizard_progress.views import UploadShapefilesView
+                                    Project)
 from django.utils.html import conditional_escape
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
@@ -17,36 +15,6 @@ import os
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-class ProjectForm(forms.ModelForm):
-    name = forms.CharField(max_length=50)
-
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.get('initial').pop('superuser')
-        super(ProjectForm, self).__init__(*args, **kwargs)
-
-        usernames = [u.username for u in
-                     Organization.users_in_same_organization(self.user)]
-        self.fields['superuser'].queryset = \
-            User.objects.filter(username__in=usernames)
-
-    def clean_name(self):
-        """Validates and returns the name of a new project."""
-        # Since the `slug` field is excluded, it will not
-        # be checked automatically for uniqueness.
-        name = self.cleaned_data['name']
-        usernames = list(
-            Organization.users_in_same_organization(self.user))
-        if Project.objects.filter(
-            name=name, superuser__in=usernames).exists():
-            msg = "Kies a.u.b. een andere Projectnaam."
-            raise forms.ValidationError(msg)
-        return name
-
-    class Meta:
-        model = Project
-        exclude = ('slug',)
 
 
 USER_CHOICES = (
@@ -251,6 +219,11 @@ class CalculateForm(forms.Form):
     @property
     def has_mothershape(self):
         """Returns `True` if an uploaded shapefile is present."""
+        from lizard_progress.views import UploadShapefilesView
         directory = UploadShapefilesView.get_directory(self.contractor)
         return bool(
             [fn for fn in os.listdir(directory) if fn.endswith('.shp')])
+
+
+class NewProjectForm(forms.Form):
+    name = forms.CharField(max_length=50)

@@ -61,50 +61,6 @@ class OverwriteStorage(FileSystemStorage):
         return name
 
 
-class ProjectWizard(UiView, SessionWizardView):
-    """Form wizard for creating a new `Project`.
-
-    Usage of this wizard requires `lizard_progress.add_project` permission.
-    """
-
-    @method_decorator(permission_required('lizard_progress.add_project'))
-    def dispatch(self, *args, **kwargs):
-        return super(ProjectWizard, self).dispatch(*args, **kwargs)
-
-    def get_form_initial(self, step):
-        """Returns a dictionary with initial form data for the current step."""
-        form_initial = super(ProjectWizard, self).get_form_initial(step)
-        if step == "0":
-            form_initial['organization'] = Organization.get_by_user(
-                self.request.user)
-        return form_initial
-
-    def get_template_names(self):
-        return ["lizard_progress/new_project.html"]
-
-    @transaction.commit_on_success
-    def done(self, form_list, **kwargs):
-        # Save the new project.
-        project = form_list[0].save(commit=False)
-        project.set_slug_and_save()
-
-        if False:
-            # For development purposes.
-            return render_to_response('lizard_progress/done.html', {
-                'form_data': [form.cleaned_data for form in form_list],
-            })
-        else:
-            msg = 'Het aanmaken van project "%s" was succesvol.' % project.name
-            messages.info(self.request, msg)
-            msg = ('U kunt hier eventueel de configuratie '
-                   'van dit project aanpassen.')
-            messages.info(self.request, msg)
-            return HttpResponseRedirect(
-                reverse(
-                    'lizard_progress_project_configuration_view',
-                    kwargs={"project_slug": project.slug}))
-
-
 class ContractorWizard(UiView, SessionWizardView):
     """Form wizard for creating a new `Contractor`.
 

@@ -199,6 +199,11 @@ class Project(models.Model):
     def __unicode__(self):
         return unicode(self.name)
 
+    def is_manager(self, user):
+        profile = UserProfile.get_for_user(user)
+        return (self.organization == profile.organization and
+                profile.has_role(UserRole.ROLE_MANAGER))
+
     def set_slug_and_save(self):
         """Call on an unsaved project.
 
@@ -241,11 +246,11 @@ class Project(models.Model):
 
     def can_upload(self, user):
         """User can upload if he is the superuser or with one of the
-        contractors.  Slightly different from has_access, because
-        admin isn't included."""
+        contractors."""
 
-        return (user == self.superuser or Contractor.objects.filter(
-                project=self, organization__userprofile__user=user).exists())
+        return (self.is_manager(user) or
+                Contractor.objects.filter(
+                project=self, organization=Organization.get_by_user(user)).exists())
 
     def work_to_do(self):
         """Returns list of contractor/measurement type combinations

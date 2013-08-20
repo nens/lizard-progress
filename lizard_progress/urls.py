@@ -11,14 +11,7 @@ from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 
-from lizard_progress.forms import CalculateForm
-from lizard_progress.forms import ContractorChoiceForm
-from lizard_progress.forms import ContractorForm
-from lizard_progress.forms import MeasurementTypeForm
-from lizard_progress.forms import ProjectChoiceForm
-from lizard_progress.forms import ProjectForm
-from lizard_progress.forms import ShapefileForm
-from lizard_progress.forms import needs_shapefile_condition
+from lizard_progress import forms
 
 from lizard_progress.views import ActivitiesWizard
 from lizard_progress.views import ComparisonPopupView
@@ -31,7 +24,6 @@ from lizard_progress.views import DownloadHomeView
 from lizard_progress.views import DownloadView
 from lizard_progress.views import HydrovakkenWizard
 from lizard_progress.views import MapView
-from lizard_progress.views import ProjectWizard
 from lizard_progress.views import ProjectsView
 from lizard_progress.views import ResultsWizard
 from lizard_progress.views import UploadDialogView
@@ -57,31 +49,32 @@ urlpatterns = patterns(
     url('^projects/$',
         login_required(ProjectsView.as_view()),
         name='lizard_progress_projecten'),
+    url('^newproject/$',
+        login_required(views.NewProjectView.as_view()),
+        name='lizard_progress_newproject'),
     url('^admin/$',
         login_required(
             views.View.as_view(template_name='lizard_progress/admin.html')),
         name='lizard_progress_admin'),
-    url('^admin/projects/new/$',
-        login_required(ProjectWizard.as_view([ProjectForm])),
-        name='lizard_progress_newproject'),
     url('^admin/contractors/new/$',
         login_required(ContractorWizard.as_view(
-            [ContractorForm])),
+            [forms.ContractorForm])),
         name='lizard_progress_newcontractor'),
     url('^admin/activities/new/$',
         login_required(ActivitiesWizard.as_view(
-            [ProjectChoiceForm, ContractorChoiceForm,
-             MeasurementTypeForm, ShapefileForm],
+            [forms.ProjectChoiceForm, forms.ContractorChoiceForm,
+             forms.MeasurementTypeForm, forms.ShapefileForm],
             condition_dict={
-                '3': needs_shapefile_condition})),
+                '3': forms.needs_shapefile_condition})),
         name='lizard_progress_newactivities'),
     url('^admin/hydrovakken/new/$',
         login_required(HydrovakkenWizard.as_view(
-            [ProjectChoiceForm, ShapefileForm])),
+            [forms.ProjectChoiceForm, forms.ShapefileForm])),
         name='lizard_progress_newhydrovakken'),
     url('^admin/results/$',
         login_required(ResultsWizard.as_view(
-            [ProjectChoiceForm, ContractorChoiceForm, CalculateForm])),
+            [forms.ProjectChoiceForm, forms.ContractorChoiceForm,
+             forms.CalculateForm])),
         name='lizard_progress_results'),
     url('^projects/(?P<project_slug>[^/]+)/$',
         login_required(ProjectsView.as_view()),

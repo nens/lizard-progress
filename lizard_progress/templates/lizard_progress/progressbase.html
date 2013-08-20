@@ -32,10 +32,10 @@ Navigation
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
 {% if view.user_is_manager %}
-  <h2>Beheer</h2>
+  <h2>Nieuw project</h2>
   <ul class="without-bullets">
   <li>
-    <a href="{% url lizard_progress_admin %}">Beheer projecten</a>
+    <a href="{% url lizard_progress_newproject %}"><i class="icon-plus-sign"></i>Project toevoegen</a>
   </li>
   </ul>
 {% endif %}
@@ -58,6 +58,7 @@ Navigation
 
 {% block content %}
 <div id="actions" class="sidebar-inner">
+{% block topbar %}
 {% if view.project %}
 <ul class="nav nav-pills">
 <li {% if view.active_menu == "dashboard" %}class="active"{% endif %}><a title="Dashboard" href="{% url lizard_progress_dashboardview project_slug=view.project_slug %}">Dashboard</a></li>
@@ -73,6 +74,7 @@ Navigation
 {% else %}
 <p class="small">(Kies een project)</p>
 {% endif %}
+{% endblock %}
 </div>
 
 <div id="contentpage">

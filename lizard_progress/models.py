@@ -627,12 +627,12 @@ class UploadedFile(models.Model):
                 num_measurements=num_measurements)
 
     def delete_self(self):
-        if os.path.exists(self.path):
-            os.remove(self.path)
-        # Try to remove empty directory
         try:
-            os.rmdir(os.path.basename(self.path))
-        except IOError:
+            if os.path.exists(self.path):
+                os.remove(self.path)
+            # Try to remove empty directory
+            os.rmdir(os.path.dirname(self.path))
+        except (IOError, OSError):
             pass
 
         self.delete()

@@ -7,6 +7,8 @@ Changelog of lizard-progress
 
 - Fix wrong percentage (b/a instead of a/b)
 
+- Fix bugs with removing uploaded files
+
 
 1.33 (2013-08-13)
 -----------------

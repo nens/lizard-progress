@@ -298,8 +298,9 @@ class Project(models.Model):
                 measurementtype__project=self)):
             return "N/A"
 
-        percentage = ((100 * self.number_of_scheduled_measurements()) /
-                      self.number_of_complete_scheduled_measurements())
+        percentage = (
+            (100 * self.number_of_complete_scheduled_measurements()) /
+            self.number_of_scheduled_measurements())
         return "{percentage:2.0f}%".format(percentage=percentage)
 
     def latest_log(self):

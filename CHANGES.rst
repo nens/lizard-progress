@@ -8,6 +8,8 @@ Changelog of lizard-progress
 - Fix Hydrovakken upload so that it works with mixed LineString /
   MultiLineString content.
 
+- Try to fix plupload for Internet Explorer.
+
 
 1.34 (2013-08-20)
 -----------------

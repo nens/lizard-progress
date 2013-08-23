@@ -5,7 +5,8 @@ Changelog of lizard-progress
 1.35 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix Hydrovakken upload so that it works with mixed LineString /
+  MultiLineString content.
 
 
 1.34 (2013-08-20)

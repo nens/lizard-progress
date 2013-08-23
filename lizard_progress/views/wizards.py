@@ -14,6 +14,9 @@ from django import db
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.formtools.wizard.views import SessionWizardView
+from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.geos import LineString
+from django.contrib.gis.geos import MultiLineString
 from django.contrib.gis.geos import fromstr
 from django.contrib.gis.utils import LayerMapping
 from django.contrib.gis.utils import LayerMapError
@@ -375,8 +378,8 @@ class HydrovakkenWizard(UiView, SessionWizardView):
 
     @transaction.commit_on_success
     def done(self, form_list, **kwargs):
-        success = self.__import_geoms(form_list)
         self.__save_uploads(form_list)
+        success = self.__import_geoms(form_list)
         if success:
             project = form_list[0].cleaned_data['project']
             msg = ('Het uploaden van hydrovakken t.b.v. project "%s" '
@@ -398,43 +401,35 @@ class HydrovakkenWizard(UiView, SessionWizardView):
         # robust way. Bear with me.
         success = True
 
-        global PROJECT
-        PROJECT = form_list[0].cleaned_data['project']
-
+        project = form_list[0].cleaned_data['project']
         shp = form_list[1].cleaned_data['shp']
 
-        id_field_name = configuration.get(PROJECT, 'hydrovakken_id_field')
-        mapping = {
-            'br_ident': id_field_name,
-            'the_geom': 'LINESTRING'
-            }
+        id_field_name = configuration.get(project, 'hydrovakken_id_field')
 
-        try:
-            layer_mapping = LayerMapping(Hydrovak,
-                                         shp.file.name, mapping,
-                                         source_srs=SRID)
+        datasource = DataSource(shp.file.name)
+        layer = datasource[0]
 
-            # First, empty the previous Hydrovakken of this project,
-            # because LayerMapping has no way to update them.
-            Hydrovak.objects.filter(project=PROJECT).delete()
+        for feature in layer:
+            if id_field_name in feature.fields:
+                # The shape can contain both LineStrings and
+                # MultiLineStrings - to be able to save both we
+                # convert them all to multis
+                geom = fromstr(feature.geom.ewkt)
+                if isinstance(geom, LineString):
+                    geom = MultiLineString(geom)
 
-            layer_mapping.save(strict=True)
-        except db.IntegrityError:
-            # IDs weren't unique.
-            messages.info(self.request,
-                    "Het uploaden van hydrovakken was NIET succesvol! "
-                    "De IDs van de hydrovakken zijn niet uniek.")
-            success = False
-        except LayerMapError:
-            # ID field is wrong
-            messages.info(self.request,
-          "Het uploaden van hydrovakken was NIET succesvol! "
-          "Waarschijnlijk is het veld '{name}' niet aanwezig in de shapefile."
-                          .format(name=id_field_name))
-            success = False
-        finally:
-            PROJECT = None
-            return success
+                hydrovak, created = Hydrovak.objects.get_or_create(
+                    project=project,
+                    br_ident=unicode(feature[id_field_name]),
+                    defaults={'the_geom': geom})
+                if not created:
+                    hydrovak.the_geom = geom
+                    hydrovak.save()
+            else:
+                logger.debug("id_field_name not present")
+                logger.debug(feature.fields)
+
+        return success
 
     @staticmethod
     def __save_uploads(form_list):
@@ -454,14 +449,6 @@ class HydrovakkenWizard(UiView, SessionWizardView):
 
 
 PROJECT = None
-
-
-@receiver(pre_save, sender=Hydrovak)
-def hydrovak_handler(sender, **kwargs):
-    if PROJECT:
-        hydrovak = kwargs['instance']
-        if not hydrovak.pk:
-            hydrovak.project = PROJECT
 
 
 class ResultsWizard(UiView, SessionWizardView):

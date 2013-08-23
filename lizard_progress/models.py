@@ -540,7 +540,7 @@ class Hydrovak(models.Model):
     """Hydrovak."""
     project = models.ForeignKey(Project)
     br_ident = models.CharField(max_length=24)
-    the_geom = models.LineStringField(srid=SRID)
+    the_geom = models.MultiLineStringField(srid=SRID)
     objects = models.GeoManager()
 
     def __unicode__(self):

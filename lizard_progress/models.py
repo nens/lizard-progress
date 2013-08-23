@@ -11,6 +11,7 @@ RDNEW = 28992
 SRID = RDNEW
 
 import datetime
+import functools
 import logging
 import os
 import random
@@ -18,7 +19,9 @@ import string
 
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.http import HttpRequest
 from django.template.defaultfilters import slugify
 
 # JSONField was moved for lizard-map 4.0...
@@ -98,21 +101,51 @@ class Organization(models.Model):
 
 
 class UserRole(models.Model):
-    ROLE_MANAGER = "manager"  # Can make new projects, configure running projects
-    # ROLE_VIEWER = "viewer"  # This role is commented out because right now I *think* we
-                              # can keep this implicit -- all members of an organization
-                              # are viewers.
-    ROLE_UPLOADER = "uploader"  # Can upload measurements and reports if user's organization
-                                # is a contractor in the project
-    ROLE_ADMIN = "admin"  # Can assign roles to people in the organization, create and delete
-                          # user accounts belonging to this organization.
+    ROLE_MANAGER = "manager"  # Can make new projects, configure
+                              # running projects
+    # ROLE_VIEWER = "viewer"  # This role is commented out because right
+                            # now I *think* we can keep this implicit
+                            # -- all members of an organization are
+                            # viewers.
+    ROLE_UPLOADER = "uploader"  # Can upload measurements and reports
+                                # if user's organization is a
+                                # contractor in the project
+    ROLE_ADMIN = "admin"  # Can assign roles to people in the
+                          # organization, create and delete user
+                          # accounts belonging to this organization.
 
-    # Rows according to those roles are entered into the database by means of a data migration.
+    # Rows according to those roles are entered into the database by
+    # means of a data migration.
     code = models.CharField(max_length=10)
     description = models.CharField(max_length=100)
 
     def __unicode__(self):
         return self.description
+
+    @classmethod
+    def check(cls, role):
+        """Return a view decorator that checks if the logged in user
+        has a given role, otherwise raises PermissionDenied."""
+
+        def view_wrapper(view):
+            """Decorator. Returns a wrapped version of the view that
+            checks roles."""
+
+            @functools.wraps(view)
+            def wrapped(*args, **kwargs):
+                # The first or second argument must be the request
+                if isinstance(args[0], HttpRequest):
+                    request = args[0]
+                else:
+                    request = args[1]
+
+                profile = UserProfile.get_by_user(request.user)
+                if not profile or not profile.has_role(role):
+                    raise PermissionDenied()
+
+                return view(*args, **kwargs)
+            return wrapped
+        return view_wrapper
 
 
 class UserProfile(models.Model):

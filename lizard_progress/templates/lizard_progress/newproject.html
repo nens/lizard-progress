@@ -1,0 +1,18 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block topbar %}
+{% endblock %}
+
+{% block contentpage %}
+<h2>Project toevoegen</h2>
+{% if not view.user_is_manager %}
+<p>U bent geen projectbeheerder en mag dus geen nieuwe projecten toevoegen.</p>
+{% else %}
+<form action="" method="post">{% csrf_token %}
+<table>
+{{ view.form }}
+</table>
+<input type="submit" class="btn btn-primary" value="Nieuw project toevoegen">
+</form>
+{% endif %}
+{% endblock contentpage %}

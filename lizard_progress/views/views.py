@@ -23,6 +23,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import simplejson as json
 from django.utils.translation import ugettext as _
@@ -827,6 +828,7 @@ def protected_file_download(request, project_slug, contractor_slug,
 class NewProjectView(ProjectsView):
     template_name = "lizard_progress/newproject.html"
 
+    @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def dispatch(self, request, *args, **kwargs):
         if request.method == 'POST':
             self.form = forms.NewProjectForm(request.POST)
@@ -834,3 +836,30 @@ class NewProjectView(ProjectsView):
             self.form = forms.NewProjectForm()
 
         return super(NewProjectView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        profile = models.UserProfile.get_by_user(request.user)
+        organization = profile.organization
+
+        project = models.Project(
+            name=self.form.cleaned_data['name'],
+            organization=organization)
+        project.set_slug_and_save()
+
+        for contractor in self.form.cleaned_data['contractors']:
+            c = models.Contractor(
+                project=project,
+                organization=contractor)
+            c.set_slug_and_save()
+
+        for mtype in self.form.cleaned_data['mtypes']:
+            c = models.MeasurementType.objects.create(
+                project=project,
+                mtype=mtype)
+
+        return HttpResponseRedirect(
+            reverse('lizard_progress_project_configuration_view',
+                    kwargs={'project_slug': project.slug}))

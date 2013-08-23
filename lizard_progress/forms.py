@@ -1,14 +1,21 @@
-# coding=utf8
+# coding=UTF-8
 """Forms, mainly used as steps by form wizards."""
 
 from itertools import chain
 
+from tls import request  # ! So that form validation can know about
+                         # the current user
+
 from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.encoding import force_unicode
+from django.utils.html import conditional_escape
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
+
+from lizard_progress import models
 from lizard_progress.models import (AvailableMeasurementType, Contractor,
                                     Project)
-from django.utils.html import conditional_escape
-from django.utils.encoding import force_unicode
-from django.utils.safestring import mark_safe
 
 import os
 
@@ -225,5 +232,32 @@ class CalculateForm(forms.Form):
             [fn for fn in os.listdir(directory) if fn.endswith('.shp')])
 
 
+def project_name_validator(name):
+    organization = models.Organization.get_by_user(request.user)
+    if not organization:
+        raise ValidationError(_("No organization found!"))
+
+    if models.Project.objects.filter(
+        organization=organization, name=name).exists():
+        raise ValidationError(_("This project name already exists."))
+
+
 class NewProjectForm(forms.Form):
-    name = forms.CharField(max_length=50)
+    def __init__(self, *args, **kwargs):
+        if 'organization' in kwargs:
+            self.organization = kwargs['organization']
+            del kwargs['organization']
+        else:
+            self.organization = None
+        return super(NewProjectForm, self).__init__(*args, **kwargs)
+
+    name = forms.CharField(
+        label=_("Project name"),
+        max_length=50,
+        validators=[project_name_validator])
+    contractors = forms.ModelMultipleChoiceField(
+        label=_("Choose 1 or more contractors"),
+        queryset=models.Organization.objects.all())
+    mtypes = forms.ModelMultipleChoiceField(
+        label=_("Choose 1 or more measurement types"),
+        queryset=models.AvailableMeasurementType.objects.all())

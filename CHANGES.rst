@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-1.36 (unreleased)
+1.36 (2013-10-10)
 -----------------
 
 - Plupload won't work in Internet Explorer. This version implements a

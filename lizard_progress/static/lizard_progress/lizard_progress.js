@@ -31,6 +31,10 @@ $().ready(function () {
         uploader.splice(); // Clean the queue
         uploader.refresh();
 
+        // Simple upload form for IE
+        $simple_form = $('#simple-upload-form');
+        $simple_form.attr("action", $(this).attr('data-upload-url'));
+
         // prevent the default action, e.g., following a link
         return false;
     });

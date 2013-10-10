@@ -10,12 +10,10 @@ import logging
 import os
 import shutil
 import tempfile
-import time
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.http import Http404
 from django.http import HttpResponse
@@ -249,16 +247,22 @@ class UploadView(View):
         # Note that the whole chunking thing is currently turned off
         # in Javascript because it is buggy.
 
+        # Usually we return JSON, but not with the simple upload form (for IE)
+        return_json = not request.POST.get("simple-upload")
+
         try:
             self.contractor = models.Contractor.objects.get(
                 project=self.project,
                 organization__userprofile__user=request.user)
         except models.Contractor.DoesNotExist:
-            return json_response({'error': {
-                        'details': "User not allowed to upload files."}})
+            if return_json:
+                return json_response({'error': {
+                            'details': "User not allowed to upload files."}})
+            else:
+                raise PermissionDenied("User not allowed to upload files.")
 
         uploaded_file = request.FILES['file']
-        filename = request.POST['filename']
+        filename = request.POST.get('filename', uploaded_file.name)
         chunk = int(request.POST.get('chunk', 0))
         chunks = int(request.POST.get('chunks', 1))
 
@@ -277,12 +281,25 @@ class UploadView(View):
 
         if chunk == chunks - 1:
             # We have the whole file.
-            return self.process_file(path)
+            if return_json:
+                return self.process_file(path)
+            else:
+                self.process_file(path)
+                return HttpResponseRedirect(self.url)
         else:
-            return json_response({})
+            if return_json:
+                return json_response({})
+            else:
+                return HttpResponseRedirect(self.url)
 
     def process_file(self, path):
         raise NotImplementedError
+
+    @property
+    def url(self):
+        return reverse(
+            'lizard_progress_uploadhomeview',
+            kwargs={'project_slug': self.project_slug})
 
 
 class UploadMeasurementsView(UploadView):
@@ -299,7 +316,6 @@ class UploadMeasurementsView(UploadView):
 
 
 class UploadReportsView(UploadView):
-
     exts = [".pdf", ".doc", ".zip"]
 
     @staticmethod
@@ -323,7 +339,6 @@ class UploadReportsView(UploadView):
 
 
 class UploadShapefilesView(UploadView):
-
     exts = [".dbf", ".prj", ".sbn", ".sbx", ".shp", ".shx", ".xml"]
 
     def process_file(self, path):

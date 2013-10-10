@@ -5,7 +5,10 @@ Changelog of lizard-progress
 1.36 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Plupload won't work in Internet Explorer. This version implements a
+  very basic form for such browsers that just uploads one single
+  file. This will be particularly annoying for shapefiles, but at
+  least IE can be used now.
 
 
 1.35 (2013-08-23)

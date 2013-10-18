@@ -45,6 +45,9 @@ var upload_page_functions = upload_page_functions || (function () {
     var refresh_uploaded_file_tables = function () {
         refresh_url = $(id_not_ready_div).attr("data-refresh-url");
 
+        // To get it working in IE
+        $.ajaxSetup({ cache: false });
+
         $.getJSON(refresh_url, function (data) {
             var ids_to_keep = {};
 
@@ -58,7 +61,7 @@ var upload_page_functions = upload_page_functions || (function () {
                 var row_id = make_row_id(uploaded_file);
                 ids_to_keep[row_id] = true;
 
-                if ($("#"+row_id).length == 0) {
+                if ($("#"+row_id).length === 0) {
                     if (uploaded_file.ready) {
                         add_to_ready_table(uploaded_file);
                     } else {
@@ -74,14 +77,14 @@ var upload_page_functions = upload_page_functions || (function () {
                 }
             });
 
-            if ($(id_not_ready_div + " table tbody tr").length == 0) {
+            if ($(id_not_ready_div + " table tbody tr").length === 0) {
                 $(id_not_ready_div).fadeOut();
             } else {
                 // Keep refreshing until this table is empty
                 setTimeout(refresh_uploaded_file_tables, 1000);
             }
 
-            if ($(id_ready_div + " table tbody tr").length == 0) {
+            if ($(id_ready_div + " table tbody tr").length === 0) {
                 $(id_ready_div).fadeOut();
             }
         });

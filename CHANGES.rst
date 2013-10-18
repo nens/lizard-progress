@@ -5,7 +5,7 @@ Changelog of lizard-progress
 1.38 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Further fix IE bug (it caches Ajax requests).
 
 
 1.37 (2013-10-10)

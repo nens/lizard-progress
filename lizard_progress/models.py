@@ -233,7 +233,7 @@ class Project(models.Model):
         return unicode(self.name)
 
     def is_manager(self, user):
-        profile = UserProfile.get_for_user(user)
+        profile = UserProfile.get_by_user(user)
         return (self.organization == profile.organization and
                 profile.has_role(UserRole.ROLE_MANAGER))
 
@@ -281,9 +281,11 @@ class Project(models.Model):
         """User can upload if he is the superuser or with one of the
         contractors."""
 
-        return (self.is_manager(user) or
-                Contractor.objects.filter(
-                project=self, organization=Organization.get_by_user(user)).exists())
+        return (
+            self.is_manager(user) or
+            Contractor.objects.filter(
+                project=self, organization=Organization.get_by_user(user))
+            .exists())
 
     def work_to_do(self):
         """Returns list of contractor/measurement type combinations
@@ -392,7 +394,8 @@ class Contractor(models.Model):
 
     def show_measurement_type(self, measurement_type):
         """Only show that measurement type for this contractor if there are
-        scheduled measurements for it."""
+        scheduled measurements for it, or if all contractors can freely upload
+        measurements."""
 
         return ScheduledMeasurement.objects.filter(
             project=self.project,

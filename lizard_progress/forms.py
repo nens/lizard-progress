@@ -256,8 +256,8 @@ class NewProjectForm(forms.Form):
         max_length=50,
         validators=[project_name_validator])
     contractors = forms.ModelMultipleChoiceField(
-        label=_("Choose 1 or more contractors"),
+        label=_("Choose one or more contractors"),
         queryset=models.Organization.objects.all())
     mtypes = forms.ModelMultipleChoiceField(
-        label=_("Choose 1 or more measurement types"),
+        label=_("Choose one or more measurement types"),
         queryset=models.AvailableMeasurementType.objects.all())

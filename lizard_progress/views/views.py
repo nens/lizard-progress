@@ -915,10 +915,9 @@ class PlanningView(ProjectsView):
         mtype = models.MeasurementType.objects.get_or_create(
             mtype=amtype, project=self.project)[0]
 
-        tempdir = self.__save_uploaded_files(request)
+        shapefilepath = self.__save_uploaded_files(request, contractor, amtype)
         locations_from_shapefile = dict(
-            self.__locations_from_shapefile(tempdir))
-        self.__remove_tempdir(tempdir)
+            self.__locations_from_shapefile(shapefilepath))
 
         existing_measurements = list(
             self.__existing_measurements(self.project, mtype, contractor))
@@ -952,30 +951,32 @@ class PlanningView(ProjectsView):
             reverse('lizard_progress_dashboardview', kwargs={
                     'project_slug': self.project.slug}))
 
-    def __save_uploaded_files(self, request):
-        tempdir = tempfile.mkdtemp()
+    def __save_uploaded_files(self, request, contractor, amtype):
+        shapefilepath = os.path.join(
+            directories.location_shapefile_dir(
+                self.project, contractor),
+            b'{project}-{contractor}-{mtype}'.format(
+                project=self.project.slug,
+                contractor=contractor.slug,
+                mtype=amtype.slug))
 
-        with open(os.path.join(tempdir, 'shapefile.shp'), 'wb+') as dest:
+        with open(shapefilepath + '.shp', 'wb+') as dest:
             for chunk in request.FILES['shp'].chunks():
                 dest.write(chunk)
-        with open(os.path.join(tempdir, 'shapefile.dbf'), 'wb+') as dest:
+        with open(shapefilepath + '.dbf', 'wb+') as dest:
             for chunk in request.FILES['dbf'].chunks():
                 dest.write(chunk)
-        with open(os.path.join(tempdir, 'shapefile.shx'), 'wb+') as dest:
+        with open(shapefilepath + '.shx', 'wb+') as dest:
             for chunk in request.FILES['shx'].chunks():
                 dest.write(chunk)
 
-        return tempdir
+        return shapefilepath + '.shp'
 
-    def __remove_tempdir(self, tempdir):
-        shutil.rmtree(tempdir)
-
-    def __locations_from_shapefile(self, tempdir):
+    def __locations_from_shapefile(self, shapefilepath):
         """Get locations from shapefile and generate them as
         (location_code, WKT string) tuples."""
 
-        shapefile = osgeo.ogr.Open(
-            os.path.join(str(tempdir), b'shapefile.shp'))
+        shapefile = osgeo.ogr.Open(shapefilepath)
 
         for layer_num in xrange(shapefile.GetLayerCount()):
             layer = shapefile.GetLayer(layer_num)

@@ -10,6 +10,11 @@ Changelog of lizard-progress
 - Organization is now a property of a project. Before, the
   organization of the project's superuser was used.
 
+- There is a new 'new project' page.
+
+- Scheduling measurements now goes through the 'Planning' page, available
+  on the Dashboard.
+
 
 1.38 (2013-10-18)
 -----------------

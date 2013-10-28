@@ -10,7 +10,6 @@ import re
 import shutil
 import tempfile
 
-from django import db
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.formtools.wizard.views import SessionWizardView
@@ -18,14 +17,10 @@ from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import MultiLineString
 from django.contrib.gis.geos import fromstr
-from django.contrib.gis.utils import LayerMapping
-from django.contrib.gis.utils import LayerMapError
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.utils.decorators import method_decorator

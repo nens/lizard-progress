@@ -1,0 +1,14 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block contentpage %}
+<h2>Planning</h2>
+
+<p>Metingen kunnen gepland worden door het uploaden van een puntenshape. Eerder geplande metingen worden verwijderd, tenzij er al een meting geupload is. Al geuploade data blijft altijd bestaan.</p>
+
+<form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
+  {{ view.form.as_p }}
+  <input type="submit" value="Versturen" class="btn btn-primary">
+  {% csrf_token %}
+</form>
+
+{% endblock %}

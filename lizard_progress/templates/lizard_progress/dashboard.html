@@ -7,6 +7,7 @@
   <th>Uitvoerder</th>
   <th>Werkzaamheid</th>
   <th>Geplande metingen</th>
+  {% if view.user_is_manager %}<th>Planning</th>{% endif %}
   <th>Ingevoerde metingen</th>
   <th>Laatste upload</th>
 </thead>
@@ -15,6 +16,7 @@
   <td>{% if workinfo.contractor %}{{ workinfo.contractor.organization }}{% endif %}</td>
   <td>{% if workinfo.measurement_type %}{{ workinfo.measurement_type.name }}{% endif %}</td>
   <td>{% if workinfo.scheduled_measurements %}{{ workinfo.scheduled_measurements }}{% endif %}</td>
+  <td>{% if view.user_is_manager %}{% if workinfo.planning_url %}<a href="{{workinfo.planning_url}}">plan metingen</a>{% endif %}{% endif %}</td>
   <td>{{ workinfo.num_measurements }}</td>
   <td>{% if workinfo.last_measurement %}{{ workinfo.last_measurement }}{% endif %}</td>
 </tr>

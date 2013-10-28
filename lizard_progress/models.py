@@ -302,14 +302,17 @@ class Project(models.Model):
                 if not c.show_measurement_type(m):
                     continue
 
+                scheduled_measurements = len(
+                    ScheduledMeasurement.objects.filter(
+                        project=self,
+                        contractor=c,
+                        measurement_type=m))
                 if self.needs_predefined_locations(m.mtype):
-                    scheduled_measurements = len(
-                        ScheduledMeasurement.objects.filter(
-                            project=self,
-                            contractor=c,
-                            measurement_type=m))
+                    scheduled_measurements = str(scheduled_measurements)
                 else:
-                    scheduled_measurements = "N/A"
+                    scheduled_measurements = (
+                        "{}, vrij uploaden mogelijk".format(
+                            scheduled_measurements))
 
                 measurements = Measurement.objects.filter(
                     scheduled__project=self,
@@ -322,20 +325,29 @@ class Project(models.Model):
                 else:
                     last_m = None
 
+                planning_url = reverse('lizard_progress_planningview', kwargs={
+                            'project_slug': self.slug,
+                            'contractor_slug': c.slug,
+                            'mtype_slug': m.mtype.slug})
+
                 info_for_contractor.append({
                         'contractor': c,
                         'measurement_type': m,
                         'scheduled_measurements': scheduled_measurements,
+                        'planning_url': planning_url,
                         'num_measurements': num_m,
                         'last_measurement': last_m
                         })
             if info_for_contractor:
                 info += info_for_contractor
             else:
+                planning_url = reverse('lizard_progress_planningview', kwargs={
+                        'project_slug': self.slug,
+                        'contractor_slug': c.slug})
                 info.append({
                         'contractor': c,
                         'measurement_type': None,
-                        'scheduled_measurements': None,
+                        'scheduled_measurements': "Geen metingen toegewezen",
                         'num_measurements': 0,
                         'last_measurement': None
                         })
@@ -397,10 +409,13 @@ class Contractor(models.Model):
         scheduled measurements for it, or if all contractors can freely upload
         measurements."""
 
-        return ScheduledMeasurement.objects.filter(
-            project=self.project,
-            contractor=self,
-            measurement_type=measurement_type).exists()
+        if self.project.needs_predefined_locations(measurement_type.mtype):
+            return ScheduledMeasurement.objects.filter(
+                project=self.project,
+                contractor=self,
+                measurement_type=measurement_type).exists()
+        else:
+            return True
 
     def __unicode__(self):
         return u"%s in %s" % (self.name, self.project.name)

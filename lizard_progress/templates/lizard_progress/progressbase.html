@@ -31,7 +31,7 @@ Navigation
 
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
-{% if view.user_is_manager %}
+{% if view.user_has_manager_role %}
   <h2>Nieuw project</h2>
   <ul class="without-bullets">
   <li>
@@ -43,11 +43,7 @@ Navigation
   <ul class="nav nav-pills nav-stacked">
   {% for project in view.projects %}
     <li {% if project == view.project %}class="active"{% endif %}>
-      {% if view.user_is_uploader %}
         <a href="{% url lizard_progress_dashboardview project.slug %}">{{ project }} ({{ project.organization.name }})</a>
-      {% else %}
-	<a href="{% url lizard_progress_dashboardview project.slug %}">{{ project }}</a>
-      {% endif %}
     </li>
   {% empty %}
   <p class="small">(Er zijn nog geen projecten)</p>
@@ -60,17 +56,17 @@ Navigation
 <div id="actions" class="sidebar-inner">
 {% block topbar %}
 {% if view.project %}
-<ul class="nav nav-pills">
-<li {% if view.active_menu == "dashboard" %}class="active"{% endif %}><a title="Dashboard" href="{% url lizard_progress_dashboardview project_slug=view.project_slug %}">Dashboard</a></li>
-{% if view.user_is_uploader %}
-<li {% if view.active_menu == "upload" %}class="active"{% endif %}><a title="Upload files" href="{% url lizard_progress_uploadhomeview project_slug=view.project_slug %}">Upload</a></li>
-{% endif %}
-<li {% if view.active_menu == "download" %}class="active"{% endif %}><a title="Download files" href="{% url lizard_progress_downloadhomeview project_slug=view.project_slug %}">Download</a></li>
-<li><a title="Kaartlagen" href="{% url lizard_progress_mapview project_slug=view.project_slug %}">Kaartlagen</a></li>
-{% if view.user_is_manager %}
-<li {% if view.active_menu == "config" %}class="active"{% endif %}><a title="Configuratie" href="{% url lizard_progress_project_configuration_view project_slug=view.project_slug %}">Configuratie</a></li>
-</ul>
-{% endif %}
+  <ul class="nav nav-pills">
+  <li {% if view.active_menu == "dashboard" %}class="active"{% endif %}><a title="Dashboard" href="{% url lizard_progress_dashboardview project_slug=view.project_slug %}">Dashboard</a></li>
+  {% if view.user_is_uploader %}
+    <li {% if view.active_menu == "upload" %}class="active"{% endif %}><a title="Upload files" href="{% url lizard_progress_uploadhomeview project_slug=view.project_slug %}">Upload</a></li>
+  {% endif %}
+  <li {% if view.active_menu == "download" %}class="active"{% endif %}><a title="Download files" href="{% url lizard_progress_downloadhomeview project_slug=view.project_slug %}">Download</a></li>
+  {% if view.user_is_manager %}
+    <li {% if view.active_menu == "config" %}class="active"{% endif %}><a title="Configuratie" href="{% url lizard_progress_project_configuration_view project_slug=view.project_slug %}">Configuratie</a></li>
+  {% endif %}
+  <li><a title="Kaartlagen" href="{% url lizard_progress_mapview project_slug=view.project_slug %}">Kaartlagen</a></li>
+  </ul>
 {% else %}
 <p class="small">(Kies een project)</p>
 {% endif %}

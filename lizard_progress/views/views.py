@@ -15,6 +15,10 @@ import csv
 import logging
 import os
 import platform
+import shutil
+import tempfile
+
+import osgeo.ogr
 
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -48,6 +52,7 @@ from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
 
+from lizard_progress import configuration
 from lizard_progress import forms
 
 logger = logging.getLogger(__name__)
@@ -97,10 +102,30 @@ class ProjectsMixin(object):
         return self.project.can_upload(self.request.user)
 
     def user_is_uploader(self):
-        return self.profile and self.profile.has_role(models.UserRole.ROLE_UPLOADER)
+        """User is an upload if his organization is a contractor in
+        this project and user has role ROLE_UPLOADER."""
+        return (self.user_has_uploader_role() and
+                (not self.project or models.Contractor.objects.filter(
+                    project=self.project,
+                    organization=self.profile.organization)
+                 .exists()))
+
+    def user_has_uploader_role(self):
+        return (
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_UPLOADER))
 
     def user_is_manager(self):
-        return self.profile and self.profile.has_role(models.UserRole.ROLE_MANAGER)
+        """User is a manager if his organization owns this projects
+        and user has the ROLE_MANAGER role."""
+        return (self.user_has_manager_role() and
+                (not self.project or
+                 self.profile.organization == self.project.organization))
+
+    def user_has_manager_role(self):
+        return (
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_MANAGER))
 
     def project_home_url(self):
         if not self.project_slug:
@@ -863,3 +888,110 @@ class NewProjectView(ProjectsView):
         return HttpResponseRedirect(
             reverse('lizard_progress_project_configuration_view',
                     kwargs={'project_slug': project.slug}))
+
+
+class PlanningView(ProjectsView):
+    template_name = 'lizard_progress/planning.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            self.form = forms.ShapefileForm()
+        elif request.method == 'POST':
+            self.form = forms.ShapefileForm(request.POST, request.FILES)
+
+        self.contractor_slug = kwargs.pop('contractor_slug', None)
+        self.mtype_slug = kwargs.pop('mtype_slug', None)
+
+        return super(PlanningView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        contractor = models.Contractor.objects.get(slug=self.contractor_slug)
+        amtype = models.AvailableMeasurementType.objects.get(
+            slug=self.mtype_slug)
+
+        mtype = models.MeasurementType.objects.get_or_create(
+            mtype=amtype, project=self.project)[0]
+
+        tempdir = self.__save_uploaded_files(request)
+        locations_from_shapefile = dict(
+            self.__locations_from_shapefile(tempdir))
+        self.__remove_tempdir(tempdir)
+
+        existing_measurements = list(
+            self.__existing_measurements(self.project, mtype, contractor))
+
+        locations_with_measurements = set(
+                existing_measurement.scheduled.location.location_code
+                for existing_measurement in existing_measurements)
+
+        locations_to_keep = (set(locations_from_shapefile) |
+                locations_with_measurements)
+
+        # Remove not needed scheduled measurements
+        models.ScheduledMeasurement.objects.filter(
+            project=self.project, contractor=contractor,
+            measurement_type=mtype).exclude(
+            location__location_code__in=locations_to_keep).delete()
+
+        for location_code, geom in locations_from_shapefile.iteritems():
+            location, created = models.Location.objects.get_or_create(
+            location_code=location_code, project=self.project)
+            if location.the_geom != geom:
+                location.the_geom = geom
+                location.save()
+            if location_code not in locations_with_measurements:
+                models.ScheduledMeasurement.objects.get_or_create(
+                    project=self.project, contractor=contractor,
+                    measurement_type=mtype, location=location,
+                    complete=False)
+
+        return HttpResponseRedirect(
+            reverse('lizard_progress_dashboardview', kwargs={
+                    'project_slug': self.project.slug}))
+
+    def __save_uploaded_files(self, request):
+        tempdir = tempfile.mkdtemp()
+
+        with open(os.path.join(tempdir, 'shapefile.shp'), 'wb+') as dest:
+            for chunk in request.FILES['shp'].chunks():
+                dest.write(chunk)
+        with open(os.path.join(tempdir, 'shapefile.dbf'), 'wb+') as dest:
+            for chunk in request.FILES['dbf'].chunks():
+                dest.write(chunk)
+        with open(os.path.join(tempdir, 'shapefile.shx'), 'wb+') as dest:
+            for chunk in request.FILES['shx'].chunks():
+                dest.write(chunk)
+
+        return tempdir
+
+    def __remove_tempdir(self, tempdir):
+        shutil.rmtree(tempdir)
+
+    def __locations_from_shapefile(self, tempdir):
+        """Get locations from shapefile and generate them as
+        (location_code, WKT string) tuples."""
+
+        shapefile = osgeo.ogr.Open(
+            os.path.join(str(tempdir), b'shapefile.shp'))
+
+        for layer_num in xrange(shapefile.GetLayerCount()):
+            layer = shapefile.GetLayer(layer_num)
+            for feature_num in xrange(layer.GetFeatureCount()):
+                feature = layer.GetFeature(feature_num)
+                location_code = feature.GetField(
+                    configuration.get(self.project, 'location_id_field')
+                    .encode('utf8'))
+                geometry = feature.GetGeometryRef().ExportToWkt()
+
+                yield (location_code, geometry)
+
+    def __existing_measurements(self, project, mtype, contractor):
+        logger.debug("project: {} mtype {} contractor {}".format(project, mtype, contractor))
+        return models.Measurement.objects.filter(
+            scheduled__project=project,
+            scheduled__measurement_type=mtype,
+            scheduled__contractor=contractor).select_related(
+            "scheduled", "scheduled__location")

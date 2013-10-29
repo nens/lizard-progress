@@ -285,8 +285,10 @@ class TestContractor(TestCase):
     def test_unicode(self):
         """Tests unicode method."""
         contractor = ContractorF(
-            name="test", project=ProjectF(name="testproject"))
-        self.assertEquals(unicode(contractor), "test in testproject")
+            name="test",
+            organization=OrganizationF(name="testorg"),
+            project=ProjectF(name="testproject"))
+        self.assertEquals(unicode(contractor), "testorg in testproject")
 
     def test_set_slug_and_save(self):
         organization = OrganizationF.create(name="some_org")

@@ -94,21 +94,36 @@ class DownloadHomeView(ProjectsView):
                         }
 
     def _location_shapefile_files(self):
-        for contractor in self.project.contractor_set.all():
-            if has_access(self.user, self.project, contractor):
-                for path in directories.all_files_in(
-                    directories.location_shapefile_dir(
-                        self.project, contractor)):
-                        yield {
-                            'type': 'Meetlocatie shapefile '.format(
-                                contractor.organization.name),
-                            'filename': os.path.basename(path),
-                            'size': directories.human_size(path),
-                            'url': self._make_url('locations',
-                                                  self.project,
-                                                  contractor,
-                                                  path)
-                        }
+        for shapefile_path, contractor, mtype in self.__location_shapefiles():
+            yield {
+                'description': "Meetlocaties {mtype} {contractor}"
+                .format(
+                    mtype=mtype.mtype, contractor=contractor.organization),
+                'urls': {
+                    'shp': self._make_url(
+                        'locations', self.project,
+                        contractor, shapefile_path + ".shp"),
+                    'dbf': self._make_url(
+                        'locations', self.project,
+                        contractor, shapefile_path + ".dbf"),
+                    'shx': self._make_url(
+                        'locations', self.project,
+                        contractor, shapefile_path + ".shx")
+                    }}
+
+    def __location_shapefiles(self):
+        """For all the combinations of contractor and measurement type in this
+        project, check if the shapefile exists, and if so return its path and
+        the measurement type and contractor."""
+
+        for mtype in models.MeasurementType.objects.filter(
+            project=self.project):
+            for contractor in Contractor.objects.filter(project=self.project):
+                if has_access(self.user, self.project, contractor):
+                    shapefile_path = directories.location_shapefile_path(
+                        self.project, contractor, mtype.mtype)
+                    if os.path.exists(shapefile_path + ".shp"):
+                        yield shapefile_path, contractor, mtype
 
     def _shapefile_files(self):
         for contractor in self.project.contractor_set.all():
@@ -121,25 +136,29 @@ class DownloadHomeView(ProjectsView):
                                 contractor.organization.name),
                             'filename': os.path.basename(path),
                             'size': directories.human_size(path),
-                            'url': self._make_url('contractor_hydrovakken',
-                                                  self.project,
-                                                  contractor,
-                                                  path)
+                            'url': self._make_url(
+                                'contractor_hydrovakken', self.project,
+                                contractor, path)
                         }
 
     def _hydrovakken_files(self):
         if has_access(self.user, self.project):
             for path in directories.all_files_in(
-                directories.hydrovakken_dir(self.project)):
+                directories.hydrovakken_dir(self.project),
+                extension=".shp"):
                 yield {
-                    'type': 'Hydrovakken shapefile',
-                    'filename': os.path.basename(path),
-                    'size': directories.human_size(path),
-                    'url': self._make_url('hydrovakken',
-                                          self.project,
-                                          None,
-                                          path)
-                    }
+                'description':
+                    "Hydrovakken {project}".format(project=self.project),
+                'urls': {
+                    'shp': self._make_url(
+                            'hydrovakken', self.project, None, path),
+                    'dbf': self._make_url(
+                            'hydrovakken', self.project, None,
+                            path.replace('.shp', '.dbf')),
+                    'shx': self._make_url(
+                            'hydrovakken', self.project, None,
+                            path.replace('.shp', '.shx'))
+                    }}
 
     def files(self):
         if not hasattr(self, '_files'):

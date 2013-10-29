@@ -418,7 +418,7 @@ class Contractor(models.Model):
             return True
 
     def __unicode__(self):
-        return u"%s in %s" % (self.name, self.project.name)
+        return u"%s in %s" % (self.organization, self.project.name)
 
     class Meta:
         unique_together = (("project", "organization"))

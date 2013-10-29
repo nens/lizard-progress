@@ -952,13 +952,8 @@ class PlanningView(ProjectsView):
                     'project_slug': self.project.slug}))
 
     def __save_uploaded_files(self, request, contractor, amtype):
-        shapefilepath = os.path.join(
-            directories.location_shapefile_dir(
-                self.project, contractor),
-            b'{project}-{contractor}-{mtype}'.format(
-                project=self.project.slug,
-                contractor=contractor.slug,
-                mtype=amtype.slug))
+        shapefilepath = directories.location_shapefile_path(
+            self.project, contractor, amtype)
 
         with open(shapefilepath + '.shp', 'wb+') as dest:
             for chunk in request.FILES['shp'].chunks():
@@ -990,7 +985,6 @@ class PlanningView(ProjectsView):
                 yield (location_code, geometry)
 
     def __existing_measurements(self, project, mtype, contractor):
-        logger.debug("project: {} mtype {} contractor {}".format(project, mtype, contractor))
         return models.Measurement.objects.filter(
             scheduled__project=project,
             scheduled__measurement_type=mtype,

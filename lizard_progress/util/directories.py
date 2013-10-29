@@ -116,6 +116,12 @@ def location_shapefile_dir(project, contractor):
             'locations'))
 
 
+def location_shapefile_path(project, contractor, available_mtype):
+    return os.path.join(
+        location_shapefile_dir(project, contractor),
+        b'meetlocaties-{mtype}'.format(mtype=available_mtype.slug))
+
+
 def hydrovakken_dir(project):
     """Directory where wizards put hydrovakken shapefiles for this project."""
     return mk(os.path.join(

@@ -15,6 +15,9 @@ Changelog of lizard-progress
 - Scheduling measurements now goes through the 'Planning' page, available
   on the Dashboard.
 
+- Show the organization's downloads and the shapefile downloads in
+  separate tables
+
 
 1.38 (2013-10-18)
 -----------------

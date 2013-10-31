@@ -15,8 +15,6 @@ import csv
 import logging
 import os
 import platform
-import shutil
-import tempfile
 
 import osgeo.ogr
 

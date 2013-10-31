@@ -414,3 +414,24 @@ class UploadedFileErrorsView(ViewContextMixin, TemplateView):
                         'errors': errordict.get(line_number)})
 
         return lines
+
+
+class UploadOrganizationFileView(ProjectsView):
+    @models.UserRole.check(models.UserRole.ROLE_MANAGER)
+    def post(self, request):
+        organization = models.Organization.get_by_user(request.user)
+
+        uploaded_file = request.FILES['file']
+        filename = request.POST.get('filename', uploaded_file.name)
+
+        with open(os.path.join(
+                directories.organization_files_dir(organization),
+                filename), "wb") as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+
+        return json_response({})
+
+
+class UploadHydrovakkenView(ProjectsView):
+    pass

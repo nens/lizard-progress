@@ -129,6 +129,7 @@ urlpatterns = patterns(
         login_required(UploadShapefilesView.as_view()),
         name='lizard_progress_uploadshapefilesview'),
 
+    # Download page
     url('^projects/(?P<project_slug>[^/]+)/download/$',
         login_required(DownloadHomeView.as_view()),
         name='lizard_progress_downloadhomeview'),
@@ -136,6 +137,13 @@ urlpatterns = patterns(
         '(?P<contractor_slug>[^/]+)/(?P<filename>[^/]+)',
         login_required(DownloadView.as_view()),
         name='lizard_progress_downloadview'),
+    url('^organization_file_upload/$',
+        login_required(views.UploadOrganizationFileView.as_view()),
+        name='lizard_progress_upload_orgfile'),
+    url('^hydrovakken_upload/$',
+        login_required(views.UploadHydrovakkenView.as_view()),
+        name='lizard_progress_upload_hydrovakken'),
+
     url('^(?P<project_slug>[^/]+)/dashboard/' +
         '(?P<contractor_slug>[^/]+)/(?P<area_slug>.+)/graph/$',
         dashboard_graph,

@@ -231,6 +231,11 @@ class DownloadHomeView(ProjectsView):
 
         return crumbs
 
+    @staticmethod
+    def upload_dialog_url():
+        """Returns URL to the file upload dialog."""
+        return reverse('lizard_progress_uploaddialogview')
+
 
 class DownloadView(View):
     """Downloading files."""

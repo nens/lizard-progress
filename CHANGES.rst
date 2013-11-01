@@ -1,4 +1,4 @@
-Changelog of lizard-progress
+B1;2802;0cChangelog of lizard-progress
 ===================================================
 
 
@@ -19,6 +19,8 @@ Changelog of lizard-progress
   separate tables
 
 - Upload and delete organization files.
+
+- Hydrovakken can also be uploaded again.
 
 
 1.38 (2013-10-18)

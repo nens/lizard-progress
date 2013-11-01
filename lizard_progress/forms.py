@@ -169,9 +169,9 @@ class ExtFileField(forms.FileField):
 class ShapefileForm(forms.Form):
     """Form for uploading a shapefile."""
 
-    dbf = ExtFileField(exts=[".dbf"])
-    shp = ExtFileField(exts=[".shp"])
-    shx = ExtFileField(exts=[".shx"])
+    dbf = ExtFileField(exts=[".dbf"], label=".dbf bestand")
+    shp = ExtFileField(exts=[".shp"], label=".shp bestand")
+    shx = ExtFileField(exts=[".shx"], label=".shx bestand")
 
     def clean(self):
         cleaned_data = super(ShapefileForm, self).clean()
@@ -185,17 +185,7 @@ class ShapefileForm(forms.Form):
         shp = os.path.splitext(cleaned_data.get("shp").name)[0]
         shx = os.path.splitext(cleaned_data.get("shx").name)[0]
 
-        # According to http://en.wikipedia.org/wiki/Shapefile,
-        # a `.prj` file is not mandatory, but if it is not
-        # absent, it has to have the same filename.
-
-        prj = cleaned_data.get("prj", None)
-        if prj:
-            prj = os.path.splitext(prj.name)[0]
-        else:
-            prj = dbf
-
-        if dbf == prj == shp == shx:
+        if dbf == shp == shx:
             pass
         else:
             msg = ("De geselecteerde bestanden horen "

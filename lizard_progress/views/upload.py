@@ -12,6 +12,10 @@ import shutil
 import tempfile
 
 from django.conf import settings
+from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.geos import LineString
+from django.contrib.gis.geos import MultiLineString
+from django.contrib.gis.geos import fromstr
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
@@ -26,10 +30,12 @@ from django.views.generic import View
 from lizard_ui.views import ViewContextMixin
 from lizard_ui.layout import Action
 
+from lizard_progress import forms
 from lizard_progress import tasks
 from lizard_progress import models
 from lizard_progress.util import directories
 from lizard_progress.views.views import ProjectsView
+from lizard_progress import configuration
 
 
 APP_LABEL = models.Project._meta.app_label
@@ -434,4 +440,69 @@ class UploadOrganizationFileView(ProjectsView):
 
 
 class UploadHydrovakkenView(ProjectsView):
-    pass
+    template_name = "lizard_progress/upload_hydrovakken.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            self.form = forms.ShapefileForm()
+        elif request.method == 'POST':
+            self.form = forms.ShapefileForm(request.POST, request.FILES)
+
+        return super(
+            UploadHydrovakkenView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        if not self.project.is_manager(request.user):
+            return HttpResponseForbidden()
+
+        hydrovakken_dir = directories.hydrovakken_dir(self.project)
+
+        filename = request.FILES['shp'].name
+
+        # Remove old hydrovakken
+        for filename in os.listdir(hydrovakken_dir):
+            filepath = os.path.join(hydrovakken_dir, filename)
+            if os.path.isfile(filepath):
+                os.remove(filepath)
+        models.Hydrovak.objects.filter(project=self.project).delete()
+
+        # Save uploaded files
+        for ext in ['shp', 'dbf', 'shx']:
+            uploaded_file = request.FILES[ext]
+            with open(
+                os.path.join(hydrovakken_dir, uploaded_file.name), 'wb+') as f:
+                for chunk in uploaded_file.chunks():
+                    f.write(chunk)
+
+        datasource = DataSource(
+            os.path.join(hydrovakken_dir, request.FILES['shp'].name))
+        id_field_name = configuration.get(
+            self.project, 'hydrovakken_id_field')
+        layer = datasource[0]
+
+        for feature in layer:
+            if id_field_name in feature.fields:
+                # The shape can contain both LineStrings and
+                # MultiLineStrings - to be able to save both we
+                # convert them all to multis
+                geom = fromstr(feature.geom.ewkt)
+                if isinstance(geom, LineString):
+                    geom = MultiLineString(geom)
+
+                hydrovak, created = models.Hydrovak.objects.get_or_create(
+                    project=self.project,
+                    br_ident=unicode(feature[id_field_name]),
+                    defaults={'the_geom': geom})
+                if not created:
+                    hydrovak.the_geom = geom
+                    hydrovak.save()
+            else:
+                logger.debug("id_field_name not present")
+                logger.debug(feature.fields)
+
+        return HttpResponseRedirect(reverse(
+                'lizard_progress_downloadhomeview', kwargs={
+                    'project_slug': self.project.slug}))

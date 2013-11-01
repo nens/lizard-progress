@@ -140,7 +140,7 @@ urlpatterns = patterns(
     url('^organization_file_upload/$',
         login_required(views.UploadOrganizationFileView.as_view()),
         name='lizard_progress_upload_orgfile'),
-    url('^hydrovakken_upload/$',
+    url('^projects/(?P<project_slug>[^/]+)/hydrovakken_upload/$',
         login_required(views.UploadHydrovakkenView.as_view()),
         name='lizard_progress_upload_hydrovakken'),
 

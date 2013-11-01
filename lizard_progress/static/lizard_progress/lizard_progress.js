@@ -163,6 +163,7 @@ $("tr.clickable").click(function () {
     }
 });
 
+// Deleting uploaded files using a clickable link
 $("a.delete_file").click(function (event) {
     event.preventDefault();
     if (confirm("Dit verwijdert dit bestand uit alle projecten van de organisatie. Weet u dit zeker?")) {
@@ -174,5 +175,14 @@ $("a.delete_file").click(function (event) {
                 location.reload(true);
             }
         });
+    }
+});
+
+// A button the redirects to some page
+$("button.redirect").click(function (event) {
+    event.preventDefault();
+    var url = $(this).attr("data-redirect-url");
+    if (url) {
+        window.location.href = url;
     }
 });

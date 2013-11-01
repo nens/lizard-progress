@@ -162,3 +162,17 @@ $("tr.clickable").click(function () {
         window.location = url;
     }
 });
+
+$("a.delete_file").click(function (event) {
+    event.preventDefault();
+    if (confirm("Dit verwijdert dit bestand uit alle projecten van de organisatie. Weet u dit zeker?")) {
+        // Send DELE to the file's download URL
+        $.ajax({
+            url: $(this).attr("href"),
+            type: 'DELETE',
+            success: function () {
+                location.reload(true);
+            }
+        });
+    }
+});

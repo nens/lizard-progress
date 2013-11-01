@@ -295,6 +295,30 @@ class DownloadView(View):
 
         return serve(request, path, '/')
 
+    def delete(self, request, filetype, project_slug,
+            contractor_slug, filename):
+        """Delete a downloadable file. For now, only for files without
+        contractor ('organization files')."""
+
+        if contractor_slug != 'x' or filetype != 'organization':
+            return HttpResponseForbidden()
+
+        project = get_object_or_404(Project, slug=project_slug)
+
+        if not project.is_manager(request.user):
+            return HttpResponseForbidden()
+
+        directory = directories.organization_files_dir(
+            project.organization)
+        path = os.path.join(directory, filename)
+
+        if os.path.exists(path) and os.path.isfile(path):
+            os.remove(path)
+        else:
+            raise http.Http404()
+
+        return HttpResponse()
+
 
 def start_export_run_view(request, project_slug, export_run_id):
     if request.method != "POST":

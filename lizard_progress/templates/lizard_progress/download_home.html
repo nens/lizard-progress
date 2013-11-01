@@ -30,12 +30,18 @@
 <table class="table table-bordered fixed">
   <thead>
     <th>Filename</th>
-    <th>Download</th>
+    <th style="width: 6em;">Download</th>
+    {% if view.user_is_manager %}
+    <th style="width: 6em;">Delete</th>
+    {% endif %}
   </thead>
   {% for file in view.files.organization %}
   <tr>
     <td class="filename">{{ file.filename }} ({{ file.size }})</td>
     <td class="download"><a href="{{ file.url }}">download</a></td>
+    {% if view.user_is_manager %}
+    <td><a class="delete_file" href="{{ file.url }}">delete</a></td>
+    {% endif %}
   </tr>
   {% endfor %}
 </table>
@@ -127,10 +133,10 @@
 </table>
 {% endif %}
 {% if view.csv %}
-  <table class="table table-bordered" style="max-width: 600px;">
+  <table class="table table-bordered fixed">
   <thead>
     <th>Opdrachtnemer</th>
-    <th>CSV bestand</th>
+    <th style="width: 6em;">CSV bestand</th>
   </thead>
 {% for contractor, url in view.csv %}
   <tr>
@@ -148,7 +154,7 @@
   <table class="table table-bordered fixed">
   <thead>
     <th>Filenaam</th>
-    <th>Download</th>
+    <th style="width: 6em;">Download</th>
   </thead>
   {% for file in view.files.reports %}
   <tr>
@@ -171,7 +177,7 @@
   <table class="table table-bordered fixed">
   <thead>
     <th>Filenaam</th>
-    <th>Download</th>
+    <th style="width: 6em;">Download</th>
   </thead>
   {% for file in view.files.results %}
   <tr>

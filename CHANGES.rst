@@ -18,6 +18,8 @@ Changelog of lizard-progress
 - Show the organization's downloads and the shapefile downloads in
   separate tables
 
+- Upload and delete organization files.
+
 
 1.38 (2013-10-18)
 -----------------

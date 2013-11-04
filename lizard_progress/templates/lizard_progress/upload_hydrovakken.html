@@ -1,0 +1,14 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block contentpage %}
+<h2>Hydrovakken</h2>
+<p>Er kan per project een lijnenshape ingevoerd worden, de zogenaamde
+"hydrovakken". Deze zijn te downloaden door opdrachtnemers en kunnen
+weergegeven worden op de kaart.</p>
+
+<form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
+  {{ view.form.as_p }}
+  <input type="submit" value="Versturen" class="btn btn-primary">
+  {% csrf_token %}
+</form>
+{% endblock %}

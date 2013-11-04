@@ -9,6 +9,16 @@ $().ready(function () {
 
     url = $('#upload-wrapper').attr('data-upload-dialog-url');
 
+    on_open = function() {
+        var uploader = uploader || $('#uploader').plupload('getUploader');
+        //Next line seems to solve a problem with the "Add Files"
+        //button in Chrome when using a modal dialog.
+        $('#uploader > div.plupload').css('z-index','99999');
+        uploader.settings.url = $(this).attr('data-upload-url');
+        uploader.splice(); // Clean the queue
+        uploader.refresh();
+    };
+
     // Preload
     $dialog = $('<div class="lizard-progress-popup"/>').load(url).dialog({
         autoOpen: false,

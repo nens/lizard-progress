@@ -34,12 +34,8 @@ Navigation
 {% if view.user_has_manager_role %}
   <h2>Beheer</h2>
   <ul class="without-bullets">
-  <li>
-    <a href="{% url lizard_progress_newproject %}"><i class="icon-plus-sign"></i>Project toevoegen</a>
-    <a href="{% url lizard_progress_admin_organization %}">Beheer {{ view.organization }}</a>
-  </li>
-  <li>
-    <a href="{% url lizard_progress_admin %}">Beheer projecten</a>
+  <li><a href="{% url lizard_progress_newproject %}"><i class="icon-plus-sign"></i> Project toevoegen</a></li>
+  <li><a href="{% url lizard_progress_admin_organization %}"><i class="icon-briefcase"></i> Beheer {{ view.organization }}</a>
   </li>
   </ul>
 {% endif %}

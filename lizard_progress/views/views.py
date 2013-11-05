@@ -897,7 +897,7 @@ class PlanningView(ProjectsView):
 
     def dispatch(self, request, *args, **kwargs):
         mtypes = models.MeasurementType.objects.filter(
-            project__slug=kwargs.pop('project_slug'))
+            project__slug=kwargs.get('project_slug'))
 
         if request.method == 'GET':
             self.form = forms.MtypeShapefileForm(mtypes=mtypes)
@@ -915,7 +915,7 @@ class PlanningView(ProjectsView):
 
         contractor = models.Contractor.objects.get(slug=self.contractor_slug)
         amtype = models.AvailableMeasurementType.objects.get(
-            slug=self.mtype_slug)
+            slug=self.form.cleaned_data['mtype_slug'])
 
         mtype = models.MeasurementType.objects.get_or_create(
             mtype=amtype, project=self.project)[0]

@@ -325,10 +325,11 @@ class Project(models.Model):
                 else:
                     last_m = None
 
-                planning_url = reverse('lizard_progress_planningview', kwargs={
+                planning_url = (
+                    reverse('lizard_progress_planningview', kwargs={
                             'project_slug': self.slug,
-                            'contractor_slug': c.slug,
-                            'mtype_slug': m.mtype.slug})
+                            'contractor_slug': c.slug}) +
+                    "?mtype_slug={}".format(m.mtype.slug))
 
                 info_for_contractor.append({
                         'contractor': c,
@@ -348,6 +349,7 @@ class Project(models.Model):
                         'contractor': c,
                         'measurement_type': None,
                         'scheduled_measurements': "Geen metingen toegewezen",
+                        'planning_url': planning_url,
                         'num_measurements': 0,
                         'last_measurement': None
                         })

@@ -896,13 +896,16 @@ class PlanningView(ProjectsView):
     template_name = 'lizard_progress/planning.html'
 
     def dispatch(self, request, *args, **kwargs):
+        mtypes = models.MeasurementType.objects.filter(
+            project__slug=kwargs.pop('project_slug'))
+
         if request.method == 'GET':
-            self.form = forms.ShapefileForm()
+            self.form = forms.MtypeShapefileForm(mtypes=mtypes)
         elif request.method == 'POST':
-            self.form = forms.ShapefileForm(request.POST, request.FILES)
+            self.form = forms.MtypeShapefileForm(
+                request.POST, request.FILES, mtypes=mtypes)
 
         self.contractor_slug = kwargs.pop('contractor_slug', None)
-        self.mtype_slug = kwargs.pop('mtype_slug', None)
 
         return super(PlanningView, self).dispatch(request, *args, **kwargs)
 

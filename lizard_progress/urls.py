@@ -119,9 +119,6 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/planning/$',
         login_required(views.PlanningView.as_view()),
         name='lizard_progress_planningview'),
-    url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/(?P<mtype_slug>[^/]+)/planning$',
-        login_required(views.PlanningView.as_view()),
-        name='lizard_progress_planningview'),
 
     # CSV file generation
     url('^dashboardcsv/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/$',

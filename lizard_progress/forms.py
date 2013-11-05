@@ -195,6 +195,22 @@ class ShapefileForm(forms.Form):
         return cleaned_data
 
 
+class MtypeShapefileForm(ShapefileForm):
+    """Shapefile form that also includes a select for measurement
+    types."""
+
+    def __init__(self, *args, **kwargs):
+        # Add choice field in init so we can use arguments
+        mtypes_qs = kwargs.pop('mtypes')
+
+        super(MtypeShapefileForm, self).__init__(*args, **kwargs)
+
+        self.fields['mtype_slug'] = forms.ChoiceField(
+            label="Soort meting", choices=(
+                (mtype.mtype.slug, unicode(mtype.mtype))
+                for mtype in mtypes_qs))
+
+
 class CalculateForm(forms.Form):
     """cccc"""
     error_messages = {

@@ -83,9 +83,6 @@ urlpatterns = patterns(
              forms.CalculateForm])),
         name='lizard_progress_results'),
 
-    url('^admin/organization/$',
-        login_required(organization_admin.OrganizationAdminView.as_view()),
-        name='lizard_progress_admin_organization'),
     url('^admin/organization/errorconfiguration/$',
         login_required(organization_admin.OrganizationAdminConfiguration.as_view()),
         name='lizard_progress_admin_organization_errorconfiguration'),
@@ -111,7 +108,7 @@ urlpatterns = patterns(
         login_required(ComparisonPopupView.as_view()),
         name='lizard_progress_comparisonpopup'),
 
-    # Dashboard page, is this still used?
+    # Dashboard page
     url('^projects/(?P<project_slug>[^/]+)/dashboard/$',
         login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),
@@ -125,7 +122,7 @@ urlpatterns = patterns(
         login_required(DashboardCsvView.as_view()),
         name='lizard_progress_dashboardcsvview'),
 
-    # This is where uploads happend
+    # This is where uploads happen
     url('^upload/$',
         login_required(UploadDialogView.as_view()),
         name='lizard_progress_uploaddialogview'),
@@ -203,6 +200,16 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/config/$',
         login_required(views.ConfigurationView.as_view()),
         name="lizard_progress_project_configuration_post"),
+
+    # User management
+    url('users/$', login_required(views.UserManagementView.as_view()),
+        name="lizard_progress_user_management"),
+    url('users/(?P<user_id>\d+)/$',
+        login_required(views.SingleUserManagementView.as_view()),
+        name="lizard_progress_single_user_management"),
+    url('users/newuser/$',
+        login_required(views.NewUserManagementView.as_view()),
+        name="lizard_progress_new_user_management"),
 )
 
 urlpatterns += debugmode_urlpatterns()

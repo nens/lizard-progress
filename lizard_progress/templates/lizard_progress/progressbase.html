@@ -31,12 +31,16 @@ Navigation
 
 {% block sidebar %}
 <div class="sidebarbox sidebarbox-stretched">
-{% if view.user_has_manager_role %}
+{% if view.user_has_manager_role or view.user_has_usermanager_role %}
   <h2>Beheer</h2>
   <ul class="without-bullets">
+{% if view.user_has_manager_role %}
   <li><a href="{% url lizard_progress_newproject %}"><i class="icon-plus-sign"></i> Project toevoegen</a></li>
-  <li><a href="{% url lizard_progress_admin_organization %}"><i class="icon-briefcase"></i> Beheer {{ view.organization }}</a>
-  </li>
+  <li><a href="{% url lizard_progress_admin_organization_errorconfiguration %}"><i class="icon-pencil"></i> Configuratie defaults</a></li>
+{% endif %}
+{% if view.user_has_usermanager_role %}
+  <li><a href="{% url lizard_progress_user_management %}"><i class="icon-user"></i> Gebruikersbeheer</a></li>
+{% endif %}
   </ul>
 {% endif %}
   <h2>Projecten</h2>

@@ -1,17 +1,11 @@
 from django import http
 from django.core.urlresolvers import reverse
 
-from lizard_ui.views import UiView
-
+from lizard_progress.views.views import ProjectsView
 from lizard_progress import configuration
-from lizard_progress.views.views import KickOutMixin
 
 
-class OrganizationAdminView(KickOutMixin, UiView):
-    template_name = "lizard_progress/organization_admin.html"
-
-
-class OrganizationAdminConfiguration(OrganizationAdminView):
+class OrganizationAdminConfiguration(ProjectsView):
     """Boundary values for checks"""
     template_name = "lizard_progress/organization_config.html"
 

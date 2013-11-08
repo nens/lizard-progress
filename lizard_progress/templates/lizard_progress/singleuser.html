@@ -1,0 +1,21 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block topbar %}
+{% endblock %}
+
+{% block contentpage %}
+{% if view.edited_user %}
+<h2>Gebruiker "{{ view.edited_user }}" {% if view.user.get_full_name %}({{ view.edited_user.get_full_name }}){% endif %}</h2>
+{% else %}
+<h2>Nieuwe gebruiker {{ view.organization }}</h2>
+{% endif %}
+
+<form method="post" action="">
+{% csrf_token %}
+<table>
+{{ view.form }}
+<tr><td></td><td><input type="submit" class="btn btn-primary" value="Aanpassingen opslaan"></td></tr>
+</table>
+</form>
+
+{% endblock contentpage %}

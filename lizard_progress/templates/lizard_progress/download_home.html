@@ -40,7 +40,7 @@
     <td class="filename">{{ file.filename }} ({{ file.size }})</td>
     <td class="download"><a href="{{ file.url }}">download</a></td>
     {% if view.user_is_manager %}
-    <td><a class="delete_file" href="{{ file.url }}">delete</a></td>
+    <td><a class="delete_file" data-message="Dit verwijdert dit bestand uit alle projecten van de organisatie. Weet u dit zeker?" href="{{ file.url }}">delete</a></td>
     {% endif %}
   </tr>
   {% endfor %}

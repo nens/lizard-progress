@@ -7,6 +7,7 @@ from tls import request  # ! So that form validation can know about
                          # the current user
 
 from django import forms
+from django.contrib.auth import models as authmodels
 from django.core.exceptions import ValidationError
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
@@ -267,3 +268,110 @@ class NewProjectForm(forms.Form):
     mtypes = forms.ModelMultipleChoiceField(
         label=_("Choose one or more measurement types"),
         queryset=models.AvailableMeasurementType.objects.all())
+
+
+class SingleUserForm(forms.Form):
+    username = forms.RegexField(
+        label="Gebruikersnaam", max_length=30, regex=r"^[\w.@+-]+$",
+        help_text=_(
+            "Required. 30 characters or fewer. Letters, digits and "
+            "@/./+/-/_ only."),
+        error_messages={
+            'invalid': _("This value may contain only letters, numbers and "
+                         "@/./+/-/_ characters.")})
+
+    first_name = forms.CharField(
+        label="Voornaam", max_length=30, required=False)
+    last_name = forms.CharField(
+        label="Achternaam", max_length=30, required=False)
+
+    email = forms.EmailField(label="Email adres", required=False)
+
+    new_password1 = forms.CharField(
+        label=_("New password"), required=False,
+        widget=forms.PasswordInput)
+    new_password2 = forms.CharField(
+        label=_("New password confirmation"), required=False,
+        widget=forms.PasswordInput)
+
+    def __init__(self, user, *args, **kwargs):
+        """Store which user we are editing."""
+        self.edited_user = user
+        return super(SingleUserForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super(SingleUserForm, self).clean()
+
+        if self.errors:
+            return cleaned_data
+
+        username = cleaned_data['username']
+        new_password1 = cleaned_data['new_password1']
+        new_password2 = cleaned_data['new_password2']
+
+        # Does the username exist?
+        try:
+            user = authmodels.User.objects.get(username=username)
+            if user != self.edited_user:
+                raise ValidationError("Deze gebruikersnaam bestaat al.")
+        except authmodels.User.DoesNotExist:
+            # Geen probleem
+            pass
+
+        if new_password1 != new_password2:
+            raise ValidationError("De wachtwoorden zijn niet gelijk.")
+
+        return cleaned_data
+
+    def update_user(self, organization=None):
+        if not self.edited_user:
+            self.edited_user = authmodels.User.objects.create(
+                username=self.cleaned_data['username'])
+            profile = models.UserProfile.objects.create(
+                user=self.edited_user,
+                organization=organization)
+        else:
+            profile = models.UserProfile.get_by_user(self.edited_user)
+
+        for attr in ['username', 'first_name', 'last_name', 'email']:
+            data = self.cleaned_data[attr]
+            setattr(self.edited_user, attr, data)
+
+        if self.cleaned_data['new_password1']:
+            self.edited_user.set_password(self.cleaned_data['new_password1'])
+
+        for (field, role) in (
+            ('is_uploader', models.UserRole.ROLE_UPLOADER),
+            ('is_manager', models.UserRole.ROLE_MANAGER),
+            ('is_admin', models.UserRole.ROLE_ADMIN)):
+            if field in self.fields:
+                if self.cleaned_data[field] and not profile.has_role(role):
+                    # Add role
+                    profile.roles.add(models.UserRole.objects.get(code=role))
+                elif not self.cleaned_data[field] and profile.has_role(role):
+                    # Remove remove
+                    profile.roles.remove(
+                        models.UserRole.objects.get(code=role))
+
+        self.edited_user.save()
+        return self.edited_user
+
+    def add_role_fields(self, editing_self):
+        if self.edited_user:
+            profile = models.UserProfile.get_by_user(self.edited_user)
+            initial_uploader = profile.has_role(models.UserRole.ROLE_UPLOADER)
+            initial_manager = profile.has_role(models.UserRole.ROLE_MANAGER)
+            initial_admin = profile.has_role(models.UserRole.ROLE_ADMIN)
+        else:
+            initial_uploader = initial_manager = initial_admin = False
+
+        self.fields['is_uploader'] = forms.BooleanField(
+            label="Mag uploaden", initial=initial_uploader, required=False)
+        self.fields['is_manager'] = forms.BooleanField(
+            label="Mag projecten beheren", initial=initial_manager,
+            required=False)
+
+        if not editing_self:
+            self.fields['is_admin'] = forms.BooleanField(
+                label="Mag gebruikers beheren", initial=initial_admin,
+                required=False)

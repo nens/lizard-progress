@@ -125,6 +125,11 @@ class ProjectsMixin(object):
             self.profile and
             self.profile.has_role(models.UserRole.ROLE_MANAGER))
 
+    def user_has_usermanager_role(self):
+        return (
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_ADMIN))
+
     def project_home_url(self):
         if not self.project_slug:
             return reverse('lizard_progress_projecten')

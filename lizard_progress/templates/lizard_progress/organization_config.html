@@ -1,9 +1,17 @@
-{% extends "lizard_progress/organization_admin.html" %}
+{% extends "lizard_progress/progressbase.html" %}
 
-{% block content %}
+{% block topbar %}
+{% endblock %}
+
+{% block contentpage %}
 
 <div id="contentpage">
 <h2>Configuratie {{ view.organization }}</h2>
+
+<p>Dit zijn de default waarden voor het Configuratie scherm van een project. Deze
+waarden worden alleen gebruikt bij het <i>aanmaken</i> van een project, als het project
+eenmaal aangemaakt is kunnen de waarden van dat project aangepast worden op het
+Configuratie scherm van dat project.</p>
 
 <form method="post" action="{% url lizard_progress_admin_organization_errorconfiguration %}">
 <table class="table table-bordered progressbase">
@@ -29,4 +37,4 @@
 {% csrf_token %}
 </form>
 </div>
-{% endblock content %}
+{% endblock contentpage %}

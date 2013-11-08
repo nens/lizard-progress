@@ -176,7 +176,7 @@ $("tr.clickable").click(function () {
 // Deleting uploaded files using a clickable link
 $("a.delete_file").click(function (event) {
     event.preventDefault();
-    if (confirm("Dit verwijdert dit bestand uit alle projecten van de organisatie. Weet u dit zeker?")) {
+    if (confirm($(this).attr("data-message"))) {
         // Send DELE to the file's download URL
         $.ajax({
             url: $(this).attr("href"),

@@ -123,6 +123,10 @@ class UserRole(models.Model):
         return self.description
 
     @classmethod
+    def all_role_codes(cls):
+        return (cls.ROLE_MANAGER, cls.ROLE_UPLOADER, cls.ROLE_ADMIN)
+
+    @classmethod
     def check(cls, role):
         """Return a view decorator that checks if the logged in user
         has a given role, otherwise raises PermissionDenied."""
@@ -155,7 +159,7 @@ class UserProfile(models.Model):
 
     @classmethod
     def get_by_user(cls, user):
-        if not user.is_authenticated():
+        if not user or not user.is_authenticated():
             return None
         try:
             return cls.objects.get(user=user)
@@ -168,6 +172,12 @@ class UserProfile(models.Model):
 
     def has_role(self, role_code):
         return self.roles.filter(code=role_code).exists()
+
+    def roles_description(self):
+        return ", ".join(
+                UserRole.objects.get(code=code).description
+                for code in UserRole.all_role_codes()
+                if self.has_role(code))
 
 
 def has_access(user, project, contractor=None):
@@ -182,6 +192,11 @@ def has_access(user, project, contractor=None):
         project.organization):
         # Everybody in the project's organization can see it.
         return True
+
+    # A user may only see projects of other organizations if this user
+    # is an Uploader.
+    if not userprofile.has_role(UserRole.ROLE_UPLOADER):
+        return False
 
     if contractor:
         # If it is about one contractor's data in this project,

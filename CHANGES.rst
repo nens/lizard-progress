@@ -23,6 +23,8 @@ B1;2802;0cChangelog of lizard-progress
 - Added a page where organizations can edit the default values for
   configuration values of checks.
 
+- Add user management pages. An organization can now manage its own
+  users.
 
 1.38 (2013-10-18)
 -----------------

@@ -26,6 +26,9 @@ B1;2802;0cChangelog of lizard-progress
 - Add user management pages. An organization can now manage its own
   users.
 
+- Fix bugs where map layers didn't have icons, contractors didn't have
+  names.
+
 1.38 (2013-10-18)
 -----------------
 

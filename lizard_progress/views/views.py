@@ -884,13 +884,16 @@ class NewProjectView(ProjectsView):
         for contractor in self.form.cleaned_data['contractors']:
             c = models.Contractor(
                 project=project,
-                organization=contractor)
+                organization=contractor,
+                name=unicode(contractor))
             c.set_slug_and_save()
 
         for mtype in self.form.cleaned_data['mtypes']:
             c = models.MeasurementType.objects.create(
                 project=project,
-                mtype=mtype)
+                mtype=mtype,
+                icon_missing=mtype.default_icon_missing,
+                icon_complete=mtype.default_icon_complete)
 
         return HttpResponseRedirect(
             reverse('lizard_progress_project_configuration_view',
@@ -923,7 +926,9 @@ class PlanningView(ProjectsView):
             slug=self.form.cleaned_data['mtype_slug'])
 
         mtype = models.MeasurementType.objects.get_or_create(
-            mtype=amtype, project=self.project)[0]
+            mtype=amtype, project=self.project, defaults={
+                'icon_missing': amtype.default_icon_missing,
+                'icon_complete': amtype.default_icon_complete})[0]
 
         shapefilepath = self.__save_uploaded_files(request, contractor, amtype)
         locations_from_shapefile = dict(

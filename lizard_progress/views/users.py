@@ -99,19 +99,21 @@ class NewUserManagementView(ProjectsView):
     template_name = "lizard_progress/singleuser.html"
 
     def dispatch(self, request, *args, **kwargs):
-        """This page is only accessible for ROLE_ADMIN users, or the
-        user himself."""
+        """This page is only accessible for ROLE_ADMIN users."""
 
         editing_user = models.UserProfile.get_by_user(request.user)
         if not editing_user.has_role(models.UserRole.ROLE_ADMIN):
             raise PermissionDenied()
+
+        show_admin_role = editing_user.organization.is_project_owner
 
         if request.method == 'POST':
             self.form = forms.SingleUserForm(None, request.POST)
         else:
             self.form = forms.SingleUserForm(None)
 
-        self.form.add_role_fields(editing_self=False)
+        self.form.add_role_fields(
+            editing_self=False, show_admin_role=show_admin_role)
 
         return super(NewUserManagementView, self).dispatch(
             request, *args, **kwargs)

@@ -356,7 +356,7 @@ class SingleUserForm(forms.Form):
         self.edited_user.save()
         return self.edited_user
 
-    def add_role_fields(self, editing_self):
+    def add_role_fields(self, editing_self, show_admin_role=False):
         # Initial values
         if self.edited_user:
             profile = models.UserProfile.get_by_user(self.edited_user)
@@ -367,13 +367,14 @@ class SingleUserForm(forms.Form):
             initial_manager = initial_admin = False
             # For organizations that can only upload, everyone is uploader
             # by default, because there's nothing else to do for them
-            initial_uploader = (not profile.organization.is_project_owner)
+            initial_uploader = not show_admin_role
 
         self.fields['is_uploader'] = forms.BooleanField(
             label="Mag uploaden", initial=initial_uploader, required=False)
 
         # This field is only allowed in organizations that have projects
-        if profile.organization.is_project_owner:
+        if ((self.edited_user and profile.organization.is_project_owner) or
+            show_admin_role):
             self.fields['is_manager'] = forms.BooleanField(
                 label="Mag projecten beheren", initial=initial_manager,
                 required=False)

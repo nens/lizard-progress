@@ -3,6 +3,8 @@
 <head>
   <link rel="stylesheet"
     href="{{ STATIC_URL }}lizard_progress/lizard_progress_errors.css" />
+  <script src="{{ STATIC_URL }}jquery/jquery.min.js"></script>
+  <script src="{{ STATIC_URL }}lizard_progress/lizard_progress_errors.js"></script>
 </head>
 <body>
 
@@ -20,9 +22,11 @@
 
 {% if view.lines_and_errors %}
 <h3>Fouten per regel</h3>
+<p><input type="checkbox" id="toggle-success-line">Toon regels zonder fouten</p>
+
 <table class="file-errors" cellpadding="1" cellspacing="0">
 {% for line in view.lines_and_errors %}
-  <tr class="file-errors">
+  <tr class="file-errors {% if line.has_error %}errorline{% else %}successline{% endif %}" style="{% if line.has_error %}{% else %}display: none{% endif %}">
     <td>{{ line.line_number }}</td>
     <td class="{% if line.has_error %}error{% else %}noerror{% endif %}">
     {{ line.file_line }}</td>

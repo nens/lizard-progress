@@ -29,6 +29,11 @@ B1;2802;0cChangelog of lizard-progress
 - Fix bugs where map layers didn't have icons, contractors didn't have
   names.
 
+- Only show lines with errors in them, unless a checkbox is ticked.
+
+- Only organizations with projects can assign the project manager role.
+
+
 1.38 (2013-10-18)
 -----------------
 

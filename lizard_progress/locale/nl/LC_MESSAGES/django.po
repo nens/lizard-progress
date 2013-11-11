@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-08-20 10:26-0500\n"
+"POT-Creation-Date: 2013-11-11 06:25-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,13 +17,41 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
-#: forms.py:234
-msgid "Contractors"
-msgstr "Opdrachtnemers"
+#: forms.py:245
+msgid "No organization found!"
+msgstr "Geen organisaties gevonden."
 
-#: forms.py:237
-msgid "Measurement types"
-msgstr "Metingtypes"
+#: forms.py:249
+msgid "This project name already exists."
+msgstr "Deze projectnaam bestaat al."
+
+#: forms.py:262
+msgid "Project name"
+msgstr "Projectnaam"
+
+#: forms.py:266
+msgid "Choose one or more contractors"
+msgstr "Kies een of meer opdrachtnemers"
+
+#: forms.py:269
+msgid "Choose one or more measurement types"
+msgstr "Kies een of meer metingtypes"
+
+#: forms.py:277
+msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
+msgstr "Verplicht. Maximaal 30 tekens. Alleen letters, cijfers en @/./+/-/_."
+
+#: forms.py:280
+msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
+msgstr "Deze waarde mag alleen letters, cijfers en @/./+/-/_ tekens bevatten."
+
+#: forms.py:291
+msgid "New password"
+msgstr "Nieuw wachtwoord"
+
+#: forms.py:294
+msgid "New password confirmation"
+msgstr "Bevestiging nieuw wachtwoord"
 
 #: templates/lizard_progress/ui_base.html:101
 msgid "Back to homepage"
@@ -42,6 +69,9 @@ msgstr ""
 msgid "Verder &gt;"
 msgstr ""
 
-#: views/views.py:154
+#: views/views.py:197
 msgid "Your current organization"
 msgstr "Uw huidige organisatie"
+
+#~ msgid "Contractors"
+#~ msgstr "Opdrachtnemers"

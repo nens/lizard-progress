@@ -65,7 +65,8 @@ class Organization(models.Model):
     description = models.CharField(max_length=256, blank=True, null=True)
     errors = models.ManyToManyField(ErrorMessage)
 
-    # Organizations are _either_ project owners or uploaders, never both
+    # Only is_project_owner organizations are allowed to give the projecter
+    # manager role to their users
     is_project_owner = models.BooleanField(default=False)
 
     lizard_config = models.ForeignKey(

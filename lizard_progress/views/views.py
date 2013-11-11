@@ -180,6 +180,16 @@ class KickOutMixin(object):
     def site_actions(self):
         actions = super(KickOutMixin, self).site_actions
 
+        # Find the user icon, add a profile URL
+        if self.request.user.is_authenticated():
+            for action in actions:
+                if action.icon == 'icon-user':
+                    action.url = reverse(
+                        "lizard_progress_single_user_management",
+                        kwargs={'user_id': self.request.user.id})
+                    break
+
+        # Prepend organization icon
         actions[0:0] = [
             Action(
                 icon='icon-briefcase',

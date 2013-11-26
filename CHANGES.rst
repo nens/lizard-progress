@@ -2,8 +2,8 @@ B1;2802;0cChangelog of lizard-progress
 ===================================================
 
 
-2.1 (unreleased)
-----------------
+2.0.1 (2013-11-26)
+------------------
 
 - Fix bug to open a shapefile in case of unicode filename.
 

@@ -996,6 +996,8 @@ class PlanningView(ProjectsView):
         """Get locations from shapefile and generate them as
         (location_code, WKT string) tuples."""
 
+        if isinstance(shapefilepath, unicode):
+            shapefilepath = shapefilepath.encode('utf8')
         shapefile = osgeo.ogr.Open(shapefilepath)
 
         for layer_num in xrange(shapefile.GetLayerCount()):

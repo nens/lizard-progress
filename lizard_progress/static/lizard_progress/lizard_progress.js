@@ -112,7 +112,7 @@ $().ready(function () {
         draggable: false,
         modal: true,
         resizable: false,
-        title: 'Admin',
+        title: 'Melding',
         width: 450
     });
 });

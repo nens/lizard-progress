@@ -22,6 +22,7 @@ from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
@@ -54,6 +55,10 @@ from lizard_progress import configuration
 from lizard_progress import forms
 
 logger = logging.getLogger(__name__)
+
+
+class NoSuchFieldException(Exception):
+    pass
 
 
 class ProjectsMixin(object):
@@ -941,8 +946,18 @@ class PlanningView(ProjectsView):
                 'icon_complete': amtype.default_icon_complete})[0]
 
         shapefilepath = self.__save_uploaded_files(request, contractor, amtype)
-        locations_from_shapefile = dict(
-            self.__locations_from_shapefile(shapefilepath))
+        try:
+            locations_from_shapefile = dict(
+                self.__locations_from_shapefile(shapefilepath))
+        except NoSuchFieldException:
+            messages.add_message(
+                request, messages.ERROR,
+                'Veld "{}" niet gevonden in de shapefile. '
+                'Pas de shapefile aan,'
+                'of geef een ander ID veld aan op het Configuratie scherm.'
+                .format(self.location_id_field))
+
+            return self.get(request, *args, **kwargs)
 
         existing_measurements = list(
             self.__existing_measurements(self.project, mtype, contractor))
@@ -992,6 +1007,10 @@ class PlanningView(ProjectsView):
 
         return shapefilepath + '.shp'
 
+    @property
+    def location_id_field(self):
+        return configuration.get(self.project, 'location_id_field')
+
     def __locations_from_shapefile(self, shapefilepath):
         """Get locations from shapefile and generate them as
         (location_code, WKT string) tuples."""
@@ -1004,9 +1023,12 @@ class PlanningView(ProjectsView):
             layer = shapefile.GetLayer(layer_num)
             for feature_num in xrange(layer.GetFeatureCount()):
                 feature = layer.GetFeature(feature_num)
-                location_code = feature.GetField(
-                    configuration.get(self.project, 'location_id_field')
-                    .encode('utf8'))
+                try:
+                    location_code = feature.GetField(
+                        self.location_id_field).encode('utf8')
+                except ValueError:
+                    raise NoSuchFieldException()
+
                 geometry = feature.GetGeometryRef().ExportToWkt()
 
                 yield (location_code, geometry)

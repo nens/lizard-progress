@@ -3,7 +3,9 @@
 {% block contentpage %}
 <h2>Planning</h2>
 
-<p>Metingen kunnen gepland worden door het uploaden van een puntenshape. Eerder geplande metingen worden verwijderd, tenzij er al een meting geupload is. Al geuploade data blijft altijd bestaan.</p>
+<p>Metingen kunnen gepland worden door het uploaden van een punten-shapefile. Eerder geplande metingen worden verwijderd, tenzij er al een meting geupload is. Al geuploade data blijft altijd bestaan.</p>
+
+<p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder "Configuratie".</p>
 
 <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
   {{ view.form.as_p }}

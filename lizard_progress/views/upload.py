@@ -12,6 +12,7 @@ import shutil
 import tempfile
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import MultiLineString
@@ -451,6 +452,11 @@ class UploadHydrovakkenView(ProjectsView):
         return super(
             UploadHydrovakkenView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def hydrovakken_id_field(self):
+        return configuration.get(
+            self.project, 'hydrovakken_id_field')
+
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -477,10 +483,12 @@ class UploadHydrovakkenView(ProjectsView):
                 for chunk in uploaded_file.chunks():
                     f.write(chunk)
 
-        datasource = DataSource(
-            os.path.join(hydrovakken_dir, request.FILES['shp'].name))
-        id_field_name = configuration.get(
-            self.project, 'hydrovakken_id_field')
+        filepath = os.path.join(hydrovakken_dir, request.FILES['shp'].name)
+        if isinstance(filepath, unicode):
+            filepath = filepath.encode('utf8')
+        datasource = DataSource(filepath)
+
+        id_field_name = self.hydrovakken_id_field
         layer = datasource[0]
 
         for feature in layer:
@@ -500,8 +508,13 @@ class UploadHydrovakkenView(ProjectsView):
                     hydrovak.the_geom = geom
                     hydrovak.save()
             else:
-                logger.debug("id_field_name not present")
-                logger.debug(feature.fields)
+                messages.add_message(
+                    request, messages.SUCCESS,
+                    'Veld "{}" niet gevonden in de shapefile. '
+                    'Pas de shapefile aan,'
+                    'of geef een ander ID veld aan op het Configuratie scherm.'
+                    .format(self.hydrovakken_id_field))
+                return self.get(request, *args, **kwargs)
 
         return HttpResponseRedirect(reverse(
                 'lizard_progress_downloadhomeview', kwargs={

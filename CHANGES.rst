@@ -2,8 +2,8 @@ B1;2802;0cChangelog of lizard-progress
 ===================================================
 
 
-2.1 (unreleased)
-----------------
+2.0.2 (2013-11-27)
+------------------
 
 - Check if ID field name exists when importing shapefiles, better
   inform user.

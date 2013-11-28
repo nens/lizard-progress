@@ -2,7 +2,7 @@ B1;2802;0cChangelog of lizard-progress
 ===================================================
 
 
-2.0.3 (unreleased)
+2.0.3 (2013-11-28)
 ------------------
 
 - Fix next bug, can't lookup unicode field names with ogr.

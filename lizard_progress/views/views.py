@@ -1009,7 +1009,9 @@ class PlanningView(ProjectsView):
 
     @property
     def location_id_field(self):
-        return configuration.get(self.project, 'location_id_field')
+        return (
+            configuration.get(self.project, 'location_id_field')
+            .strip().encode('utf8'))
 
     def __locations_from_shapefile(self, shapefilepath):
         """Get locations from shapefile and generate them as
@@ -1019,13 +1021,16 @@ class PlanningView(ProjectsView):
             shapefilepath = shapefilepath.encode('utf8')
         shapefile = osgeo.ogr.Open(shapefilepath)
 
+        location_id_field = self.location_id_field
+
         for layer_num in xrange(shapefile.GetLayerCount()):
             layer = shapefile.GetLayer(layer_num)
             for feature_num in xrange(layer.GetFeatureCount()):
                 feature = layer.GetFeature(feature_num)
+
                 try:
                     location_code = feature.GetField(
-                        self.location_id_field).encode('utf8')
+                        location_id_field).encode('utf8')
                 except ValueError:
                     raise NoSuchFieldException()
 

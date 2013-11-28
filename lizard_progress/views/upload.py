@@ -509,7 +509,7 @@ class UploadHydrovakkenView(ProjectsView):
                     hydrovak.save()
             else:
                 messages.add_message(
-                    request, messages.SUCCESS,
+                    request, messages.ERROR,
                     'Veld "{}" niet gevonden in de shapefile. '
                     'Pas de shapefile aan,'
                     'of geef een ander ID veld aan op het Configuratie scherm.'

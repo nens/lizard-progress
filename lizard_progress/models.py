@@ -101,6 +101,16 @@ class Organization(models.Model):
             self.errors.add(error)
 
 
+class ProjectType(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+    description = models.TextField(blank=True, null=True)
+    organization = models.ForeignKey(Organization)
+    default = models.BooleanField(help_text="The type wil be applied to projects by default")
+
+    def __unicode__(self):
+        return unicode(self.name)
+
+
 class UserRole(models.Model):
     ROLE_MANAGER = "manager"  # Can make new projects, configure
                               # running projects
@@ -189,6 +199,12 @@ def has_access(user, project, contractor=None):
     if userprofile is None:
         return False
 
+    if project.is_archived:
+        # Only organization's project managers have access
+        return (userprofile.organization ==
+                project.organization) and (
+                    userprofile.has_role(UserRole.ROLE_MANAGER))
+
     if (userprofile.organization ==
         project.organization):
         # Everybody in the project's organization can see it.
@@ -237,10 +253,11 @@ class Project(models.Model):
         verbose_name='projectnaam')
     slug = models.SlugField(max_length=50, unique=True)
     organization = models.ForeignKey(Organization, null=False)
-
+    is_archived = models.BooleanField()
     # Deprecated
     superuser = models.ForeignKey(User, null=True, blank=True,
         verbose_name='projectmanager')
+    project_type = models.ForeignKey(ProjectType, null=True, blank=True)
 
     class Meta:
         ordering = ('name',)

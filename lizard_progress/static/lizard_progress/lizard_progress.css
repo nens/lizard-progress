@@ -100,12 +100,20 @@ table.fixed {
     max-width: 600px;
 }
 
+div#archive {
+    background-color: #728b9a !important;
+}
+
 td.filename {
     width: 500px;
 }
 
 td.download {
     width: 100px;
+}
+
+td.archive {
+    text-align: right;
 }
 
 p.small {

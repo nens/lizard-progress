@@ -196,3 +196,11 @@ $("button.redirect").click(function (event) {
         window.location.href = url;
     }
 });
+
+
+// A button to archive a project
+$("#bt-archive").click(function (event) {
+    if (confirm("Project wordt gearchiveerd. Weet je het zeker?")){
+	window.location = this.value;
+    }
+});

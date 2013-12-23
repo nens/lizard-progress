@@ -1,8 +1,30 @@
 {% extends "lizard_progress/progressbase.html" %}
 
 {% block contentpage %}
-<h2>Werkzaamheden {{ view.project.name }}</h2>
-<table class="table table-bordered progressbase">
+
+{% if view.project.is_archived %}
+<div id="archive">
+{% endif %}
+
+<table class="table">
+  <tr><td>
+<h2>Werkzaamheden {{ view.project.name }} {% if view.project.is_archived %} (Gearchiveerd) {% endif %}<h2>
+  </td>
+  <td class="archive">  
+{% if view.user_is_manager %}
+    {% if not view.project.is_archived %}
+        <button id="bt-archive"
+  		type="button"
+  		value="{% url lizard_progress_archive project_slug=view.project.slug %}?action=archive"
+  		class="btn btn-link" title="Archiveren">
+	  <i class="icon-large icon-briefcase"></i>
+    {% endif %}
+  </button>
+{% endif %}
+  </td>
+</tr>
+</table>
+<table class="table table-bordered progressbase archived-dashboard">
 <thead>
   <th>Uitvoerder</th>
   <th>Werkzaamheid</th>
@@ -29,4 +51,9 @@
 <img src="{% url lizard_progress_dashboardgraphview project_slug=view.project_slug contractor_slug=contractor.slug area_slug=area.slug %}" title="Voortgang {{ contractor.organization.name }}"/>
 {% endfor %}
   </ul>
+
+{% if view.project.is_archived %}
+</div>
+{% endif %}
+
 {% endblock contentpage %}

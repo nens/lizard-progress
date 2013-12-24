@@ -887,9 +887,33 @@ def protected_file_download(request, project_slug, contractor_slug,
 class ArchiveProjectsOverview(ProjectsView):
 
     template_name = 'lizard_progress/archive.html'
+
+    def archive_years(self):
+        years = list(set([p.created_at.year for p in self.projects_archived()]))
+        years.sort()
+        years.reverse()
+        return years
         
-    def projects(self):
-        return self.projects_archived()
+    def project_types(self):
+        return models.ProjectType.objects.filter(organization=self.organization)
+
+    def archive_tree(self):
+        archive_tree = {}
+        projects_archived = Project.objects.filter(
+            id__in=[p.id for p in self.projects_archived()])
+
+        for archive_year in self.archive_years():
+            archive_tree.update({archive_year: {}})
+            
+        for archive_year in self.archive_years():
+            
+            for project_type in self.project_types():
+                projects = projects_archived.filter(
+                    **{'created_at__year': archive_year,
+                       'project_type': project_type})
+                if projects.exists():
+                    archive_tree[archive_year].update({project_type.name: projects})
+        return archive_tree    
 
 
 class ArchiveProjectsView(ProjectsView):

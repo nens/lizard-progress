@@ -1,0 +1,116 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block contentpage %}
+<h2>Archief</h2>
+
+
+<div class="tree">
+    <ul>
+      {% for y in view.archive_years %}
+        <li>
+            <span><i class="icon-calendar"></i>{{ y }}</span>
+            <ul>
+	      {% for k, v in view.archive_tree.items %}
+	        {% if k == y %}
+	           {% for t, projects in v.items %}
+	         <li>
+                	<span class="badge badge-success"><i class="icon-minus-sign"></i>{{ t }}</span>
+                    <ul>
+		      {% for project in projects %}
+                        <li>
+	                        <a href=""><span><i class="icon-time"></i>{{ project.name }}</a>
+                        </li>
+		      {% endfor %}
+                    </ul>
+                </li>
+		 {% endfor %}
+		 {% endif %}
+		 {% endfor %}
+                <!-- <li> -->
+                <!-- 	<span class="badge badge-success"><i class="icon-minus-sign"></i> Tuesday, January 8: 8.00 hours</span> -->
+                <!--     <ul> -->
+                <!--         <li> -->
+	        <!--                 <span><i class="icon-time"></i> 6.00</span> &ndash; <a href="">Altered code...</a> -->
+                <!--         </li> -->
+                <!--         <li> -->
+	        <!--                 <span><i class="icon-time"></i> 2.00</span> &ndash; <a href="">Simplified our approach to...</a> -->
+                <!--         </li> -->
+                <!--     </ul> -->
+                <!-- </li> -->
+                <!-- <li> -->
+                <!-- 	<span class="badge badge-warning"><i class="icon-minus-sign"></i> Wednesday, January 9: 6.00 hours</span> -->
+                <!--     <ul> -->
+                <!--         <li> -->
+	        <!--                 <a href=""><span><i class="icon-time"></i> 3.00</span> &ndash; Fixed bug caused by...</a> -->
+                <!--         </li> -->
+                <!--         <li> -->
+	        <!--                 <a href=""><span><i class="icon-time"></i> 3.00</span> &ndash; Comitting latest code to Git...</a> -->
+                <!--         </li> -->
+                <!--     </ul> -->
+                <!-- </li> -->
+                <!-- <li> -->
+                <!-- 	<span class="badge badge-important"><i class="icon-minus-sign"></i> Wednesday, January 9: 4.00 hours</span> -->
+                <!--     <ul> -->
+                <!--         <li> -->
+	        <!--                 <a href=""><span><i class="icon-time"></i> 2.00</span> &ndash; Create component that...</a> -->
+                <!--         </li> -->
+                <!--     </ul> -->
+                <!-- </li> -->
+            </ul>
+        </li>
+{% endfor %}
+    </ul>
+</div>
+
+
+   <!--  <div class="container"> -->
+    
+<!--     <div class="well"> -->
+<!-- <span id="toggler" href="#" data-toggle="collapse" class="active" data-target="#demo"> -->
+<!-- <\!--i class="icon-folder-open"></i-\-> -->
+<!-- <i class="icon-folder-close"></i> -->
+<!-- Folder Items -->
+<!-- </span> -->
+
+<!-- <div id="demo" class="collapse in"> -->
+<!-- <ul class="nav nav-list"> -->
+<!--   <\!--li class="nav-header">List header</li-\-> -->
+<!--   <li class="active"><a href="#">Home</a></li> -->
+<!--   <li><a href="#">Library</a></li> -->
+<!-- </ul> -->
+<!-- </div> -->
+<!-- </div> -->
+<!--     </div>  --><!-- /container -->
+<!-- <table class="table table-bordered table-hover progressbase"> -->
+<!-- <thead> -->
+<!--   <th>Project</th> -->
+<!--   <th>Laatste upload</th> -->
+<!--   <th>Soort</th> -->
+<!--   <th>Door</th> -->
+<!--   <th>Aantal</th> -->
+<!--   <th>Totaal nu</th> -->
+<!--   <th>%</th> -->
+<!-- </thead> -->
+<!-- {% for project in view.projects %} -->
+<!-- <tr class="clickable" data-url="{% url lizard_progress_dashboardview project.slug %}"> -->
+<!--   <td>{{ project.name }}</td> -->
+<!--   {% if project.latest_log %} -->
+<!--   <td>{{ project.latest_log.when }}</td> -->
+<!--   <td>{{ project.latest_log.mtype }}</td> -->
+<!--   <td>{{ project.latest_log.uploading_organization }}</td> -->
+<!--   <td>{{ project.latest_log.num_measurements }}</td> -->
+<!--   <td>{{ project.number_of_complete_scheduled_measurements }}</td> -->
+<!--   <td>{{ project.percentage_done }}</td> -->
+<!--   {% else %} -->
+<!--   <td></td> -->
+<!--   <td></td> -->
+<!--   <td></td> -->
+<!--   <td></td> -->
+<!--   <td></td> -->
+<!--   <td></td> -->
+<!--   {% endif %} -->
+<!-- </tr> -->
+<!-- {% endfor %} -->
+<!-- </table> -->
+
+{% endblock contentpage %}

@@ -258,6 +258,7 @@ class Project(models.Model):
     superuser = models.ForeignKey(User, null=True, blank=True,
         verbose_name='projectmanager')
     project_type = models.ForeignKey(ProjectType, null=True, blank=True)
+    created_at = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         ordering = ('name',)

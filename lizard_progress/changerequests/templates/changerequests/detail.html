@@ -1,0 +1,67 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block contentpage %}
+
+{% with view.changerequest as cr %}
+
+<h3>Aanvraag</h3>
+
+<dl class="dl-horizontal">
+  <dt>Aanvrager</dt>
+  <dd>{{ cr.contractor.organization }}</dd>
+
+  <dt>Type aanvraag</dt>
+  <dd>{{ cr.type_description }}</dd>
+
+  <dt>Locatie</dt>
+  <dd>{{ cr.location_code }}{% if cr.old_location_code %} (vervangt {{cr.old_location_code }}){% endif %}</dd>
+
+  <dt>Werkzaamheid</dt>
+  <dd>{{ cr.mtype }}</dd>
+
+  <dt>Motivatie</dt>
+  <dd>{% if view.user_is_contractor %}
+    <form action="{{ cr.detail_url }}change_motivation/" method="post">
+ {% csrf_token %}
+ <textarea cols="50" rows="4" name="motivation">{{ cr.motivation }}</textarea><br />
+ <input class="btn" type="submit" value="Motivatie opslaan">
+ </form>
+{% else %}
+   {{ cr.motivation }}
+{% endif %}
+   </dd>
+
+  {% if cr.is_open %}
+  <dt>Goedkeuring</dt>
+  <dd>
+    {% if view.user_is_manager %}
+    <button class="btn btn-success">Goedkeuren</button>
+    <button class="btn btn-danger">Afkeuren</button>
+    Reden: <input type="text" value="">
+    {% else %}
+    <button class="btn btn-danger">Aanvraag annuleren</button>
+    {% endif %}
+  </dd>
+  {% endif %}
+</dl>
+
+<h3>Commentaar</h3>
+<dl class="dl-horizontal">
+  {% for comment in cr.requestcomment_set.all %}
+    <dt>{% if comment.user.get_full_name %}{{ comment.user.get_full_name }}{% else %}{{ comment.user.username }}{% endif %} op {{ comment.comment_time|date:"d/m" }}</dt>
+    <dd>{{ comment.comment }}</dd>
+  {% endfor %}
+    <br />
+    <dt></dt>
+    <dd>
+    <form action="{{ cr.detail_url }}add_comment/" method="post">
+    {% csrf_token %}
+    <textarea name="comment" cols="50" rows="4"></textarea><br />
+    <input class="btn" type="submit" value="Commentaar toevoegen">
+    </form>
+    </dd>
+</dl>
+
+{% endwith %}
+
+{% endblock contentpage %}

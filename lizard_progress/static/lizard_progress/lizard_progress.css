@@ -192,3 +192,7 @@ tr.clickable:hover {
     border:1px solid #94a0b4;
     color:#000
 }
+
+.dl-horizontal dt {
+    white-space: normal;
+}

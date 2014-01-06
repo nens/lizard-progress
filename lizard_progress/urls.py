@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from django.conf.urls.defaults import include
 from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
@@ -48,6 +49,11 @@ urlpatterns = patterns(
     url('^$',
         login_required(ProjectsView.as_view()),
         name='lizard_progress_projecten'),
+
+    # Change requests are in a subapp
+    url(r'^projects/(?P<project_slug>[^/]+)/changerequests/',
+        include('lizard_progress.changerequests.urls')),
+
     # "Projects" page is basically same as homepage
     url('^projects/$',
         login_required(ProjectsView.as_view()),

@@ -200,7 +200,14 @@ $("button.redirect").click(function (event) {
 
 // A button to archive a project
 $("#bt-archive").click(function (event) {
-    if (confirm("Project wordt gearchiveerd. Weet je het zeker?")){
+    var msg = "";
+    if (this.name == "archive"){
+	msg = "Project wordt gearchiveerd. Weet u het zeker?";
+    } else {
+	msg = "Project wordt geactiveerd. Weet u het zeker?";
+    }
+
+    if (confirm(msg)){
 	window.location = this.value;
     }
 });

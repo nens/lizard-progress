@@ -14,11 +14,18 @@
 {% if view.user_is_manager %}
     {% if not view.project.is_archived %}
         <button id="bt-archive"
+		name="archive"
   		type="button"
   		value="{% url lizard_progress_archive project_slug=view.project.slug %}?action=archive"
   		class="btn btn-link" title="Archiveren">
-	  <i class="icon-large icon-briefcase"></i>
+    {% else %}
+        <button id="bt-archive"
+		name="activate"
+  		type="button"
+  		value="{% url lizard_progress_archive project_slug=view.project.slug %}?action=activate"
+  		class="btn btn-link" title="Activeren">
     {% endif %}
+    <i class="icon-large icon-briefcase"></i>
   </button>
 {% endif %}
   </td>

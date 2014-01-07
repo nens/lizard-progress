@@ -180,14 +180,16 @@ class Request(models.Model):
                 if location.has_scheduled_measurements(
                     mtype=self.mtype, contractor=self.contractor):
                     return self.set_invalid("Locatie bestaat al.")
-            old_location = self.get_location(
-                location_code=self.old_location_code)
-            if not old_location:
-                return self.set_invalid("Oude locatie bestaat niet.")
-            if old_location.has_measurements(
-                mtype=self.mtype, contractor=self.contractor):
-                return self.set_invalid(
-                    "Er zijn al metingen op de oude locatie.")
+
+            if self.old_location_code:
+                old_location = self.get_location(
+                    location_code=self.old_location_code)
+                if not old_location:
+                    return self.set_invalid("Oude locatie bestaat niet.")
+                if old_location.has_measurements(
+                    mtype=self.mtype, contractor=self.contractor):
+                    return self.set_invalid(
+                        "Er zijn al metingen op de oude locatie.")
 
         return True
 

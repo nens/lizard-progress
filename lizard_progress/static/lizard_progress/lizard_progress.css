@@ -131,6 +131,11 @@ tr.clickable:hover {
     *cursor: hand;
 }
 
+td.clickable:hover {
+    cursor: pointer;
+    *cursor: hand;
+}
+
 .tree {
     min-height:20px;
     #padding: 1px;
@@ -187,8 +192,13 @@ tr.clickable:hover {
 .tree li:last-child::before {
     height:30px
 }
+
 .tree li.parent_li>span:hover, .tree li.parent_li>span:hover+ul li span {
     background:#eee;
     border:1px solid #94a0b4;
     color:#000
+}
+
+.dl-horizontal dt {
+    white-space: normal;
 }

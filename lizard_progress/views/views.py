@@ -111,6 +111,19 @@ class ProjectsMixin(object):
         """Return organization name of current user."""
         return self.profile and self.profile.organization.name
 
+    def contractor(self):
+        """Return user-in-this-project's contractor object, if one
+        exists."""
+        profile = self.profile
+        project = self.project
+
+        if profile and project and profile.organization:
+            try:
+                return models.Contractor.objects.get(
+                    project=project, organization=profile.organization)
+            except models.Contractor.DoesNotExist:
+                return None
+
     def user_can_upload_to_project(self):
         if not self.project:
             return False
@@ -146,6 +159,17 @@ class ProjectsMixin(object):
         return (
             self.profile and
             self.profile.has_role(models.UserRole.ROLE_ADMIN))
+
+    def change_requests_menu_string(self):
+        from lizard_progress.changerequests.models import Request
+
+        n = len(Request.open_requests_for_profile(
+                self.project, self.profile))
+
+        if n == 0:
+            return ""
+        else:
+            return " ({n})".format(n=n)
 
     def project_home_url(self):
         if not self.project_slug:

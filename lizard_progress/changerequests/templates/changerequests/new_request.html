@@ -1,0 +1,13 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block contentpage %}
+
+<h3>{{ view.description }}</h3>
+
+<form action="{{ view.url }}" method="post">
+{% csrf_token %}
+{{ view.form.as_p }}
+<input type="submit" class="btn" value="Aanvragen">
+</form>
+
+{% endblock %}

@@ -62,6 +62,9 @@ Navigation
   {% if view.user_is_uploader %}
     <li {% if view.active_menu == "upload" %}class="active"{% endif %}><a title="Upload files" href="{% url lizard_progress_uploadhomeview project_slug=view.project_slug %}">Upload</a></li>
   {% endif %}
+
+  <li {% if view.active_menu == "requests" %}class="active"{% endif %}><a title="Aanvragen" href="{% url changerequests_main project_slug=view.project_slug %}">Aanvragen{{ view.change_requests_menu_string }}</a></li>
+
   <li {% if view.active_menu == "download" %}class="active"{% endif %}><a title="Download files" href="{% url lizard_progress_downloadhomeview project_slug=view.project_slug %}">Download</a></li>
   {% if view.user_is_manager %}
     <li {% if view.active_menu == "config" %}class="active"{% endif %}><a title="Configuratie" href="{% url lizard_progress_project_configuration_view project_slug=view.project_slug %}">Configuratie</a></li>

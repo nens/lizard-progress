@@ -185,7 +185,7 @@ class NewRequestView(ProjectsView):
             return pmodels.Contractor.objects.get(
                 pk=self.form.cleaned_data['contractor'])
         else:
-            return self.contractor
+            return self.contractor()
 
     def chosen_measurement_type(self):
         if 'mtype' in self.form.cleaned_data:

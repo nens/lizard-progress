@@ -99,7 +99,8 @@ class ProjectsMixin(object):
         return projects
 
     def projects_archived(self):
-        """Returns a list of archived projects the current user has access to."""
+        """Returns a list of archived projects the current user has
+        access to."""
 
         projects = []
         for project in Project.objects.filter(is_archived=True):

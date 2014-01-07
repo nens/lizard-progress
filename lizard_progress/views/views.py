@@ -27,7 +27,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
+from django.template import RequestContext
 from django.shortcuts import get_object_or_404
+from django.shortcuts import render
 from django.utils import simplejson as json
 from django.utils.translation import ugettext as _
 from django.views.static import serve
@@ -70,7 +73,7 @@ class ProjectsMixin(object):
         self.request = request
         self.user = request.user
         self.profile = models.UserProfile.get_by_user(self.user)
-
+        
         self.project_slug = kwargs.get('project_slug')
         if self.project_slug:
             self.project = get_object_or_404(Project, slug=self.project_slug)
@@ -90,7 +93,16 @@ class ProjectsMixin(object):
         """Returns a list of projects the current user has access to."""
 
         projects = []
-        for project in Project.objects.all():
+        for project in Project.objects.filter(is_archived=False):
+            if has_access(self.request.user, project):
+                projects.append(project)
+        return projects
+
+    def projects_archived(self):
+        """Returns a list of archived projects the current user has access to."""
+
+        projects = []
+        for project in Project.objects.filter(is_archived=True):
             if has_access(self.request.user, project):
                 projects.append(project)
         return projects
@@ -872,6 +884,75 @@ def protected_file_download(request, project_slug, contractor_slug,
     return response
 
 
+class ArchiveProjectsOverview(ProjectsView):
+
+    template_name = 'lizard_progress/archive.html'
+
+    def archive_years(self):
+        years = list(set([p.created_at.year for p in self.projects_archived()]))
+        years.sort()
+        years.reverse()
+        return years
+        
+    def project_types(self):
+        return models.ProjectType.objects.filter(organization=self.organization)
+
+    def archive_tree(self):
+        archive_tree = {}
+        projects_archived = Project.objects.filter(
+            id__in=[p.id for p in self.projects_archived()])
+
+        for archive_year in self.archive_years():
+            archive_tree.update({archive_year: {}})
+            
+        for archive_year in self.archive_years():
+            
+            for project_type in self.project_types():
+                projects = projects_archived.filter(
+                    **{'created_at__year': archive_year,
+                       'project_type': project_type})
+                if projects.exists():
+                    archive_tree[archive_year].update({project_type.name: projects})
+        return archive_tree    
+
+
+class ArchiveProjectsView(ProjectsView):
+    
+    template_name = 'lizard_progress/dashboard.html'
+    
+    def archive(self, project_slug):
+        is_archived = False
+        if self.user_is_manager():
+            try:
+                is_archived = True
+                project = Project.objects.get(slug=project_slug)
+                project.is_archived = is_archived
+                project.save()
+                msg = "Project '{}' is gearchiveerd."
+            except:
+                msg = "Er is een fout opgetreden. Project '{}' is NIET gearchiveerd." 
+            messages.success(self.request, msg.format(project_slug))
+        else:
+            messages.warning(self.request, "Permission denied. Login as a project manager.")
+    
+    def activate(self, project_slug):
+        project = Project.objects.get(slug=project_slug)
+        project.is_archived = False
+        project.save()
+        messages.success(self.request, "Project '{}' is geactiveerd.".format(project_slug))
+
+    def get(self, request, project_slug, *args, **kwargs):
+        action = request.GET.get('action', None)
+        if action == "archive":
+            self.archive(project_slug)
+        elif action == "activate":
+            self.activate(project_slug)
+
+        return HttpResponseRedirect(
+            reverse('lizard_progress_dashboardview', kwargs={
+                    'project_slug': project_slug}))
+
+
 class NewProjectView(ProjectsView):
     template_name = "lizard_progress/newproject.html"
 
@@ -890,10 +971,19 @@ class NewProjectView(ProjectsView):
 
         profile = models.UserProfile.get_by_user(request.user)
         organization = profile.organization
-
+        ptype = self.form.cleaned_data['ptype']
+        project_type = None
+        if ptype is None:
+            projecttypes = models.ProjectType.objects.filter(default=True)
+            if projecttypes.exists():
+                project_type = projecttypes[0]
+        else:
+            project_type = models.ProjectType.objects.get(name=ptype)
+            
         project = models.Project(
             name=self.form.cleaned_data['name'],
-            organization=organization)
+            organization=organization,
+            project_type=project_type)
         project.set_slug_and_save()
 
         for contractor in self.form.cleaned_data['contractors']:

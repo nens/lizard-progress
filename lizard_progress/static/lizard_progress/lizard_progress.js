@@ -196,3 +196,33 @@ $("button.redirect").click(function (event) {
         window.location.href = url;
     }
 });
+
+
+// A button to archive a project
+$("#bt-archive").click(function (event) {
+    var msg = "";
+    if (this.name == "archive"){
+	msg = "Project wordt gearchiveerd. Weet u het zeker?";
+    } else {
+	msg = "Project wordt geactiveerd. Weet u het zeker?";
+    }
+
+    if (confirm(msg)){
+	window.location = this.value;
+    }
+});
+
+$(function () {
+    $('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
+    $('.tree li.parent_li > span').on('click', function (e) {
+        var children = $(this).parent('li.parent_li').find(' > ul > li');
+        if (children.is(":visible")) {
+            children.hide('fast');
+            $(this).attr('title', 'Expand this branch').find(' > i').addClass('icon-plus-sign').removeClass('icon-minus-sign');
+        } else {
+            children.show('fast');
+            $(this).attr('title', 'Collapse this branch').find(' > i').addClass('icon-minus-sign').removeClass('icon-plus-sign');
+        }
+        e.stopPropagation();
+    });
+});

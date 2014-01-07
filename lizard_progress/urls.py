@@ -57,6 +57,13 @@ urlpatterns = patterns(
         login_required(views.NewProjectView.as_view()),
         name='lizard_progress_newproject'),
 
+    url('^archive/$',
+        login_required(views.ArchiveProjectsOverview.as_view()),
+        name='lizard_progress_archive_overview'),
+    url('^archive/(?P<project_slug>[^/]+)$',
+        login_required(views.ArchiveProjectsView.as_view()),
+        name='lizard_progress_archive'),
+
     # Admin pages
     url('^admin/$',
         login_required(

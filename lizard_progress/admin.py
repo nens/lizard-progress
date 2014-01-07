@@ -14,6 +14,12 @@ class OrganizationAdmin(admin.ModelAdmin):
     inlines = [OrganizationConfigurationInline]
 
 
+class ProjectTypeAdmin(admin.ModelAdmin):
+    
+    list_display = ('id', 'name', 'organization', 'default')
+    list_editable = ('name', 'organization', 'default')
+
+
 admin.site.register(models.Area)
 admin.site.register(models.Contractor)
 admin.site.register(models.Hydrovak)
@@ -25,3 +31,4 @@ admin.site.register(models.Organization, OrganizationAdmin)
 admin.site.register(models.UserProfile)
 admin.site.register(models.ErrorMessage)
 admin.site.register(models.LizardConfiguration)
+admin.site.register(models.ProjectType, ProjectTypeAdmin)

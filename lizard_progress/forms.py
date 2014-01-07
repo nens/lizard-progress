@@ -268,6 +268,10 @@ class NewProjectForm(forms.Form):
     mtypes = forms.ModelMultipleChoiceField(
         label=_("Choose one or more measurement types"),
         queryset=models.AvailableMeasurementType.objects.all())
+    ptype = forms.ModelChoiceField(
+        label=_("Project type (optional)."),
+        queryset=models.ProjectType.objects.all(),
+        required=False)
 
 
 class SingleUserForm(forms.Form):

@@ -88,6 +88,9 @@ def new_request_form_factory(
                 required=False)
 
             def clean_old_location_code(self):
+                if not self.data['old_location_code']:
+                    return  # It's optional
+
                 try:
                     pmodels.Location.objects.get(
                         project=project,

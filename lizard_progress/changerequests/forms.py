@@ -10,8 +10,11 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
 
 from . import models
+from lizard_progress import models as pmodels
 
 
 class ChangeRequestsForm(forms.Form):
@@ -37,10 +40,18 @@ class RequestDetailMotivationForm(ChangeRequestsForm):
     motivation = forms.CharField(min_length=1)
 
 
-def new_request_form_factory(request_type, mtypes=(), contractors=()):
+def new_request_form_factory(
+    project, request_type, mtypes=(), contractors=()):
     """Create a class that represents the exact form we currently
     need; forms are slightly different based on who is filling one in
-    (project owner or contractor) and on the type of request."""
+    (project owner or contractor) and on the type of request.
+
+    This Form class is created dynamically, to fit for each request
+    type.  The types have fields and checks in common, but there are
+    differences too. Both fields and methods are optionally defined.
+    Note that the variables 'project', 'request_type' and so on, which
+    are used in if statements and clean_ methods, are defined in this
+    function, not in the class."""
 
     class NewRequestForm(forms.Form):
         if contractors:
@@ -54,11 +65,36 @@ def new_request_form_factory(request_type, mtypes=(), contractors=()):
         location_code = forms.CharField(
             label="Locatiecode", required=True)
 
+        def clean_location_code(self):
+            try:
+                location = pmodels.Location.objects.get(
+                    project=project, location_code=self.data['location_code'])
+            except pmodels.Location.DoesNotExist:
+                location = None
+
+            if request_type == models.Request.REQUEST_TYPE_NEW_LOCATION:
+                if location:
+                    raise ValidationError(
+                        _('Location already exists.'))
+            else:
+                if not location:
+                    raise ValidationError(
+                        _('Location does not exist.'))
+
         if request_type == models.Request.REQUEST_TYPE_NEW_LOCATION:
             old_location_code = forms.CharField(
                 label="Oude locatiecode",
                 help_text="Alleen nodig als de nieuwe code deze vervangt",
                 required=False)
+
+            def clean_old_location_code(self):
+                try:
+                    pmodels.Location.objects.get(
+                        project=project,
+                        location_code=self.data['old_location_code'])
+                except pmodels.Location.DoesNotExist:
+                    raise ValidationError(_(
+                            "Old location doesn't exist."))
 
         if request_type in (
             models.Request.REQUEST_TYPE_NEW_LOCATION,
@@ -77,3 +113,7 @@ def new_request_form_factory(request_type, mtypes=(), contractors=()):
             widget=forms.Textarea)
 
     return NewRequestForm
+
+
+class RefusalForm(forms.Form):
+    reason = forms.CharField(label="Reden", required=True)

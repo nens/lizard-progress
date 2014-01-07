@@ -15,6 +15,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 
 from lizard_progress.views import ProjectsView
 from lizard_progress import models as pmodels
@@ -30,8 +31,9 @@ class ChangeRequestsPage(ProjectsView):
     active_menu = "requests"
 
     def open_requests(self):
-        requests = list(models.Request.open_requests_for_profile(
-                self.project, self.profile))
+        requests = models.Request.open_requests_for_profile(
+                self.project, self.profile)
+
         for request in requests:
             request.view = self
         return requests
@@ -49,6 +51,19 @@ class ChangeRequestsPage(ProjectsView):
         return requests
 
 
+class AllClosedChangeRequestsPage(ProjectsView):
+    template_name = 'changerequests/closed_overview.html'
+    active_menu = 'requests'
+
+    def closed_requests(self):
+        requests = models.Request.closed_requests_for_profile(
+                self.project, self.profile)
+
+        for request in requests:
+            request.view = self
+        return requests
+
+
 class RequestDetailPage(ProjectsView):
     template_name = 'changerequests/detail.html'
     active_menu = 'requests'
@@ -56,6 +71,7 @@ class RequestDetailPage(ProjectsView):
     def dispatch(self, request, project_slug, request_id):
         try:
             self.changerequest = models.Request.objects.get(pk=request_id)
+            self.changerequest.check_validity()
         except models.Request.DoesNotExist:
             raise Http404()
 
@@ -105,12 +121,38 @@ class ChangeRequestMotivation(RequestDetailPage):
             forms.RequestDetailMotivationForm, self.request.POST)
 
         if self.motivation_form.is_valid():
-            logger.debug("HMMMMMMMMMMMMMM")
             self.changerequest.motivation = (
                 self.motivation_form.cleaned_data['motivation'])
             self.changerequest.save()
-        else:
-            logger.debug("NOT VALID!")
+
+        return HttpResponseRedirect(
+            self.changerequest.detail_url())
+
+
+class AcceptOrRefuseRequest(RequestDetailPage):
+    def post(self, request, project_slug):
+        if 'accept' in request.POST:
+            if not self.user_is_manager():
+                raise PermissionDenied()
+            # Do accept
+            self.changerequest.accept()
+        elif 'refuse' in request.POST:
+            if not self.user_is_manager():
+                raise PermissionDenied()
+            # Refusal needs a reason
+            self.refusal_form = forms.RefusalForm(request.POST)
+            if self.refusal_form.is_valid():
+                # Do refuse
+                self.changerequest.refuse(
+                    self.refusal_form.cleaned_data['reason'])
+            else:
+                # Set error and render get
+                self.acceptance_error = "Afwijzing kan alleen met reden."
+                return self.get(request, project_slug)
+        elif 'withdraw' in request.POST:
+            if not self.user_is_uploader() or self.user_is_manager():
+                raise PermissionDenied()
+            self.changerequest.withdraw()
 
         return HttpResponseRedirect(
             self.changerequest.detail_url())
@@ -135,7 +177,7 @@ class NewRequestView(ProjectsView):
             for mtype in self.project.measurementtype_set.all()]
 
         return forms.new_request_form_factory(
-            request_type, mtypes, contractors)
+            self.project, request_type, mtypes, contractors)
 
     def chosen_contractor(self):
         """Assume form was valid, which contractor was chosen?"""
@@ -193,7 +235,10 @@ class NewRequestNewLocation(NewRequestView):
             location_code=self.form.cleaned_data['location_code'],
             old_location_code=(
                 self.form.cleaned_data['old_location_code'] or None),
-            motivation=self.form.cleaned_data['motivation'])
+            motivation=self.form.cleaned_data['motivation'],
+            the_geom='POINT({x} {y})'.format(
+                x=self.form.cleaned_data['rd_x'],
+                y=self.form.cleaned_data['rd_y']))
 
 
 class NewRequestMoveLocation(NewRequestView):
@@ -208,7 +253,10 @@ class NewRequestMoveLocation(NewRequestView):
             request_type=self.request_type,
             request_status=models.Request.REQUEST_STATUS_OPEN,
             location_code=self.form.cleaned_data['location_code'],
-            motivation=self.form.cleaned_data['motivation'])
+            motivation=self.form.cleaned_data['motivation'],
+            the_geom='POINT({x} {y})'.format(
+                x=self.form.cleaned_data['rd_x'],
+                y=self.form.cleaned_data['rd_y']))
 
 
 class NewRequestRemoveCode(NewRequestView):
@@ -224,3 +272,17 @@ class NewRequestRemoveCode(NewRequestView):
             request_status=models.Request.REQUEST_STATUS_OPEN,
             location_code=self.form.cleaned_data['location_code'],
             motivation=self.form.cleaned_data['motivation'])
+
+
+class RequestSeen(ProjectsView):
+    def post(self, request, project_slug, request_id):
+        try:
+            changerequest = models.Request.objects.get(pk=request_id)
+        except models.Request.DoesNotExist:
+            raise Http404()
+
+        if self.contractor() == changerequest.contractor:
+            changerequest.seen = True
+            changerequest.save()
+
+        return HttpResponse("OK")

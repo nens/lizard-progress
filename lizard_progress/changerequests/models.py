@@ -55,7 +55,7 @@ class Request(models.Model):
         REQUEST_STATUS_ACCEPTED: "Geaccepteerd",
         REQUEST_STATUS_REFUSED: "Geweigerd",
         REQUEST_STATUS_WITHDRAWN: "Ingetrokken",
-        REQUEST_STATUS_INVALID: "Ongeldig (vanwege eerder geuploade data)"
+        REQUEST_STATUS_INVALID: "Ongeldig"
     }
 
     contractor = models.ForeignKey(pmodels.Contractor)
@@ -64,6 +64,10 @@ class Request(models.Model):
     request_type = models.IntegerField(choices=sorted(TYPES.items()))
     request_status = models.IntegerField(
         choices=sorted(STATUSES.items()), default=REQUEST_STATUS_OPEN)
+
+    refusal_reason = models.TextField(null=True, blank=True)
+    invalid_reason = models.TextField(null=True, blank=True)
+
     creation_date = models.DateTimeField(auto_now_add=True)
     change_date = models.DateTimeField(auto_now=True)
 
@@ -99,6 +103,10 @@ class Request(models.Model):
                 status=self.status_description))
 
     @property
+    def project(self):
+        return self.contractor.project
+
+    @property
     def type_description(self):
         return Request.TYPES.get(self.request_type, "Onbekend")
 
@@ -121,6 +129,137 @@ class Request(models.Model):
     @property
     def is_invalid(self):
         return self.request_status == Request.REQUEST_STATUS_INVALID
+
+    @property
+    def is_valid(self):
+        return not self.is_invalid
+
+    def get_location(self, location_code=None):
+        if location_code is None:
+            location_code = self.location_code
+
+        try:
+            return pmodels.Location.objects.get(
+                location_code=location_code,
+                project=self.project)
+        except pmodels.Location.DoesNotExist:
+            return None
+
+    def set_invalid(self, reason):
+        self.invalid_reason = reason
+        self.request_status = Request.REQUEST_STATUS_INVALID
+        self.save()
+        return False
+
+    def _check_validity(self):
+        """Return True if this change request is valid. Assumes request
+        is open."""
+        if self.request_type == Request.REQUEST_TYPE_REMOVE_CODE:
+            # Location must exist, and this contractor can't have
+            # measurements for it yet.
+            location = self.get_location()
+            if not location:
+                return self.set_invalid("Locatie bestaat niet")
+            if location.has_measurements(self.mtype, self.contractor):
+                return self.set_invalid("Locatie heeft al metingen")
+
+        elif self.request_type == Request.REQUEST_TYPE_MOVE_LOCATION:
+            # Location must exist, and nobody can have uploaded measurements
+            # for it yet
+            location = self.get_location()
+            if not location:
+                return self.set_invalid("Locatie bestaat niet.")
+            if location.has_measurements():
+                return self.set_invalid("Locatie heeft al metingen.")
+        elif self.request_type == Request.REQUEST_TYPE_NEW_LOCATION:
+            # Location must NOT exist, and if an old_location is
+            # given, it must exist and have no measurements for this
+            # contractor yet.
+            location = self.get_location()
+            if location:
+                if location.has_scheduled_measurements(
+                    mtype=self.mtype, contractor=self.contractor):
+                    return self.set_invalid("Locatie bestaat al.")
+            old_location = self.get_location(location_code=self.old_location)
+            if not old_location:
+                return self.set_invalid("Oude locatie bestaat niet.")
+            if old_location.has_measurements(
+                mtype=self.mtype, contractor=self.contractor):
+                return self.set_invalid(
+                    "Er zijn al metingen op de oude locatie.")
+
+        return True
+
+    def check_validity(self):
+        """Returns True if this change request is still valid.
+
+        If it is not, False is returned. This can be because the
+        request is already closed (accepted, refused, withdrawn or
+        invalid), in which case nothing more happens.
+
+        If it was still open, the status of this request is also
+        updated to invalid and the request is saved!"""
+        if self.request_status != Request.REQUEST_STATUS_OPEN:
+            return False
+
+        return self._check_validity()
+
+    def accept(self):
+        # Sanity check
+        if not self.check_validity():
+            return
+
+        # Actually perform whatever this request wants
+        if self.request_type == Request.REQUEST_TYPE_REMOVE_CODE:
+            self.do_remove_code()
+        elif self.request_type == Request.REQUEST_TYPE_MOVE_LOCATION:
+            self.do_move_location()
+        elif self.request_type == Request.REQUEST_TYPE_NEW_LOCATION:
+            self.do_add_location()
+
+        # Save new status
+        self.request_status = Request.REQUEST_STATUS_ACCEPTED
+        self.save()
+
+    def do_remove_code(self, location_code=None):
+        location = self.get_location(location_code)
+
+        # Delete the scheduled measurements, which shouldn't have
+        # measurements connected to them (then this request would
+        # be invalid).
+        pmodels.ScheduledMeasurement.objects.filter(
+            location=location,
+            measurement_type=self.mtype,
+            contractor__organization=self.contractor).delete()
+
+        if not location.has_scheduled_measurements():
+            location.delete()
+
+    def do_move_location(self):
+        location = self.get_location()
+        location.the_geom = self.the_geom
+        location.save()
+
+    def do_add_location(self):
+        location, created = pmodels.Location.objects.get_or_create(
+            location_code=self.location_code, project=self.project,
+            defaults={'the_geom': self.the_geom})
+
+        mtype, created = pmodels.MeasurementType.objects.get_or_create(
+            mtype=self.mtype, project=self.project)
+
+        pmodels.ScheduledMeasurement.objects.get_or_create(
+            project=self.project, contractor=self.contractor,
+            mtype=mtype)
+
+    def refuse(self, reason):
+        self.refusal_reason = reason
+        self.request_status = Request.REQUEST_STATUS_REFUSED
+        self.save()
+
+    def withdraw(self):
+        self.request_status = Request.REQUEST_STATUS_WITHDRAWN
+        self.save()
 
     def did_last_action(self, organization=None):
         """Did this organization do the last action related to this request?
@@ -183,18 +322,20 @@ class Request(models.Model):
         return [
             request for request in
             cls.open_requests().filter(contractor__project=project)
+            if request.check_validity() and request.can_see(profile)]
+
+    @classmethod
+    def closed_requests_for_profile(cls, project, profile):
+        return [
+            request for request in
+            cls.closed_requests().filter(contractor__project=project)
             if request.can_see(profile)]
 
     def detail_url(self):
-        logger.debug("In detail_url")
-        try:
-            url = reverse('changerequests_detail', kwargs={
-                    'project_slug': self.contractor.project.slug,
-                    'request_id': str(self.id)})
-            logger.debug("URL is: {}".format(url))
-            return url
-        except Exception as e:
-            logger.debug(e)
+        url = reverse('changerequests_detail', kwargs={
+                'project_slug': self.contractor.project.slug,
+                'request_id': str(self.id)})
+        return url
 
     def record_comment(self, user, comment):
         RequestComment.objects.create(

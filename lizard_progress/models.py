@@ -490,6 +490,37 @@ class Location(models.Model):
     def __unicode__(self):
         return u"Location with code '%s'" % (self.location_code,)
 
+    def has_scheduled_measurements(self, mtype=None, contractor=None):
+        scheduleds = ScheduledMeasurement.objects.filter(
+            location=self)
+
+        if mtype is not None:
+            scheduleds = scheduleds.filter(
+                mtype__mtype=mtype)
+
+        if contractor is not None:
+            scheduleds = scheduleds.filter(
+                contractor=contractor)
+
+        return scheduleds.count() > 0
+
+    def has_measurements(self, mtype=None, contractor=None):
+        """Return True if there are any uploaded measurements at this
+        location, for this mtype (=AvailableMeasurementType) or
+        contractor, if given."""
+        measurements = Measurement.objects.filter(
+            scheduled__location=self)
+
+        if mtype is not None:
+            measurements = measurements.filter(
+                scheduled__mtype__mtype=mtype)
+
+        if contractor is not None:
+            measurements = measurements.filter(
+                scheduled__contractor=contractor)
+
+        return measurements.count() > 0
+
 
 class AvailableMeasurementType(models.Model):
     # "Dwarsprofiel", "Oeverfoto", "Oeverkenmerk", "Peilschaal foto",

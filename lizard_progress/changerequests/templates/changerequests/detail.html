@@ -4,7 +4,7 @@
 
 {% with view.changerequest as cr %}
 
-<h3>Aanvraag</h3>
+<h3>Aanvraag ({{ cr.status_description }})</h3>
 
 <dl class="dl-horizontal">
   <dt>Aanvrager</dt>
@@ -20,7 +20,7 @@
   <dd>{{ cr.mtype }}</dd>
 
   <dt>Motivatie</dt>
-  <dd>{% if view.user_is_contractor %}
+  <dd>{% if view.user_is_contractor and cr.is_open %}
     <form action="{{ cr.detail_url }}change_motivation/" method="post">
  {% csrf_token %}
  <textarea cols="50" rows="4" name="motivation">{{ cr.motivation }}</textarea><br />
@@ -30,17 +30,28 @@
    {{ cr.motivation }}
 {% endif %}
    </dd>
-
+  {% if cr.refusal_reason %}
+    <dt>Geweigerd vanwege</dt>
+    <dd>{{ cr.refusal_reason }}</dd>
+  {% endif %}
+  {% if cr.invalid_reason %}
+    <dt>Ongeldig vanwege</dt>
+    <dd>{{ cr.invalid_reason }}</dd>
+  {% endif %}
   {% if cr.is_open %}
   <dt>Goedkeuring</dt>
   <dd>
+    <form action="{{ cr.detail_url }}acceptance/" method="post">
+    {% csrf_token %}
     {% if view.user_is_manager %}
-    <button class="btn btn-success">Goedkeuren</button>
-    <button class="btn btn-danger">Afkeuren</button>
-    Reden: <input type="text" value="">
+    <input type="submit" name="accept" class="btn btn-success" value="Goedkeuren">
+    <input type="submit" name="refuse" class="btn btn-danger" value="Afkeuren">
+    Reden: <input name="reason" type="text" value="">
+    {% if view.acceptance_error %}<span style="color: red">{{ view.acceptance_error }}</span>{% endif %}
     {% else %}
-    <button class="btn btn-danger">Aanvraag annuleren</button>
+    <input type="submit" name="withdraw" class="btn btn-danger" value="Annuleren">
     {% endif %}
+    </form>
   </dd>
   {% endif %}
 </dl>

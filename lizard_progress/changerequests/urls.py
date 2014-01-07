@@ -16,9 +16,17 @@ from . import views
 
 urlpatterns = patterns(
     '',
-    # Overview page
+    # Overview pages
     url('^$', login_required(views.ChangeRequestsPage.as_view()),
         name='changerequests_main'),
+    url('^closed/$',
+        login_required(views.AllClosedChangeRequestsPage.as_view()),
+        name='changerequests_closed'),
+
+    # Note that a closed request is seen
+    url(r'^detail/(?P<request_id>\d+)/set_seen/$',
+        login_required(views.RequestSeen.as_view()),
+        name='changerequests_set_seen'),
 
     # Detail page and POST functionality from here
     url(r'^detail/(?P<request_id>\d+)/$',
@@ -30,6 +38,9 @@ urlpatterns = patterns(
     url(r'^detail/(?P<request_id>\d+)/change_motivation/$',
         login_required(views.ChangeRequestMotivation.as_view()),
         name='changerequests_detail_changemotivation'),
+    url(r'^detail/(?P<request_id>\d+)/acceptance/$',
+        login_required(views.AcceptOrRefuseRequest.as_view()),
+        name='changerequests_detail_acceptorrefuse'),
 
     # New change request forms
     url(r'^new/new_location/$',

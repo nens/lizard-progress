@@ -165,8 +165,19 @@ $().ready(function () {
 });
 
 // Make table rows clickable
-$("tr.clickable").click(function () {
+$("tr.clickable").click(function (event) {
+    event.preventDefault();
     url = $(this).attr('data-url');
+
+    if (url) {
+        window.location = url;
+    }
+});
+
+// Or table cells (URL is still in the tr)
+$("td.clickable").click(function (event) {
+    event.preventDefault();
+    url = $(this).closest("tr").attr("data-url");
 
     if (url) {
         window.location = url;
@@ -188,7 +199,7 @@ $("a.delete_file").click(function (event) {
     }
 });
 
-// A button the redirects to some page
+// A button that redirects to some page
 $("button.redirect").click(function (event) {
     event.preventDefault();
     var url = $(this).attr("data-redirect-url");
@@ -196,7 +207,6 @@ $("button.redirect").click(function (event) {
         window.location.href = url;
     }
 });
-
 
 // A button to archive a project
 $("#bt-archive").click(function (event) {
@@ -225,4 +235,19 @@ $(function () {
         }
         e.stopPropagation();
     });
+});
+
+// Click away closed requests on the changerequests page
+$("button.close").click(function (event) {
+    event.preventDefault();
+    var url = $(this).attr("data-post-url");
+    if (url) {
+        $.ajax({
+            url: url,
+            type: 'POST'
+        });
+    }
+    // Hide table row, if any
+    var $tr = $(this).closest('tr');
+    $tr.hide();
 });

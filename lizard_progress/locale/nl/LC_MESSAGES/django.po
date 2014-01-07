@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-11-11 06:25-0600\n"
+"POT-Creation-Date: 2014-01-07 01:48-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -53,6 +53,18 @@ msgstr "Nieuw wachtwoord"
 msgid "New password confirmation"
 msgstr "Bevestiging nieuw wachtwoord"
 
+#: changerequests/forms.py:78
+msgid "Location already exists."
+msgstr "Deze locatie bestaat al."
+
+#: changerequests/forms.py:82
+msgid "Location does not exist."
+msgstr "Locatie bestaat niet."
+
+#: changerequests/forms.py:97
+msgid "Old location doesn't exist."
+msgstr "Oude locatie bestaat niet."
+
 #: templates/lizard_progress/ui_base.html:101
 msgid "Back to homepage"
 msgstr "Terug naar de homepage"
@@ -69,7 +81,7 @@ msgstr ""
 msgid "Verder &gt;"
 msgstr ""
 
-#: views/views.py:197
+#: views/views.py:226
 msgid "Your current organization"
 msgstr "Uw huidige organisatie"
 

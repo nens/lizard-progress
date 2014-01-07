@@ -66,9 +66,10 @@ def new_request_form_factory(
             label="Locatiecode", required=True)
 
         def clean_location_code(self):
+            location_code = self.data['location_code']
             try:
                 location = pmodels.Location.objects.get(
-                    project=project, location_code=self.data['location_code'])
+                    project=project, location_code=location_code)
             except pmodels.Location.DoesNotExist:
                 location = None
 
@@ -81,6 +82,8 @@ def new_request_form_factory(
                     raise ValidationError(
                         _('Location does not exist.'))
 
+            return location_code
+
         if request_type == models.Request.REQUEST_TYPE_NEW_LOCATION:
             old_location_code = forms.CharField(
                 label="Oude locatiecode",
@@ -88,13 +91,15 @@ def new_request_form_factory(
                 required=False)
 
             def clean_old_location_code(self):
-                if not self.data['old_location_code']:
-                    return  # It's optional
+                old_location_code = self.data.get('old_location_code')
+                if not old_location_code:
+                    return None  # It's optional
 
                 try:
                     pmodels.Location.objects.get(
                         project=project,
-                        location_code=self.data['old_location_code'])
+                        location_code=old_location_code)
+                    return old_location_code
                 except pmodels.Location.DoesNotExist:
                     raise ValidationError(_(
                             "Old location doesn't exist."))

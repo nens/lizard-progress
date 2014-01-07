@@ -98,7 +98,7 @@ class Request(models.Model):
                 requesttype=self.type_description,
                 codes=(self.location_code +
                        (", " + self.old_location_code
-                        if self.location_code else "")),
+                        if self.old_location_code else "")),
                 contractor=self.contractor,
                 status=self.status_description))
 

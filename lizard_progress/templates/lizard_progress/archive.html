@@ -18,7 +18,7 @@
                     <ul>
 		      {% for project in projects %}
                         <li style="display: none;">
-	                    <a href="{% url lizard_progress_dashboardview project.slug %}"><span>{{ project.slug }}</a>
+	                    <a href="{% url lizard_progress_dashboardview project.slug %}"><span>{{ project }}</a>
                         </li>
 		      {% endfor %}
                     </ul>

@@ -77,7 +77,7 @@ Navigation
 {% endblock %}
 </div>
 
-<div id="contentpage">
+<div id="contentpage" {% if view.project and view.project.is_archived %}class="archive"{% endif %}>
 {% block contentpage %}
 {% endblock contentpage %}
 </div>

@@ -102,10 +102,14 @@ class Organization(models.Model):
 
 
 class ProjectType(models.Model):
-    name = models.CharField(max_length=128, unique=True)
+    name = models.CharField(max_length=128)
     description = models.TextField(blank=True, null=True)
     organization = models.ForeignKey(Organization)
-    default = models.BooleanField(help_text="The type wil be applied to projects by default")
+    default = models.BooleanField(
+        help_text="The type wil be applied to projects by default")
+
+    class Meta:
+        unique_together = (('name', 'organization'),)
 
     def __unicode__(self):
         return unicode(self.name)

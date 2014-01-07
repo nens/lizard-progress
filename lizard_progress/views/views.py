@@ -73,7 +73,7 @@ class ProjectsMixin(object):
         self.request = request
         self.user = request.user
         self.profile = models.UserProfile.get_by_user(self.user)
-        
+
         self.project_slug = kwargs.get('project_slug')
         if self.project_slug:
             self.project = get_object_or_404(Project, slug=self.project_slug)
@@ -917,7 +917,7 @@ class ArchiveProjectsOverview(ProjectsView):
         years.sort()
         years.reverse()
         return years
-        
+
     def project_types(self):
         return models.ProjectType.objects.filter(organization=self.organization)
 
@@ -928,22 +928,22 @@ class ArchiveProjectsOverview(ProjectsView):
 
         for archive_year in self.archive_years():
             archive_tree.update({archive_year: {}})
-            
+
         for archive_year in self.archive_years():
-            
+
             for project_type in self.project_types():
                 projects = projects_archived.filter(
                     **{'created_at__year': archive_year,
                        'project_type': project_type})
                 if projects.exists():
                     archive_tree[archive_year].update({project_type.name: projects})
-        return archive_tree    
+        return archive_tree
 
 
 class ArchiveProjectsView(ProjectsView):
-    
+
     template_name = 'lizard_progress/dashboard.html'
-    
+
     def archive(self, project_slug):
         is_archived = False
         if self.user_is_manager():
@@ -954,16 +954,16 @@ class ArchiveProjectsView(ProjectsView):
                 project.save()
                 msg = "Project '{}' is gearchiveerd."
             except:
-                msg = "Er is een fout opgetreden. Project '{}' is NIET gearchiveerd." 
-            messages.success(self.request, msg.format(project_slug))
+                msg = "Er is een fout opgetreden. Project '{}' is NIET gearchiveerd."
+            messages.success(self.request, msg.format(project))
         else:
             messages.warning(self.request, "Permission denied. Login as a project manager.")
-    
+
     def activate(self, project_slug):
         project = Project.objects.get(slug=project_slug)
         project.is_archived = False
         project.save()
-        messages.success(self.request, "Project '{}' is geactiveerd.".format(project_slug))
+        messages.success(self.request, "Project '{}' is geactiveerd.".format(project))
 
     def get(self, request, project_slug, *args, **kwargs):
         action = request.GET.get('action', None)
@@ -982,14 +982,18 @@ class NewProjectView(ProjectsView):
 
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def dispatch(self, request, *args, **kwargs):
-        if request.method == 'POST':
-            self.form = forms.NewProjectForm(request.POST)
-        else:
-            self.form = forms.NewProjectForm()
-
         return super(NewProjectView, self).dispatch(request, *args, **kwargs)
 
+    def get(self, request, *args, **kwargs):
+        if not hasattr(self, 'form'):
+            self.form = forms.NewProjectForm(
+                organization=self.profile.organization)
+        return super(NewProjectView, self).get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
+        self.form = forms.NewProjectForm(
+            request.POST,
+            organization=self.profile.organization)
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
 
@@ -998,12 +1002,15 @@ class NewProjectView(ProjectsView):
         ptype = self.form.cleaned_data['ptype']
         project_type = None
         if ptype is None:
-            projecttypes = models.ProjectType.objects.filter(default=True)
+            projecttypes = models.ProjectType.objects.filter(
+                organization=self.profile.organization,
+                default=True)
             if projecttypes.exists():
                 project_type = projecttypes[0]
         else:
-            project_type = models.ProjectType.objects.get(name=ptype)
-            
+            project_type = models.ProjectType.objects.get(
+                organization=self.profile.organization, name=ptype)
+
         project = models.Project(
             name=self.form.cleaned_data['name'],
             organization=organization,

@@ -100,7 +100,7 @@ table.fixed {
     max-width: 600px;
 }
 
-div#archive {
+div.archive {
     background-color: #728b9a !important;
 }
 

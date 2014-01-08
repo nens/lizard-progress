@@ -23,12 +23,88 @@ from lizard_progress.util import directories
 from lizard_progress.models import Contractor
 from lizard_progress.models import Project
 from lizard_progress.models import has_access
+from lizard_progress.models import Organization
 from lizard_progress.views.views import ProjectsView
 
 logger = logging.getLogger(__name__)
 
 
 APP_LABEL = Project._meta.app_label
+
+
+class DownloadOrganizationDocumentView(View):
+
+    def get(self, request, organization_id, filename):
+        organization = get_object_or_404(Organization,
+                                         id=organization_id)
+
+        # if not has_access(request.user, project, contractor):
+        #     return HttpResponseForbidden()
+
+        
+        directory = directories.organization_files_dir(
+            organization)
+
+        path = os.path.join(directory, filename)
+
+        if not os.path.exists(path):
+            raise http.Http404()
+
+        return serve(request, path, '/')
+
+    @models.UserRole.check(models.UserRole.ROLE_MANAGER)
+    def delete(self, request, organization_id, filename):
+        """Delete a downloadable file."""
+        organization = get_object_or_404(Organization,
+                                         id=organization_id)
+
+        directory = directories.organization_files_dir(
+            organization)
+        path = os.path.join(directory, filename)
+
+        if os.path.exists(path) and os.path.isfile(path):
+            os.remove(path)
+        else:
+            raise http.Http404()
+
+        return HttpResponse()
+    
+
+class DownloadDocumentsView(ProjectsView):
+    template_name = "lizard_progress/documents_download.html"
+    
+    def _make_url(self, filetype, path):
+        return reverse('lizard_progress_download_organization_document',
+                       kwargs={
+                           'organization_id': self.organization.id,
+                           'filename': os.path.basename(path)
+                       })
+
+    def _organization_files(self):
+        for path in directories.files_in(
+            directories.organization_files_dir(self.organization)):
+            yield {
+                'type': 'Handleidingen e.d.',
+                'filename': os.path.basename(path),
+                'size': directories.human_size(path),
+                'url': self._make_url('organization', path)
+                }
+
+    def files(self):
+        if not hasattr(self, '_files'):
+            def sorted_on_filename(iterable):
+                return sorted(
+                    iterable,
+                    key=lambda f: f.get('filename', '').lower())
+
+            try:
+                self._files = {
+                    'organization': sorted_on_filename(
+                        self._organization_files()),
+                    }
+            except Exception as e:
+                logger.debug(e)
+        return self._files
 
 
 class DownloadHomeView(ProjectsView):
@@ -48,9 +124,9 @@ class DownloadHomeView(ProjectsView):
                 'filename': os.path.basename(path)
                 })
 
-    def _organization_files(self):
+    def _project_files(self):
         for path in directories.files_in(
-            directories.organization_files_dir(self.project.organization)):
+                directories.project_files_dir(self.project)):
             yield {
                 'type': 'Handleidingen e.d.',
                 'filename': os.path.basename(path),
@@ -168,9 +244,10 @@ class DownloadHomeView(ProjectsView):
                     key=lambda f: f.get('filename', '').lower())
 
             try:
+                #import pdb; pdb.set_trace()
                 self._files = {
                     'organization': sorted_on_filename(
-                        self._organization_files()),
+                        self._project_files()),
                     'reports': sorted_on_filename(self._reports_files()),
                     'results': sorted_on_filename(self._results_files()),
                     'location_shapefile': sorted_on_filename(
@@ -267,8 +344,8 @@ class DownloadView(View):
             else:
                 raise http.Http404()
         elif filetype == 'organization':
-            directory = directories.organization_files_dir(
-                project.organization)
+            directory = directories.project_files_dir(
+                project)
         elif filetype == 'hydrovakken':
             directory = directories.hydrovakken_dir(project)
             for path in directories.all_files_in(directory):
@@ -299,7 +376,7 @@ class DownloadView(View):
             contractor_slug, filename):
         """Delete a downloadable file. For now, only for files without
         contractor ('organization files')."""
-
+        
         if contractor_slug != 'x' or filetype != 'organization':
             return HttpResponseForbidden()
 
@@ -308,10 +385,9 @@ class DownloadView(View):
         if not project.is_manager(request.user):
             return HttpResponseForbidden()
 
-        directory = directories.organization_files_dir(
-            project.organization)
+        directory = directories.project_files_dir(
+            project)
         path = os.path.join(directory, filename)
-
         if os.path.exists(path) and os.path.isfile(path):
             os.remove(path)
         else:

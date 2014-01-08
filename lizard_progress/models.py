@@ -517,7 +517,7 @@ class Location(models.Model):
 
         if mtype is not None:
             measurements = measurements.filter(
-                scheduled__mtype__mtype=mtype)
+                scheduled__measurement_type__mtype=mtype)
 
         if contractor is not None:
             measurements = measurements.filter(

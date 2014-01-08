@@ -1,0 +1,49 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block css %}
+{{block.super}}
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/base/jquery-ui.css" type="text/css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
+{% endblock css %}
+
+{% block javascript %}
+{{block.super}}
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.flash.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html4.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
+{% endblock javascript %}
+
+{% block contentpage %}
+
+{% if view.user_is_manager %}
+<div id="upload-wrapper" data-upload-dialog-url="/us/upload/">
+  <button type="button" class="upload btn btn-primary" data-upload-url="{% url lizard_progress_upload_orgfile %}"><i class="icon-upload"></i> Organisatiedocumenten uploaden</button>
+</div>
+{% endif %}
+
+{% if view.files and view.files.organization %}
+<h3>Documenten {{ view.organization }}</h3>
+<table class="table table-bordered fixed">
+  <thead>
+    <th>Filename</th>
+    <th style="width: 6em;">Download</th>
+    {% if view.user_is_manager %}
+    <th style="width: 6em;">Delete</th>
+    {% endif %}
+  </thead>
+  {% for file in view.files.organization %}
+  <tr>
+    <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+    <td class="download"><a href="{{ file.url }}">download</a></td>
+    {% if view.user_is_manager %}
+    <td><a class="delete_file" data-message="Dit verwijdert dit bestand uit alle projecten van de organisatie. Weet u dit zeker?" href="{{ file.url }}">delete</a></td>
+    {% endif %}
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% endblock contentpage %}

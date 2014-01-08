@@ -129,6 +129,11 @@ def hydrovakken_dir(project):
             'hydrovakken'))
 
 
+def project_files_dir(project):
+    return mk(os.path.join(
+        project_dir(project), 'files'))
+
+
 def organization_files_dir(organization):
     return mk(os.path.join(
             BASE_DIR,

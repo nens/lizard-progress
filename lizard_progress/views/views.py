@@ -15,6 +15,8 @@ import csv
 import logging
 import os
 import platform
+import shutil
+import glob
 
 import osgeo.ogr
 
@@ -1033,6 +1035,12 @@ class NewProjectView(ProjectsView):
                 mtype=mtype,
                 icon_missing=mtype.default_icon_missing,
                 icon_complete=mtype.default_icon_complete)
+
+        org_files_dir = directories.organization_files_dir(organization)
+        project_files_dir = directories.project_files_dir(project)
+        for filename in os.listdir(org_files_dir):
+            shutil.copy(os.path.join(org_files_dir, filename),
+                        os.path.join(project_files_dir, filename))
 
         return HttpResponseRedirect(
             reverse('lizard_progress_project_configuration_view',

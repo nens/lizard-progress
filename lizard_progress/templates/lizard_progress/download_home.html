@@ -20,13 +20,13 @@
 
 {% if view.user_is_manager %}
 <div id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
-  <button type="button" class="upload btn btn-primary" data-upload-url="{% url lizard_progress_upload_orgfile %}"><i class="icon-upload"></i> Organisatiedocumenten uploaden</button>
+  <button type="button" class="upload btn btn-primary" data-upload-url="{% url lizard_progress_upload_projectfile project_slug=view.project.slug%}"><i class="icon-upload"></i> Organisatiedocumenten uploaden</button>
   <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url lizard_progress_upload_hydrovakken project_slug=view.project.slug %}"><i class="icon-upload"></i> Hydrovakken uploaden</button>
 </div>
 {% endif %}
 
-{% if view.files.organization %}
-<h3>Documenten {{ view.project.organization }}</h3>
+<!-- {% if view.files.organization %} -->
+<h3>Documenten {{ view.project.name }}</h3>
 <table class="table table-bordered fixed">
   <thead>
     <th>Filename</th>
@@ -45,7 +45,7 @@
   </tr>
   {% endfor %}
 </table>
-{% endif %}
+<!-- {% endif %} -->
 
 {% if view.files.location_shapefile or view.files.hydrovakken %}
 <h3>Shapefiles</h3>

@@ -23,6 +23,8 @@ from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DashboardView
 from lizard_progress.views import DownloadHomeView
 from lizard_progress.views import DownloadView
+from lizard_progress.views import DownloadDocumentsView
+from lizard_progress.views import DownloadOrganizationDocumentView
 from lizard_progress.views import HydrovakkenWizard
 from lizard_progress.views import MapView
 from lizard_progress.views import ProjectsView
@@ -100,6 +102,14 @@ urlpatterns = patterns(
         login_required(organization_admin.OrganizationAdminConfiguration.as_view()),
         name='lizard_progress_admin_organization_errorconfiguration'),
 
+    # Organization documents
+    url('^projects/documents/download/$',
+        login_required(DownloadDocumentsView.as_view()),
+        name='lizard_progress_documents_download'),
+    url('^download/organization/(?P<organization_id>\d+)/(?P<filename>[^/]+)',
+        login_required(DownloadOrganizationDocumentView.as_view()),
+        name='lizard_progress_download_organization_document'),
+
     # Project page per project
     url('^projects/(?P<project_slug>[^/]+)/$',
         login_required(ProjectsView.as_view()),
@@ -174,6 +184,9 @@ urlpatterns = patterns(
     url('^organization_file_upload/$',
         login_required(views.UploadOrganizationFileView.as_view()),
         name='lizard_progress_upload_orgfile'),
+    url('^project_file_upload/(?P<project_slug>[^/]+)/$',
+        login_required(views.UploadProjectFileView.as_view()),
+        name='lizard_progress_upload_projectfile'),
     url('^projects/(?P<project_slug>[^/]+)/hydrovakken_upload/$',
         login_required(views.UploadHydrovakkenView.as_view()),
         name='lizard_progress_upload_hydrovakken'),

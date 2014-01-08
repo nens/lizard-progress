@@ -440,6 +440,24 @@ class UploadOrganizationFileView(ProjectsView):
         return json_response({})
 
 
+class UploadProjectFileView(ProjectsView):
+    @models.UserRole.check(models.UserRole.ROLE_MANAGER)
+    def post(self, request, project_slug):
+        #organization = models.Organization.get_by_user(request.user)
+        project = get_object_or_404(models.Project, slug=project_slug)
+        
+        uploaded_file = request.FILES['file']
+        filename = request.POST.get('filename', uploaded_file.name)
+
+        with open(os.path.join(
+                directories.project_files_dir(project),
+                filename), "wb") as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+
+        return json_response({})
+
+
 class UploadHydrovakkenView(ProjectsView):
     template_name = "lizard_progress/upload_hydrovakken.html"
 

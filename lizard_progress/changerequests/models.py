@@ -9,11 +9,14 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import json
 import logging
 
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.contrib.gis.db import models
+
+from lizard_map.models import WorkspaceEditItem
 
 from lizard_progress import models as pmodels
 
@@ -34,6 +37,8 @@ logger = logging.getLogger(__name__)
 
 
 class Request(models.Model):
+    adapter_class = 'adapter_changerequest'
+
     REQUEST_TYPE_REMOVE_CODE = 1
     REQUEST_TYPE_MOVE_LOCATION = 2
     REQUEST_TYPE_NEW_LOCATION = 3
@@ -97,10 +102,20 @@ class Request(models.Model):
             "{requesttype}: {codes} door {contractor} ({status})".format(
                 requesttype=self.type_description,
                 codes=(self.location_code +
-                       (", " + self.old_location_code
+                       (", vervangt " + self.old_location_code
                         if self.old_location_code else "")),
                 contractor=self.contractor,
                 status=self.status_description))
+
+    def adapter_layer_name(self):
+        """Sort of a simplied Unicode."""
+        return (
+            "Aanvraag {requesttype} {codes} door {organization}".format(
+                requesttype=self.type_description.lower(),
+                codes=(self.location_code +
+                       (", " + self.old_location_code
+                        if self.old_location_code else "")),
+                organization=self.contractor.organization))
 
     @property
     def project(self):
@@ -207,6 +222,19 @@ class Request(models.Model):
 
         return self._check_validity()
 
+    def change_status(self, status):
+        """Change status, save request, and handle possible side effects."""
+        open_before = self.is_open
+
+        self.request_status = status
+        self.save()
+
+        if open_before and not self.is_open:
+            # We got closed, remove us from workspaces
+            WorkspaceEditItem.objects.filter(
+                adapter_class=self.adapter_class,
+                adapter_layer_json=self.adapter_layer_json()).delete()
+
     def accept(self):
         # Sanity check
         if not self.check_validity():
@@ -219,10 +247,11 @@ class Request(models.Model):
             self.do_move_location()
         elif self.request_type == Request.REQUEST_TYPE_NEW_LOCATION:
             self.do_add_location()
+            if self.old_location_code:
+                self.do_remove_code(location_code=self.old_location_code)
 
         # Save new status
-        self.request_status = Request.REQUEST_STATUS_ACCEPTED
-        self.save()
+        self.change_status(Request.REQUEST_STATUS_ACCEPTED)
 
     def do_remove_code(self, location_code=None):
         location = self.get_location(location_code)
@@ -230,10 +259,15 @@ class Request(models.Model):
         # Delete the scheduled measurements, which shouldn't have
         # measurements connected to them (then this request would
         # be invalid).
-        pmodels.ScheduledMeasurement.objects.filter(
+        mtype = pmodels.MeasurementType.objects.get(
+            mtype=self.mtype, project=self.contractor.project)
+
+        scheduleds = pmodels.ScheduledMeasurement.objects.filter(
             location=location,
-            measurement_type=self.mtype,
-            contractor__organization=self.contractor).delete()
+            measurement_type=mtype,
+            contractor=self.contractor)
+
+        scheduleds.delete()
 
         if not location.has_scheduled_measurements():
             location.delete()
@@ -253,16 +287,15 @@ class Request(models.Model):
 
         pmodels.ScheduledMeasurement.objects.get_or_create(
             project=self.project, contractor=self.contractor,
-            mtype=mtype)
+            location=location,
+            measurement_type=mtype)
 
     def refuse(self, reason):
         self.refusal_reason = reason
-        self.request_status = Request.REQUEST_STATUS_REFUSED
-        self.save()
+        self.change_status(Request.REQUEST_STATUS_REFUSED)
 
     def withdraw(self):
-        self.request_status = Request.REQUEST_STATUS_WITHDRAWN
-        self.save()
+        self.change_status(Request.REQUEST_STATUS_WITHDRAWN)
 
     def did_last_action(self, organization=None):
         """Did this organization do the last action related to this request?
@@ -333,6 +366,10 @@ class Request(models.Model):
             request for request in
             cls.closed_requests().filter(contractor__project=project)
             if request.can_see(profile)]
+
+    def adapter_layer_json(self):
+        return json.dumps({
+                'changerequest_id': self.id})
 
     def detail_url(self):
         url = reverse('changerequests_detail', kwargs={

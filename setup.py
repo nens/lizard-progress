@@ -58,4 +58,6 @@ setup(name='lizard-progress',
           'lizard_map.adapter_class': [
               'adapter_progress = lizard_progress.layers:ProgressAdapter',
               'adapter_hydrovak = lizard_progress.layers:HydrovakAdapter',
+              'adapter_changerequest = '
+              'lizard_progress.changerequests.layers:ChangeRequestAdapter',
               ]})

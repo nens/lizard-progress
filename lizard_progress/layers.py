@@ -30,7 +30,7 @@ def mapnik_datasource(query):
         user=default_database['USER'],
         password=default_database['PASSWORD'],
         dbname=default_database['NAME'],
-        table=query.encode('ascii')
+        table=query.encode('utf8')
         )
 
 

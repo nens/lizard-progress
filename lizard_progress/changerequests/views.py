@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import json
 import logging
 
 from django.core.exceptions import PermissionDenied
@@ -24,6 +25,11 @@ from . import models
 from . import forms
 
 logger = logging.getLogger(__name__)
+
+
+def JSONResponse(ob):
+    return HttpResponse(
+        json.dumps(ob), mimetype="application/json")
 
 
 class ChangeRequestsPage(ProjectsView):
@@ -131,12 +137,15 @@ class ChangeRequestMotivation(RequestDetailPage):
 
 class AcceptOrRefuseRequest(RequestDetailPage):
     def post(self, request, project_slug):
-        if 'accept' in request.POST:
+        wantsjson = (
+            request.POST.get('wantoutputas') == 'json')
+
+        if request.POST.get('accept'):
             if not self.user_is_manager():
                 raise PermissionDenied()
             # Do accept
             self.changerequest.accept()
-        elif 'refuse' in request.POST:
+        elif request.POST.get('refuse'):
             if not self.user_is_manager():
                 raise PermissionDenied()
             # Refusal needs a reason
@@ -148,14 +157,22 @@ class AcceptOrRefuseRequest(RequestDetailPage):
             else:
                 # Set error and render get
                 self.acceptance_error = "Afwijzing kan alleen met reden."
-                return self.get(request, project_slug)
-        elif 'withdraw' in request.POST:
+                if wantsjson:
+                    return JSONResponse({
+                            'success': False, 'error': self.acceptance_error})
+                else:
+                    return self.get(request, project_slug)
+        elif request.POST.get('withdraw'):
             if not self.user_is_uploader() or self.user_is_manager():
                 raise PermissionDenied()
             self.changerequest.withdraw()
 
-        return HttpResponseRedirect(
-            self.changerequest.detail_url())
+        if wantsjson:
+            return JSONResponse({
+                    'success': True})
+        else:
+            return HttpResponseRedirect(
+                self.changerequest.detail_url())
 
 
 class NewRequestView(ProjectsView):
@@ -265,13 +282,18 @@ class NewRequestRemoveCode(NewRequestView):
     url_name = 'changerequests_removecode'
 
     def create_new_request(self):
+        location = pmodels.Location.objects.get(
+            location_code=self.form.cleaned_data['location_code'],
+            project=self.chosen_contractor().project)
+
         models.Request.objects.create(
             contractor=self.chosen_contractor(),
             mtype=self.chosen_measurement_type(),
             request_type=self.request_type,
             request_status=models.Request.REQUEST_STATUS_OPEN,
             location_code=self.form.cleaned_data['location_code'],
-            motivation=self.form.cleaned_data['motivation'])
+            motivation=self.form.cleaned_data['motivation'],
+            the_geom=location.the_geom)
 
 
 class RequestSeen(ProjectsView):

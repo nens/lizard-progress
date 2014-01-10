@@ -188,6 +188,10 @@ class UserProfile(models.Model):
     def has_role(self, role_code):
         return self.roles.filter(code=role_code).exists()
 
+    def is_manager_in(self, project):
+        return self.has_role(UserRole.ROLE_MANAGER) and (
+            project.organization == self.organization)
+
     def roles_description(self):
         return ", ".join(
                 UserRole.objects.get(code=code).description
@@ -500,7 +504,7 @@ class Location(models.Model):
 
         if mtype is not None:
             scheduleds = scheduleds.filter(
-                mtype__mtype=mtype)
+                measurement_type__mtype=mtype)
 
         if contractor is not None:
             scheduleds = scheduleds.filter(

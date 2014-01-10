@@ -22,11 +22,22 @@
     <li class="workspace-acceptable"
         data-name="{{ layer.name }}"
         data-adapter-class="{{ layer.adapter }}"
-        data-adapter-layer-json="{{ layer.json }}">{{ layer.name }}
+        data-adapter-layer-json="{{ layer.json }}">{{ layer.name }}</li>
 {% endfor %}
   </ul>
+
+{% with view.open_changerequests as changerequests %}
+  {% if changerequests %}
+  <h2>Open aanvragen</h2>
+  <ul>
+  {% for cr in changerequests %}
+    <li class="workspace-acceptable"
+         data-name="{{ cr.adapter_layer_name }}"
+         data-adapter-class="{{ cr.adapter_class }}"
+         data-adapter-layer-json="{{ cr.adapter_layer_json }}">{{ cr.adapter_layer_name }}</li>
+  {% endfor %}
+  </ul>
+  {% endif %}
+{% endwith %}
 </div>
-
-{% workspace_edit view.workspace_edit %}
-
 {% endblock sidebar %}

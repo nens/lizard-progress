@@ -251,3 +251,35 @@ $("button.close").click(function (event) {
     var $tr = $(this).closest('tr');
     $tr.hide();
 });
+
+// Submit a form Ajax-style. Find out which button was pressed, in
+// which form the button is, set a hidden field pointed at by the
+// button, then submit the form.
+var ajax_submit = function (button) {
+    var $button = $(button);
+
+    var $hidden = $($button.attr("data-hidden-id"));
+
+    var $form = $button.closest('form');
+    var formdata = $form.serialize();
+
+    if ($hidden) {
+        $hidden.attr("value", $hidden.attr("name"));
+        formdata = $form.serialize();
+        $hidden.attr("value", "");
+    }
+
+    var url = $form.attr("action");
+
+    $.post(url, formdata,function (data) {
+        if (data.success) {
+            // Reload page? Easiest way to close the dialog, delete the
+            // request from the sidebar, and stop showing the request on
+            // the map.
+            location.reload();
+        } else {
+            var $errors = $("#submit-errors");
+            $errors.html(data.error);
+        }
+    });
+};

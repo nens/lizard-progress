@@ -5,7 +5,12 @@ B1;2802;0cChangelog of lizard-progress
 2.0.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Change requests page: contractors can ask to remove, move or create
+  new locations.
+
+- View and judge change requests using the map.
+
+- Archive projects.
 
 
 2.0.3 (2013-11-28)

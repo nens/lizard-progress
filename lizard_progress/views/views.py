@@ -27,10 +27,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from django.http import HttpResponse
-from django.template import RequestContext
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render
 from django.utils import simplejson as json
 from django.utils.translation import ugettext as _
 from django.views.static import serve
@@ -42,6 +39,7 @@ from lizard_map.views import AppView
 from lizard_ui.layout import Action
 from lizard_ui.views import UiView
 
+from lizard_progress.changerequests import models as cmodels
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress import models
 from lizard_progress.models import Area
@@ -310,6 +308,10 @@ class MapView(View):
             })
 
         return layers
+
+    def open_changerequests(self):
+        return cmodels.Request.open_requests_for_profile(
+            self.project, self.profile)
 
     @property
     def content_actions(self):

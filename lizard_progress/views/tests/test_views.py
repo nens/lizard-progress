@@ -11,6 +11,7 @@ from __future__ import division
 
 
 from django.test import TestCase
+from django.test.client import RequestFactory
 
 import mock
 
@@ -18,4 +19,11 @@ from lizard_progress.views import views
 from lizard_progress.tests import test_models
 
 
+class TestMapView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.view = views.MapView.as_view()
+
+    def available_layers_returns_layers(self):
+        user = test_models.UserF.create()
 

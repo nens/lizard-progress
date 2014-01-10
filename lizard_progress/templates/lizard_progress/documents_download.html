@@ -26,6 +26,8 @@
 
 {% if view.files and view.files.organization %}
 <h3>Documenten {{ view.organization }}</h3>
+<p>Deze documenten worden gekopi&euml;erd naar elk nieuw aangemaakt project.</p>
+
 <table class="table table-bordered fixed">
   <thead>
     <th>Filename</th>
@@ -39,7 +41,7 @@
     <td class="filename">{{ file.filename }} ({{ file.size }})</td>
     <td class="download"><a href="{{ file.url }}">download</a></td>
     {% if view.user_is_manager %}
-    <td><a class="delete_file" data-message="Dit verwijdert dit bestand uit alle projecten van de organisatie. Weet u dit zeker?" href="{{ file.url }}">delete</a></td>
+    <td><a class="delete_file" data-message="Wilt u dit bestand verwijderen?" href="{{ file.url }}">delete</a></td>
     {% endif %}
   </tr>
   {% endfor %}

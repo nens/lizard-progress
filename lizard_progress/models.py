@@ -830,8 +830,12 @@ class UploadedFile(models.Model):
                 'changerequests_possiblerequests', kwargs={
                     'project_slug': self.project.slug,
                     'uploaded_file_id': self.id
-                    })
+                    }),
+            'has_possible_requests': self.has_possible_requests()
             }
+
+    def has_possible_requests(self):
+        return self.possiblerequest_set.exists()
 
     def is_fixable(self):
         """Return True if the number of errors of this file is equal to

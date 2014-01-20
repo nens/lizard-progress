@@ -12,6 +12,14 @@ B1;2802;0cChangelog of lizard-progress
 
 - Archive projects.
 
+- Possible requests: some errors (unknown locations, moved locations)
+  can potentially be fixed with requests. This is recorded and the
+  uploader can quickly requests the necessary changes. If all errors
+  of the file are like this, and the requests are all accepted, then
+  the file is re-uploaded.
+
+- Check distance to planned location for MET files.
+
 
 2.0.3 (2013-11-28)
 ------------------

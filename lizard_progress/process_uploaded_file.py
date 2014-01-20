@@ -18,6 +18,7 @@ import traceback
 from django.db import transaction
 
 from lizard_progress import models
+from lizard_progress.changerequests.models import PossibleRequest
 from lizard_progress import specifics
 from lizard_progress.util import directories
 from lizard_progress.tools import unique_filename
@@ -71,7 +72,7 @@ def process(uploaded_file):
     for parser in possible_parsers:
         # Try_parser takes care of moving the file to its correct
         # destination if successful, and all database operations.
-        success, errors = try_parser(uploaded_file, parser)
+        success, errors, possible_requests = try_parser(uploaded_file, parser)
 
         if success:
             uploaded_file.ready = True
@@ -89,6 +90,10 @@ def process(uploaded_file):
                     line=error.line if uploaded_file.linelike else 0,
                     error_code=error.error_code or "UNKNOWNCODE",
                     error_message=error.error_message or "Unknown message")
+
+            for possible_request in possible_requests:
+                PossibleRequest.create_from_dict(
+                    uploaded_file, possible_request)
 
             return
 
@@ -113,6 +118,7 @@ def try_parser(uploaded_file, parser):
     case of success."""
 
     errors = []
+    possible_requests = []
 
     try:
         # We use transaction.commit_on_success to control our
@@ -147,7 +153,7 @@ def try_parser(uploaded_file, parser):
                 # Log success
                 uploaded_file.log_success(parseresult.measurements)
 
-                return True, []
+                return True, [], []
 
             elif parseresult.success:
                 # Success, but no results.  Don't count this as
@@ -162,6 +168,7 @@ def try_parser(uploaded_file, parser):
                 # New style errors (possibly more than one)
                 if parseresult.errors:
                     errors = parseresult.errors
+                    possible_requests = parseresult.possible_requests
                 # Old style (only one)
                 elif parseresult.error:
                     errors = [
@@ -178,7 +185,7 @@ def try_parser(uploaded_file, parser):
     except DummyException:
         pass
 
-    return False, errors
+    return False, errors, possible_requests
 
 
 def call_parser(uploaded_file, parser):

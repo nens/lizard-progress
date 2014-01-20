@@ -125,3 +125,10 @@ def new_request_form_factory(
 
 class RefusalForm(forms.Form):
     reason = forms.CharField(label="Reden", required=True)
+    old_location_code = forms.CharField(
+        label="Oude locatiecode", required=False)
+
+
+class PossibleRequestForm(forms.Form):
+    motivation = forms.CharField(label="Reden", required=True)
+

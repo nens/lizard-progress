@@ -308,3 +308,49 @@ class RequestSeen(ProjectsView):
             changerequest.save()
 
         return HttpResponse("OK")
+
+
+class PossibleRequestsView(ProjectsView):
+    template_name = "changerequests/possible_requests.html"
+
+    def dispatch(self, request, uploaded_file_id, *args, **kwargs):
+        self.uploaded_file_id = uploaded_file_id
+        return super(PossibleRequestsView, self).dispatch(
+            request, *args, **kwargs)
+
+    def uploaded_file(self):
+        try:
+            return pmodels.UploadedFile.objects.get(
+                pk=self.uploaded_file_id)
+        except pmodels.UploadedFile.DoesNotExist:
+            raise Http404()
+
+
+class ActivatePossibleRequest(ProjectsView):
+    """Called from Ajax, answers in JSON."""
+
+    def post(
+        self, request, project_slug, uploaded_file_id, possible_request_id):
+        try:
+            possible_request = models.PossibleRequest.objects.get(
+                uploaded_file_id=uploaded_file_id,
+                pk=possible_request_id)
+        except models.PossibleRequest.DoesNotExist:
+            raise Http404()
+
+        form = forms.PossibleRequestForm(request.POST)
+
+        if not form.is_valid():
+            return JSONResponse({
+                    'success': False,
+                    'error': "Motivatie is verplicht.",
+                    "error_span_id": (
+                        "#submit-errors-{}".format(possible_request_id))
+                    })
+
+        # Actually make request
+        possible_request.activate(
+            motivation=form.cleaned_data['motivation'],
+            old_location_code=form.cleaned_data.get('old_location_code', None))
+
+        return JSONResponse({'success': True})

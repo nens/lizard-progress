@@ -24,9 +24,12 @@ var upload_page_functions = upload_page_functions || (function () {
                             .attr("target", "_")
                              .text("bekijk fouten"))))
                   .append($("<td>").append(
+                      $("<a>").attr("href", uploaded_file.requests_url)
+                            .text("Aanvragen")))
+                  .append($("<td>").append(
                       $("<a>").attr("href", uploaded_file.delete_url)
                             .attr("class", "delete-uploaded-file")
-                            .text("verwijder")))
+                            .text("X")))
         );
         $(id_ready_div).fadeIn();
     };

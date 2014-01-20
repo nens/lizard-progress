@@ -1,0 +1,60 @@
+{% extends "lizard_progress/progressbase.html" %}
+{% block contentpage %}
+
+<h3>Mogelijke aanvragen voor "{{ view.uploaded_file.filename }}"</h3>
+
+<p>In het bestand zijn fouten gemeld die
+eventueel opgelost kunnen worden door een geaccepteerde aanvraag. Het
+gaat daarbij om onbekende locatiecodes die toegevoegd kunnen worden,
+en metingen die te ver van de locatie af liggen, waarvan de locatie
+verplaatst kan worden.</p>
+
+<p>Om de aanvragen daadwerkelijk te doen moet er bij de mogelijke
+aanvraag een motivatie verstuurd worden. Als het gaat om een nieuwe
+locatie is het ook mogelijk om een oude locatiecode op te geven. Als
+de nieuwe toegevoegd wordt, komt deze oude te vervallen. Dit is
+optioneel.</p>
+
+<p>Als er geen andere fouten met het bestand waren, en als voor alle
+mogelijke aanvragen een aanvraag ingediend wordt, en als die allemaal
+geaccepteerd worden, dan wordt het bestand automatisch opnieuw
+aangeboden. Is aan een van deze voorwaarden niet voldaan dan moet het
+bestand aangepast worden en handmatig opnieuw aangeboden worden.</p>
+
+{% with view.uploaded_file as uf %}
+    {% for pr in uf.possiblerequest_set.all %}
+        <p><b>{{ forloop.counter }}. Locatiecode {{ pr.location_code }}
+          {% if pr.request_type == 3 %}toevoegen{% else %}verplaatsen{% endif %}</b></p>
+          <dl class="dl-horizontal">
+           <dt>Co&ouml;rdinaten</dt>
+           <dd>({{ pr.the_geom.x }}, {{ pr.the_geom.y }})</dd>
+           <dt>Metingtype</dt>
+           <dd>{{ pr.mtype }}</dd>
+{% if pr.requested %}
+           <dt>Aanvraag gedaan</dt>
+     {% with pr.request as request %}
+          {% if request %}
+           <dd><a href="{{ pr.request.detail_url }}">Status: {{ pr.request.status_description }}</a></dd>
+          {% else %}
+           <dd>Aanvraag niet meer beschikbaar</dd>
+          {% endif %}
+     {% endwith %}
+{% else %}
+        <form action="{% url changerequests_activatepossiblerequest project_slug=view.project.slug uploaded_file_id=uf.id possible_request_id=pr.id %}" method="post">
+          {% if pr.request_type == 3 %}
+           <dt>Optionele oude locatiecode</dt>
+           <dd><input type="text" name="old_location_code"></dd>
+          {% endif %}
+          <dt>Reden</dt>
+            <dd><textarea name="motivation"></textarea>
+                    <span style="color: red" id="submit-errors-{{ pr.id }}"></span>
+            </dd>
+          <dt></dt>
+          <dd> <input type="hidden" name="submit" id="hidden-submit-{{ pr.id }}" value="">
+<button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-submit-{{ pr.id }}" class="btn btn-primary ajaxsubmit">Aanvragen</button></dd>
+        </form>
+{% endif %}
+          </dl>
+    {% endfor %}
+{% endwith %}
+{% endblock contentpage %}

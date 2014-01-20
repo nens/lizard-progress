@@ -94,6 +94,10 @@ class Request(models.Model):
     # as well as for showing points on the map.
     the_geom = models.PointField(null=True, srid=pmodels.SRID)
 
+    possible_request = models.ForeignKey(
+        'PossibleRequest', null=True, blank=True,
+        on_delete=models.SET_NULL)
+
     class Meta:
         ordering = ('creation_date',)
 
@@ -396,3 +400,82 @@ class RequestComment(models.Model):
         return (
             "{u}@{d}: {c}"
             .format(u=self.user, d=self.comment_time, c=self.comment))
+
+
+class PossibleRequest(models.Model):
+    """This is attached to an uploaded file, and created by a parser
+    that runs into an error. If the error could be fixed with an
+    accepted request, then the parser can create a
+    PossibleRequest. The user can give a motivation to turn it into a
+    real request.
+
+    There are two possible possible requests: for new location and for
+    moved location."""
+
+    uploaded_file = models.ForeignKey(pmodels.UploadedFile)
+    requested = models.BooleanField(default=False)
+    accepted = models.BooleanField(default=False)
+
+    # The following fields are the same values as in
+    # Request. Motivation and optionally old_location_code need to be
+    # given by the user.
+    mtype = models.ForeignKey(pmodels.AvailableMeasurementType)
+    request_type = models.IntegerField(choices=sorted(Request.TYPES.items()))
+    location_code = models.CharField(max_length=50)
+    # Contains coordinates of the point.
+    the_geom = models.PointField(null=True, srid=pmodels.SRID)
+
+    class Meta:
+        ordering = ('location_code',)
+
+    def __unicode__(self):
+        return "PossibleRequest(uploaded_file={u}, location_code={l})".format(
+            u=self.uploaded_file_id, l=self.location_code)
+
+    def request(self):
+        if self.requested:
+            try:
+                return Request.objects.get(
+                    possible_request=self)
+            except Request.DoesNotExist:
+                return None
+        else:
+            return None
+
+    def do_accept(self):
+        """Called if this possible request was accepted. If the
+        related uploaded file was fixable (all its errors had possible
+        requests) and all of the possible requests were done and
+        accepted, then re-upload the file."""
+        self.accepted = True
+        self.save()
+
+        if not self.uploaded_file.is_fixable():
+            return
+
+        if self.uploaded_file.possiblerequest_set.filter(
+            accepted=False).count() == 0:
+            self.uploaded_file.re_upload()
+
+    def activate(self, motivation, old_location_code=None):
+        Request.objects.create(
+            contractor=self.uploaded_file.contractor,
+            mtype=self.mtype,
+            request_type=self.request_type,
+            location_code=self.location_code,
+            old_location_code=old_location_code,
+            motivation=motivation,
+            the_geom=self.the_geom,
+            possible_request=self)
+
+        self.requested = True
+        self.save()
+
+    @classmethod
+    def create_from_dict(cls, uploaded_file, possible_request):
+        cls.objects.create(
+            uploaded_file=uploaded_file,
+            mtype=possible_request['available_measurement_type'],
+            request_type=possible_request['request_type'],
+            location_code=possible_request['location_code'],
+            the_geom='POINT({x} {y})'.format(**possible_request))

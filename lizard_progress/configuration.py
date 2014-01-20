@@ -109,6 +109,14 @@ CONFIG_OPTIONS = {
         default='289000',
         only_for_error='MET_INSIDE_EXTENT',
         ),
+    'maximum_location_distance': Option(
+        option='maximum_location_distance',
+        short_description='Maximum afstand tot geplande meetlocatie',
+        long_description='In meter',
+        type='float',
+        default='10',
+        only_for_error='TOO_FAR_FROM_LOCATION',
+        ),
     'maximum_mean_distance_between_points': Option(
         option='maximum_mean_distance_between_points',
         short_description=(

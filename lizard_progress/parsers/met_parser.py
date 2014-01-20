@@ -8,12 +8,14 @@ import math
 
 from django.contrib.gis.geos import Point
 
+from metfilelib.util import linear_algebra
 from metfilelib.parser import parse_metfile
 
 from lizard_progress import configuration
 from lizard_progress import models
 from lizard_progress import specifics
 from lizard_progress import errors
+from lizard_progress.changerequests.models import Request
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +140,16 @@ class MetParser(specifics.ProgressParser):
                     profile.line_number, 'MET_PROFILE_NUMBER_IN_DESC')
 
         max_z1 = max_z2 = None
+
+        # Profile's start_x and start_y must be the coordinates of one
+        # of the measurements
+        if not any(
+            measurement.x == profile.start_x
+            and measurement.y == profile.start_y
+            for measurement in profile.measurements):
+            self.record_error_code(
+                profile.line_number,
+                'MET_PROF_COORDS_IN_MEASRMNTS')
 
         self.check_waternet_profile_point_types(profile)
         self.check_two_22_codes_with_z1z2_equal(profile)
@@ -430,12 +442,44 @@ class MetParser(specifics.ProgressParser):
             location = models.Location.objects.get(
                 project=self.project,
                 location_code=profile.id)
+
+            location_point = linear_algebra.Point(
+                x=location.the_geom.x, y=location.the_geom.y)
+            profile_point = profile.start_point
+
+            distance = location_point.distance(profile_point)
+            maxdistance = self.config_value('maximum_location_distance')
+            if distance > maxdistance:
+                self.record_error_code(
+                    line_number=profile.line_number,
+                    error_code="TOO_FAR_FROM_LOCATION",
+                    location_id=profile.id,
+                    x=location_point.x, y=location_point.y,
+                    m=distance, maxm=maxdistance, recovery={
+                        'available_measurement_type': self.mtype().mtype,
+                        'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
+                        'location_code': profile.id,
+                        'x': profile.start_x,
+                        'y': profile.start_y
+                        })
+            else:
+                # Update location!
+                location.the_geom = profile_point.as_wkt
+                location.save()
+
         except models.Location.DoesNotExist:
             if self.project.needs_predefined_locations(self.mtype().mtype):
                 self.record_error_code(
                     line_number=profile.line_number,
                     error_code="NO_LOCATION",
-                    location_id=profile.id)
+                    location_id=profile.id,
+                    recovery={
+                        'available_measurement_type': self.mtype().mtype,
+                        'request_type': Request.REQUEST_TYPE_NEW_LOCATION,
+                        'location_code': profile.id,
+                        'x': profile.start_x,
+                        'y': profile.start_y
+                        })
                 return None
             else:
                 location = models.Location.objects.create(
@@ -480,9 +524,12 @@ class MetParser(specifics.ProgressParser):
         if error_code not in self.error_config:
             return
 
+        recovery = kwargs.pop('recovery') if 'recovery' in kwargs else None
+
         self.record_error(
             line_number,
-            *(models.ErrorMessage.format_code(error_code, *args, **kwargs)))
+            *(models.ErrorMessage.format_code(error_code, *args, **kwargs)),
+            recovery=recovery)
 
     def config_value(self, key):
         project = self.project

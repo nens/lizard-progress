@@ -278,7 +278,8 @@ var ajax_submit = function (button) {
             // the map.
             location.reload();
         } else {
-            var $errors = $("#submit-errors");
+            var error_span_id = data.error_span_id || "#submit-errors";
+            var $errors = $(error_span_id);
             $errors.html(data.error);
         }
     });

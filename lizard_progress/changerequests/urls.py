@@ -52,4 +52,12 @@ urlpatterns = patterns(
     url(r'^new/remove_code/$',
         login_required(views.NewRequestRemoveCode.as_view()),
         name='changerequests_removecode'),
+
+    # List of possible requests
+    url(r'^possible/(?P<uploaded_file_id>\d+)/$',
+        login_required(views.PossibleRequestsView.as_view()),
+        name='changerequests_possiblerequests'),
+    url(r'^possible/(?P<uploaded_file_id>\d+)/(?P<possible_request_id>\d+)/$',
+        login_required(views.ActivatePossibleRequest.as_view()),
+        name='changerequests_activatepossiblerequest'),
 )

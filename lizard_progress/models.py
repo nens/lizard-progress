@@ -715,7 +715,14 @@ class UploadedFile(models.Model):
     deleted. The stored uploaded file is deleted at that point as
     well. However, if uploading was successful, then there is a copy
     of it in the file system that will be kept. That is beyond the
-    zone of influence of this model."""
+    zone of influence of this model.
+
+    Unsuccessful uploaded files can also be re-processed automatically
+    by calling re_upload(). A new UploadedFile instance will be
+    created, using the same path, and the process uploaded file task
+    will be started for this new instance. Because of this, the actual
+    uploaded file is only finally deleted if there are no uploadedfile
+    instances referring to it anymore."""
 
     project = models.ForeignKey(Project)
     contractor = models.ForeignKey(Contractor)
@@ -740,6 +747,19 @@ class UploadedFile(models.Model):
 
     class PathDoesNotExist(Exception):
         pass
+
+    def re_upload(self):
+        """Make a new UploadedFile instance that refers to the same file,
+        and process it. Currently only used if all errors in the original
+        file could be treated with possible requests, they were all
+        requested and all accepted."""
+        new_uf = UploadedFile.objects.create(
+            project=self.project, contractor=self.contractor,
+            uploaded_by=self.uploaded_by, uploaded_at=datetime.datetime.now(),
+            path=self.path, ready=False, linelike=self.linelike)
+
+        from . import tasks
+        tasks.process_uploaded_file_task.delay(new_uf.id)
 
     @property
     def filename(self):
@@ -777,7 +797,9 @@ class UploadedFile(models.Model):
 
     def delete_self(self):
         try:
-            if os.path.exists(self.path):
+            if os.path.exists(self.path) and UploadedFile.objects.filter(
+                path=self.path).count() == 1:
+                # File exists and only we refer to it
                 os.remove(self.path)
             # Try to remove empty directory
             os.rmdir(os.path.dirname(self.path))
@@ -793,7 +815,7 @@ class UploadedFile(models.Model):
             'project_id': self.project.id,
             'contractor_id': self.contractor.id,
             'uploaded_by': self.uploaded_by.get_full_name(),
-            'uploaded_at': unicode(self.uploaded_at),
+            'uploaded_at': self.uploaded_at.strftime("%d/%m/%y %H:%M"),
             'filename': os.path.basename(self.path),
             'ready': self.ready,
             'success': self.success,
@@ -803,8 +825,20 @@ class UploadedFile(models.Model):
                 'lizard_progress_remove_uploaded_file', kwargs={
                     'project_slug': self.project.slug,
                     'uploaded_file_id': self.id
+                    }),
+            'requests_url': reverse(
+                'changerequests_possiblerequests', kwargs={
+                    'project_slug': self.project.slug,
+                    'uploaded_file_id': self.id
                     })
             }
+
+    def is_fixable(self):
+        """Return True if the number of errors of this file is equal to
+        the number of possible requests."""
+        return (
+            self.uploadedfileerror_set.count() ==
+            self.possiblerequest_set.count())
 
 
 class UploadedFileError(models.Model):

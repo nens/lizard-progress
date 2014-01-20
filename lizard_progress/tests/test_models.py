@@ -252,9 +252,14 @@ class TestSecurity(TestCase):
     def test_has_access_contractor(self):
         """Test access for contractor to a project."""
         uploader = UserF.create(username="uploader", is_superuser=False)
-        uploaderorganization = OrganizationF.create(name="Uploader organization")
-        UserProfileF.create(
+        uploaderorganization = OrganizationF.create(
+            name="Uploader organization")
+        profile = UserProfileF.create(
             user=uploader, organization=uploaderorganization)
+        profile.roles.add(
+            models.UserRole.objects.get(
+                code=models.UserRole.ROLE_UPLOADER))
+
         projectorganization = OrganizationF.create(name="organization")
         projectuser = UserF(is_superuser=True)
         project = ProjectF.create(superuser=projectuser)
@@ -263,7 +268,7 @@ class TestSecurity(TestCase):
         contractor = ContractorF(
             project=project, organization=uploaderorganization)
         has_access = models.has_access(uploader, project, contractor)
-        self.assertEquals(has_access, True)
+        self.assertTrue(has_access)
 
 
 class TestProject(TestCase):

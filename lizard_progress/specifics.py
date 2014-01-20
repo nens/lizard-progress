@@ -156,6 +156,7 @@ class ProgressParser(object):
         self.contractor = contractor
         self.file_object = file_object
         self.errors = []
+        self.possible_requests = []
 
     def parse(self, check_only=False):
         """Not applicable therefore return default."""
@@ -191,10 +192,20 @@ class ProgressParser(object):
         perhaps we should also have self.success()."""
         return SuccessfulParserResult(measurements)
 
-    def record_error(self, line_number, error_code, error_message):
+    def record_error(
+        self, line_number, error_code, error_message, recovery=None):
         """Record an error, then continue parsing. Because the error
         is recorded, self._parser_result() will return an
         UnSuccessfulParserResult later.
+
+        If a recovery dict is given, then we also record a
+        PossibleRequest using it. This is used for unknown or
+        misplaced locations, to automatically create requests to add
+        or change them. A user can turn possible requests into actual
+        requests by giving a motivation on the possible requests
+        screen. IF all possible requests are turned into actual
+        requests, and they are all accepted, and the uploaded file
+        isn't removed yet, then the file is re-submitted.
 
         Don't record an error on a line that already has one. Usually
         if there is an error on some line, that automatically leads to
@@ -209,6 +220,9 @@ class ProgressParser(object):
                 error_code=error_code,
                 error_message=error_message))
 
+        if recovery is not None:
+            self.possible_requests.append(recovery)
+
     def _parser_result(self, measurements):
         """Called by the parser, from the parse() function, after
         parsing a file using new-style errors. If errors were recorded
@@ -218,7 +232,9 @@ class ProgressParser(object):
         the right Measurements set."""
 
         if self.errors:
-            return UnSuccessfulParserResult(errors=self.errors)
+            return UnSuccessfulParserResult(
+                errors=self.errors,
+                possible_requests=self.possible_requests)
 
         return SuccessfulParserResult(measurements)
 
@@ -247,7 +263,7 @@ class UnSuccessfulParserResult(object):
     """
     Returned by an unsuccessful parser. Error is an error message.
     """
-    def __init__(self, error=None, errors=None):
+    def __init__(self, error=None, errors=None, possible_requests=None):
         self.success = False
 
         # A parser should use either the old way of reporting errors,
@@ -259,8 +275,17 @@ class UnSuccessfulParserResult(object):
         # New way -- iterable of Error namedtuples, with line /
         # error_message / error_code
         self.errors = tuple(errors) if errors else None
+        self.possible_requests = possible_requests or []
 
     def __str__(self):
         return (
             "UnSuccessfulParserResult: {}".
             format(self.error or self.errors))
+
+    @property
+    def recovery_possible(self):
+        """Recovery from this unsuccessful result is possible if every
+        error also has a possible request attached to it."""
+        num_errors = len(self.errors) if self.errors else 0
+
+        return num_errors > 0 and len(self.possible_request) == num_errors

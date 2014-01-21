@@ -1176,3 +1176,109 @@ class PlanningView(ProjectsView):
             scheduled__measurement_type=mtype,
             scheduled__contractor=contractor).select_related(
             "scheduled", "scheduled__location")
+
+
+class EditContractorsMeasurementTypes(ProjectsView):
+    template_name = "lizard_progress/edit_contractors.html"
+    active_menu = "dashboard"
+
+    def current_contractors(self):
+        return models.Contractor.objects.filter(
+            project=self.project)
+
+    def current_mtypes(self):
+        return models.MeasurementType.objects.filter(
+            project=self.project)
+
+    def contractors_to_add(self):
+        return models.Organization.objects.exclude(
+            contractor__project=self.project)
+
+    def measurementtypes_to_add(self):
+        return models.AvailableMeasurementType.objects.exclude(
+            measurementtype__project=self.project)
+
+    def post(self, request, project_slug):
+        if not self.user_is_manager():
+            raise PermissionDenied()
+
+        form = forms.AddContractorMeasurementTypeForm(request.POST)
+        if not form.is_valid():
+            # Can't happen...
+            logger.debug("Form is not valid")
+            raise http.Http404()
+
+        if form.cleaned_data.get('contractor'):
+            self._save_contractor(form)
+
+        if form.cleaned_data.get('measurementtype'):
+            self._save_measurementtype(form)
+
+        if form.cleaned_data.get('remove_contractor'):
+            self._remove_contractor(form)
+
+        if form.cleaned_data.get('remove_mtype'):
+            self._remove_mtype(form)
+
+        return HttpResponseRedirect(
+            reverse(
+                'lizard_progress_edit_contractors',
+                kwargs={'project_slug': self.project_slug}))
+
+    def _save_contractor(self, form):
+        try:
+            organization = models.Organization.objects.get(
+                pk=form.cleaned_data['contractor'])
+        except models.Organization.DoesNotExist:
+            logger.debug("Organization id '{}' does not exist."
+                         .format(form.cleaned_data['contractor']))
+            raise http.Http404()
+
+        args = {
+            'project': self.project,
+            'organization': organization
+            }
+
+        if not models.Contractor.objects.filter(**args).exists():
+            contractor = models.Contractor(**args)
+            contractor.set_slug_and_save()
+
+    def _save_measurementtype(self, form):
+        try:
+            available_measurement_type = (
+                models.AvailableMeasurementType.objects.get(
+                    pk=form.cleaned_data['measurementtype']))
+        except models.AvailableMeasurementType.DoesNotExist:
+            logger.debug("Available mtype id '{}' does not exist."
+                         .format(form.cleaned_data['measurementtype']))
+            raise http.Http404()
+
+        models.MeasurementType.objects.get_or_create(
+            project=self.project,
+            mtype=available_measurement_type,
+            defaults={
+                'icon_missing':
+                    available_measurement_type.default_icon_missing,
+                'icon_complete':
+                    available_measurement_type.default_icon_complete
+                })
+
+    def _remove_contractor(self, form):
+        try:
+            contractor = models.Contractor.objects.get(
+                pk=form.cleaned_data['remove_contractor'])
+        except models.Contractor.DoesNotExist:
+            raise http.Http404()
+
+        if not contractor.has_measurements():
+            contractor.delete()
+
+    def _remove_mtype(self, form):
+        try:
+            mtype = models.MeasurementType.objects.get(
+                pk=form.cleaned_data['remove_mtype'])
+        except models.MeasurementType.DoesNotExist:
+            raise http.Http404()
+
+        if not mtype.has_measurements():
+            mtype.delete()

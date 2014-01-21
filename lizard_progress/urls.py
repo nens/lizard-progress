@@ -140,6 +140,11 @@ urlpatterns = patterns(
         login_required(views.PlanningView.as_view()),
         name='lizard_progress_planningview'),
 
+    # Edit contractors and measurement types
+    url('^projects/(?P<project_slug>[^/]+)/edit_contractors/$',
+        login_required(views.EditContractorsMeasurementTypes.as_view()),
+        name='lizard_progress_edit_contractors'),
+
     # CSV file generation
     url('^dashboardcsv/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/$',
         login_required(DashboardCsvView.as_view()),
@@ -236,6 +241,7 @@ urlpatterns = patterns(
     url('users/newuser/$',
         login_required(views.NewUserManagementView.as_view()),
         name="lizard_progress_new_user_management"),
+
 )
 
 urlpatterns += debugmode_urlpatterns()

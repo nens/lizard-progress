@@ -391,3 +391,12 @@ class SingleUserForm(forms.Form):
             self.fields['is_admin'] = forms.BooleanField(
                 label="Mag gebruikers beheren", initial=initial_admin,
                 required=False)
+
+
+class AddContractorMeasurementTypeForm(forms.Form):
+    # We use a single form with no required fields for four different
+    # submits...
+    contractor = forms.IntegerField(required=False)
+    measurementtype = forms.IntegerField(required=False)
+    remove_contractor = forms.IntegerField(required=False)
+    remove_mtype = forms.IntegerField(required=False)

@@ -461,6 +461,10 @@ class Contractor(models.Model):
         else:
             return True
 
+    def has_measurements(self):
+        return Measurement.objects.filter(
+            scheduled__contractor=self).exists()
+
     def __unicode__(self):
         return u"%s in %s" % (self.organization, self.project.name)
 
@@ -603,6 +607,10 @@ class MeasurementType(models.Model):
 
     def __unicode__(self):
         return u"Type '%s' in %s" % (self.mtype.name, self.project.name)
+
+    def has_measurements(self):
+        return Measurement.objects.filter(
+            scheduled__measurement_type=self).exists()
 
 
 class ScheduledMeasurement(models.Model):

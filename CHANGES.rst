@@ -20,6 +20,9 @@ B1;2802;0cChangelog of lizard-progress
 
 - Check distance to planned location for MET files.
 
+- Added a page where contractors and measurementtypes can be added to
+  and removed from projects.
+
 
 2.0.3 (2013-11-28)
 ------------------

@@ -23,6 +23,10 @@ B1;2802;0cChangelog of lizard-progress
 - Added a page where contractors and measurementtypes can be added to
   and removed from projects.
 
+- Location shapefile can now be downloaded as an export (that can be
+  updated). Downloading the original shapefile is now disabled, as it
+  can be out of date.
+
 
 2.0.3 (2013-11-28)
 ------------------

@@ -47,24 +47,14 @@
 </table>
 <!-- {% endif %} -->
 
-{% if view.files.location_shapefile or view.files.hydrovakken %}
-<h3>Shapefiles</h3>
+{% if view.files.hydrovakken %}
+<h3>Hydrovakken shapefile</h3>
 
   <table class="table table-bordered fixed">
   <thead>
     <th>Omschrijving</th>
     <th>Downloads (3 files zijn samen een shape)</th>
   </thead>
-  {% for file in view.files.location_shapefile %}
-  <tr>
-    <td class="filename">{{ file.description }}</td>
-    <td class="download">
-      <a href="{{ file.urls.shp }}">.shp</a>,
-      <a href="{{ file.urls.dbf }}">.dbf</a>,
-      <a href="{{ file.urls.shx }}">.shx</a>
-    </td>
-  </tr>
-  {% endfor %}
   {% for file in view.files.hydrovakken %}
   <tr>
     <td class="filename">{{ file.description }}</td>
@@ -98,6 +88,7 @@
     <td>{{ export_run.measurement_type }}</td>
     <td>
       {% if export_run.exporttype == "allfiles" %}ZIP bestand
+      {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties
       {% elif export_run.exporttype == "met" %}MET bestand
       {% elif export_run.exporttype == "dxf" %}Zipped DXF
       {% elif export_run.exporttype == "csv" %}Zipped CSV
@@ -110,7 +101,15 @@
       {% endif %}
     </td>
     <td id="uptodate-{{ export_run.id }}">
-      {% if export_run.available %}{% if export_run.up_to_date %}Ja{% else %}Nee{% endif %}{% endif %}
+      {% if export_run.available %}
+         {% if export_run.exporttype == "pointshape" %}
+           Onbekend
+         {% elif export_run.up_to_date %}
+           Ja
+         {% else %}
+           Nee
+         {% endif %}
+      {% endif %}
     </td>
     <td id="download-{{ export_run.id }}">
       {% if export_run.present %}

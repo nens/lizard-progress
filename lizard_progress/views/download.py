@@ -41,7 +41,6 @@ class DownloadOrganizationDocumentView(View):
         # if not has_access(request.user, project, contractor):
         #     return HttpResponseForbidden()
 
-        
         directory = directories.organization_files_dir(
             organization)
 
@@ -68,11 +67,11 @@ class DownloadOrganizationDocumentView(View):
             raise http.Http404()
 
         return HttpResponse()
-    
+
 
 class DownloadDocumentsView(ProjectsView):
     template_name = "lizard_progress/documents_download.html"
-    
+
     def _make_url(self, filetype, path):
         return reverse('lizard_progress_download_organization_document',
                        kwargs={
@@ -169,38 +168,6 @@ class DownloadHomeView(ProjectsView):
                                               path)
                         }
 
-    def _location_shapefile_files(self):
-        for shapefile_path, contractor, mtype in self.__location_shapefiles():
-            yield {
-                'description': "Meetlocaties {mtype} {contractor}"
-                .format(
-                    mtype=mtype.mtype, contractor=contractor.organization),
-                'urls': {
-                    'shp': self._make_url(
-                        'locations', self.project,
-                        contractor, shapefile_path + ".shp"),
-                    'dbf': self._make_url(
-                        'locations', self.project,
-                        contractor, shapefile_path + ".dbf"),
-                    'shx': self._make_url(
-                        'locations', self.project,
-                        contractor, shapefile_path + ".shx")
-                    }}
-
-    def __location_shapefiles(self):
-        """For all the combinations of contractor and measurement type in this
-        project, check if the shapefile exists, and if so return its path and
-        the measurement type and contractor."""
-
-        for mtype in models.MeasurementType.objects.filter(
-            project=self.project):
-            for contractor in Contractor.objects.filter(project=self.project):
-                if has_access(self.user, self.project, contractor):
-                    shapefile_path = directories.location_shapefile_path(
-                        self.project, contractor, mtype.mtype)
-                    if os.path.exists(shapefile_path + ".shp"):
-                        yield shapefile_path, contractor, mtype
-
     def _shapefile_files(self):
         for contractor in self.project.contractor_set.all():
             if has_access(self.user, self.project, contractor):
@@ -250,8 +217,6 @@ class DownloadHomeView(ProjectsView):
                         self._project_files()),
                     'reports': sorted_on_filename(self._reports_files()),
                     'results': sorted_on_filename(self._results_files()),
-                    'location_shapefile': sorted_on_filename(
-                        self._location_shapefile_files()),
                     'contractor_hydrovakken': sorted_on_filename(
                         self._shapefile_files()),
                     'hydrovakken': sorted_on_filename(
@@ -332,17 +297,6 @@ class DownloadView(View):
             directory = directories.reports_dir(project, contractor)
         elif filetype == 'results':
             directory = directories.reports_dir(project, contractor)
-        elif filetype == 'locations':
-            logger.debug("Looking for {0}".format(filename))
-            directory = directories.location_shapefile_dir(project, contractor)
-            logger.debug("Trying in {0}".format(directory))
-            for path in directories.all_files_in(directory):
-                logger.debug("... {0}".format(path))
-                if os.path.basename(path) == filename:
-                    directory = os.path.dirname(path)
-                    break
-            else:
-                raise http.Http404()
         elif filetype == 'organization':
             directory = directories.project_files_dir(
                 project)
@@ -376,7 +330,7 @@ class DownloadView(View):
             contractor_slug, filename):
         """Delete a downloadable file. For now, only for files without
         contractor ('organization files')."""
-        
+
         if contractor_slug != 'x' or filetype != 'organization':
             return HttpResponseForbidden()
 

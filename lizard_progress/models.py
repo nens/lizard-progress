@@ -954,6 +954,8 @@ class ExportRun(models.Model):
 
                     yield cls.get_or_create(
                         project, contractor, mtype.mtype, 'allfiles')
+                    yield cls.get_or_create(
+                        project, contractor, mtype.mtype, 'pointshape')
 
     @property
     def available(self):
@@ -994,6 +996,9 @@ class ExportRun(models.Model):
 
     @property
     def up_to_date(self):
+        if self.exporttype == 'pointshape':
+            return False  # We can't check if it's up to date
+
         measurement_dates = [
             measurement.timestamp
             for measurement in self.measurements_to_export()

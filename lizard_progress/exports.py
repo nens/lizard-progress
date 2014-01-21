@@ -23,8 +23,12 @@ from __future__ import division
 
 import csv
 import os
+import pkg_resources
+import shutil
 import tempfile
 import zipfile
+
+import shapefile
 
 from metfilelib.util import dxf
 
@@ -35,6 +39,7 @@ from lizard_progress import errors
 from lizard_progress import models
 from lizard_progress import lizard_export
 from lizard_progress import tools
+from lizard_progress import configuration
 
 
 def start_run(export_run_id, user):
@@ -54,6 +59,8 @@ def start_run(export_run_id, user):
         export_as_dxf(export_run)
     elif export_run.exporttype == "csv":
         export_as_csv(export_run)
+    elif export_run.exporttype == "pointshape":
+        export_as_shapefile(export_run)
     elif export_run.exporttype == "lizard":
         export_to_lizard(export_run)
     else:
@@ -271,3 +278,60 @@ def export_to_lizard(export_run):
     # We don't record a downloadable file, so no need to do anything
     # else, just return
     return
+
+
+def export_as_shapefile(export_run):
+    """Use pyshp to generate a shapefile."""
+
+    temp_dir = tempfile.mkdtemp()
+    filename = export_run.export_filename(extension="")[:-1]  # Remove '.'
+
+    zipfile_path = export_run.export_filename(extension="zip")
+
+    filename = os.path.basename(zipfile_path)[:-4]  # Remove '.zip'
+    shape_filepath = os.path.join(temp_dir, filename)
+
+    shp = shapefile.Writer(shapefile.POINT)
+    locations = models.Location.objects.filter(
+        scheduledmeasurement__project=export_run.project,
+        scheduledmeasurement__contractor=export_run.contractor)
+
+    shp.field(
+        configuration.get(export_run.project, 'location_id_field')
+        .strip().encode('utf8'))
+    shp.field(b'X', b'F', 11, 5)
+    shp.field(b'Y', b'F', 11, 5)
+    shp.field(b'Uploaded', b'L', 1)
+
+    for location in locations:
+        shp.point(location.the_geom.x, location.the_geom.y)
+        shp.record(
+            location.location_code,
+            float(location.the_geom.x),
+            float(location.the_geom.y),
+            int(models.Measurement.objects.filter(
+                    scheduled__location=location,
+                    scheduled__contractor=export_run.contractor).exists())
+            )
+
+    shp.save(shape_filepath)
+
+    # Create ZIP
+    if not os.path.isdir(os.path.dirname(zipfile_path)):
+        os.makedirs(os.path.dirname(zipfile_path))
+
+    with zipfile.ZipFile(zipfile_path, 'w') as z:
+        for file_path in os.listdir(temp_dir):
+            z.write(
+                os.path.join(temp_dir, file_path),
+                file_path)
+        # Add a .prj too, if we can find it
+        prj = pkg_resources.resource_filename(
+            'lizard_progress', 'rijksdriehoek.prj')
+        if prj and os.path.exists(prj):
+            z.write(prj, filename + ".prj")
+
+    shutil.rmtree(temp_dir)
+
+    export_run.file_path = zipfile_path
+    export_run.save()

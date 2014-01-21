@@ -309,9 +309,10 @@ def export_as_shapefile(export_run):
             location.location_code,
             float(location.the_geom.x),
             float(location.the_geom.y),
-            int(models.Measurement.objects.filter(
-                    scheduled__location=location,
-                    scheduled__contractor=export_run.contractor).exists())
+            models.ScheduledMeasurement.objects.filter(
+                location=location,
+                contractor=export_run.contractor,
+                complete=True).exists()
             )
 
     shp.save(shape_filepath)

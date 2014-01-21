@@ -1,0 +1,94 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block contentpage %}
+<h2>Opdrachtnemers en werkzaamheden toevoegen of verwijderen</h2>
+
+<table class="table">
+
+<tbody>
+  <tr><td colspan="2"><h3>Huidige oprachtnemers:</h3></td></tr>
+</tbody>
+
+<tbody>
+  <th>Opdrachtnemer</th><th>Verwijderen</th>
+</tbody>
+
+<tbody>
+{% for contractor in view.current_contractors %}
+<tr>
+  <td>{{ contractor }}</td>
+  <td>
+  {% if contractor.has_measurements %}Heeft metingen{% else %}
+  <form method="post" action="{% url lizard_progress_edit_contractors project_slug=view.project_slug %}">
+     {% csrf_token %}
+     <input type="hidden" name="remove_contractor" value="{{ contractor.id }}">
+     <input type="submit" class="btn btn-primary" name="submit" value="Verwijderen">
+  </form>
+  {% endif %}
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+
+<tbody>
+<tr><td colspan="2"><h3>Huidige werkzaamheden:</h3></td></tr>
+</tbody>
+
+<tbody>
+  <th>Werkzaamheid</th><th>Verwijderen</th>
+</tbody>
+<tbody>
+{% for mtype in view.current_mtypes %}
+<tr>
+  <td>{{ mtype.mtype }}</td>
+  <td>
+  {% if mtype.has_measurements %}Heeft metingen{% else %}
+  <form method="post" action="{% url lizard_progress_edit_contractors project_slug=view.project_slug %}">
+     {% csrf_token %}
+     <input type="hidden" name="remove_mtype" value="{{ mtype.id }}">
+     <input type="submit" class="btn btn-primary" name="submit" value="Verwijderen">
+  </form>
+  {% endif %}
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h3>Toevoegen:</h3>
+<form method="post" action="{% url lizard_progress_edit_contractors project_slug=view.project_slug %}">
+<dl class="dl-horizontal">
+    {% csrf_token %}
+    <dt>Opdrachtnemer</dt>
+    <dd>
+
+      <select name="contractor">
+      <option value="">------</option>
+      {% for contractor in view.contractors_to_add %}
+        <option value="{{ contractor.id }}">{{ contractor }}</option>
+      {% endfor %}
+      </select>
+    </dd>
+    <dt></dt>
+    <dd><input type="submit" class="btn btn-primary" name="submit" value="Opdrachtnemer toevoegen"></dd>
+</dl>
+</form>
+
+<form method="post" action="{% url lizard_progress_edit_contractors project_slug=view.project_slug %}">
+<dl class="dl-horizontal">
+    {% csrf_token %}
+    <dt>Werkzaamheid</dt>
+    <dd>
+
+      <select name="measurementtype">
+      <option value="">------</option>
+      {% for mtype in view.measurementtypes_to_add %}
+        <option value="{{ mtype.id }}">{{ mtype }}</option>
+      {% endfor %}
+      </select>
+    </dd>
+    <dt></dt>
+    <dd><input type="submit" class="btn btn-primary" name="submit" value="Werkzaamheid toevoegen"></dd>
+</dl>
+</form>
+{% endblock contentpage %}

@@ -462,6 +462,15 @@ class PossibleRequest(models.Model):
         None on success. If a request for this location already exists,
         return an error message."""
 
+        try:
+            location = models.Location.objects.get(
+                project=self.uploaded_file.project,
+                location_code=self.location_code)
+            if location.has_measurements(mtype=self.mtype):
+                return "Kan aanvraag niet doen, de locatie heeft al metingen."
+        except models.Location.DoesNotExist:
+            pass
+
         # XXX No error is given if the request already exists for
         # another contractor. This is not consistent with the check
         # that is done for manual requests (in forms.py).
@@ -480,6 +489,7 @@ class PossibleRequest(models.Model):
         if not created:
             # It already existed! Fail
             return "Er is al een open aanvraag voor deze locatie."
+
 
         self.requested = True
         self.save()

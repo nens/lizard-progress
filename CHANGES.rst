@@ -32,6 +32,11 @@ B1;2802;0cChangelog of lizard-progress
 
 - Auto-accept requests made by a project manager
 
+- Fix bug with zooming onto a single point with Mapnik (it's not a
+  _nice_ fix, but it works)
+
+- Add extent to changerequest map layers
+
 
 2.0.3 (2013-11-28)
 ------------------

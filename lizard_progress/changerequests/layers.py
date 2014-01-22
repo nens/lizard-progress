@@ -21,6 +21,7 @@ from django.template.loader import render_to_string
 
 from lizard_map.coordinates import RD
 from lizard_map.coordinates import google_to_rd
+from lizard_map.coordinates import rd_to_google
 from lizard_map.workspace import WorkspaceItemAdapter
 
 from lizard_progress.layers import mapnik_datasource
@@ -53,6 +54,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         desc = unicode(self.changerequest)
         if color == 'red':
             return b"Oude of te verwijderen locatie"
+
         return desc.encode('utf8')
 
     def symbol_img(self, img_file):
@@ -95,26 +97,37 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 return self.mapnik_query_location()
 
     def mapnik_query_the_geom(self):
+        # This is an _awful_ way of doing it, I know. I lack time. To
+        # work around a bug in Mapnik, there need to be little points
+        # around the point, and I have no time to switch from postgis
+        # to point symbolizers entirely.
+
+        models.Points.points_around(
+            self.changerequest.location_code + "_the_geom",
+            self.changerequest.the_geom)
+
         return ("""(
             SELECT
-                changerequest.the_geom
+                points.the_geom
             FROM
-                changerequests_request AS changerequest
+                changerequests_points AS points
             WHERE
-                changerequest.id = %d) data""" %
-                self.changerequest.id)
+                location_code = '%s_the_geom') data"""
+                % (self.changerequest.location_code,))
 
     def mapnik_query_location(self):
+        models.Points.points_around(
+            self.changerequest.location_code,
+            self.changerequest.the_geom)
+
         q = ("""(
             SELECT
-                lizard_progress_location.the_geom
+                the_geom
             FROM
-                lizard_progress_location
+                changerequests_points
             WHERE
-                lizard_progress_location.location_code = '%s'
-            AND lizard_progress_location.project_id = %d) data""" %
-                (self.changerequest.location_code,
-                 self.changerequest.contractor.project_id))
+                changerequests_points.location_code = '%s') data""" %
+                (self.changerequest.location_code,))
         return q
 
     def mapnik_query_old_location(self):
@@ -226,3 +239,34 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         return render_to_string(
             'changerequests/detail_popup.html',
             context_instance=context)
+
+    def extent(self, identifiers=None):
+        """
+        Returns extent {'west':.., 'south':.., 'east':.., 'north':..}
+        in google projection. None for each key means unknown.
+        """
+        if not self.changerequest:
+            return {'west': None, 'south': None, 'east': None, 'north': None}
+
+        cr = self.changerequest  # Purely to make it shorter to type
+
+        west = east = cr.the_geom.x
+        north = south = cr.the_geom.y
+
+        if cr.old_location_code:
+            try:
+                old_location = pmodels.Location.objects.get(
+                    project=cr.contractor.project,
+                    location_code=cr.old_location_code)
+                west = min(west, old_location.the_geom.x)
+                east = max(east, old_location.the_geom.x)
+                north = max(north, old_location.the_geom.y)
+                south = min(south, old_location.the_geom.y)
+            except pmodels.Location.DoesNotExist:
+                pass
+
+        gwest, gnorth = rd_to_google(west, north)
+        geast, gsouth = rd_to_google(east, south)
+
+        return {'west': gwest, 'south': gsouth,
+                'east': geast, 'north': gnorth}

@@ -7,6 +7,7 @@ from lizard_map import coordinates
 from lizard_map.coordinates import RD
 from lizard_map.coordinates import rd_to_google
 from lizard_map.workspace import WorkspaceItemAdapter
+
 from pkg_resources import resource_filename  # pylint: disable=E0611
 import logging
 import mapnik

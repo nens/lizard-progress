@@ -509,3 +509,23 @@ class PossibleRequest(models.Model):
             request_type=possible_request['request_type'],
             location_code=possible_request['location_code'],
             the_geom='POINT({x} {y})'.format(**possible_request))
+
+
+class Points(models.Model):
+    """Complete dummy class that's only here to work around a Mapnik
+    bug in layers.py."""
+    location_code = models.CharField(max_length=50)
+    the_geom = models.PointField(srid=pmodels.SRID)
+
+    @classmethod
+    def points_around(cls, location_code, the_geom, e=0.001):
+        x, y = the_geom.x, the_geom.y
+
+        cls.objects.filter(location_code=location_code).delete()
+
+        for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1), (0, 0)):
+            xx = x + dx * e
+            yy = y + dy * e
+            cls.objects.create(
+                location_code=location_code,
+                the_geom='POINT({} {})'.format(xx, yy))

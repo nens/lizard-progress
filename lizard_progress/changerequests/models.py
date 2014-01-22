@@ -463,12 +463,12 @@ class PossibleRequest(models.Model):
         return an error message."""
 
         try:
-            location = models.Location.objects.get(
+            location = pmodels.Location.objects.get(
                 project=self.uploaded_file.project,
                 location_code=self.location_code)
             if location.has_measurements(mtype=self.mtype):
                 return "Kan aanvraag niet doen, de locatie heeft al metingen."
-        except models.Location.DoesNotExist:
+        except pmodels.Location.DoesNotExist:
             pass
 
         # XXX No error is given if the request already exists for

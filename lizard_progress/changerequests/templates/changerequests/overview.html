@@ -65,7 +65,7 @@ The tds are clickable here, and not the trs, because the last td should not be c
       <td class="clickable">{{ request.type_description }}</td>
       <td class="clickable">{{ request.location_code }}
         {% if request.old_location_code %} (vervangt {{ request.old_location_code }}{% endif %}</td>
-      <td><button class="close" type="button" data-post-url="{{ request.detail_url }}set_seen/" aria-hidden="true">&times;</button></td>
+      <td><button class="close" type="button" title="Markeer als gezien" data-post-url="{{ request.detail_url }}set_seen/" aria-hidden="true">&times;</button></td>
     </tr>
     {% endfor %}
   {% endif %}

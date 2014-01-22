@@ -256,6 +256,10 @@ class Request(models.Model):
 
         # Save new status
         self.change_status(Request.REQUEST_STATUS_ACCEPTED)
+        if self.possible_request:
+            # If all possible requests of all a file are accepted, it may
+            # be uploaded again
+            self.possible_request.do_accept()
 
     def do_remove_code(self, location_code=None):
         location = self.get_location(location_code)
@@ -489,7 +493,6 @@ class PossibleRequest(models.Model):
         if not created:
             # It already existed! Fail
             return "Er is al een open aanvraag voor deze locatie."
-
 
         self.requested = True
         self.save()

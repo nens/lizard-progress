@@ -27,6 +27,11 @@ B1;2802;0cChangelog of lizard-progress
   updated). Downloading the original shapefile is now disabled, as it
   can be out of date.
 
+- Don't allow new requests for location codes that already have an
+  open request
+
+- Auto-accept requests made by a project manager
+
 
 2.0.3 (2013-11-28)
 ------------------

@@ -82,6 +82,21 @@ def new_request_form_factory(
                     raise ValidationError(
                         _('Location does not exist.'))
 
+            # Query to see if the request already exists
+            existing_request_queryset = models.Request.objects.filter(
+                contractor__project=project,
+                location_code=location_code,
+                request_status=models.Request.REQUEST_STATUS_OPEN)
+
+            # If there is more than one mtype (and the user was asked for that
+            # too), then check if the existing request is of the same mtype
+            if self.data.get('mtype'):
+                existing_request_queryset = existing_request_queryset.filter(
+                    mtype__id=self.data['mtype'])
+            if existing_request_queryset.exists():
+                raise ValidationError(
+                    _("There is already an open request for this location."))
+
             return location_code
 
         if request_type == models.Request.REQUEST_TYPE_NEW_LOCATION:

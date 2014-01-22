@@ -458,21 +458,38 @@ class PossibleRequest(models.Model):
             self.uploaded_file.re_upload()
 
     def activate(self, motivation, old_location_code=None):
-        Request.objects.create(
+        """Turn this possible request into an actual request. Return
+        None on success. If a request for this location already exists,
+        return an error message."""
+
+        # XXX No error is given if the request already exists for
+        # another contractor. This is not consistent with the check
+        # that is done for manual requests (in forms.py).
+
+        request, created = Request.objects.get_or_create(
             contractor=self.uploaded_file.contractor,
             mtype=self.mtype,
-            request_type=self.request_type,
-            location_code=self.location_code,
-            old_location_code=old_location_code,
-            motivation=motivation,
-            the_geom=self.the_geom,
-            possible_request=self)
+            request_status=Request.REQUEST_STATUS_OPEN,
+            location_code=self.location_code, defaults=dict(
+                request_type=self.request_type,
+                old_location_code=old_location_code,
+                motivation=motivation,
+                the_geom=self.the_geom,
+                possible_request=self))
+
+        if not created:
+            # It already existed! Fail
+            return "Er is al een open aanvraag voor deze locatie."
 
         self.requested = True
         self.save()
+        return None
 
     @classmethod
     def create_from_dict(cls, uploaded_file, possible_request):
+        """Create a new PossibleRequest based on a dictionary returned
+        by a parser."""
+
         cls.objects.create(
             uploaded_file=uploaded_file,
             mtype=possible_request['available_measurement_type'],

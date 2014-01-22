@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-07 01:48-0600\n"
+"POT-Creation-Date: 2014-01-22 02:51-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,42 +26,50 @@ msgid "This project name already exists."
 msgstr "Deze projectnaam bestaat al."
 
 #: forms.py:262
+msgid "Project type (optional)."
+msgstr ""
+
+#: forms.py:268
 msgid "Project name"
 msgstr "Projectnaam"
 
-#: forms.py:266
+#: forms.py:272
 msgid "Choose one or more contractors"
 msgstr "Kies een of meer opdrachtnemers"
 
-#: forms.py:269
+#: forms.py:275
 msgid "Choose one or more measurement types"
 msgstr "Kies een of meer metingtypes"
 
-#: forms.py:277
+#: forms.py:283
 msgid "Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only."
 msgstr "Verplicht. Maximaal 30 tekens. Alleen letters, cijfers en @/./+/-/_."
 
-#: forms.py:280
+#: forms.py:286
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
 msgstr "Deze waarde mag alleen letters, cijfers en @/./+/-/_ tekens bevatten."
 
-#: forms.py:291
+#: forms.py:297
 msgid "New password"
 msgstr "Nieuw wachtwoord"
 
-#: forms.py:294
+#: forms.py:300
 msgid "New password confirmation"
 msgstr "Bevestiging nieuw wachtwoord"
 
-#: changerequests/forms.py:78
+#: changerequests/forms.py:79
 msgid "Location already exists."
 msgstr "Deze locatie bestaat al."
 
-#: changerequests/forms.py:82
+#: changerequests/forms.py:83
 msgid "Location does not exist."
 msgstr "Locatie bestaat niet."
 
-#: changerequests/forms.py:97
+#: changerequests/forms.py:90
+msgid "There is already an open request for this location."
+msgstr "Er is al een open aanvraag voor deze locatie."
+
+#: changerequests/forms.py:112
 msgid "Old location doesn't exist."
 msgstr "Oude locatie bestaat niet."
 
@@ -81,7 +89,7 @@ msgstr ""
 msgid "Verder &gt;"
 msgstr ""
 
-#: views/views.py:226
+#: views/views.py:239
 msgid "Your current organization"
 msgstr "Uw huidige organisatie"
 

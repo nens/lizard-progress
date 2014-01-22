@@ -225,7 +225,12 @@ class NewRequestView(ProjectsView):
             request_type=self.request_type)(request.POST)
 
         if self.form.is_valid():
-            self.create_new_request()
+            request = self.create_new_request()
+
+            if self.user_is_manager():
+                # Auto accept
+                request.accept()
+
             return HttpResponseRedirect(reverse(
                     'changerequests_main',
                     kwargs={'project_slug': self.project_slug}))
@@ -244,7 +249,7 @@ class NewRequestNewLocation(NewRequestView):
     url_name = 'changerequests_newlocation'
 
     def create_new_request(self):
-        models.Request.objects.create(
+        return models.Request.objects.create(
             contractor=self.chosen_contractor(),
             mtype=self.chosen_measurement_type(),
             request_type=self.request_type,
@@ -264,7 +269,7 @@ class NewRequestMoveLocation(NewRequestView):
     url_name = 'changerequests_movelocation'
 
     def create_new_request(self):
-        models.Request.objects.create(
+        return models.Request.objects.create(
             contractor=self.chosen_contractor(),
             mtype=self.chosen_measurement_type(),
             request_type=self.request_type,
@@ -286,7 +291,7 @@ class NewRequestRemoveCode(NewRequestView):
             location_code=self.form.cleaned_data['location_code'],
             project=self.chosen_contractor().project)
 
-        models.Request.objects.create(
+        return models.Request.objects.create(
             contractor=self.chosen_contractor(),
             mtype=self.chosen_measurement_type(),
             request_type=self.request_type,
@@ -349,8 +354,16 @@ class ActivatePossibleRequest(ProjectsView):
                     })
 
         # Actually make request
-        possible_request.activate(
+        error = possible_request.activate(
             motivation=form.cleaned_data['motivation'],
             old_location_code=form.cleaned_data.get('old_location_code', None))
 
-        return JSONResponse({'success': True})
+        if error is None:
+            return JSONResponse({'success': True})
+        else:
+            return JSONResponse({
+                    'success': False,
+                    'error': error,
+                    "error_span_id": (
+                        "#submit-errors-{}".format(possible_request_id))
+                    })

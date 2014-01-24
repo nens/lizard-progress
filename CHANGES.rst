@@ -37,6 +37,9 @@ B1;2802;0cChangelog of lizard-progress
 
 - Add extent to changerequest map layers
 
+- After uploading an organization or project file, put all shapefile parts
+  into a ZIP file.
+
 
 2.0.3 (2013-11-28)
 ------------------

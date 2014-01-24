@@ -437,6 +437,10 @@ class UploadOrganizationFileView(ProjectsView):
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
 
+        # Put shapefile parts into zip files
+        tasks.shapefile_vacuum.delay(
+            directories.organization_files_dir(organization))
+
         return json_response({})
 
 
@@ -445,7 +449,7 @@ class UploadProjectFileView(ProjectsView):
     def post(self, request, project_slug):
         #organization = models.Organization.get_by_user(request.user)
         project = get_object_or_404(models.Project, slug=project_slug)
-        
+
         uploaded_file = request.FILES['file']
         filename = request.POST.get('filename', uploaded_file.name)
 
@@ -454,6 +458,10 @@ class UploadProjectFileView(ProjectsView):
                 filename), "wb") as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
+
+        # Put shapefile parts into zip files
+        tasks.shapefile_vacuum.delay(
+            directories.project_files_dir(project))
 
         return json_response({})
 

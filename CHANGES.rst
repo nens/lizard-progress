@@ -40,6 +40,8 @@ B1;2802;0cChangelog of lizard-progress
 - After uploading an organization or project file, put all shapefile parts
   into a ZIP file.
 
+- Add Handleiding.
+
 
 2.0.3 (2013-11-28)
 ------------------

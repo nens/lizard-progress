@@ -239,6 +239,16 @@ class KickOutMixin(object):
                 description=(_("Your current organization")))
             ]
 
+        # Prepend documentation icon
+        actions[0:0] = [
+            Action(
+                icon='icon-question-sign',
+                name="Handleiding",
+                description=(_("Download de handleiding")),
+                url=settings.STATIC_URL +
+                "lizard_progress/Gebruikershandleiding_Uploadserver_v3.docx")
+            ]
+
         return actions
 
 

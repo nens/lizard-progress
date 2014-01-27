@@ -206,7 +206,7 @@ class NewRequestView(ProjectsView):
 
     def chosen_measurement_type(self):
         if 'mtype' in self.form.cleaned_data:
-            return pmodels.AvailableMeasurementType.objecs.get(
+            return pmodels.AvailableMeasurementType.objects.get(
                 pk=self.form.cleaned_data['mtype'])
         else:
             # There is only one?

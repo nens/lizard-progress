@@ -12,6 +12,16 @@
   <dt>Locatie</dt>
   <dd>{{ cr.location_code }}{% if cr.old_location_code %} (vervangt {{cr.old_location_code }}){% endif %}</dd>
 
+  {% if cr.request_type == 2 %}
+  <dt>Nieuwe co&ouml;rdinaten</dt>
+  <dd>({{ cr.the_geom.x }}, {{ cr.the_geom.y }})</dd>
+  {% endif %}
+
+  {% if cr.request_type == 3 %}
+  <dt>Co&ouml;rdinaten</dt>
+  <dd>({{ cr.the_geom.x }}, {{ cr.the_geom.y }})</dd>
+  {% endif %}
+
   <dt>Werkzaamheid</dt>
   <dd>{{ cr.mtype }}</dd>
 

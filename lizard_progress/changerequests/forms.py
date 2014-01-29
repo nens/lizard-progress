@@ -40,6 +40,22 @@ class RequestDetailMotivationForm(ChangeRequestsForm):
     motivation = forms.CharField(min_length=1)
 
 
+def _open_request_exists(project, mtype_id, **kwargs):
+    # Query to see if the request already exists
+    existing_request_queryset = models.Request.objects.filter(
+        contractor__project=project,
+        request_status=models.Request.REQUEST_STATUS_OPEN,
+        **kwargs)
+
+    # If there is more than one mtype (and the user was asked for that
+    # too), then check if the existing request is of the same mtype
+    if mtype_id is not None:
+        existing_request_queryset = existing_request_queryset.filter(
+            mtype__id=mtype_id)
+
+    return existing_request_queryset.exists()
+
+
 def new_request_form_factory(
     project, request_type, mtypes=(), contractors=()):
     """Create a class that represents the exact form we currently
@@ -82,18 +98,11 @@ def new_request_form_factory(
                     raise ValidationError(
                         _('Location does not exist.'))
 
-            # Query to see if the request already exists
-            existing_request_queryset = models.Request.objects.filter(
-                contractor__project=project,
-                location_code=location_code,
-                request_status=models.Request.REQUEST_STATUS_OPEN)
-
-            # If there is more than one mtype (and the user was asked for that
-            # too), then check if the existing request is of the same mtype
-            if self.data.get('mtype'):
-                existing_request_queryset = existing_request_queryset.filter(
-                    mtype__id=self.data['mtype'])
-            if existing_request_queryset.exists():
+            mtype = self.data.get('mtype')
+            if (_open_request_exists(
+                    project, mtype, location_code=location_code) or
+                _open_request_exists(
+                    project, mtype, old_location_code=location_code)):
                 raise ValidationError(
                     _("There is already an open request for this location."))
 
@@ -106,6 +115,9 @@ def new_request_form_factory(
                 required=False)
 
             def clean_old_location_code(self):
+                """If given, the old location must exist and there
+                cannot be an existing request using this location
+                yet."""
                 old_location_code = self.data.get('old_location_code')
                 if not old_location_code:
                     return None  # It's optional
@@ -114,10 +126,20 @@ def new_request_form_factory(
                     pmodels.Location.objects.get(
                         project=project,
                         location_code=old_location_code)
-                    return old_location_code
                 except pmodels.Location.DoesNotExist:
                     raise ValidationError(_(
                             "Old location doesn't exist."))
+
+                mtype = self.data.get('mtype')
+                if (_open_request_exists(
+                        project, mtype, location_code=old_location_code) or
+                    _open_request_exists(
+                        project, mtype, old_location_code=old_location_code)):
+                    raise ValidationError(
+                        _("There is already an open request "
+                          "for this location."))
+
+                return old_location_code
 
         if request_type in (
             models.Request.REQUEST_TYPE_NEW_LOCATION,

@@ -475,24 +475,33 @@ class PossibleRequest(models.Model):
         except pmodels.Location.DoesNotExist:
             pass
 
-        # XXX No error is given if the request already exists for
-        # another contractor. This is not consistent with the check
-        # that is done for manual requests (in forms.py).
+        # We need to do two tests to see if it already exists: on
+        # location_code and on old_location_code. Requesting also
+        # fails if another contractor has already done a request for
+        # this code, such is life. Can be made one query with Q
+        # objects, but I'm pressed for time.
+        if (Request.objects.filter(
+                mtype=self.mtype,
+                contractor__project=self.uploaded_file.project,
+                request_status=Request.REQUEST_STATUS_OPEN,
+                location_code=self.location_code).exists() or
+            Request.objects.filter(
+                mtype=self.mtype,
+                contractor__project=self.uploaded_file.project,
+                request_status=Request.REQUEST_STATUS_OPEN,
+                old_location_code=self.location_code).exists()):
+            return "Er is al een open aanvraag voor deze locatie."
 
-        request, created = Request.objects.get_or_create(
+        Request.objects.create(
             contractor=self.uploaded_file.contractor,
             mtype=self.mtype,
             request_status=Request.REQUEST_STATUS_OPEN,
-            location_code=self.location_code, defaults=dict(
-                request_type=self.request_type,
-                old_location_code=old_location_code,
-                motivation=motivation,
-                the_geom=self.the_geom,
-                possible_request=self))
-
-        if not created:
-            # It already existed! Fail
-            return "Er is al een open aanvraag voor deze locatie."
+            location_code=self.location_code,
+            request_type=self.request_type,
+            old_location_code=old_location_code,
+            motivation=motivation,
+            the_geom=self.the_geom,
+            possible_request=self)
 
         self.requested = True
         self.save()

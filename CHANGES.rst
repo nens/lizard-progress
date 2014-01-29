@@ -28,7 +28,7 @@ B1;2802;0cChangelog of lizard-progress
   can be out of date.
 
 - Don't allow new requests for location codes that already have an
-  open request
+  open request, not even if one of them is only the old_location_code
 
 - Auto-accept requests made by a project manager
 

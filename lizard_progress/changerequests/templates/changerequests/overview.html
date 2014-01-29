@@ -28,7 +28,7 @@
       <td>{{ request.mtype }}</td>
       <td>{{ request.type_description }}</td>
       <td>{{ request.location_code }}
-        {% if request.old_location_code %} (vervangt {{ request.old_location_code }}{% endif %}</td>
+        {% if request.old_location_code %} (vervangt {{ request.old_location_code }}){% endif %}</td>
       <td><a href="{{ request.detail_url }}">bekijk</a></td>
     </tr>
     {% endfor %}

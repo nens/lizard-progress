@@ -524,17 +524,22 @@ class Points(models.Model):
     """Complete dummy class that's only here to work around a Mapnik
     bug in layers.py."""
     location_code = models.CharField(max_length=50)
+    dx = models.IntegerField()
+    dy = models.IntegerField()
     the_geom = models.PointField(srid=pmodels.SRID)
 
     @classmethod
     def points_around(cls, location_code, the_geom, e=0.001):
         x, y = the_geom.x, the_geom.y
 
-        cls.objects.filter(location_code=location_code).delete()
-
         for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1), (0, 0)):
             xx = x + dx * e
             yy = y + dy * e
-            cls.objects.create(
+            geom = 'POINT({} {})'.format(xx, yy)
+            point, created = cls.objects.get_or_create(
                 location_code=location_code,
-                the_geom='POINT({} {})'.format(xx, yy))
+                dx=dx, dy=dy, defaults=dict(
+                    the_geom=geom))
+            if not created:
+                point.the_geom = geom
+                point.save()

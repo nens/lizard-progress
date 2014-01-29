@@ -31,6 +31,9 @@ from . import models
 
 logger = logging.getLogger(__name__)
 
+COLOR_NEW = "blue"
+COLOR_OLD = "black"
+
 
 class ChangeRequestAdapter(WorkspaceItemAdapter):
     def __init__(self, *args, **kwargs):
@@ -50,11 +53,11 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
 
         super(ChangeRequestAdapter, self).__init__(*args, **kwargs)
 
-    def layer_desc(self, color="green"):
-        desc = unicode(self.changerequest)
-        if color == 'red':
+    def layer_desc(self, color=COLOR_NEW):
+        if color == COLOR_OLD:
             return b"Oude of te verwijderen locatie"
 
+        desc = unicode(self.changerequest)
         return desc.encode('utf8')
 
     def symbol_img(self, img_file):
@@ -81,19 +84,19 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
 
         if request_type == models.Request.REQUEST_TYPE_NEW_LOCATION:
             # New one in green, old one in red
-            if color == 'green':
+            if color == COLOR_NEW:
                 return self.mapnik_query_the_geom()
-            if color == 'red':
+            if color == COLOR_OLD:
                 return self.mapnik_query_old_location()
         if request_type == models.Request.REQUEST_TYPE_REMOVE_CODE:
             # Only show the current one in red
-            if color == 'red':
+            if color == COLOR_OLD:
                 return self.mapnik_query_location()
         if request_type == models.Request.REQUEST_TYPE_MOVE_LOCATION:
             # New location in green, old location in red
-            if color == 'green':
+            if color == COLOR_NEW:
                 return self.mapnik_query_the_geom()
-            if color == 'red':
+            if color == COLOR_OLD:
                 return self.mapnik_query_location()
 
     def mapnik_query_the_geom(self):
@@ -116,9 +119,14 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 % (self.changerequest.location_code,))
 
     def mapnik_query_location(self):
+        location = self.changerequest.get_location()
+
+        if not location:
+            return None
+
         models.Points.points_around(
             self.changerequest.location_code,
-            self.changerequest.the_geom)
+            location.the_geom)
 
         q = ("""(
             SELECT
@@ -134,16 +142,21 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         if not self.changerequest.old_location_code:
             return None
 
+        location = self.changerequest.get_location(
+            location=self.changerequest.old_location_code)
+
+        models.Points.points_around(
+            self.changerequest.old_location_code,
+            location.the_geom)
+
         q = ("""(
             SELECT
-                lizard_progress_location.the_geom
+                the_geom
             FROM
-                lizard_progress_location
+                changerequests_points
             WHERE
-                lizard_progress_location.location_code = '%s'
-            AND lizard_progress_location.project_id = %d) data""" %
-                (self.changerequest.old_location_code,
-                 self.changerequest.contractor.project_id))
+                changerequests_points.location_code = '%s') data""" %
+                (self.changerequest.old_location_code,))
         return q
 
     def layer(self, layer_ids=None, request=None):
@@ -155,7 +168,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         if not self.changerequest:
             return
 
-        for color in ('green', 'red'):
+        for color in (COLOR_NEW, COLOR_OLD):
             query = self.mapnik_query(color)
             if query:
                 img_file = "ball_{}.png".format(color)

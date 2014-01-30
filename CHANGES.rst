@@ -44,6 +44,8 @@ B1;2802;0cChangelog of lizard-progress
 
 - Add detail about coordinates to change request detail page and popup.
 
+- Fix progress graphs.
+
 
 2.0.3 (2013-11-28)
 ------------------

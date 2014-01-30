@@ -16,7 +16,6 @@ import logging
 import os
 import platform
 import shutil
-import glob
 
 import osgeo.ogr
 
@@ -583,9 +582,9 @@ class ComparisonPopupView(View):
 
 
 class DashboardView(ProjectsView):
-    """Show the dashboard page. The page offers a popup per area per
-    contractor, if the user has access, and also downloads to CSV
-    files."""
+    """Show the dashboard page. The page shows contractors and measurement types,
+    number of planned and uploaded measurements, links to pages for planning and for adding
+    and removing contractors and measurement types, and progress graphs."""
 
     template_name = 'lizard_progress/dashboard.html'
     active_menu = "dashboard"
@@ -607,60 +606,20 @@ class DashboardView(ProjectsView):
 
         return crumbs
 
-    def areas(self):
-        """The areas for which to show popup links. Shows each area
-        for each contractor the user has access to."""
+    def graphs(self):
+        """Generator for the links for the dashboard graphs."""
 
-        areas = []
         for contractor in Contractor.objects.filter(project=self.project):
             if has_access(self.request.user, self.project, contractor):
-                for area in Area.objects.filter(project=self.project):
-                    areas.append((contractor, area,
-                                  reverse('lizard_progress_dashboardareaview',
-                                          kwargs={
-                                    'contractor_slug': contractor.slug,
-                                    'project_slug': self.project.slug,
-                                    'area_slug': area.slug})))
-
-        return areas
+                yield (
+                    contractor,
+                    reverse('lizard_progress_dashboardgraphview',
+                            kwargs={
+                            'contractor_slug': contractor.slug,
+                            'project_slug': self.project.slug}))
 
 
-class DashboardAreaView(View):
-    """Shows Dashboard popup for one area."""
-
-    template_name = "lizard_progress/dashboard_content.html"
-
-    def dispatch(self, request, *args, **kwargs):
-        """Get objects project, area and contractor from the request,
-        404 if they are not found. Check if the user has access."""
-
-        self.project_slug = kwargs.get('project_slug', None)
-        self.project = get_object_or_404(Project, slug=self.project_slug)
-        self.area_slug = kwargs.get('area_slug', None)
-        if self.area_slug:
-            self.area = get_object_or_404(Area,
-                                          project=self.project,
-                                          slug=self.area_slug)
-        self.contractor_slug = kwargs.get('contractor_slug', None)
-        self.contractor = get_object_or_404(Contractor,
-                                            project=self.project,
-                                            slug=self.contractor_slug)
-
-        if not has_access(request.user, self.project, self.contractor):
-            raise PermissionDenied()
-
-        return (super(DashboardAreaView, self).
-                dispatch(request, *args, **kwargs))
-
-    def graph_url(self):
-        """Url to the actual graph."""
-        return reverse('lizard_progress_dashboardgraphview', kwargs={
-                'project_slug': self.project.slug,
-                'contractor_slug': self.contractor.slug,
-                'area_slug': self.area.slug})
-
-
-class DashboardCsvView(DashboardAreaView):
+class DashboardCsvView(ProjectsView):
     """Returns a CSV file for a contractor and measurement type."""
 
     template_name = "lizard_progress/project_progress.csv"
@@ -693,15 +652,18 @@ class DashboardCsvView(DashboardAreaView):
         return "%s (%s-%s-%s)" % (orig_filename, datestr[:4],
                                   datestr[4:6], datestr[6:])
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, project_slug, contractor_slug):
         """Returns a CSV file for this contractor and measurement
         type."""
+
+        self.contractor_instance = models.Contractor.objects.get(
+            project=self.project, slug=contractor_slug)
 
         # Setup HttpResponse and a CSV writer
         response = http.HttpResponse(content_type="text/csv")
         writer = csv.writer(response)
 
-        filename = '%s_%s.csv' % (self.project.slug, self.contractor.slug)
+        filename = '%s_%s.csv' % (self.project.slug, self.contractor_instance)
 
         response['Content-Disposition'] = ('attachment; filename=%s' %
                                            (filename,))
@@ -726,7 +688,8 @@ class DashboardCsvView(DashboardAreaView):
             # Are there any scheduled measurements for this contractor
             # at this location? Otherwise skip it.
             if (ScheduledMeasurement.objects.filter(
-                    project=self.project, contractor=self.contractor,
+                    project=self.project,
+                    contractor=self.contractor_instance,
                     location=l).count()) == 0:
                 continue
 
@@ -736,7 +699,7 @@ class DashboardCsvView(DashboardAreaView):
             for mtype in measurement_types:
                 try:
                     scheduled = ScheduledMeasurement.objects.get(
-                        project=self.project, contractor=self.contractor,
+                        project=self.project, contractor=self.contractor_instance,
                         location=l, measurement_type=mtype)
                 except ScheduledMeasurement.DoesNotExist:
                     # This measurement type wasn't scheduled here -
@@ -787,14 +750,13 @@ class ScreenFigure(figure.Figure):
 
 
 @login_required
-def dashboard_graph(request, project_slug, contractor_slug,
-                    area_slug, *args, **kwargs):
+def dashboard_graph(
+    request, project_slug, contractor_slug, *args, **kwargs):
     """Show the work in progress per area in pie charts.
 
     A single PNG image is returned as a response.
     """
     project = get_object_or_404(Project, slug=project_slug)
-    area = get_object_or_404(Area, project=project, slug=area_slug)
     contractor = get_object_or_404(Contractor, project=project,
                                    slug=contractor_slug)
 
@@ -837,15 +799,12 @@ def dashboard_graph(request, project_slug, contractor_slug,
         total = (ScheduledMeasurement.objects.
                  filter(project=project,
                         contractor=contractor,
-                        measurement_type=mtype,
-                        location__area=area).count())
+                        measurement_type=mtype).count())
 
         # Measured profiles
-        done = ScheduledMeasurement.objects.filter(project=project,
-                                                   contractor=contractor,
-                                                   measurement_type=mtype,
-                                                   location__area=area,
-                                                   complete=True).count()
+        done = ScheduledMeasurement.objects.filter(
+            project=project, contractor=contractor, measurement_type=mtype,
+            complete=True).count()
 
         todo = total - done
         x = [done, todo]

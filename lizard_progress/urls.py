@@ -18,9 +18,8 @@ from lizard_progress.views import ActivitiesWizard
 from lizard_progress.views import ComparisonPopupView
 from lizard_progress.views import ComparisonView
 from lizard_progress.views import ContractorWizard
-from lizard_progress.views import DashboardAreaView
-from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DashboardView
+from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DownloadHomeView
 from lizard_progress.views import DownloadView
 from lizard_progress.views import DownloadDocumentsView
@@ -197,13 +196,9 @@ urlpatterns = patterns(
         name='lizard_progress_upload_hydrovakken'),
 
     url('^(?P<project_slug>[^/]+)/dashboard/' +
-        '(?P<contractor_slug>[^/]+)/(?P<area_slug>.+)/graph/$',
+        '(?P<contractor_slug>[^/]+)/graph/$',
         dashboard_graph,
         name='lizard_progress_dashboardgraphview'),
-    url('^(?P<project_slug>[^/]+)/dashboard/' +
-        '(?P<contractor_slug>[^/]+)/(?P<area_slug>.+)/$',
-        login_required(DashboardAreaView.as_view()),
-        name='lizard_progress_dashboardareaview'),
     url('^file/(?P<project_slug>[^/]+)/' +
         '(?P<contractor_slug>[^/]+)/(?P<measurement_type_slug>[^/]+)/' +
         '(?P<filename>[^/]+)$',

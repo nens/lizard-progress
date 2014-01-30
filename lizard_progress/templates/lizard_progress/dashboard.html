@@ -51,8 +51,8 @@
 </table>
 
   <ul class="without-bullets">
-{% for contractor, area, url in view.areas %}
-<img src="{% url lizard_progress_dashboardgraphview project_slug=view.project_slug contractor_slug=contractor.slug area_slug=area.slug %}" title="Voortgang {{ contractor.organization.name }}"/>
+{% for contractor, url in view.graphs %}
+<img src="{% url lizard_progress_dashboardgraphview project_slug=view.project_slug contractor_slug=contractor.slug %}" title="Voortgang {{ contractor.organization.name }}"/>
 {% endfor %}
   </ul>
 

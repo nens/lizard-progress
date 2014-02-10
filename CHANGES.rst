@@ -46,6 +46,8 @@ B1;2802;0cChangelog of lizard-progress
 
 - Fix progress graphs.
 
+- Put the right measurements into the location shapefile.
+
 
 2.0.3 (2013-11-28)
 ------------------

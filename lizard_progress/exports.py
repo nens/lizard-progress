@@ -294,7 +294,9 @@ def export_as_shapefile(export_run):
     shp = shapefile.Writer(shapefile.POINT)
     locations = models.Location.objects.filter(
         scheduledmeasurement__project=export_run.project,
-        scheduledmeasurement__contractor=export_run.contractor)
+        scheduledmeasurement__contractor=export_run.contractor,
+        scheduledmeasurement__measurement_type__mtype=(
+            export_run.measurement_type))
 
     shp.field(
         configuration.get(export_run.project, 'location_id_field')

@@ -314,6 +314,7 @@ def export_as_shapefile(export_run):
             models.ScheduledMeasurement.objects.filter(
                 location=location,
                 contractor=export_run.contractor,
+                measurement_type__mtype=export_run.measurement_type,
                 complete=True).exists()
             )
 

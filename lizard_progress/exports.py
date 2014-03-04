@@ -294,7 +294,8 @@ def export_as_shapefile(export_run):
         scheduledmeasurement__project=export_run.project,
         scheduledmeasurement__contractor=export_run.contractor,
         scheduledmeasurement__measurement_type__mtype=(
-            export_run.measurement_type)))
+            export_run.measurement_type),
+        the_geom__isnull=False))
 
     if not locations:
         # Can't generate an empty shapefile.

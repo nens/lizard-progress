@@ -53,18 +53,25 @@ def start_run(export_run_id, user):
     export_run.clear()
     export_run.record_start(user)
 
-    if export_run.exporttype == "met":
-        export_as_metfile(export_run)
-    elif export_run.exporttype == "dxf":
-        export_as_dxf(export_run)
-    elif export_run.exporttype == "csv":
-        export_as_csv(export_run)
-    elif export_run.exporttype == "pointshape":
-        export_as_shapefile(export_run)
-    elif export_run.exporttype == "lizard":
-        export_to_lizard(export_run)
-    else:
-        export_all_files(export_run)
+    try:
+        if export_run.exporttype == "met":
+            export_as_metfile(export_run)
+        elif export_run.exporttype == "dxf":
+            export_as_dxf(export_run)
+        elif export_run.exporttype == "csv":
+            export_as_csv(export_run)
+        elif export_run.exporttype == "pointshape":
+            export_as_shapefile(export_run)
+        elif export_run.exporttype == "lizard":
+            export_to_lizard(export_run)
+        else:
+            export_all_files(export_run)
+    except:
+        # Catch-all except, because this is meant to catch all the
+        # exceptions we don't know about yet
+        export_run.fail("Onbekende fout, export mislukt")
+        return
+
     export_run.set_ready_for_download()
 
 

@@ -283,6 +283,17 @@ def export_to_lizard(export_run):
 def export_as_shapefile(export_run):
     """Use pyshp to generate a shapefile."""
 
+    locations = list(models.Location.objects.filter(
+        scheduledmeasurement__project=export_run.project,
+        scheduledmeasurement__contractor=export_run.contractor,
+        scheduledmeasurement__measurement_type__mtype=(
+            export_run.measurement_type)))
+
+    if not locations:
+        # Can't generate an empty shapefile.
+        export_run.fail("Er zijn 0 locaties, kan geen shapefile genereren.")
+        return
+
     temp_dir = tempfile.mkdtemp()
     filename = export_run.export_filename(extension="")[:-1]  # Remove '.'
 
@@ -292,12 +303,6 @@ def export_as_shapefile(export_run):
     shape_filepath = os.path.join(temp_dir, filename)
 
     shp = shapefile.Writer(shapefile.POINT)
-    locations = models.Location.objects.filter(
-        scheduledmeasurement__project=export_run.project,
-        scheduledmeasurement__contractor=export_run.contractor,
-        scheduledmeasurement__measurement_type__mtype=(
-            export_run.measurement_type))
-
     shp.field(
         configuration.get(export_run.project, 'location_id_field')
         .strip().encode('utf8'))

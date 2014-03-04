@@ -409,3 +409,22 @@ class TestExportRun(TestCase):
             generates_file=False,
             created_at=datetime.datetime(1980, 1, 1))
         self.assertTrue(run.available)
+
+    def test_exportrun_that_fails_is_not_available(self):
+        project = ProjectF.create()
+        contractor = ContractorF.create(project=project)
+        run = ExportRunF.build(
+            project=project,
+            contractor=contractor,
+            file_path=None,
+            generates_file=True)
+
+        run.record_start(None)
+        run.fail("Testmessage")
+
+        # Retrieve from database
+        run = models.ExportRun.objects.get(pk=run.id)
+
+        self.assertEquals(run.error_message, "Testmessage")
+        self.assertFalse(run.export_running)
+        self.assertFalse(run.available)

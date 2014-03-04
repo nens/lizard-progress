@@ -890,6 +890,8 @@ class ExportRun(models.Model):
     ready_for_download = models.BooleanField(default=False)
     export_running = models.BooleanField(default=False)
 
+    error_message = models.CharField(max_length=100, null=True, blank=True)
+
     class Meta:
         unique_together = (
             'project', 'contractor', 'measurement_type', 'exporttype')
@@ -986,6 +988,7 @@ class ExportRun(models.Model):
         self.created_by = user
         self.created_at = datetime.datetime.now()
         self.export_running = True
+        self.error_message = None
         self.save()
 
     def set_ready_for_download(self):
@@ -1030,6 +1033,12 @@ class ExportRun(models.Model):
             contractor=self.contractor.slug,
             mtype=self.measurement_type.slug,
             extension=extension).encode('utf8')
+
+    def fail(self, error_message):
+        self.ready_for_download = False
+        self.export_running = False
+        self.error_message = error_message
+        self.save()
 
 
 class UploadLog(models.Model):

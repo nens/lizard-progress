@@ -53,18 +53,25 @@ def start_run(export_run_id, user):
     export_run.clear()
     export_run.record_start(user)
 
-    if export_run.exporttype == "met":
-        export_as_metfile(export_run)
-    elif export_run.exporttype == "dxf":
-        export_as_dxf(export_run)
-    elif export_run.exporttype == "csv":
-        export_as_csv(export_run)
-    elif export_run.exporttype == "pointshape":
-        export_as_shapefile(export_run)
-    elif export_run.exporttype == "lizard":
-        export_to_lizard(export_run)
-    else:
-        export_all_files(export_run)
+    try:
+        if export_run.exporttype == "met":
+            export_as_metfile(export_run)
+        elif export_run.exporttype == "dxf":
+            export_as_dxf(export_run)
+        elif export_run.exporttype == "csv":
+            export_as_csv(export_run)
+        elif export_run.exporttype == "pointshape":
+            export_as_shapefile(export_run)
+        elif export_run.exporttype == "lizard":
+            export_to_lizard(export_run)
+        else:
+            export_all_files(export_run)
+    except:
+        # Catch-all except, because this is meant to catch all the
+        # exceptions we don't know about yet
+        export_run.fail("Onbekende fout, export mislukt")
+        return
+
     export_run.set_ready_for_download()
 
 
@@ -283,6 +290,18 @@ def export_to_lizard(export_run):
 def export_as_shapefile(export_run):
     """Use pyshp to generate a shapefile."""
 
+    locations = list(models.Location.objects.filter(
+        scheduledmeasurement__project=export_run.project,
+        scheduledmeasurement__contractor=export_run.contractor,
+        scheduledmeasurement__measurement_type__mtype=(
+            export_run.measurement_type),
+        the_geom__isnull=False))
+
+    if not locations:
+        # Can't generate an empty shapefile.
+        export_run.fail("Er zijn 0 locaties, kan geen shapefile genereren.")
+        return
+
     temp_dir = tempfile.mkdtemp()
     filename = export_run.export_filename(extension="")[:-1]  # Remove '.'
 
@@ -292,12 +311,6 @@ def export_as_shapefile(export_run):
     shape_filepath = os.path.join(temp_dir, filename)
 
     shp = shapefile.Writer(shapefile.POINT)
-    locations = models.Location.objects.filter(
-        scheduledmeasurement__project=export_run.project,
-        scheduledmeasurement__contractor=export_run.contractor,
-        scheduledmeasurement__measurement_type__mtype=(
-            export_run.measurement_type))
-
     shp.field(
         configuration.get(export_run.project, 'location_id_field')
         .strip().encode('utf8'))

@@ -96,8 +96,7 @@
       {% else %}Onbekend{% endif%}
     </td>
     <td id="present-{{ export_run.id }}">
-      {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}
-        <img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">
+      {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">{% elif export_run.error_message %}<span class="small">{{ export_run.error_message }}</span>
       {% endif %}
     </td>
     <td id="uptodate-{{ export_run.id }}">

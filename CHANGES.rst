@@ -5,7 +5,8 @@ B1;2802;0cChangelog of lizard-progress
 2.1.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Export runs that crash will now be recorded as stopped, and show an
+  error message.
 
 
 2.1 (2014-02-18)

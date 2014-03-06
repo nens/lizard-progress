@@ -40,6 +40,7 @@ from lizard_progress import models
 from lizard_progress import lizard_export
 from lizard_progress import tools
 from lizard_progress import configuration
+from lizard_progress.util.send_exception_mail import send_email_on_exception
 
 
 def start_run(export_run_id, user):
@@ -54,21 +55,23 @@ def start_run(export_run_id, user):
     export_run.record_start(user)
 
     try:
-        if export_run.exporttype == "met":
-            export_as_metfile(export_run)
-        elif export_run.exporttype == "dxf":
-            export_as_dxf(export_run)
-        elif export_run.exporttype == "csv":
-            export_as_csv(export_run)
-        elif export_run.exporttype == "pointshape":
-            export_as_shapefile(export_run)
-        elif export_run.exporttype == "lizard":
-            export_to_lizard(export_run)
-        else:
-            export_all_files(export_run)
+        with send_email_on_exception(
+            "Start export run, id={}".format(export_run.id)):
+            if export_run.exporttype == "met":
+                export_as_metfile(export_run)
+            elif export_run.exporttype == "dxf":
+                export_as_dxf(export_run)
+            elif export_run.exporttype == "csv":
+                export_as_csv(export_run)
+            elif export_run.exporttype == "pointshape":
+                export_as_shapefile(export_run)
+            elif export_run.exporttype == "lizard":
+                export_to_lizard(export_run)
+            else:
+                export_all_files(export_run)
     except:
         # Catch-all except, because this is meant to catch all the
-        # exceptions we don't know about yet
+        # exceptions we don't know about yet. The mail is also sent.
         export_run.fail("Onbekende fout, export mislukt")
         return
 
@@ -164,9 +167,16 @@ def export_as_dxf(export_run):
 
 
 def create_dxf(measurement, temp):
-    series_id, series_name, profile = retrieve_profile.retrieve(
+    retrieved_profile = retrieve_profile.retrieve(
         measurement.filename,
         measurement.scheduled.location.location_code)
+
+    if retrieved_profile is None:
+        raise ValueError("Profile {} not found in file {}".format(
+                measurement.scheduled.location.location_code,
+                measurement.filename))
+
+    series_id, series_name, profile = retrieved_profile
 
     filename = "{id}.dxf".format(
         id=measurement.scheduled.location.location_code)

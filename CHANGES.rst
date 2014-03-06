@@ -5,7 +5,10 @@ B1;2802;0cChangelog of lizard-progress
 2.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- If an export fails, send an email.
+
+- A DXF export will fail if it wasn't possible to retrieve the
+  necessary profile.
 
 
 2.1.1 (2014-03-04)

@@ -2,7 +2,7 @@ B1;2802;0cChangelog of lizard-progress
 ===================================================
 
 
-2.1.2 (unreleased)
+2.1.2 (2014-03-06)
 ------------------
 
 - If an export fails, send an email.

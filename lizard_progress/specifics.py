@@ -61,11 +61,12 @@ class Specifics(object):
     def parsers(self, filename):
         """Return the parsers that have the right extension for this
         filename"""
-        return [
+        parsers = [
             specifics.parser
             for specifics in self._specifics.values()
             if filename.lower().endswith(specifics.extension)
             ]
+        return parsers
 
     def html_handler(self, measurement_type, contractor):
         instance = self.__instance(measurement_type, contractor)

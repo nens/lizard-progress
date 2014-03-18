@@ -65,14 +65,15 @@ def make_uploaded_file_path(root, project, contractor,
     External URLs should use a reverse() call to the
     lizard_progress_filedownload view instead of this function."""
 
-    project = getattr(project, 'slug', project)
-    contractor = getattr(contractor, 'slug', contractor)
-    measurement_type = getattr(measurement_type, 'slug', measurement_type)
+    project_slug = getattr(project, 'slug', project)
+    contractor_slug = getattr(contractor, 'slug', contractor)
+    measurement_type_slug = getattr(measurement_type, 'slug', measurement_type)
 
     return os.path.join(root,
-                        project,
-                        contractor,
-                        measurement_type,
+                        project.organization.name,
+                        project_slug,
+                        contractor_slug,
+                        measurement_type_slug,
                         os.path.basename(filename))
 
 

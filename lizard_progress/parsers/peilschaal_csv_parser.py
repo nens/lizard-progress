@@ -55,25 +55,33 @@ class PeilschaalCsvParser(ProgressParser):
             else:
                 return self.error('missingdata', str(row))
 
-            # Location must already exist.
+            mtype = MeasurementType.objects.get(project=self.project,
+                                                mtype__slug='meting')
+
             try:
                 l = Location.objects.get(
                     location_code=locationid,
                     project=self.project)
             except Location.DoesNotExist:
-                return self.error('location', locationid)
-
-            mtype = MeasurementType.objects.get(project=self.project,
-                                                mtype__slug='meting')
+                if self.project.needs_predefined_locations(mtype.mtype):
+                    return self.error('location', locationid)
+                else:
+                    l, created = Location.objects.get_or_create(
+                        location_code=locationid,
+                        project=self.project)
 
             try:
                 sm = ScheduledMeasurement.objects.get(
                     project=self.project, contractor=self.contractor,
                     measurement_type=mtype, location=l)
             except ScheduledMeasurement.DoesNotExist:
-                return self.error('scheduled', self.project.name,
-                                  self.contractor.name,
-                                  mtype.name, l.location_code)
+                if self.project.needs_predefined_locations(mtype.mtype):
+                    return self.error('scheduled', self.project.name,
+                                      self.contractor.name,
+                                      mtype.name, l.location_code)
+                sm = ScheduledMeasurement.objects.create(
+                    project=self.project, contractor=self.contractor,
+                    measurement_type=mtype, location=l)
 
             if not check_only:
                 m, _ = Measurement.objects.get_or_create(scheduled=sm)

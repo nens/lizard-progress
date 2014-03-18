@@ -12,6 +12,7 @@ from lizard_progress.models import MeasurementType
 from lizard_progress.models import SRID
 from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.specifics import ProgressParser
+from lizard_progress.specifics import FILE_IMAGE
 from lizard_progress.specifics import SuccessfulParserResult
 from lizard_progress.specifics import UnSuccessfulParserResult
 from lizard_progress.util.image import get_exif_data, get_lat_lon
@@ -32,8 +33,12 @@ class PeilschaalJpgParser(ProgressParser):
         'scheduled': "Meting met id %s en type %s was niet gepland.",
         }
 
+    FILE_TYPE = FILE_IMAGE
+
     def parse(self, check_only=False):
+        logger.critical("In parser")
         if not isinstance(self.file_object, ImageFile):
+            logger.critical("No ImageFile")
             return UnSuccessfulParserResult()
 
         try:

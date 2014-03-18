@@ -878,6 +878,8 @@ def protected_file_download(request, project_slug, contractor_slug,
         logger.debug(
             "With DEBUG off, we'd serve the programfile via webserver: \n%s",
             response)
+        logger.debug(
+            "Instead, we let Django serve {}.\n".format(file_path))
         return serve(request, file_path, '/')
     return response
 

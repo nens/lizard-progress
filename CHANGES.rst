@@ -2,7 +2,7 @@ B1;2802;0cChangelog of lizard-progress
 ===================================================
 
 
-2.1.3 (unreleased)
+2.1.3 (2014-03-18)
 ------------------
 
 - Images can be shown again (Django served them from the wrong

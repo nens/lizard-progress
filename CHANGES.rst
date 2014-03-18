@@ -5,7 +5,16 @@ B1;2802;0cChangelog of lizard-progress
 2.1.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Images can be shown again (Django served them from the wrong
+  directory).
+
+- Images can be uploaded again (Once upon a time we created, but
+  never used, the FILE_IMAGE file type).
+
+- Peilschaal CSV files now don't need predefined scheduled
+  measurements anymore, although it's very good to have them, because
+  the CSV files lack geom info. Turning the check back on in the admin
+  after a manual import.
 
 
 2.1.2 (2014-03-06)

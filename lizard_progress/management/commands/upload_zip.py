@@ -86,40 +86,6 @@ def upload_zipfile(stdout, project, contractor, path):
             stdout.write("{} uploaded.\n".format(filename))
 
 
-def upload_zipfile(stdout, project, contractor, path):
-    """Create a temporary directory; unzip the zipfile in there;
-    create UploadedFile objects for each file; start the background
-    task for each file."""
-    basedir = os.path.join(
-        settings.BUILDOUT_DIR, 'var', 'lizard_progress', 'uploaded_files')
-    tmpdir = tempfile.mkdtemp(dir=basedir)
-    zipf = zipfile.ZipFile(path)
-    zipf.extractall(tmpdir)
-
-    # Get a user
-    profiles = list(models.UserProfile.objects.filter(
-            organization=contractor.organization))
-
-    if not profiles:
-        raise CommandError("This contractor has no users!")
-
-    user = profiles[0].user
-    stdout.write("Uploading as user {}...\n".format(user))
-
-    for (dirpath, dirnames, filenames) in os.walk(tmpdir):
-        for filename in filenames:
-            fullpath = os.path.join(dirpath, filename)
-            scheduled_measurement_for(project, contractor, fullpath)
-            uploaded_file = models.UploadedFile.objects.create(
-                project=project,
-                contractor=contractor,
-                uploaded_by=user,
-                uploaded_at=datetime.datetime.now(),
-                path=fullpath)
-            tasks.process_uploaded_file_task.delay(uploaded_file.id)
-            stdout.write("{} uploaded.\n".format(filename))
-
-
 class Command(BaseCommand):
     """Command that goes through all uploaded data and re-checks it."""
 

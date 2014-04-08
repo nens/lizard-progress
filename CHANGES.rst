@@ -2,7 +2,7 @@ B1;2802;0cChangelog of lizard-progress
 ===================================================
 
 
-2.1.4 (unreleased)
+2.1.4 (2014-04-08)
 ------------------
 
 - Add a 'refresh_hydrovakken' management command that reloads existing

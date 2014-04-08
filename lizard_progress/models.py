@@ -15,10 +15,15 @@ import functools
 import logging
 import os
 import random
+import shutil
 import string
 
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
+from django.contrib.gis.geos import LineString
+from django.contrib.gis.geos import MultiLineString
+from django.contrib.gis.geos import fromstr
+from django.contrib.gis.gdal import DataSource
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
@@ -424,6 +429,22 @@ class Project(models.Model):
 
         return self._latest_log
 
+    def refresh_hydrovakken(self):
+        """Find Hydrovakken shapefiles belonging to this project.
+        If there is more than one, return an error message. Otherwise
+        refresh the database with the shapefile's contents and return
+        any error message from that."""
+        shapefiles = list(directories.all_files_in(
+            directories.hydrovakken_dir(self), extension='.shp'))
+
+        if len(shapefiles) == 0:
+            # No shapefiles is not an error, it's the default.
+            return
+        if len(shapefiles) > 1:
+            return "More than one shapefile found, clean up first."""
+
+        return Hydrovak.reload_from(self, shapefiles[0])
+
 
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc
@@ -706,6 +727,56 @@ class Hydrovak(models.Model):
     class Meta:
         unique_together = ("project", "br_ident")
         verbose_name_plural = "Hydrovakken"
+
+    @classmethod
+    def remove_hydrovakken_files(cls, project):
+        hydrovakken_dir = directories.hydrovakken_dir(project)
+        shutil.rmtree(hydrovakken_dir)
+        os.mkdir(hydrovakken_dir)
+
+    @classmethod
+    def remove_hydrovakken_data(cls, project):
+        cls.objects.filter(project=project).delete()
+
+    @classmethod
+    def reload_from(cls, project, shapefile_path):
+        cls.remove_hydrovakken_data(project)
+
+        if isinstance(shapefile_path, unicode):
+            shapefile_path = shapefile_path.encode('utf8')
+
+        datasource = DataSource(shapefile_path)
+
+        # We only import configuration here, because it imports this module
+        # for the OrganizationConfig and ProjectConfig models.
+        from lizard_progress import configuration
+        id_field_name = configuration.get(
+            project, 'hydrovakken_id_field')
+
+        layer = datasource[0]
+
+        for feature in layer:
+            if id_field_name in feature.fields:
+                # The shape can contain both LineStrings and
+                # MultiLineStrings - to be able to save both we
+                # convert them all to multis
+                geom = fromstr(feature.geom.ewkt)
+                if isinstance(geom, LineString):
+                    geom = MultiLineString(geom)
+
+                hydrovak, created = cls.objects.get_or_create(
+                    project=project,
+                    br_ident=unicode(feature[id_field_name]),
+                    defaults={'the_geom': geom})
+                if not created:
+                    hydrovak.the_geom = geom
+                    hydrovak.save()
+            else:
+                return (
+                    'Veld "{}" niet gevonden in de shapefile. '
+                    'Pas de shapefile aan,'
+                    'of geef een ander ID veld aan op het Configuratie scherm.'
+                    .format(id_field_name))
 
 
 class UploadedFile(models.Model):

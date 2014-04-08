@@ -13,10 +13,6 @@ import tempfile
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.gis.gdal import DataSource
-from django.contrib.gis.geos import LineString
-from django.contrib.gis.geos import MultiLineString
-from django.contrib.gis.geos import fromstr
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
@@ -490,16 +486,10 @@ class UploadHydrovakkenView(ProjectsView):
         if not self.project.is_manager(request.user):
             return HttpResponseForbidden()
 
+        # Remove old files before we move the new ones
+        models.Hydrovak.remove_hydrovakken_files(self.project)
+
         hydrovakken_dir = directories.hydrovakken_dir(self.project)
-
-        filename = request.FILES['shp'].name
-
-        # Remove old hydrovakken
-        for filename in os.listdir(hydrovakken_dir):
-            filepath = os.path.join(hydrovakken_dir, filename)
-            if os.path.isfile(filepath):
-                os.remove(filepath)
-        models.Hydrovak.objects.filter(project=self.project).delete()
 
         # Save uploaded files
         for ext in ['shp', 'dbf', 'shx']:
@@ -510,37 +500,14 @@ class UploadHydrovakkenView(ProjectsView):
                     f.write(chunk)
 
         filepath = os.path.join(hydrovakken_dir, request.FILES['shp'].name)
-        if isinstance(filepath, unicode):
-            filepath = filepath.encode('utf8')
-        datasource = DataSource(filepath)
 
-        id_field_name = self.hydrovakken_id_field
-        layer = datasource[0]
+        error_message = models.Hydrovak.reload_from(
+            self.project, filepath, self.hydrovakken_id_field)
 
-        for feature in layer:
-            if id_field_name in feature.fields:
-                # The shape can contain both LineStrings and
-                # MultiLineStrings - to be able to save both we
-                # convert them all to multis
-                geom = fromstr(feature.geom.ewkt)
-                if isinstance(geom, LineString):
-                    geom = MultiLineString(geom)
-
-                hydrovak, created = models.Hydrovak.objects.get_or_create(
-                    project=self.project,
-                    br_ident=unicode(feature[id_field_name]),
-                    defaults={'the_geom': geom})
-                if not created:
-                    hydrovak.the_geom = geom
-                    hydrovak.save()
-            else:
-                messages.add_message(
-                    request, messages.ERROR,
-                    'Veld "{}" niet gevonden in de shapefile. '
-                    'Pas de shapefile aan,'
-                    'of geef een ander ID veld aan op het Configuratie scherm.'
-                    .format(self.hydrovakken_id_field))
-                return self.get(request, *args, **kwargs)
+        if error_message:
+            messages.add_message(
+                request, messages.ERROR, error_message)
+            return self.get(request, *args, **kwargs)
 
         return HttpResponseRedirect(reverse(
                 'lizard_progress_downloadhomeview', kwargs={

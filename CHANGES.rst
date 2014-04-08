@@ -5,7 +5,8 @@ B1;2802;0cChangelog of lizard-progress
 2.1.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add a 'refresh_hydrovakken' management command that reloads existing
+  Hydrovakken shapes into the database.
 
 
 2.1.3 (2014-03-18)

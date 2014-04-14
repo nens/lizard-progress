@@ -1,10 +1,11 @@
-"""
-Connection to lizard_progress. This module implements the
-HDSR-specific details.
+"""Each measurement type has specifics that define its behavior, like
+how to show a measurement in a popup, or whether an uploaded file
+should be treated as linelike or as binary.
+
+This module defines a Specifics object for each measurement type.
 """
 
 import logging
-from math import sqrt
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 

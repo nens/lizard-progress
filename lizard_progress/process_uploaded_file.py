@@ -52,7 +52,7 @@ def process_capturing_errors(uploaded_file):
     except Exception as e:
         # Something went wrong. Record it as an error at line 0, what
         # else to do.
-        print(traceback.format_exc())
+        logger.debug(traceback.format_exc())
         uploaded_file.ready = True
         uploaded_file.success = False
         uploaded_file.linelike = False

@@ -5,7 +5,8 @@ B1;2802;0cChangelog of lizard-progress
 2.1.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Increase the length of some database fields, e.g. too short Hydrovak
+  IDs led to errors.
 
 
 2.1.4 (2014-04-08)

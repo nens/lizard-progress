@@ -717,7 +717,7 @@ class Measurement(models.Model):
 class Hydrovak(models.Model):
     """Hydrovak."""
     project = models.ForeignKey(Project)
-    br_ident = models.CharField(max_length=24)
+    br_ident = models.CharField(max_length=100)
     the_geom = models.MultiLineStringField(srid=SRID)
     objects = models.GeoManager()
 
@@ -1120,7 +1120,7 @@ class UploadLog(models.Model):
     mtype = models.ForeignKey(AvailableMeasurementType)
 
     when = models.DateTimeField()
-    filename = models.CharField(max_length=50)
+    filename = models.CharField(max_length=250)
     num_measurements = models.IntegerField()
 
     class Meta:

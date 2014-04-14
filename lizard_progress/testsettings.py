@@ -34,6 +34,7 @@ DATABASES = {
 SITE_ID = 1
 INSTALLED_APPS = [
     'lizard_progress',
+    'lizard_progress.changerequests',
     'lizard_ui',
     'lizard_map',
     'lizard_security',

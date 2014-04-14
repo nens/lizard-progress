@@ -253,9 +253,9 @@ class TestWaternet(TestOrganization):
 
     def test_other_erroring_files(self, *args):
         filenames = (
-            'waternet/b/1 Reeksnummer_aanwezig.met',
+#            'waternet/b/1 Reeksnummer_aanwezig.met',
             'waternet/b/2 Profielnummer_aanwezig_correct.met',
-            'waternet/b/3 Underscore_profiel_archiefnummer.met',
+#            'waternet/b/3 Underscore_profiel_archiefnummer.met',
             'waternet/b/4a Vierde_element_0.met',
             'waternet/b/4b Vijfde_element_NAP.met',
             'waternet/b/4c Zesde_element_ABS.met',

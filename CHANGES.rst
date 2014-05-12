@@ -1,4 +1,4 @@
-B1;2802;0cChangelog of lizard-progress
+Changelog of lizard-progress
 ===================================================
 
 

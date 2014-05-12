@@ -5,7 +5,7 @@ Changelog of lizard-progress
 2.1.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Show number of open change requests on the projects page.
 
 
 2.1.5 (2014-04-14)

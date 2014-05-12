@@ -284,6 +284,23 @@ class TestProject(TestCase):
         self.assertTrue(unicode(project.id) in project.slug)
         self.assertTrue("test-project" in project.slug)
 
+    def test_num_open_change_requests_returns_one(self):
+        from lizard_progress.changerequests.tests.test_models import RequestF
+        organization = OrganizationF.create(name='A')
+        project = ProjectF.create(organization=organization)
+        organizationB = OrganizationF.create(name='B')
+        contractor = ContractorF.create(
+            project=project, organization=organizationB)
+
+        RequestF.create(contractor=contractor)
+        self.assertEquals(project.num_open_requests, 1)
+
+    def test_num_open_change_requests_returns_zero(self):
+        organization = OrganizationF.create(name='A')
+        project = ProjectF.create(organization=organization)
+
+        self.assertEquals(project.num_open_requests, 0)
+
 
 class TestContractor(TestCase):
     """Tests for the Contractor model."""

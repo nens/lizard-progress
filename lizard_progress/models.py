@@ -445,6 +445,12 @@ class Project(models.Model):
 
         return Hydrovak.reload_from(self, shapefiles[0])
 
+    @property
+    def num_open_requests(self):
+        return sum(
+            contractor.request_set.filter(request_status=1).count()
+            for contractor in self.contractor_set.all())
+
 
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc

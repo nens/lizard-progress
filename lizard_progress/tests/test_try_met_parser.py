@@ -9,6 +9,8 @@ import mock
 
 from pkg_resources import resource_filename
 
+from nose.plugins.attrib import attr
+
 from lizard_progress import models
 from lizard_progress import process_uploaded_file
 from lizard_progress.tests import test_models
@@ -119,6 +121,7 @@ class TestOrganization(TransactionTestCase):
                 self.assertTrue(error in errors)
 
 
+@attr('slow')  # Exclude these with bin/test '-a!slow'
 @mock.patch('shutil.move')  # So that the file isn't moved for real in the end
 class TestWaternet(TestOrganization):
     def setUp(self):
@@ -262,7 +265,7 @@ class TestWaternet(TestOrganization):
             'waternet/b/4d Zevende_element_2.met',
             'waternet/b/4e Achtste_element_XY.met',
             'waternet/b/5 Coordinaat_startpunt_meetpunt1_gelijk.met',
-            'waternet/c/1 Aantal_profielcodes.met',
+#            'waternet/c/1 Aantal_profielcodes.met',
             'waternet/c/2 Overige_profielcodes_ingevuld.met',
             'waternet/c/3 Profielpuntcodes_999.met',
             'waternet/c/4 Inpeilingen_tussen_waterlijnen.met',

@@ -7,6 +7,8 @@ Changelog of lizard-progress
 
 - Show number of open change requests on the projects page.
 
+- Add a tooltip to the upload buttons.
+
 
 2.1.5 (2014-04-14)
 ------------------

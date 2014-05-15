@@ -18,6 +18,8 @@ Changelog of lizard-progress
   each organization. In the same models, the organizations will be
   able to say which of those they want to be visible.
 
+- By default, everything that already existed is allowed and visible.
+
 
 2.1.5 (2014-04-14)
 ------------------

@@ -22,6 +22,8 @@ Changelog of lizard-progress
 
 - New project page only shows visible measurement types.
 
+- Both planning pages only show visible measurement types.
+
 
 2.1.5 (2014-04-14)
 ------------------

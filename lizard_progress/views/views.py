@@ -1022,8 +1022,9 @@ class PlanningView(ProjectsView):
     template_name = 'lizard_progress/planning.html'
 
     def dispatch(self, request, *args, **kwargs):
-        mtypes = models.MeasurementType.objects.filter(
-            project__slug=kwargs.get('project_slug'))
+        project = models.Project.objects.get(slug=kwargs.get('project_slug'))
+
+        mtypes = project.organization.visible_available_measurement_types()
 
         if request.method == 'GET':
             self.form = forms.MtypeShapefileForm(mtypes=mtypes)
@@ -1166,7 +1167,7 @@ class EditContractorsMeasurementTypes(ProjectsView):
             contractor__project=self.project)
 
     def measurementtypes_to_add(self):
-        return models.AvailableMeasurementType.objects.exclude(
+        return self.organization.visible_available_measurement_types().exclude(
             measurementtype__project=self.project)
 
     def post(self, request, project_slug):

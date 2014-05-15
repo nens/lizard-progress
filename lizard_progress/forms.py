@@ -208,7 +208,7 @@ class MtypeShapefileForm(ShapefileForm):
 
         self.fields['mtype_slug'] = forms.ChoiceField(
             label="Soort meting", choices=(
-                (mtype.mtype.slug, unicode(mtype.mtype))
+                (mtype.slug, unicode(mtype))
                 for mtype in mtypes_qs))
 
 

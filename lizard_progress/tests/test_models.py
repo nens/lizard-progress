@@ -222,6 +222,41 @@ class TestOrganization(TestCase):
         users = self.organization.users_in_same_organization(user1)
         self.assertEquals(len(users), 2)
 
+    def test_allowed_measurement_types_is_none_at_first(self):
+        organization = OrganizationF.create(name="mtypetest")
+        self.assertEquals(
+            len(organization.allowed_available_measurement_types()), 0)
+
+    def test_allowed_measurement_type_not_allowed(self):
+        organization = OrganizationF.create(name="mtypetest")
+        AvailableMeasurementTypeF.create()
+        self.assertEquals(
+            len(organization.allowed_available_measurement_types()), 0)
+
+    def test_allowed_measurement_types_allowed_if_added(self):
+        organization = OrganizationF.create(name="mtypetest")
+        amt = AvailableMeasurementTypeF.create()
+        models.MeasurementTypeAllowed.objects.create(
+            organization=organization, mtype=amt)
+        self.assertEquals(
+            len(organization.allowed_available_measurement_types()), 1)
+
+    def test_allowed_invisible_mtype_is_not_visible(self):
+        organization = OrganizationF.create(name="mtypetest")
+        amt = AvailableMeasurementTypeF.create()
+        models.MeasurementTypeAllowed.objects.create(
+            organization=organization, mtype=amt, visible=False)
+        self.assertEquals(
+            len(organization.visible_available_measurement_types()), 0)
+
+    def test_allowed_visible_mtype_is_visible(self):
+        organization = OrganizationF.create(name="mtypetest")
+        amt = AvailableMeasurementTypeF.create()
+        models.MeasurementTypeAllowed.objects.create(
+            organization=organization, mtype=amt, visible=True)
+        self.assertEquals(
+            len(organization.visible_available_measurement_types()), 1)
+
 
 class TestUserProfile(TestCase):
     """Tests for the UserProfile model."""

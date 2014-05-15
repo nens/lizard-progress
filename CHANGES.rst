@@ -14,6 +14,10 @@ Changelog of lizard-progress
   thing. If no implementation is given, the "slug" field is used, so
   that for types for which this feature isn't used, nothing changes.
 
+- We can now configure which AvailableMeasurementTypes are allowed for
+  each organization. In the same models, the organizations will be
+  able to say which of those they want to be visible.
+
 
 2.1.5 (2014-04-14)
 ------------------

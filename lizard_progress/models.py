@@ -70,12 +70,16 @@ class Organization(models.Model):
     description = models.CharField(max_length=256, blank=True, null=True)
     errors = models.ManyToManyField(ErrorMessage)
 
-    # Only is_project_owner organizations are allowed to give the projecter
+    # Only is_project_owner organizations are allowed to give the project
     # manager role to their users
     is_project_owner = models.BooleanField(default=False)
 
     lizard_config = models.ForeignKey(
         'LizardConfiguration', blank=True, null=True)
+
+    mtypes_allowed = models.ManyToManyField(
+        'AvailableMeasurementType',
+        through='MeasurementTypeAllowed')
 
     @classmethod
     def users_in_same_organization(cls, user):
@@ -91,6 +95,15 @@ class Organization(models.Model):
         if user_profile is not None:
             return user_profile.organization
         return None
+
+    def allowed_available_measurement_types(self):
+        return self.mtypes_allowed.all()
+
+    def visible_available_measurement_types(self):
+        """Return only those allowed types that the organization wants
+        to see."""
+        return self.allowed_available_measurement_types().filter(
+            measurementtypeallowed__visible=True)
 
     def contains_user(self, user):
         """Returns true if user is in this organization."""
@@ -615,6 +628,24 @@ class AvailableMeasurementType(models.Model):
     @classmethod
     def dwarsprofiel(cls):
         return cls.objects.get(slug='dwarsprofiel')
+
+
+class MeasurementTypeAllowed(models.Model):
+    """This model is the "through" model for relationships between
+    (project-owning) Organizations, and AvailableMeasurementTypes.
+
+    If a combination organization / available measurement type exists,
+    then that means that that organization can use this type in *new*
+    projects.
+
+    Also, a boolean value stores whether the organization *wants* to
+    see this type whenever it creates a new project. Organization admins
+    can edit the value of this boolean.
+    """
+    organization = models.ForeignKey(Organization)
+    mtype = models.ForeignKey(AvailableMeasurementType)
+
+    visible = models.BooleanField(default=True)
 
 
 class MeasurementType(models.Model):

@@ -9,6 +9,11 @@ Changelog of lizard-progress
 
 - Add a tooltip to the upload buttons.
 
+- AvailableMeasurementTypes now have an "implementation". Several
+  types may share the same implementation, and thus do the exact same
+  thing. If no implementation is given, the "slug" field is used, so
+  that for types for which this feature isn't used, nothing changes.
+
 
 2.1.5 (2014-04-14)
 ------------------

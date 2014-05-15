@@ -291,6 +291,8 @@ class LaboratoriumCsvSpecifics(GenericSpecifics):
     linelike = True
 
 
+# The keys of this class are also the choices for 'implementation' of
+# an AvailableMeasurementType.
 AVAILABLE_SPECIFICS = {
     'dwarsprofiel': MetfileSpecifics,
     'oeverfoto': OeverfotoSpecifics,

@@ -567,6 +567,17 @@ class AvailableMeasurementType(models.Model):
 
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=50, unique=True)
+
+    # Several measurement types can have the same implementation
+    # If implementation is '', slug is used instead.
+    implementation = models.CharField(max_length=50, unique=False, choices=(
+            ('dwarsprofiel', 'dwarsprofiel'),
+            ('oeverfoto', 'oeverfoto'),
+            ('oeverkenmerk', 'oeverkenmerk'),
+            ('foto', 'foto'),
+            ('meting', 'meting'),
+            ('laboratorium_csv', 'laboratorium_csv')))
+
     default_icon_missing = models.CharField(max_length=50)
     default_icon_complete = models.CharField(max_length=50)
 

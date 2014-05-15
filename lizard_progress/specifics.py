@@ -31,27 +31,31 @@ Error = collections.namedtuple('Error', 'line, error_code, error_message')
 
 
 class Specifics(object):
-    def __init__(self, project, entrypoints=None):
+    def __init__(self, project):
         self.project = project
-        self.__set_specifics(entrypoints)
+        self.__set_specifics()
 
-    def __set_specifics(self, entrypoints=None):
+    def __set_specifics(self):
         # Only import it now to avoid circular imports (models
         # imports this, this imports mtype_specifics, that imports
         # parsers, those import models).
         from lizard_progress.mtype_specifics import AVAILABLE_SPECIFICS
-
+        from lizard_progress.models import AvailableMeasurementType
         self._specifics = {}
 
-        slugs_in_project = set(
-            measurement_type.slug
-            for measurement_type in self.project.measurementtype_set.all())
+        implementations_in_project = set(
+            (available_measurement_type.implementation or
+             available_measurement_type.slug)
+            for available_measurement_type in
+            AvailableMeasurementType.objects.filter(
+                measurementtype__project=self.project))
 
-        for slug in slugs_in_project:
+        for implementation in implementations_in_project:
             # If the key doesn't exist in AVAILABLE_SPECIFICS, we just
             # let it throw the exception because something is wrong
             # anyway.
-            self._specifics[slug] = AVAILABLE_SPECIFICS[slug]
+            self._specifics[implementation] = (
+                AVAILABLE_SPECIFICS[implementation])
 
     def __instance(self, measurement_type, contractor=None):
         slug = measurement_type.slug

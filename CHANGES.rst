@@ -20,6 +20,8 @@ Changelog of lizard-progress
 
 - By default, everything that already existed is allowed and visible.
 
+- New project page only shows visible measurement types.
+
 
 2.1.5 (2014-04-14)
 ------------------

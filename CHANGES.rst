@@ -24,6 +24,9 @@ Changelog of lizard-progress
 
 - Both planning pages only show visible measurement types.
 
+- There is a "Edit visibility" page where visibility of measurement
+  types can be edited. Accessible from the new project page.
+
 
 2.1.5 (2014-04-14)
 ------------------

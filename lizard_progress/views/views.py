@@ -43,7 +43,6 @@ from lizard_ui.views import UiView
 from lizard_progress.changerequests import models as cmodels
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress import models
-from lizard_progress.models import Area
 from lizard_progress.models import Contractor
 from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
@@ -912,7 +911,8 @@ class ArchiveProjectsOverview(ProjectsView):
                     **{'created_at__year': archive_year,
                        'project_type': project_type})
                 if projects.exists():
-                    archive_tree[archive_year].update({project_type.name: projects})
+                    archive_tree[archive_year].update(
+                        {project_type.name: projects})
         return archive_tree
 
 
@@ -930,16 +930,19 @@ class ArchiveProjectsView(ProjectsView):
                 project.save()
                 msg = "Project '{}' is gearchiveerd."
             except:
-                msg = "Er is een fout opgetreden. Project '{}' is NIET gearchiveerd."
+                msg = ("Er is een fout opgetreden. Project '{}' " +
+                       "is NIET gearchiveerd.")
             messages.success(self.request, msg.format(project))
         else:
-            messages.warning(self.request, "Permission denied. Login as a project manager.")
+            messages.warning(
+                self.request, "Permission denied. Login as a project manager.")
 
     def activate(self, project_slug):
         project = Project.objects.get(slug=project_slug)
         project.is_archived = False
         project.save()
-        messages.success(self.request, "Project '{}' is geactiveerd.".format(project))
+        messages.success(
+            self.request, "Project '{}' is geactiveerd.".format(project))
 
     def get(self, request, project_slug, *args, **kwargs):
         action = request.GET.get('action', None)

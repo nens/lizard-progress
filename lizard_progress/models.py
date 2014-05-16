@@ -622,6 +622,9 @@ class AvailableMeasurementType(models.Model):
     # measurement types.
     description = models.TextField(default='', blank=True)
 
+    class Meta:
+        ordering = ('name',)
+
     def __unicode__(self):
         return self.name
 

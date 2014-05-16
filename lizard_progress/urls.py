@@ -63,6 +63,10 @@ urlpatterns = patterns(
     url('^newproject/$',
         login_required(views.NewProjectView.as_view()),
         name='lizard_progress_newproject'),
+    url('^editvisibility/$',
+        login_required(
+            organization_admin.VisibleMeasurementTypes.as_view()),
+        name='lizard_progress_editvisibility'),
 
     url('^archive/$',
         login_required(views.ArchiveProjectsOverview.as_view()),

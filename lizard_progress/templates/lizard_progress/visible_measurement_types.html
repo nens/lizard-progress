@@ -1,0 +1,40 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block topbar %}
+{% endblock %}
+
+{% block contentpage %}
+
+<div id="contentpage">
+<h2>Zichtbaarheid metingtypes</h2>
+
+<p>De functionaliteit van een bepaald metingtype (bijvoorbeeld Dwarsprofielen die ingevoerd worden als MET-files) kan beschikbaar zijn onder verschillende namen, om hetzelfde type op meerdere manieren te kunnen gebruiken binnen een project. Bijvoorbeeld "Dwarsprofielen: inpeilen" en "Dwarsprofielen: uitpeilen".</p>
+<p>Aangezien niet elke organisatie dit altijd op dezelfde manier zal willen toepassen, is het op deze pagina mogelijk om metingtypes zichtbaar en onzichtbaar te maken. Dit kan natuurlijk ook gebruikt worden als bepaalde metingtypes op dit moment niet relevant zijn voor uw organisatie, en u ze tijdelijk niet hoeft te zien in de lijst.</p>
+<p>Zichtbaarheid heeft alleen effect op het aanmaken van nieuwe projecten en het toevoegen
+van werkzaamheden aan bestaande. Bestaande werkzaamheden blijven onveranderd.</p>
+
+<table class="table table-bordered progressbase">
+  <thead>
+    <th>Functionaliteit</th>
+    <th>Omschrijving</th>
+    <th>Zichtbaar?</th>
+    <th>Veranderen</th>
+  </thead>
+  {% for mtype in view.allowed_measurement_types %}
+    <form method="post" action="{% url lizard_progress_editvisibility %}">
+      {% csrf_token %}
+      <input type="hidden" name="slug" value="{{ mtype.mtype.slug }}">
+      <input type="hidden" name="new_visibility" value="{% if mtype.visible %}0{% else %}1{% endif %}">
+      <tr {% if mtype.visible %}class="success"{% endif %}>
+        <td>{% firstof mtype.mtype.implementation mtype.mtype.slug %}</td>
+        <td>{{ mtype.mtype }}</td>
+        <td>{% if mtype.visible %}Ja{% else %}Nee {% endif %}</td>
+        <td>
+          <input type="submit" value="{% if mtype.visible %}Maak onzichtbaar{% else %}Maak zichtbaar{% endif %}" class="btn btn-small btn-primary">
+        </td>
+      </tr>
+    </form>
+  {% endfor %}
+</table>
+</div>
+{% endblock contentpage %}

@@ -55,7 +55,7 @@ class ErrorConfiguration(object):
             for error_message in organization.errors.all())
 
     def __contains__(self, error_code):
-        if self.measurement_type.slug != 'dwarsprofiel':
+        if self.measurement_type.implementation_slug != 'dwarsprofiel':
             # For now, these differentiated checks only exist for MET files.
             # Other measurement types always get True.
             return True

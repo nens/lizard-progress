@@ -483,11 +483,6 @@ class UploadHydrovakkenView(ProjectsView):
         return super(
             UploadHydrovakkenView, self).dispatch(request, *args, **kwargs)
 
-    @property
-    def hydrovakken_id_field(self):
-        return configuration.get(
-            self.project, 'hydrovakken_id_field')
-
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -511,7 +506,7 @@ class UploadHydrovakkenView(ProjectsView):
         filepath = os.path.join(hydrovakken_dir, request.FILES['shp'].name)
 
         error_message = models.Hydrovak.reload_from(
-            self.project, filepath, self.hydrovakken_id_field)
+            self.project, filepath)
 
         if error_message:
             messages.add_message(

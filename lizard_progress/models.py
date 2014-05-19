@@ -862,6 +862,10 @@ class UploadedFile(models.Model):
 
     path = models.CharField(max_length=255)
 
+    # Which measurement type this file was uploaded as, only null for
+    # old data.
+    mtype = models.ForeignKey(AvailableMeasurementType, null=True)
+
     # If ready is True but success is False, uploading was unsuccessful.
     # In that case, there should be error messages in the UploadedFileError
     # models.

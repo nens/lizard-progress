@@ -1,9 +1,6 @@
 # (c) Nelen & Schuurmans. GPL licensed, see LICENSE.txt.
 
-"""Views concerned with uploading files.
-
-See wizards.py for wizard-specific upload code.
-"""
+"""Views concerned with uploading files."""
 
 import datetime
 import logging
@@ -131,10 +128,16 @@ class UploadHomeView(ProjectsView):
         """Returns URL to the file upload dialog."""
         return reverse('lizard_progress_uploaddialogview')
 
-    def upload_measurements_url(self):
-        """Returns URL to post measurements to."""
-        return reverse('lizard_progress_uploadmeasurementsview',
-                       kwargs={'project_slug': self.project_slug})
+    def upload_measurements_urls(self):
+        """Returns URLs to post measurements to."""
+        return [
+            (mtype.mtype.name,
+             reverse(
+                    'lizard_progress_uploadmeasurementsview',
+                    kwargs=dict(
+                        project_slug=self.project_slug,
+                        mtype_slug=mtype.mtype.slug)))
+            for mtype in self.project.measurementtype_set.all()]
 
     def upload_reports_url(self):
         """Returns URL to post project reports to."""
@@ -253,6 +256,8 @@ class UploadView(View):
         # Usually we return JSON, but not with the simple upload form (for IE)
         return_json = not request.POST.get("simple-upload")
 
+        self.mtype_slug = kwargs.get("mtype_slug")
+
         try:
             self.contractor = models.Contractor.objects.get(
                 project=self.project,
@@ -307,11 +312,15 @@ class UploadView(View):
 
 class UploadMeasurementsView(UploadView):
     def process_file(self, path):
+        mtype = models.AvailableMeasurementType.objects.get(
+            slug=self.mtype_slug)
+
         uploaded_file = models.UploadedFile.objects.create(
             project=self.project,
             contractor=self.contractor,
             uploaded_by=self.user,
             uploaded_at=datetime.datetime.now(),
+            mtype=mtype,
             path=path)
         tasks.process_uploaded_file_task.delay(uploaded_file.id)
 

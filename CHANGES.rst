@@ -27,6 +27,10 @@ Changelog of lizard-progress
 - There is a "Edit visibility" page where visibility of measurement
   types can be edited. Accessible from the new project page.
 
+- In order to be able to distinguish between various measurement types
+  that use the same files, we know use a separate upload button for
+  each type, and store the mtype in the UploadedFile model.
+
 
 2.1.5 (2014-04-14)
 ------------------

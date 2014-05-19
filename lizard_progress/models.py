@@ -275,7 +275,7 @@ def current_files(measurements):
 
 class Project(models.Model):
     # "Profielen", "Peilschalen", etc
-    name = models.CharField(max_length=50, unique=True,
+    name = models.CharField(max_length=50, unique=False,
         verbose_name='projectnaam')
     slug = models.SlugField(max_length=50, unique=True)
     organization = models.ForeignKey(Organization, null=False)
@@ -288,6 +288,7 @@ class Project(models.Model):
 
     class Meta:
         ordering = ('name',)
+        unique_together = [('name', 'organization')]
 
     def __unicode__(self):
         return unicode(self.name)

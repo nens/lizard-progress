@@ -60,10 +60,6 @@ class LabCsvParser(ProgressParser):
                 }
 
         if not check_only:
-            mtype = models.MeasurementType.objects.get(
-                project=self.project,
-                mtype__slug='laboratorium_csv')
-
             for hydrovak_code in data:
                 # Get or create a location
                 location, _ = models.Location.objects.get_or_create(
@@ -75,7 +71,7 @@ class LabCsvParser(ProgressParser):
                     models.ScheduledMeasurement.objects.get_or_create(
                         location=location,
                         project=self.project,
-                        measurement_type=mtype,
+                        measurement_type=self.mtype(),
                         contractor=self.contractor))
 
                 # And a measurement to go along with it

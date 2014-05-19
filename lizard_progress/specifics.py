@@ -31,8 +31,9 @@ Error = collections.namedtuple('Error', 'line, error_code, error_message')
 
 
 class Specifics(object):
-    def __init__(self, project):
+    def __init__(self, project, available_measurement_type=None):
         self.project = project
+        self.available_measurement_type = available_measurement_type
         self.__set_specifics()
 
     def __set_specifics(self):
@@ -41,21 +42,27 @@ class Specifics(object):
         # parsers, those import models).
         from lizard_progress.mtype_specifics import AVAILABLE_SPECIFICS
         from lizard_progress.models import AvailableMeasurementType
-        self._specifics = {}
 
-        implementations_in_project = set(
-            (available_measurement_type.implementation or
-             available_measurement_type.slug)
-            for available_measurement_type in
-            AvailableMeasurementType.objects.filter(
-                measurementtype__project=self.project))
+        if self.available_measurement_type:
+            # We know which specifics to use. This is usually when a specific
+            # upload button was pressed.
+            slug = self.available_measurement_type.implementation_slug
+            self._specifics = {
+                slug: AVAILABLE_SPECIFICS[slug]}
+        else:
+            self._specifics = {}
+            implementations_in_project = set(
+                available_measurement_type.implementation_slug
+                for available_measurement_type in
+                AvailableMeasurementType.objects.filter(
+                    measurementtype__project=self.project))
 
-        for implementation in implementations_in_project:
-            # If the key doesn't exist in AVAILABLE_SPECIFICS, we just
-            # let it throw the exception because something is wrong
-            # anyway.
-            self._specifics[implementation] = (
-                AVAILABLE_SPECIFICS[implementation])
+            for implementation in implementations_in_project:
+                # If the key doesn't exist in AVAILABLE_SPECIFICS, we just
+                # let it throw the exception because something is wrong
+                # anyway.
+                self._specifics[implementation] = (
+                    AVAILABLE_SPECIFICS[implementation])
 
     def __instance(self, measurement_type, contractor=None):
         slug = measurement_type.slug
@@ -64,7 +71,9 @@ class Specifics(object):
 
     def parsers(self, filename):
         """Return the parsers that have the right extension for this
-        filename"""
+        filename.
+        """
+        # Should not happen anymore
         parsers = [
             specifics.parser
             for specifics in self._specifics.values()
@@ -102,7 +111,8 @@ def _open_uploaded_file(path, file_type):
     return open(path, 'rU')
 
 
-def parser_factory(parser, project, contractor, path):
+def parser_factory(
+    parser, project, contractor, path, available_measurement_type):
     """Sets up the parser and returns a parser instance."""
 
     if not issubclass(parser, ProgressParser):
@@ -110,7 +120,8 @@ def parser_factory(parser, project, contractor, path):
                          "a ProgressParser instance.")
 
     file_object = _open_uploaded_file(path, parser.FILE_TYPE)
-    return parser(project, contractor, file_object)
+    return parser(
+        project, contractor, file_object, available_measurement_type)
 
 
 class ProgressParser(object):
@@ -156,10 +167,12 @@ class ProgressParser(object):
 
     FILE_TYPE = FILE_NORMAL
 
-    def __init__(self, project, contractor, file_object):
+    def __init__(
+        self, project, contractor, file_object, available_measurement_type):
         self.project = project
         self.contractor = contractor
         self.file_object = file_object
+        self.available_measurement_type = available_measurement_type
         self.errors = []
         self.possible_requests = []
 
@@ -242,6 +255,19 @@ class ProgressParser(object):
                 possible_requests=self.possible_requests)
 
         return SuccessfulParserResult(measurements)
+
+    def mtype(self):
+        """Return the measurement_type instance for our
+        AvailableMeasurementType."""
+        from lizard_progress.models import MeasurementType
+        try:
+            return MeasurementType.objects.get(
+                project=self.project,
+                mtype=self.available_measurement_type)
+        except MeasurementType.DoesNotExist:
+            self.record_error(
+                0, "NOMEASUREMENTTYPE",
+                "Measurement type niet geconfigureerd, systeemfout.")
 
 
 class SuccessfulParserResult(object):

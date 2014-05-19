@@ -313,8 +313,9 @@ class Project(models.Model):
             slug=slugify(self.name))
         self.save()
 
-    def specifics(self):
-        return lizard_progress.specifics.Specifics(self)
+    def specifics(self, available_measurement_type=None):
+        return lizard_progress.specifics.Specifics(
+            self, available_measurement_type)
 
     def has_measurement_type(self, mtype_slug):
         try:
@@ -622,6 +623,15 @@ class AvailableMeasurementType(models.Model):
     # Description to show to users, e.g. in the wizard where users can choose
     # measurement types.
     description = models.TextField(default='', blank=True)
+
+    @property
+    def implementation_slug(self):
+        """The implementation details are tied to the slug of the first
+        AvailableMeasurementType that implemented it. Later we can add copies
+        of the same type that work the same way, they have to have a different
+        slug but can have the slug of the reference implementation as their
+        implementation."""
+        return self.implementation or self.slug
 
     class Meta:
         ordering = ('name',)

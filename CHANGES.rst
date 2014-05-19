@@ -31,6 +31,7 @@ Changelog of lizard-progress
   that use the same files, we know use a separate upload button for
   each type, and store the mtype in the UploadedFile model.
 
+- Parsers now use that stored mtype.
 
 2.1.5 (2014-04-14)
 ------------------

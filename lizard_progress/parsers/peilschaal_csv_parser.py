@@ -4,7 +4,6 @@ import logging
 
 from lizard_progress.models import Location
 from lizard_progress.models import Measurement
-from lizard_progress.models import MeasurementType
 from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.specifics import ProgressParser
 from lizard_progress.specifics import UnSuccessfulParserResult
@@ -55,8 +54,7 @@ class PeilschaalCsvParser(ProgressParser):
             else:
                 return self.error('missingdata', str(row))
 
-            mtype = MeasurementType.objects.get(project=self.project,
-                                                mtype__slug='meting')
+            mtype = self.mtype()
 
             try:
                 l = Location.objects.get(

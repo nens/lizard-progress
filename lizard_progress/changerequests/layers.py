@@ -143,7 +143,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             return None
 
         location = self.changerequest.get_location(
-            location=self.changerequest.old_location_code)
+            location_code=self.changerequest.old_location_code)
 
         models.Points.points_around(
             self.changerequest.old_location_code,

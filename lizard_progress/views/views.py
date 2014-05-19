@@ -1027,7 +1027,9 @@ class PlanningView(ProjectsView):
     def dispatch(self, request, *args, **kwargs):
         project = models.Project.objects.get(slug=kwargs.get('project_slug'))
 
-        mtypes = project.organization.visible_available_measurement_types()
+        mtypes = (
+            project.organization.visible_available_measurement_types().filter(
+                measurementtype__project=project))
 
         if request.method == 'GET':
             self.form = forms.MtypeShapefileForm(mtypes=mtypes)

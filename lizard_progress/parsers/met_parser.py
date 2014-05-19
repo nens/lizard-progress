@@ -36,7 +36,7 @@ class MetParser(specifics.ProgressParser):
 
     def parse(self, check_only=False):
         self.error_config = (
-            errors.ErrorConfiguration(self.project, None, self.mtype()))
+            errors.ErrorConfiguration(self.project, None, self.mtype().mtype))
 
         parsed_metfile = parse_metfile(self.file_object)
 

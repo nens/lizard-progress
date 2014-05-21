@@ -901,7 +901,8 @@ class UploadedFile(models.Model):
         new_uf = UploadedFile.objects.create(
             project=self.project, contractor=self.contractor,
             uploaded_by=self.uploaded_by, uploaded_at=datetime.datetime.now(),
-            path=self.path, ready=False, linelike=self.linelike)
+            path=self.path, ready=False, linelike=self.linelike,
+            mtype=mtype)
 
         from . import tasks
         tasks.process_uploaded_file_task.delay(new_uf.id)

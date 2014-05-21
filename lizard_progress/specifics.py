@@ -65,7 +65,9 @@ class Specifics(object):
                     AVAILABLE_SPECIFICS[implementation])
 
     def __instance(self, measurement_type, contractor=None):
-        slug = measurement_type.slug
+        """measurement_type is an actual MeasurementType, not an
+        AvailableMeasurementType."""
+        slug = measurement_type.mtype.implementation_slug
         cls = self._specifics[slug]
         return cls(self.project, measurement_type, contractor)
 

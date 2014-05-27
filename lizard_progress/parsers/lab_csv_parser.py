@@ -60,6 +60,7 @@ class LabCsvParser(ProgressParser):
                 }
 
         if not check_only:
+            measurements = []
             for hydrovak_code in data:
                 # Get or create a location
                 location, _ = models.Location.objects.get_or_create(
@@ -80,9 +81,11 @@ class LabCsvParser(ProgressParser):
                 measurement.data = data[hydrovak_code]
                 measurement.save()
 
-            scheduled.complete = True
-            scheduled.save()
+                scheduled.complete = True
+                scheduled.save()
 
-            return self.success([measurement])
+                measurements.append(measurement)
+
+            return self.success(measurements)
         else:
             return self.success([])

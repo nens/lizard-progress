@@ -33,6 +33,10 @@ Changelog of lizard-progress
 
 - Parsers now use that stored mtype.
 
+- Fix lab csv parser so that it can handle multiple measurements in
+  one file.
+
+
 2.1.5 (2014-04-14)
 ------------------
 

@@ -36,7 +36,7 @@ class MetParser(specifics.ProgressParser):
 
     def parse(self, check_only=False):
         self.error_config = (
-            errors.ErrorConfiguration(self.project, None, self.mtype()))
+            errors.ErrorConfiguration(self.project, None, self.mtype().mtype))
 
         parsed_metfile = parse_metfile(self.file_object)
 
@@ -508,17 +508,6 @@ class MetParser(specifics.ProgressParser):
                         measurement_type=self.mtype()))
 
         return scheduled_measurement
-
-    def mtype(self):
-        """Return the measurement_type instance for dwarsprofielen"""
-        try:
-            return models.MeasurementType.objects.get(
-                project=self.project,
-                mtype__slug='dwarsprofiel')
-        except models.MeasurementType.DoesNotExist:
-            self.record_error(
-                0, "MET_NOMEASUREMENTTYPE",
-                "Measurement type 'dwarsprofiel' niet geconfigureerd.")
 
     def record_error_code(self, line_number, error_code, *args, **kwargs):
         if error_code not in self.error_config:

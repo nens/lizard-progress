@@ -24,8 +24,6 @@ class PeilschaalJpgParser(ProgressParser):
     """Parser for the JPG photos uploaded for the Peilschalen project."""
 
     ERRORS = {
-        'no_mtype': ("Metingtype 'foto' niet gevonden. Dit is een fout "
-                     "in de configuratie van de site."),
         'location': "Peilschaal ID onbekend: %s",
         'gps': "Foto mist GPS-data.",
         'toofar': ("De afstand tussen de locatie en de "
@@ -41,12 +39,7 @@ class PeilschaalJpgParser(ProgressParser):
             logger.critical("No ImageFile")
             return UnSuccessfulParserResult()
 
-        try:
-            measurement_type = MeasurementType.objects.get(
-                project=self.project,
-                mtype__slug='foto')
-        except MeasurementType.DoesNotExist:
-            return self.error('no_mtype')
+        mtype = self.mtype()
 
         # Uniek_id: Part of the filename before the extension, in
         # upper case.
@@ -77,9 +70,9 @@ class PeilschaalJpgParser(ProgressParser):
                                      get(project=self.project,
                                          contractor=self.contractor,
                                          location=location,
-                                         measurement_type=measurement_type))
+                                         measurement_type=mtype))
         except ScheduledMeasurement.DoesNotExist:
-            return self.error('scheduled', id, str(measurement_type))
+            return self.error('scheduled', id, str(mtype))
 
         if not check_only:
             m, _ = Measurement.objects.get_or_create(

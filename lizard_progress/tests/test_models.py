@@ -222,6 +222,41 @@ class TestOrganization(TestCase):
         users = self.organization.users_in_same_organization(user1)
         self.assertEquals(len(users), 2)
 
+    def test_allowed_measurement_types_is_none_at_first(self):
+        organization = OrganizationF.create(name="mtypetest")
+        self.assertEquals(
+            len(organization.allowed_available_measurement_types()), 0)
+
+    def test_allowed_measurement_type_not_allowed(self):
+        organization = OrganizationF.create(name="mtypetest")
+        AvailableMeasurementTypeF.create()
+        self.assertEquals(
+            len(organization.allowed_available_measurement_types()), 0)
+
+    def test_allowed_measurement_types_allowed_if_added(self):
+        organization = OrganizationF.create(name="mtypetest")
+        amt = AvailableMeasurementTypeF.create()
+        models.MeasurementTypeAllowed.objects.create(
+            organization=organization, mtype=amt)
+        self.assertEquals(
+            len(organization.allowed_available_measurement_types()), 1)
+
+    def test_allowed_invisible_mtype_is_not_visible(self):
+        organization = OrganizationF.create(name="mtypetest")
+        amt = AvailableMeasurementTypeF.create()
+        models.MeasurementTypeAllowed.objects.create(
+            organization=organization, mtype=amt, visible=False)
+        self.assertEquals(
+            len(organization.visible_available_measurement_types()), 0)
+
+    def test_allowed_visible_mtype_is_visible(self):
+        organization = OrganizationF.create(name="mtypetest")
+        amt = AvailableMeasurementTypeF.create()
+        models.MeasurementTypeAllowed.objects.create(
+            organization=organization, mtype=amt, visible=True)
+        self.assertEquals(
+            len(organization.visible_available_measurement_types()), 1)
+
 
 class TestUserProfile(TestCase):
     """Tests for the UserProfile model."""
@@ -283,6 +318,23 @@ class TestProject(TestCase):
         self.assertTrue(project.slug)
         self.assertTrue(unicode(project.id) in project.slug)
         self.assertTrue("test-project" in project.slug)
+
+    def test_num_open_change_requests_returns_one(self):
+        from lizard_progress.changerequests.tests.test_models import RequestF
+        organization = OrganizationF.create(name='A')
+        project = ProjectF.create(organization=organization)
+        organizationB = OrganizationF.create(name='B')
+        contractor = ContractorF.create(
+            project=project, organization=organizationB)
+
+        RequestF.create(contractor=contractor)
+        self.assertEquals(project.num_open_requests, 1)
+
+    def test_num_open_change_requests_returns_zero(self):
+        organization = OrganizationF.create(name='A')
+        project = ProjectF.create(organization=organization)
+
+        self.assertEquals(project.num_open_requests, 0)
 
 
 class TestContractor(TestCase):

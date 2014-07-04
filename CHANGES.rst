@@ -5,7 +5,36 @@ Changelog of lizard-progress
 2.1.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Show number of open change requests on the projects page.
+
+- Add a tooltip to the upload buttons.
+
+- AvailableMeasurementTypes now have an "implementation". Several
+  types may share the same implementation, and thus do the exact same
+  thing. If no implementation is given, the "slug" field is used, so
+  that for types for which this feature isn't used, nothing changes.
+
+- We can now configure which AvailableMeasurementTypes are allowed for
+  each organization. In the same models, the organizations will be
+  able to say which of those they want to be visible.
+
+- By default, everything that already existed is allowed and visible.
+
+- New project page only shows visible measurement types.
+
+- Both planning pages only show visible measurement types.
+
+- There is a "Edit visibility" page where visibility of measurement
+  types can be edited. Accessible from the new project page.
+
+- In order to be able to distinguish between various measurement types
+  that use the same files, we know use a separate upload button for
+  each type, and store the mtype in the UploadedFile model.
+
+- Parsers now use that stored mtype.
+
+- Fix lab csv parser so that it can handle multiple measurements in
+  one file.
 
 
 2.1.5 (2014-04-14)

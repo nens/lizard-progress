@@ -70,12 +70,16 @@ class Organization(models.Model):
     description = models.CharField(max_length=256, blank=True, null=True)
     errors = models.ManyToManyField(ErrorMessage)
 
-    # Only is_project_owner organizations are allowed to give the projecter
+    # Only is_project_owner organizations are allowed to give the project
     # manager role to their users
     is_project_owner = models.BooleanField(default=False)
 
     lizard_config = models.ForeignKey(
         'LizardConfiguration', blank=True, null=True)
+
+    mtypes_allowed = models.ManyToManyField(
+        'AvailableMeasurementType',
+        through='MeasurementTypeAllowed')
 
     @classmethod
     def users_in_same_organization(cls, user):
@@ -91,6 +95,15 @@ class Organization(models.Model):
         if user_profile is not None:
             return user_profile.organization
         return None
+
+    def allowed_available_measurement_types(self):
+        return self.mtypes_allowed.all()
+
+    def visible_available_measurement_types(self):
+        """Return only those allowed types that the organization wants
+        to see."""
+        return self.allowed_available_measurement_types().filter(
+            measurementtypeallowed__visible=True)
 
     def contains_user(self, user):
         """Returns true if user is in this organization."""
@@ -262,7 +275,7 @@ def current_files(measurements):
 
 class Project(models.Model):
     # "Profielen", "Peilschalen", etc
-    name = models.CharField(max_length=50, unique=True,
+    name = models.CharField(max_length=50, unique=False,
         verbose_name='projectnaam')
     slug = models.SlugField(max_length=50, unique=True)
     organization = models.ForeignKey(Organization, null=False)
@@ -275,6 +288,7 @@ class Project(models.Model):
 
     class Meta:
         ordering = ('name',)
+        unique_together = [('name', 'organization')]
 
     def __unicode__(self):
         return unicode(self.name)
@@ -299,8 +313,9 @@ class Project(models.Model):
             slug=slugify(self.name))
         self.save()
 
-    def specifics(self):
-        return lizard_progress.specifics.Specifics(self)
+    def specifics(self, available_measurement_type=None):
+        return lizard_progress.specifics.Specifics(
+            self, available_measurement_type)
 
     def has_measurement_type(self, mtype_slug):
         try:
@@ -445,6 +460,12 @@ class Project(models.Model):
 
         return Hydrovak.reload_from(self, shapefiles[0])
 
+    @property
+    def num_open_requests(self):
+        return sum(
+            contractor.request_set.filter(request_status=1).count()
+            for contractor in self.contractor_set.all())
+
 
 class Contractor(models.Model):
     # "Tijhuis", "Van der Zwaan", etc
@@ -561,6 +582,17 @@ class AvailableMeasurementType(models.Model):
 
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=50, unique=True)
+
+    # Several measurement types can have the same implementation
+    # If implementation is '', slug is used instead.
+    implementation = models.CharField(max_length=50, unique=False, choices=(
+            ('dwarsprofiel', 'dwarsprofiel'),
+            ('oeverfoto', 'oeverfoto'),
+            ('oeverkenmerk', 'oeverkenmerk'),
+            ('foto', 'foto'),
+            ('meting', 'meting'),
+            ('laboratorium_csv', 'laboratorium_csv')))
+
     default_icon_missing = models.CharField(max_length=50)
     default_icon_complete = models.CharField(max_length=50)
 
@@ -592,12 +624,42 @@ class AvailableMeasurementType(models.Model):
     # measurement types.
     description = models.TextField(default='', blank=True)
 
+    @property
+    def implementation_slug(self):
+        """The implementation details are tied to the slug of the first
+        AvailableMeasurementType that implemented it. Later we can add copies
+        of the same type that work the same way, they have to have a different
+        slug but can have the slug of the reference implementation as their
+        implementation."""
+        return self.implementation or self.slug
+
+    class Meta:
+        ordering = ('name',)
+
     def __unicode__(self):
         return self.name
 
     @classmethod
     def dwarsprofiel(cls):
         return cls.objects.get(slug='dwarsprofiel')
+
+
+class MeasurementTypeAllowed(models.Model):
+    """This model is the "through" model for relationships between
+    (project-owning) Organizations, and AvailableMeasurementTypes.
+
+    If a combination organization / available measurement type exists,
+    then that means that that organization can use this type in *new*
+    projects.
+
+    Also, a boolean value stores whether the organization *wants* to
+    see this type whenever it creates a new project. Organization admins
+    can edit the value of this boolean.
+    """
+    organization = models.ForeignKey(Organization)
+    mtype = models.ForeignKey(AvailableMeasurementType)
+
+    visible = models.BooleanField(default=True)
 
 
 class MeasurementType(models.Model):
@@ -810,6 +872,10 @@ class UploadedFile(models.Model):
 
     path = models.CharField(max_length=255)
 
+    # Which measurement type this file was uploaded as, only null for
+    # old data.
+    mtype = models.ForeignKey(AvailableMeasurementType, null=True)
+
     # If ready is True but success is False, uploading was unsuccessful.
     # In that case, there should be error messages in the UploadedFileError
     # models.
@@ -835,7 +901,8 @@ class UploadedFile(models.Model):
         new_uf = UploadedFile.objects.create(
             project=self.project, contractor=self.contractor,
             uploaded_by=self.uploaded_by, uploaded_at=datetime.datetime.now(),
-            path=self.path, ready=False, linelike=self.linelike)
+            path=self.path, ready=False, linelike=self.linelike,
+            mtype=self.mtype)
 
         from . import tasks
         tasks.process_uploaded_file_task.delay(new_uf.id)
@@ -1007,7 +1074,7 @@ class ExportRun(models.Model):
         for mtype in mtypes:
             for contractor in contractors:
                 if has_access(user, project, contractor):
-                    if mtype.slug == 'dwarsprofiel':
+                    if mtype.mtype.implementation_slug == 'dwarsprofiel':
                         yield cls.get_or_create(
                             project, contractor, mtype.mtype, 'met')
                         yield cls.get_or_create(

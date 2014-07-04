@@ -4,6 +4,7 @@
 <h2>Laatste uploads</h2>
 <table class="table table-bordered table-hover progressbase">
 <thead>
+  <th><i rel="tooltip" title="Aanvragen" class="icon icon-warning-sign"></i></th>
   <th>Project</th>
   <th>Laatste upload</th>
   <th>Soort</th>
@@ -14,22 +15,31 @@
 </thead>
 {% for project in view.projects %}
 <tr class="clickable" data-url="{% url lizard_progress_dashboardview project.slug %}">
+  <td>
+    {% with numrequests=project.num_open_requests %}
+      {% if numrequests > 0 %}
+        <b>{{ numrequests }}</b>
+      {% endif %}
+    {% endwith %}
+ </td>
   <td>{{ project.name }}</td>
-  {% if project.latest_log %}
-  <td>{{ project.latest_log.when }}</td>
-  <td>{{ project.latest_log.mtype }}</td>
-  <td>{{ project.latest_log.uploading_organization }}</td>
-  <td>{{ project.latest_log.num_measurements }}</td>
-  <td>{{ project.number_of_complete_scheduled_measurements }}</td>
-  <td>{{ project.percentage_done }}</td>
-  {% else %}
-  <td></td>
-  <td></td>
-  <td></td>
-  <td></td>
-  <td></td>
-  <td></td>
-  {% endif %}
+  {% with log=project.latest_log %}
+    {% if log %}
+      <td>{{ log.when }}</td>
+      <td>{{ log.mtype }}</td>
+      <td>{{ log.uploading_organization }}</td>
+      <td>{{ log.num_measurements }}</td>
+      <td>{{ project.number_of_complete_scheduled_measurements }}</td>
+      <td>{{ project.percentage_done }}</td>
+    {% else %}
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    {% endif %}
+  {% endwith %}
 </tr>
 {% endfor %}
 </table>

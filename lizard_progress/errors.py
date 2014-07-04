@@ -35,7 +35,9 @@ class ErrorConfiguration(object):
         project is also given when the options need to be shown for
         configuring inside some project. The organization is used when
         configuring the default values for some organization; we need
-        to know which checks to show the configuration for there."""
+        to know which checks to show the configuration for there.
+
+        measurement_type is an AvailableMeasurementType object."""
 
         self.project = project
         self.organization = organization
@@ -55,7 +57,7 @@ class ErrorConfiguration(object):
             for error_message in organization.errors.all())
 
     def __contains__(self, error_code):
-        if self.measurement_type.slug != 'dwarsprofiel':
+        if self.measurement_type.implementation_slug != 'dwarsprofiel':
             # For now, these differentiated checks only exist for MET files.
             # Other measurement types always get True.
             return True

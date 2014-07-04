@@ -67,7 +67,14 @@ def process_capturing_errors(uploaded_file):
 
 def process(uploaded_file):
     filename = uploaded_file.filename
-    possible_parsers = uploaded_file.project.specifics().parsers(filename)
+
+    # Since the latest change, where each measurement type has its own
+    # upload button, there should always be a single possible parser per
+    # uploaded file. However, we keep the functionality around of multiple
+    # parsers being possible -- maybe we'll have a measurement type with
+    # several parsers one day...
+    possible_parsers = uploaded_file.project.specifics(
+        uploaded_file.mtype).parsers(filename)
 
     for parser in possible_parsers:
         # Try_parser takes care of moving the file to its correct
@@ -195,7 +202,9 @@ def call_parser(uploaded_file, parser):
         parser,
         uploaded_file.project,
         uploaded_file.contractor,
-        uploaded_file.path)
+        uploaded_file.path,
+        uploaded_file.mtype)
+
     parseresult = parser_instance.parse()
     return parseresult
 

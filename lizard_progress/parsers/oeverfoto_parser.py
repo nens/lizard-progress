@@ -28,8 +28,6 @@ class OeverfotoParser(ProgressParser):
     close to the scheduled location."""
 
     ERRORS = {
-        'no_mtype': ("Metingtype 'oeverfoto' niet gevonden. Dit is een fout "
-                     "in de configuratie van de site."),
         'notleftright': "Foto is geen linker (_L) of rechter (_R) oever.",
         'nolocation': "ProfielIdentificatie onbekend: %s",
         'nogps': "Foto mist GPS-data.",
@@ -41,13 +39,6 @@ class OeverfotoParser(ProgressParser):
     def parse(self, check_only=False):
         if not isinstance(self.file_object, ImageFile):
             return UnSuccessfulParserResult()
-
-        try:
-            measurement_type = MeasurementType.objects.get(
-                project=self.project,
-                mtype__slug='oeverfoto')
-        except MeasurementType.DoesNotExist:
-            return self.error('no_mtype')
 
         # Filename is of the format "ID_L" or "ID_R", possibly in
         # mixed case. Since IDs are upper case, we change the filename
@@ -81,6 +72,7 @@ class OeverfotoParser(ProgressParser):
         if d > 75.0:
             return self.error('toofar', d)
 
+        measurement_type = self.mtype()
         try:
             scheduled_measurement = (ScheduledMeasurement.objects.
                                      get(project=self.project,

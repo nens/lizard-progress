@@ -208,7 +208,7 @@ class MtypeShapefileForm(ShapefileForm):
 
         self.fields['mtype_slug'] = forms.ChoiceField(
             label="Soort meting", choices=(
-                (mtype.mtype.slug, unicode(mtype.mtype))
+                (mtype.slug, unicode(mtype))
                 for mtype in mtypes_qs))
 
 
@@ -264,6 +264,10 @@ class NewProjectForm(forms.Form):
                 organization=self.organization),
             required=False)
 
+        self.fields['mtypes'] = forms.ModelMultipleChoiceField(
+            label=_("Choose one or more measurement types"),
+            queryset=self.organization.visible_available_measurement_types())
+
     name = forms.CharField(
         label=_("Project name"),
         max_length=50,
@@ -271,9 +275,6 @@ class NewProjectForm(forms.Form):
     contractors = forms.ModelMultipleChoiceField(
         label=_("Choose one or more contractors"),
         queryset=models.Organization.objects.all())
-    mtypes = forms.ModelMultipleChoiceField(
-        label=_("Choose one or more measurement types"),
-        queryset=models.AvailableMeasurementType.objects.all())
 
 
 class SingleUserForm(forms.Form):

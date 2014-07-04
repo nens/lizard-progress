@@ -63,6 +63,10 @@ urlpatterns = patterns(
     url('^newproject/$',
         login_required(views.NewProjectView.as_view()),
         name='lizard_progress_newproject'),
+    url('^editvisibility/$',
+        login_required(
+            organization_admin.VisibleMeasurementTypes.as_view()),
+        name='lizard_progress_editvisibility'),
 
     url('^archive/$',
         login_required(views.ArchiveProjectsOverview.as_view()),
@@ -163,11 +167,13 @@ urlpatterns = patterns(
         login_required(views.UploadedFilesView.as_view()),
         name='lizard_progress_uploaded_files_api'),
     # Remove an uploaded file
-    url('^projects/(?P<project_slug>[^/]+)/upload/remove_uploaded_file/(?P<uploaded_file_id>\d+)/$',
+    url('^projects/(?P<project_slug>[^/]+)/upload/'
+        'remove_uploaded_file/(?P<uploaded_file_id>\d+)/$',
         login_required(views.remove_uploaded_file_view),
         name='lizard_progress_remove_uploaded_file'),
     # Various uploads
-    url('^projects/(?P<project_slug>[^/]+)/upload/measurements/$',
+    url('^projects/(?P<project_slug>[^/]+)/upload/'
+        'measurements/(?P<mtype_slug>[^/]+)/$',
         login_required(UploadMeasurementsView.as_view()),
         name='lizard_progress_uploadmeasurementsview'),
     url('^projects/(?P<project_slug>[^/]+)/upload/reports/$',

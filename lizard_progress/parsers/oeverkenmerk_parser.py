@@ -19,8 +19,6 @@ class OeverkenmerkParser(ProgressParser):
     ERRORS = {
         'elements': "Regel met %d elementen gevonden.",
         'location': ("Locatie %s niet gevonden."),
-        'mtype': ("Metingtype 'oeverkenmerk' niet gevonden. Dit is een fout "
-                  "in de configuratie van de site."),
         'scheduled': "Meting %s %s %s %s was niet gepland.",
         'description': 'Missende of onbekende omschrijving bij ID %s.',
         }
@@ -73,12 +71,7 @@ class OeverkenmerkParser(ProgressParser):
             if l is None:
                 return self.error('location', profielid)
 
-            try:
-                mtype = MeasurementType.objects.get(project=self.project,
-                                                    mtype__slug='oeverkenmerk')
-            except MeasurementType.DoesNotExist:
-                return self.error('mtype')
-
+            mtype = self.mtype()
             try:
                 sm = ScheduledMeasurement.objects.get(
                     project=self.project, contractor=self.contractor,

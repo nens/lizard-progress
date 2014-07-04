@@ -9,13 +9,17 @@ class OrganizationConfigurationInline(admin.TabularInline):
     model = models.OrganizationConfig
 
 
+class MtypeAllowedInline(admin.TabularInline):
+    model = models.Organization.mtypes_allowed.through
+
+
 class OrganizationAdmin(admin.ModelAdmin):
     filter_horizontal = ['errors']
-    inlines = [OrganizationConfigurationInline]
+    inlines = [OrganizationConfigurationInline, MtypeAllowedInline]
 
 
 class ProjectTypeAdmin(admin.ModelAdmin):
-    
+
     list_display = ('id', 'name', 'organization', 'default')
     list_editable = ('name', 'organization', 'default')
 

@@ -124,7 +124,8 @@ class ProjectType(models.Model):
     description = models.TextField(blank=True, null=True)
     organization = models.ForeignKey(Organization)
     default = models.BooleanField(
-        help_text="The type wil be applied to projects by default")
+        help_text="The type wil be applied to projects by default",
+        default=False)
 
     class Meta:
         unique_together = (('name', 'organization'),)
@@ -279,7 +280,7 @@ class Project(models.Model):
         verbose_name='projectnaam')
     slug = models.SlugField(max_length=50, unique=True)
     organization = models.ForeignKey(Organization, null=False)
-    is_archived = models.BooleanField()
+    is_archived = models.BooleanField(default=False)
     # Deprecated
     superuser = models.ForeignKey(User, null=True, blank=True,
         verbose_name='projectmanager')
@@ -703,7 +704,7 @@ class ScheduledMeasurement(models.Model):
     location = models.ForeignKey(Location)
     timestamp = models.DateTimeField(auto_now=True)
 
-    complete = models.BooleanField()
+    complete = models.BooleanField(default=False)
 
     @property
     def measurement(self):

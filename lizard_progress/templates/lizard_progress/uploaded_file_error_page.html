@@ -12,7 +12,7 @@
 <h2>Foutmeldingen voor {{ view.uploaded_file.filename }}</h2>
 
 {% if view.uploaded_file.has_possible_requests %}
-<p>{% if vies.uploaded_file.is_fixable %}<strong>Alle</strong>{% else %}Sommige{% endif %} fouten in dit bestand kunnen wellicht verholpen worden met behulp van aanvragen. Zie de <a href="{% url changerequests_possiblerequests project_slug=view.uploaded_file.project.slug uploaded_file_id=view.uploaded_file.id %}">mogelijke aanvragen</a> pagina.</p>
+<p>{% if vies.uploaded_file.is_fixable %}<strong>Alle</strong>{% else %}Sommige{% endif %} fouten in dit bestand kunnen wellicht verholpen worden met behulp van aanvragen. Zie de <a href="{% url "changerequests_possiblerequests" project_slug=view.uploaded_file.project.slug uploaded_file_id=view.uploaded_file.id %}">mogelijke aanvragen</a> pagina.</p>
 {% endif %}
 
 {% if view.general_errors %}

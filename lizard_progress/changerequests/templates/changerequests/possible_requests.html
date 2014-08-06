@@ -40,7 +40,7 @@ bestand aangepast worden en handmatig opnieuw aangeboden worden.</p>
           {% endif %}
      {% endwith %}
 {% else %}
-        <form action="{% url changerequests_activatepossiblerequest project_slug=view.project.slug uploaded_file_id=uf.id possible_request_id=pr.id %}" method="post">
+        <form action="{% url "changerequests_activatepossiblerequest" project_slug=view.project.slug uploaded_file_id=uf.id possible_request_id=pr.id %}" method="post">
           {% if pr.request_type == 3 %}
            <dt>Optionele oude locatiecode</dt>
            <dd><input type="text" name="old_location_code"></dd>

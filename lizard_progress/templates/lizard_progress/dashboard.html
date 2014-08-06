@@ -12,7 +12,7 @@
         <button id="bt-archive"
 		name="archive"
   		type="button"
-  		value="{% url lizard_progress_archive project_slug=view.project.slug %}?action=archive"
+  		value="{% url "lizard_progress_archive" project_slug=view.project.slug %}?action=archive"
   		class="btn btn-primary" title="Archiveren">
          <i class="icon-large icon-briefcase"></i> Archiveren
        </button>
@@ -20,7 +20,7 @@
         <button id="bt-archive"
 		name="activate"
   		type="button"
-  		value="{% url lizard_progress_archive project_slug=view.project.slug %}?action=activate"
+  		value="{% url "lizard_progress_archive" project_slug=view.project.slug %}?action=activate"
   		class="btn btn-primary" title="Activeren">
           <i class="icon-large icon-briefcase"></i> Activeren
        </button>
@@ -52,12 +52,12 @@
 
   <ul class="without-bullets">
 {% for contractor, url in view.graphs %}
-<img src="{% url lizard_progress_dashboardgraphview project_slug=view.project_slug contractor_slug=contractor.slug %}" title="Voortgang {{ contractor.organization.name }}"/>
+<img src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project_slug contractor_slug=contractor.slug %}" title="Voortgang {{ contractor.organization.name }}"/>
 {% endfor %}
   </ul>
 
 {% if view.user_is_manager %}
-<a href="{% url lizard_progress_edit_contractors project_slug=view.project_slug %}">Opdrachtnemers of werkzaamheden toevoegen / verwijderen</a>
+<a href="{% url "lizard_progress_edit_contractors" project_slug=view.project_slug %}">Opdrachtnemers of werkzaamheden toevoegen / verwijderen</a>
 {% endif %}
 
 {% endblock contentpage %}

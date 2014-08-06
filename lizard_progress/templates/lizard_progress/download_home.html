@@ -20,8 +20,8 @@
 
 {% if view.user_is_manager %}
 <div id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
-  <button type="button" class="upload btn btn-primary" data-upload-url="{% url lizard_progress_upload_projectfile project_slug=view.project.slug%}"><i class="icon-upload"></i> Projectdocumenten uploaden</button>
-  <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url lizard_progress_upload_hydrovakken project_slug=view.project.slug %}"><i class="icon-upload"></i> Hydrovakken uploaden</button>
+  <button type="button" class="upload btn btn-primary" data-upload-url="{% url "lizard_progress_upload_projectfile" project_slug=view.project.slug%}"><i class="icon-upload"></i> Projectdocumenten uploaden</button>
+  <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "lizard_progress_upload_hydrovakken" project_slug=view.project.slug %}"><i class="icon-upload"></i> Hydrovakken uploaden</button>
 </div>
 {% endif %}
 
@@ -112,14 +112,14 @@
     </td>
     <td id="download-{{ export_run.id }}">
       {% if export_run.present %}
-        <a href="{% url lizard_progress_download_export_run_view project_slug=export_run.project.slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>
+        <a href="{% url "lizard_progress_download_export_run_view" project_slug=export_run.project.slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>
       {% endif %}
     </td>
     <td>
       <button type="button"
               autocomplete="off" {# So it doesn't stay disabled after reloading in Firefox #}
               {% if export_run.export_running %}disabled="disabled"{% endif %}
-              data-export-run-url="{% url lizard_progress_start_export_run_view project_slug=export_run.project.slug export_run_id=export_run.id %}"
+              data-export-run-url="{% url "lizard_progress_start_export_run_view" project_slug=export_run.project.slug export_run_id=export_run.id %}"
               data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif"
               data-export-run-id="{{ export_run.id }}"
               class="export-run-button btn btn-primary">

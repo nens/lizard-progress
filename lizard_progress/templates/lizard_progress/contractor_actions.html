@@ -1,5 +1,5 @@
 <div id="actions" class="sidebar-inner">
-      <a title="Upload files" href="{% url lizard_progress_uploadhomeview project_slug=view.project_slug %}">Upload</a>
-      <a title="Download files" href="{% url lizard_progress_downloadhomeview project_slug=view.project_slug %}">Download</a>
-      <a title="Kaartlagen" href="{% url lizard_progress_mapview project_slug=view.project_slug %}">Kaartlagen</a>
+      <a title="Upload files" href="{% url "lizard_progress_uploadhomeview" project_slug=view.project_slug %}">Upload</a>
+      <a title="Download files" href="{% url "lizard_progress_downloadhomeview" project_slug=view.project_slug %}">Download</a>
+      <a title="Kaartlagen" href="{% url "lizard_progress_mapview" project_slug=view.project_slug %}">Kaartlagen</a>
 </div>

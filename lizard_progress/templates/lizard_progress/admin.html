@@ -15,8 +15,8 @@
 
 {% block breadcrumbs %}
 {{ block.super }}
-&rarr; <a href="{% url lizard_progress_projecten %}" title="Home">Home</a>
-&rarr; <a href="{% url lizard_progress_admin %}" title="Administratieve taken">Admin</a>
+&rarr; <a href="{% url "lizard_progress_projecten" %}" title="Home">Home</a>
+&rarr; <a href="{% url "lizard_progress_admin" %}" title="Administratieve taken">Admin</a>
 {% endblock breadcrumbs %}
 
 {% block sidebar %}

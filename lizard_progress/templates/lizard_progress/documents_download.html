@@ -20,7 +20,7 @@
 
 {% if view.user_is_manager %}
 <div id="upload-wrapper" data-upload-dialog-url="/us/upload/">
-  <button type="button" class="upload btn btn-primary" data-upload-url="{% url lizard_progress_upload_orgfile %}"><i class="icon-upload"></i> Organisatiedocumenten uploaden</button>
+  <button type="button" class="upload btn btn-primary" data-upload-url="{% url "lizard_progress_upload_orgfile" %}"><i class="icon-upload"></i> Organisatiedocumenten uploaden</button>
 </div>
 {% endif %}
 

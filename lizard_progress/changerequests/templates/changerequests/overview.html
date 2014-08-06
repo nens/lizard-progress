@@ -70,7 +70,7 @@ The tds are clickable here, and not the trs, because the last td should not be c
     {% endfor %}
   {% endif %}
     <td colspan="7">
-      <a href="{% url changerequests_closed project_slug=view.project_slug %}">Klik hier voor een overzicht van alle afgesloten aanvragen van dit project</a>
+      <a href="{% url "changerequests_closed" project_slug=view.project_slug %}">Klik hier voor een overzicht van alle afgesloten aanvragen van dit project</a>
     </td>
     </tbody>
 {% endwith %}
@@ -82,9 +82,9 @@ The tds are clickable here, and not the trs, because the last td should not be c
 </tr>
 <tr>
   <td colspan="7">
-    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url changerequests_removecode project_slug=view.project_slug %}">Locatiecode laten vervallen</button>
-    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url changerequests_movelocation project_slug=view.project_slug %}">Locatiecode verplaatsen</button>
-    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url changerequests_newlocation project_slug=view.project_slug %}">Nieuwe of vervangende locatiecode</button>
+    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_removecode" project_slug=view.project_slug %}">Locatiecode laten vervallen</button>
+    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_movelocation" project_slug=view.project_slug %}">Locatiecode verplaatsen</button>
+    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_newlocation" project_slug=view.project_slug %}">Nieuwe of vervangende locatiecode</button>
   </td>
 </tr>
 </tbody>

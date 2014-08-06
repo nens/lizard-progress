@@ -30,7 +30,7 @@
     </p>
   </div>
 
-<div id="uploaded_files_not_ready" data-refresh-url="{% url lizard_progress_uploaded_files_api project_slug=view.project.slug %}" hidden="true">
+<div id="uploaded_files_not_ready" data-refresh-url="{% url "lizard_progress_uploaded_files_api" project_slug=view.project.slug %}" hidden="true">
   <h3>Nog niet verwerkte bestanden</h3>
   <table id="files_not_processed" class="table table-bordered progressbase uploadedfiletable">
     <thead><th>Filenaam</th><th>Geupload door</th><th>Datum</th></thead>

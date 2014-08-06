@@ -16,14 +16,14 @@
 </thead>
 {% for profile in view.users %}
 <tr>
-  <td><a href="{% url lizard_progress_single_user_management user_id=profile.user.id %}">{{ profile.user.username }}</a></td>
+  <td><a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}">{{ profile.user.username }}</a></td>
   <td>{{ profile.user.get_full_name }}</td>
   <td>{{ profile.user.email }}</td>
   <td>{{ profile.roles_description }}</td>
-  <td>{% if profile.user != view.user %}<a href="{% url lizard_progress_single_user_management user_id=profile.user.id %}" class="delete_file" data-message="Dit verwijdert deze gebruiker van de Upload Server. Deze gebruikersnaam kan daarna niet meer gebruikt worden. Weet u het zeker?">delete</a>{% endif %}</td>
+  <td>{% if profile.user != view.user %}<a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}" class="delete_file" data-message="Dit verwijdert deze gebruiker van de Upload Server. Deze gebruikersnaam kan daarna niet meer gebruikt worden. Weet u het zeker?">delete</a>{% endif %}</td>
 </tr>
 {% endfor %}
 </table>
 
-<p><a href="{% url lizard_progress_new_user_management %}">Nieuwe gebruiker toevoegen</a></p>
+<p><a href="{% url "lizard_progress_new_user_management" %}">Nieuwe gebruiker toevoegen</a></p>
 {% endblock contentpage %}

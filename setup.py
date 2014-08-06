@@ -9,7 +9,7 @@ long_description = '\n\n'.join([
     ])
 
 install_requires = [
-    'Django >= 1.4',  # Ships with form-wizard
+    'Django >= 1.4, < 1.7',  # Ships with form-wizard
     'python-dateutil >= 1.5,< 2.0',  # Needed for Celery
     'celery',
     'billiard',
@@ -18,8 +18,8 @@ install_requires = [
     'django-extensions',
     'django-jsonfield',
     'django-nose',
-    'lizard-ui',
-    'lizard-map',
+    'lizard-ui >= 4.40, < 5.0',
+    'lizard-map >= 4.40, < 5.0',
     'metfilelib >= 0.14',
     'pkginfo',
     'factory_boy',

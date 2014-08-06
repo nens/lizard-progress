@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'lizard_ui',
     'lizard_map',
     'lizard_security',
-    'staticfiles',
+    'django.contrib.staticfiles',
     'compressor',
     'south',
     'django_nose',
@@ -74,6 +74,7 @@ STATIC_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'static')
 MEDIA_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'media')
 STATICFILES_FINDERS = STATICFILES_FINDERS
 
+SECRET_KEY = "Does not need to be secret"
 
 try:
     # Import local settings that aren't stored in svn/git.

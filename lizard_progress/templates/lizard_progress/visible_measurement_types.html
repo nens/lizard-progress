@@ -21,7 +21,7 @@ van werkzaamheden aan bestaande. Bestaande werkzaamheden blijven onveranderd.</p
     <th>Veranderen</th>
   </thead>
   {% for mtype in view.allowed_measurement_types %}
-    <form method="post" action="{% url lizard_progress_editvisibility %}">
+    <form method="post" action="{% url "lizard_progress_editvisibility" %}">
       {% csrf_token %}
       <input type="hidden" name="slug" value="{{ mtype.mtype.slug }}">
       <input type="hidden" name="new_visibility" value="{% if mtype.visible %}0{% else %}1{% endif %}">

@@ -3,6 +3,7 @@
 """Views concerned with uploading files."""
 
 import datetime
+import json
 import logging
 import os
 import shutil
@@ -17,7 +18,6 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
-from django.utils import simplejson as json
 from django.views.generic import TemplateView
 from django.views.generic import View
 

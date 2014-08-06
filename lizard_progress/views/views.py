@@ -12,6 +12,7 @@ ComparisonView - a listing of measurements made by more than one
 """
 
 import csv
+import json
 import logging
 import os
 import platform
@@ -29,7 +30,6 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.utils import simplejson as json
 from django.utils.translation import ugettext as _
 from django.views.static import serve
 from django import http

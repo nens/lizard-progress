@@ -16,8 +16,9 @@ from lizard_progress.tests import test_models as progresstestmodels
 from lizard_progress.changerequests import models
 
 
-class RequestF(factory.Factory):
-    FACTORY_FOR = models.Request
+class RequestF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.Request
 
     contractor = factory.LazyAttribute(
         lambda a: progresstestmodels.ContractorF())

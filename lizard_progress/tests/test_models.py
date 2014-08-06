@@ -19,41 +19,46 @@ from django.test import TestCase
 from lizard_progress import models
 
 
-class UserF(factory.Factory):
-    FACTORY_FOR = User
+class UserF(factory.DjangoModelFactory):
+    class Meta:
+        model = User
 
     username = "admin"
     is_superuser = True
 
 
-class ErrorMessageF(factory.Factory):
-    FACTORY_FOR = models.ErrorMessage
+class ErrorMessageF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.ErrorMessage
 
     error_code = "TEST"
     error_message = "This is a test"
 
 
-class OrganizationF(factory.Factory):
+class OrganizationF(factory.DjangoModelFactory):
     """Factory for Organization model."""
-    FACTORY_FOR = models.Organization
+    class Meta:
+        model = models.Organization
 
     name = "Test organization"
     is_project_owner = True
 
 
-class UserProfileF(factory.Factory):
+class UserProfileF(factory.DjangoModelFactory):
     """Factory for UserProfile model."""
 
-    FACTORY_FOR = models.UserProfile
+    class Meta:
+        model = models.UserProfile
 
     user = factory.SubFactory(UserF)
     organization = factory.LazyAttribute(lambda a: OrganizationF())
 
 
-class ProjectF(factory.Factory):
+class ProjectF(factory.DjangoModelFactory):
     """Factory for Project models."""
 
-    FACTORY_FOR = models.Project
+    class Meta:
+        model = models.Project
 
     name = "Test project"
     slug = "testproject"
@@ -62,9 +67,10 @@ class ProjectF(factory.Factory):
     superuser = factory.SubFactory(UserF)
 
 
-class ContractorF(factory.Factory):
+class ContractorF(factory.DjangoModelFactory):
     """Factory for Contractor models."""
-    FACTORY_FOR = models.Contractor
+    class Meta:
+        model = models.Contractor
 
     project = factory.LazyAttribute(lambda a: ProjectF())
     name = "Nelen & Schuurmans"
@@ -72,18 +78,20 @@ class ContractorF(factory.Factory):
     organization = None
 
 
-class AreaF(factory.Factory):
+class AreaF(factory.DjangoModelFactory):
     """Factory for Area models."""
-    FACTORY_FOR = models.Area
+    class Meta:
+        model = models.Area
 
     project = factory.LazyAttribute(lambda a: ProjectF())
     name = "Zuidpool"
     slug = "zuidpool"
 
 
-class LocationF(factory.Factory):
+class LocationF(factory.DjangoModelFactory):
     """Factory for Location models."""
-    FACTORY_FOR = models.Location
+    class Meta:
+        model = models.Location
 
     location_code = "SOME_ID"
     project = factory.LazyAttribute(lambda a: ProjectF())
@@ -92,24 +100,27 @@ class LocationF(factory.Factory):
     information = {"key": "value"}
 
 
-class AvailableMeasurementTypeF(factory.Factory):
-    FACTORY_FOR = models.AvailableMeasurementType
+class AvailableMeasurementTypeF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.AvailableMeasurementType
 
     name = "Metingtype"
     slug = "metingtype"
 
 
-class MeasurementTypeF(factory.Factory):
+class MeasurementTypeF(factory.DjangoModelFactory):
     """Factory for MeasurementType objects."""
-    FACTORY_FOR = models.MeasurementType
+    class Meta:
+        model = models.MeasurementType
 
     mtype = factory.LazyAttribute(lambda a: AvailableMeasurementTypeF())
     project = factory.LazyAttribute(lambda a: ProjectF())
 
 
-class ScheduledMeasurementF(factory.Factory):
+class ScheduledMeasurementF(factory.DjangoModelFactory):
     """Factory for ScheduledMeasurement objects."""
-    FACTORY_FOR = models.ScheduledMeasurement
+    class Meta:
+        model = models.ScheduledMeasurement
 
     project = factory.LazyAttribute(lambda a: ProjectF())
     contractor = factory.LazyAttribute(
@@ -120,18 +131,20 @@ class ScheduledMeasurementF(factory.Factory):
     complete = False
 
 
-class MeasurementF(factory.Factory):
+class MeasurementF(factory.DjangoModelFactory):
     """Factory for Measurement objects."""
-    FACTORY_FOR = models.Measurement
+    class Meta:
+        model = models.Measurement
 
     scheduled = factory.LazyAttribute(lambda a: ScheduledMeasurementF())
     data = {"testkey": "testvalue"}
     filename = "test.txt"
 
 
-class UploadedFileF(factory.Factory):
+class UploadedFileF(factory.DjangoModelFactory):
     """Factory for UploadedFile models."""
-    FACTORY_FOR = models.UploadedFile
+    class Meta:
+        model = models.UploadedFile
 
     project = factory.LazyAttribute(lambda a: ProjectF())
     contractor = factory.LazyAttribute(lambda a: ContractorF())
@@ -142,8 +155,9 @@ class UploadedFileF(factory.Factory):
     linelike = True
 
 
-class UploadedFileErrorF(factory.Factory):
-    FACTORY_FOR = models.UploadedFileError
+class UploadedFileErrorF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.UploadedFileError
 
     uploaded_file = factory.LazyAttribute(lambda a: UploadedFileF())
     line = 0
@@ -151,8 +165,9 @@ class UploadedFileErrorF(factory.Factory):
     error_message = "Some error message"
 
 
-class ExportRunF(factory.Factory):
-    FACTORY_FOR = models.ExportRun
+class ExportRunF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.ExportRun
 
     project = factory.LazyAttribute(lambda a: ProjectF())
     contractor = factory.LazyAttribute(lambda a: ContractorF())

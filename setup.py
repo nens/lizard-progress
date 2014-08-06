@@ -9,7 +9,7 @@ long_description = '\n\n'.join([
     ])
 
 install_requires = [
-    'Django >= 1.4',  # Ships with form-wizard
+    'Django >= 1.4, < 1.7',  # Ships with form-wizard
     'python-dateutil >= 1.5,< 2.0',  # Needed for Celery
     'celery',
     'billiard',

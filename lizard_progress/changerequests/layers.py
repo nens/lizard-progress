@@ -71,7 +71,9 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         rule = mapnik.Rule()
         rule.min_scale = 0
         rule.max_scale = 1000000000.0
-        symbol = mapnik.PointSymbolizer(*img)
+        filename, extension, x, y = img
+        symbol = mapnik.PointSymbolizer()
+        symbol.filename = filename
         symbol.allow_overlap = True
         rule.symbols.append(symbol)
 
@@ -135,7 +137,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 changerequests_points
             WHERE
                 changerequests_points.location_code = '%s') data""" %
-                (self.changerequest.location_code,))
+             (self.changerequest.location_code,))
         return q
 
     def mapnik_query_old_location(self):
@@ -156,7 +158,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 changerequests_points
             WHERE
                 changerequests_points.location_code = '%s') data""" %
-                (self.changerequest.old_location_code,))
+             (self.changerequest.old_location_code,))
         return q
 
     def layer(self, layer_ids=None, request=None):

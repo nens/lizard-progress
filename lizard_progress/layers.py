@@ -78,7 +78,10 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             rule = mapnik.Rule()
             rule.min_scale = min
             rule.max_scale = max
-            symbol = mapnik.PointSymbolizer(*img)
+
+            filename, extension, x, y = img
+            symbol = mapnik.PointSymbolizer()
+            symbol.filename = filename
             symbol.allow_overlap = overlap
             rule.symbols.append(symbol)
             return rule
@@ -118,10 +121,10 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                     HAVING bool_or(sm.complete)=%s AND
                            bool_and(sm.complete)=%s
                    ) data"""
-            if complete == True:
+            if complete is True:
                 return q % (self.contractor.id, self.project.id,
                             "true", "true")
-            elif complete == False:
+            elif complete is False:
                 return q % (self.contractor.id, self.project.id,
                             "false", "false")
             elif complete == "some":
@@ -164,9 +167,9 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         for complete in (True, False, "some"):
             layer_desc = self.layer_desc(complete)
-            if complete == True:
+            if complete is True:
                 img = self.symbol_img("ball_green.png")
-            elif complete == False:
+            elif complete is False:
                 img = self.symbol_img("ball_red.png")
             else:
                 img = self.symbol_img("ball_yellow.png")

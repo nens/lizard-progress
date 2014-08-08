@@ -19,7 +19,7 @@ install_requires = [
     'django-jsonfield',
     'django-nose',
     'lizard-ui >= 4.40, < 5.0',
-    'lizard-map >= 4.40, < 5.0',
+    'lizard-map >= 4.50, < 5.0',
     'metfilelib >= 0.14',
     'pkginfo',
     'factory_boy',

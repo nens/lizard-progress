@@ -66,6 +66,7 @@ class TestOrganization(TransactionTestCase):
             project=self.project,
             contractor=self.contractor,
             uploaded_by=self.upload_user,
+            mtype=dwarsprofiel_available_mtype(),
             path=path)
         return uploaded_file
 

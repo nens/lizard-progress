@@ -114,7 +114,7 @@ def _open_uploaded_file(path, file_type):
 
 
 def parser_factory(
-    parser, project, contractor, path, available_measurement_type):
+        parser, project, contractor, path, available_measurement_type):
     """Sets up the parser and returns a parser instance."""
 
     if not issubclass(parser, ProgressParser):

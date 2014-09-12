@@ -24,7 +24,6 @@ class ProjectTypeAdmin(admin.ModelAdmin):
     list_editable = ('name', 'organization', 'default')
 
 
-admin.site.register(models.Area)
 admin.site.register(models.Contractor)
 admin.site.register(models.Hydrovak)
 admin.site.register(models.Location)

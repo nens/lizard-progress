@@ -27,8 +27,8 @@ from django.utils.decorators import method_decorator
 
 from lizard_ui.views import UiView
 
-from lizard_progress.models import (Area, Hydrovak, Location,
-                                    MeasurementType, SRID,
+from lizard_progress.models import (Hydrovak, Location,
+                                    MeasurementType,
                                     ScheduledMeasurement)
 from lizard_progress.views.upload import UploadShapefilesView
 from lizard_progress.util import directories
@@ -36,7 +36,7 @@ from lizard_progress import configuration
 
 logger = logging.getLogger(__name__)
 
-APP_LABEL = Area._meta.app_label
+APP_LABEL = Hydrovak._meta.app_label
 
 
 class OverwriteStorage(FileSystemStorage):
@@ -108,7 +108,6 @@ class ActivitiesWizard(UiView, SessionWizardView):
     def __init__(self, *args, **kwargs):
         super(ActivitiesWizard, self).__init__(*args, **kwargs)
         self.location_codes = None
-        self.area = None
 
     @method_decorator(permission_required('lizard_progress.add_project'))
     def dispatch(self, *args, **kwargs):
@@ -141,7 +140,6 @@ class ActivitiesWizard(UiView, SessionWizardView):
             success = self.__process_shapefile(form_list)
 
             if success:
-                self.__save_area(form_list)
                 self.__save_locations(form_list)
                 self.__save_scheduled_measurements(form_list)
                 self.__save_uploads(form_list)
@@ -198,18 +196,6 @@ class ActivitiesWizard(UiView, SessionWizardView):
                     icon_missing=mtype.default_icon_missing,
                     icon_complete=mtype.default_icon_complete).save()
 
-    # Within a project, locations can be assigned to different
-    # areas, for example `North`, `East`, `South`, and `West`.
-    # This information cannot be automatically deduced from
-    # the shape files yet. For that reason, we'll assign
-    # all locations to a single `Area`.
-    def __save_area(self, form_list):
-        """Save area."""
-        project = form_list[0].cleaned_data['project']
-        self.area, _ = Area.objects.get_or_create(project=project,
-                                                  name=project.name,
-                                                  slug=project.slug)
-
     def __save_locations(self, form_list):
         """Save locations."""
         project = form_list[0].cleaned_data['project']
@@ -230,7 +216,6 @@ class ActivitiesWizard(UiView, SessionWizardView):
                     location = Location(
                         location_code=location_code,
                         project=project,
-                        area=self.area,
                         the_geom=fromstr(geometry.ExportToWkt()))
                     locations.append(location)
                     location_codes.update(location_code)

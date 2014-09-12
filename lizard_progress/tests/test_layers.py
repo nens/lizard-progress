@@ -39,14 +39,12 @@ class TestProgressAdapter(TestCase):
                 'project_slug': project.slug,
                 'contractor_slug': contractor.slug})
 
-        area = test_models.AreaF.create(project=project)
-
         location1 = test_models.LocationF.create(
             location_code="LOCATION_1",
-            project=project, area=area, the_geom="POINT(150000 450000)")
+            project=project, the_geom="POINT(150000 450000)")
         location2 = test_models.LocationF.create(
             location_code="LOCATION_2",
-            project=project, area=area, the_geom="POINT(200000 500000)")
+            project=project, the_geom="POINT(200000 500000)")
 
         amt = test_models.AvailableMeasurementTypeF.create()
 
@@ -60,5 +58,3 @@ class TestProgressAdapter(TestCase):
             location=location2)
 
         extent = adapter.extent()
-
-

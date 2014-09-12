@@ -2,7 +2,7 @@
 """Views for the lizard-progress app. Includes:
 
 MapView - can show projects as map layers
-DashboardView - shows a project's dashboard, can show graphs per area and
+DashboardView - shows a project's dashboard, can show graphs and
                 offers CSV files for download.
 DashboardAreaView - a graph of the project's progress (hence "lizard-progress")
 DashboardCsvView - a csv file view
@@ -267,7 +267,7 @@ class MapView(View):
     template_name = 'lizard_progress/map.html'
 
     def available_layers(self):
-        """List of layers available to draw. Per contractor per area,
+        """List of layers available to draw. Per contractor,
         there is one layer for each measurement type and one layer
         that shows all measurement types simultaneously. If the user
         has access to that contractor's data."""
@@ -750,8 +750,8 @@ class ScreenFigure(figure.Figure):
 
 @login_required
 def dashboard_graph(
-    request, project_slug, contractor_slug, *args, **kwargs):
-    """Show the work in progress per area in pie charts.
+        request, project_slug, contractor_slug, *args, **kwargs):
+    """Show the work in progress in pie charts.
 
     A single PNG image is returned as a response.
     """

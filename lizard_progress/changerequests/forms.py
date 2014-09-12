@@ -142,8 +142,8 @@ def new_request_form_factory(
                 return old_location_code
 
         if request_type in (
-            models.Request.REQUEST_TYPE_NEW_LOCATION,
-            models.Request.REQUEST_TYPE_MOVE_LOCATION):
+                models.Request.REQUEST_TYPE_NEW_LOCATION,
+                models.Request.REQUEST_TYPE_MOVE_LOCATION):
             rd_x = forms.FloatField(
                 label="X-coordinaat",
                 help_text="In Rijksdriehoekprojectie",
@@ -168,4 +168,3 @@ class RefusalForm(forms.Form):
 
 class PossibleRequestForm(forms.Form):
     motivation = forms.CharField(label="Reden", required=True)
-

@@ -78,16 +78,6 @@ class ContractorF(factory.DjangoModelFactory):
     organization = None
 
 
-class AreaF(factory.DjangoModelFactory):
-    """Factory for Area models."""
-    class Meta:
-        model = models.Area
-
-    project = factory.LazyAttribute(lambda a: ProjectF())
-    name = "Zuidpool"
-    slug = "zuidpool"
-
-
 class LocationF(factory.DjangoModelFactory):
     """Factory for Location models."""
     class Meta:
@@ -95,7 +85,6 @@ class LocationF(factory.DjangoModelFactory):
 
     location_code = "SOME_ID"
     project = factory.LazyAttribute(lambda a: ProjectF())
-    area = factory.LazyAttribute(lambda a: AreaF(project=a.project))
 
     information = {"key": "value"}
 
@@ -389,19 +378,11 @@ class TestContractor(TestCase):
         contractor.show_measurement_type(measurement_type)
 
 
-class TestArea(TestCase):
-    """Tests for the Area model."""
-    def test_unicode(self):
-        """Tests unicode method."""
-        area = AreaF(name="test", project=ProjectF(name="testproject"))
-        self.assertEquals(unicode(area), "test in testproject")
-
-
 class TestLocation(TestCase):
     """Tests for the Location model."""
     def test_unicode(self):
         """Tests unicode method."""
-        location = LocationF(location_code="TESTID", area=None)
+        location = LocationF(location_code="TESTID")
         self.assertEquals(unicode(location), "Location with code 'TESTID'")
 
 

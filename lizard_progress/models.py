@@ -514,22 +514,10 @@ class Contractor(models.Model):
         unique_together = (("project", "organization"))
 
 
-class Area(models.Model):
-    # "Noord", "Oost", "Zuid", "West", ...
-    project = models.ForeignKey(Project)
-    name = models.CharField(max_length=50)
-    slug = models.CharField(max_length=50)
-
-    def __unicode__(self):
-        return u"%s in %s" % (self.name, self.project.name)
-
-
 class Location(models.Model):
     # All relevant locations in the project
     location_code = models.CharField(max_length=50, db_index=True)
     project = models.ForeignKey(Project)
-
-    area = models.ForeignKey(Area, null=True, blank=True)
 
     the_geom = models.PointField(null=True, srid=SRID)
     # Any extra known information about the location

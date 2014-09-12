@@ -67,14 +67,14 @@ class MetParser(specifics.ProgressParser):
                 m.date = profile.date_measurement
 
                 m.data = [{
-                        'x': float(measurement.x),
-                        'y': float(measurement.y),
-                        'type': measurement.profile_point_type,
-                        'top': measurement.z1,
-                        'bottom': measurement.z2
-                        }
-                          for measurement in profile.sorted_measurements
-                          ]
+                    'x': float(measurement.x),
+                    'y': float(measurement.y),
+                    'type': measurement.profile_point_type,
+                    'top': measurement.z1,
+                    'bottom': measurement.z2
+                }
+                    for measurement in profile.sorted_measurements
+                ]
 
                 if len(m.data) > 0:
                     # Use x, y of first point
@@ -442,7 +442,6 @@ class MetParser(specifics.ProgressParser):
             location = models.Location.objects.get(
                 project=self.project,
                 location_code=profile.id)
-
             location_point = linear_algebra.Point(
                 x=location.the_geom.x, y=location.the_geom.y)
             profile_point = profile.start_point

@@ -275,15 +275,14 @@ def current_files(measurements):
 
 
 class Project(models.Model):
-    # "Profielen", "Peilschalen", etc
     name = models.CharField(max_length=50, unique=False,
-        verbose_name='projectnaam')
+                            verbose_name='projectnaam')
     slug = models.SlugField(max_length=50, unique=True)
     organization = models.ForeignKey(Organization, null=False)
     is_archived = models.BooleanField(default=False)
     # Deprecated
     superuser = models.ForeignKey(User, null=True, blank=True,
-        verbose_name='projectmanager')
+                                  verbose_name='projectmanager')
     project_type = models.ForeignKey(ProjectType, null=True, blank=True)
     created_at = models.DateTimeField(default=datetime.datetime.now)
 

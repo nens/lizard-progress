@@ -69,7 +69,7 @@ class TestParsers(TestCase):
         name = 'filename'
 
     def setUp(self):
-        self.parser = TestParsers.MockParser(None, None, None)
+        self.parser = TestParsers.MockParser(None, None, None, None)
 
     def test_error(self):
         result = self.parser.error('key')  # No message, but shouldn't fail

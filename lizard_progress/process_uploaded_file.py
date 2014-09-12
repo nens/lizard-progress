@@ -140,10 +140,8 @@ def try_parser(uploaded_file, parser):
         with transaction.commit_on_success():
             # Call the parser.
             parseresult = call_parser(uploaded_file, parser)
-
-            if (parseresult.success
-                and hasattr(parseresult, 'measurements')
-                and parseresult.measurements):
+            if (parseresult.success and hasattr(parseresult, 'measurements')
+                    and parseresult.measurements):
                 # Get mtype from the parser result, for use in pathname
                 mtype = (parseresult.measurements[0].
                          scheduled.measurement_type)

@@ -220,7 +220,7 @@ class UserProfile(models.Model):
 
 def has_access(user, project, contractor=None):
     """Test whether user has access to this project (showing data of
-    this contractor)."""
+    this contractor organization)."""
 
     userprofile = UserProfile.get_by_user(user)
     if userprofile is None:
@@ -244,12 +244,12 @@ def has_access(user, project, contractor=None):
     if contractor:
         # If it is about one contractor's data in this project,
         # it's only visible for that contractor.
-        return contractor.organization == userprofile.organization
+        return contractor == userprofile.organization
     else:
         # If this is not about some specific contractor's data,
         # all contractors also have access.
-        for c in project.contractor_set.all():
-            if c.organization == userprofile.organization:
+        for activity in project.activity_set.all():
+            if activity.contractor == userprofile.organization:
                 return True
 
     return False
@@ -587,17 +587,16 @@ class AvailableMeasurementType(models.Model):
 class Activity(models.Model):
     """An activity is a part of a project. Measurements happen as
     part of an activity. All measurements in an activity share the
-    same set of locations and the same configuration.
-
-    There can be multiple measurement types and multiple contractors.
-    If there are, all contractors must do all types of measurements
-    at all locations in this activity."""
+    same set of locations and the same configuration, and have a
+    single measurement type and contractor."""
 
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100, default="Activity name")
 
-    measurement_types = models.ManyToManyField(AvailableMeasurementType)
-    contractors = models.ManyToManyField(Organization)
+    measurement_type = models.ForeignKey(
+        AvailableMeasurementType, null=True)
+    contractor = models.ForeignKey(
+        Organization, null=True)
 
 
 class MeasurementTypeAllowed(models.Model):

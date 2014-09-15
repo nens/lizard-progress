@@ -589,6 +589,12 @@ class Activity(models.Model):
     contractor = models.ForeignKey(
         Organization, null=True)
 
+    def config_value(self, key):
+        project = self.project
+        from lizard_progress import configuration
+        config = configuration.Configuration(project=project)
+        return config.get(key)
+
 
 class MeasurementTypeAllowed(models.Model):
     """This model is the "through" model for relationships between

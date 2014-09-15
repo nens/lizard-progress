@@ -170,13 +170,12 @@ class TestWaternet(TestOrganization):
             name="testprojectwaternet",
             slug="testprojectwaternet")
 
-        self.activity = test_models.ActivityF.create(
-            project=self.project, name="activitywaternet")
-
         self.organization = test_models.OrganizationF.create(
             name="contractorwaternet")
 
-        self.activity.contractors.add(self.organization)
+        self.activity = test_models.ActivityF.create(
+            project=self.project, name="activitywaternet",
+            contractor=self.organization)
 
         self.mtype = dwarsprofiel_available_mtype()
         self.activity.measurement_types.add(self.mtype)

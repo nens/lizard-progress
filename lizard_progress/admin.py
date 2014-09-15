@@ -24,12 +24,11 @@ class ProjectTypeAdmin(admin.ModelAdmin):
     list_editable = ('name', 'organization', 'default')
 
 
-admin.site.register(models.Contractor)
 admin.site.register(models.Hydrovak)
 admin.site.register(models.Location)
 admin.site.register(models.AvailableMeasurementType)
-admin.site.register(models.MeasurementType)
 admin.site.register(models.Project)
+admin.site.register(models.Activity)
 admin.site.register(models.Organization, OrganizationAdmin)
 admin.site.register(models.UserProfile)
 admin.site.register(models.ErrorMessage)

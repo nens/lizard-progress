@@ -7,8 +7,6 @@ DashboardView - shows a project's dashboard, can show graphs and
 DashboardAreaView - a graph of the project's progress (hence "lizard-progress")
 DashboardCsvView - a csv file view
 protected_file_download - to download some uploaded files
-ComparisonView - a listing of measurements made by more than one
-                 contractor, that can be shown side by side
 """
 
 import csv
@@ -41,12 +39,8 @@ from lizard_ui.layout import Action
 from lizard_ui.views import UiView
 
 from lizard_progress.changerequests import models as cmodels
-from lizard_progress.layers import ProgressAdapter
 from lizard_progress import models
-from lizard_progress.models import Contractor
 from lizard_progress.models import Hydrovak
-from lizard_progress.models import Location
-from lizard_progress.models import MeasurementType
 from lizard_progress.models import Project
 from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.models import has_access
@@ -282,31 +276,30 @@ class MapView(View):
                         and contractor.show_measurement_type(
                             measurement_type)):
                         mtype_layers.append({
-                                'name': '%s %s %s' %
-                                (self.project.name,
-                                 contractor.name,
-                                 measurement_type.name),
-                                'adapter': 'adapter_progress',
-                                'json': json.dumps({
-                                        "contractor_slug":
-                                            contractor.slug,
-                                        "measurement_type_slug":
-                                            measurement_type.slug,
-                                        "project_slug":
-                                            self.project.slug}),
-                                })
+                            'name': '%s %s %s' %
+                            (self.project.name,
+                             contractor.name,
+                             measurement_type.name),
+                            'adapter': 'adapter_progress',
+                            'json': json.dumps({
+                                "contractor_slug":
+                                contractor.slug,
+                                "measurement_type_slug":
+                                measurement_type.slug,
+                                "project_slug":
+                                self.project.slug}),
+                        })
 
                 if len(mtype_layers) > 1:
                     layers.append({
-                            'name': '%s %s Alle metingen'
-                            % (self.project.name, contractor.name),
-                            'adapter': 'adapter_progress',
-                            'json': json.dumps({
-                                    "contractor_slug":
-                                        contractor.slug,
-                                    "project_slug":
-                                        self.project.slug})
-                            })
+                        'name': '%s %s Alle metingen'
+                        % (self.project.name, contractor.name),
+                        'adapter': 'adapter_progress',
+                        'json': json.dumps({
+                            "contractor_slug":
+                            contractor.slug,
+                            "project_slug": self.project.slug})
+                    })
                 layers += mtype_layers
 
         if Hydrovak.objects.filter(project=self.project).exists():
@@ -347,243 +340,11 @@ class MapView(View):
         return crumbs
 
 
-class ComparisonView(View):
-    """View that can show measurement types of this project, and if
-    one is chosen, a sorted list of locations with more than one
-    contractor."""
-
-    template_name = 'lizard_progress/comparison.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        """Check access (user needs to be able to read data of all
-        contractors), and find the current measurement type, if any."""
-
-        self.mtype_slug = kwargs.get('mtype_slug', None)
-
-        result = super(ComparisonView, self).dispatch(request, *args, **kwargs)
-
-        for contractor in self.project.contractor_set.all():
-            if not has_access(request.user, self.project, contractor):
-                raise PermissionDenied()
-
-        return result
-
-    def crumbs(self):
-        """Breadcrumb for this page."""
-        crumbs = super(ComparisonView, self).crumbs()
-
-        crumbs.append({
-                'url': self.comparison_url(),
-                'description': 'Vergelijking',
-                'title': '%s vergelijking' % (self.project.name,)
-                })
-
-        return crumbs
-
-    @property
-    def measurement_type(self):
-        if self.mtype_slug is not None:
-            return MeasurementType.objects.get(
-                project=self.project,
-                mtype__slug=self.mtype_slug)
-        else:
-            return None
-
-    def measurement_types(self):
-        """Return available measurement types."""
-
-        measurement_types = self.project.measurementtype_set.all()
-        logger.debug("Hrm.")
-        logger.debug(measurement_types)
-        return measurement_types
-
-    def measurement_types_urls(self):
-        return [(measurement_type,
-                 reverse(
-                    'lizard_progress_comparisonview2',
-                    kwargs={
-                        'project_slug': self.project.slug,
-                        'mtype_slug': measurement_type.slug,
-                        }))
-                for measurement_type in self.measurement_types()]
-
-    def locations_to_compare(self):
-        """Locations that have more than scheduled measurements by
-        more than one contractor, for this measurement type"""
-
-        measurement_type = self.measurement_type
-
-        if not measurement_type or not measurement_type.id:
-            return ()
-
-        # We're looking for locations in this project where the number
-        # of distinct contractors that have a completed scheduled
-        # measurement of this measurement type on that location is
-        # greater than 1.
-
-        # As far as I can see, that beats Django's ORM and we need to
-        # use SQL.
-        locations = (
-            Location.objects.filter(project=self.project).
-            extra(where=["""
-         (SELECT
-            COUNT(
-              DISTINCT lizard_progress_scheduledmeasurement.contractor_id)
-          FROM
-            lizard_progress_scheduledmeasurement
-          WHERE
-            lizard_progress_scheduledmeasurement.location_id =
-              lizard_progress_location.id
-          AND
-            lizard_progress_scheduledmeasurement.complete='t'
-          AND
-            lizard_progress_scheduledmeasurement.measurement_type_id=%d
-          ) > 1
-         """ % measurement_type.id]).
-            order_by('location_code').
-            all())
-
-        return [(location,
-                 self.comparison_popup_url(measurement_type, location))
-                for location in locations]
-
-    def comparison_popup_url(self, measurement_type, location):
-        """Returns URL to this project's Comparison view"""
-        return reverse(
-            'lizard_progress_comparisonpopup',
-            kwargs={
-                'project_slug': self.project_slug,
-                'mtype_slug': measurement_type.slug,
-                'location_code': location.location_code,
-                }
-            )
-
-
-class ComparisonPopupView(View):
-    template_name = 'lizard_progress/comparison_popup.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        """Check access (user needs to be able to read data of all
-        contractors), find current measurement type and location."""
-
-        self.mtype_slug = kwargs.get('mtype_slug', None)
-        self.measurement_type = MeasurementType.objects.get(
-            project=self.project,
-            mtype__slug=self.mtype_slug)
-
-        self.location_code = kwargs.get('location_code', None)
-        self.location = Location.objects.get(
-            project=self.project,
-            location_code=self.location_code)
-
-        result = super(ComparisonPopupView, self).dispatch(
-            request, *args, **kwargs)
-
-        for contractor in self.project.contractor_set.all():
-            if not has_access(request.user, self.project, contractor):
-                raise PermissionDenied()
-
-        return result
-
-    def contractors(self):
-        """Return the contractors that have a complete measurement at
-        this location"""
-
-        contractors = set()
-
-        scheduled_measurements = (
-            ScheduledMeasurement.objects.
-            filter(project=self.project).
-            filter(measurement_type=self.measurement_type).
-            filter(location=self.location).
-            filter(complete=True))
-
-        for sm in scheduled_measurements:
-            contractors.add(sm.contractor)
-
-        return sorted(contractors,
-                      cmp=lambda a, b: cmp(a.name, b.name))
-
-    def contractor_html(self):
-        """Perform lizard-map-ish magic to get the same HTML as normal
-        popups do."""
-        htmls = []
-
-        class FakeWorkspaceItem(object):
-            adapter_class = 'adapter_progress'
-
-            def __init__(self, layer_arguments):
-                self.adapter_layer_json = json.dumps(layer_arguments)
-
-            def _url_arguments(self, identifiers):
-                """for img_url, csv_url"""
-
-                from lizard_map.adapter import adapter_serialize
-
-                layer_json = self.adapter_layer_json.replace('"', '%22')
-                url_arguments = [
-                    'adapter_layer_json=%s' % layer_json, ]
-                url_arguments.extend([
-                        'identifier=%s' % adapter_serialize(
-                            identifier) for identifier in identifiers])
-                return url_arguments
-
-            def url(self, url_name, identifiers, extra_kwargs=None):
-                """fetch url to adapter (img, csv, ...)
-
-                example url_name: "lizard_map_adapter_image"
-                """
-                kwargs = {'adapter_class': 'adapter_progress'}
-                if extra_kwargs is not None:
-                    kwargs.update(extra_kwargs)
-                url = reverse(
-                    url_name,
-                    kwargs=kwargs,
-                    )
-                url += '?' + '&'.join(self._url_arguments(identifiers))
-                return url
-
-        for contractor in self.contractors():
-            try:
-                layer_arguments = {
-                    'project_slug': self.project.slug,
-                    'contractor_slug': contractor.slug,
-                    'measurement_type_slug': self.measurement_type.slug,
-                    }
-
-                workspace_item = FakeWorkspaceItem(layer_arguments)
-
-                adapter = ProgressAdapter(
-                    workspace_item=workspace_item,
-                    layer_arguments=layer_arguments,
-                    )
-
-            except Exception as e:
-                logger.critical("Adapter exception: " + str(e))
-
-            scheduled_measurements = (
-                ScheduledMeasurement.objects.
-                filter(project=self.project).
-                filter(location=self.location).
-                filter(contractor=contractor).
-                filter(measurement_type=self.measurement_type))
-
-            sm_ids = [{
-                    'scheduled_measurement_id': sm.id,
-                    } for sm in scheduled_measurements]
-
-            try:
-                htmls.append(adapter.html(identifiers=sm_ids))
-            except Exception as e:
-                logger.critical("HTML exception: " + str(e))
-
-        return htmls
-
-
 class DashboardView(ProjectsView):
-    """Show the dashboard page. The page shows contractors and measurement types,
-    number of planned and uploaded measurements, links to pages for planning and for adding
-    and removing contractors and measurement types, and progress graphs."""
+    """Show the dashboard page. The page shows contractors and
+    measurement types,  number of planned and uploaded measurements,
+    links to pages for planning and for adding and removing contractors
+    and measurement types, and progress graphs."""
 
     template_name = 'lizard_progress/dashboard.html'
     active_menu = "dashboard"
@@ -698,7 +459,8 @@ class DashboardCsvView(ProjectsView):
             for mtype in measurement_types:
                 try:
                     scheduled = ScheduledMeasurement.objects.get(
-                        project=self.project, contractor=self.contractor_instance,
+                        project=self.project,
+                        contractor=self.contractor_instance,
                         location=l, measurement_type=mtype)
                 except ScheduledMeasurement.DoesNotExist:
                     # This measurement type wasn't scheduled here -
@@ -823,7 +585,7 @@ def dashboard_graph(
 
 @login_required
 def protected_file_download(request, project_slug, contractor_slug,
-                                   measurement_type_slug, filename):
+                            measurement_type_slug, filename):
     """
     We need our own file_download view because contractors can only see their
     own files, and the URLs of other contractor's files are easy to guess.
@@ -888,13 +650,15 @@ class ArchiveProjectsOverview(ProjectsView):
     template_name = 'lizard_progress/archive.html'
 
     def archive_years(self):
-        years = list(set([p.created_at.year for p in self.projects_archived()]))
+        years = list(
+            set([p.created_at.year for p in self.projects_archived()]))
         years.sort()
         years.reverse()
         return years
 
     def project_types(self):
-        return models.ProjectType.objects.filter(organization=self.organization)
+        return models.ProjectType.objects.filter(
+            organization=self.organization)
 
     def archive_tree(self):
         archive_tree = {}
@@ -1072,11 +836,11 @@ class PlanningView(ProjectsView):
             self.__existing_measurements(self.project, mtype, contractor))
 
         locations_with_measurements = set(
-                existing_measurement.scheduled.location.location_code
-                for existing_measurement in existing_measurements)
+            existing_measurement.scheduled.location.location_code
+            for existing_measurement in existing_measurements)
 
         locations_to_keep = (set(locations_from_shapefile) |
-                locations_with_measurements)
+                             locations_with_measurements)
 
         # Remove not needed scheduled measurements
         models.ScheduledMeasurement.objects.filter(
@@ -1086,7 +850,7 @@ class PlanningView(ProjectsView):
 
         for location_code, geom in locations_from_shapefile.iteritems():
             location, created = models.Location.objects.get_or_create(
-            location_code=location_code, project=self.project)
+                location_code=location_code, project=self.project)
             if location.the_geom != geom:
                 location.the_geom = geom
                 location.save()
@@ -1235,9 +999,9 @@ class EditContractorsMeasurementTypes(ProjectsView):
             mtype=available_measurement_type,
             defaults={
                 'icon_missing':
-                    available_measurement_type.default_icon_missing,
+                available_measurement_type.default_icon_missing,
                 'icon_complete':
-                    available_measurement_type.default_icon_complete
+                available_measurement_type.default_icon_complete
                 })
 
     def _remove_contractor(self, form):

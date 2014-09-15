@@ -38,9 +38,6 @@ class DownloadOrganizationDocumentView(View):
         organization = get_object_or_404(Organization,
                                          id=organization_id)
 
-        # if not has_access(request.user, project, contractor):
-        #     return HttpResponseForbidden()
-
         directory = directories.organization_files_dir(
             organization)
 
@@ -81,7 +78,7 @@ class DownloadDocumentsView(ProjectsView):
 
     def _organization_files(self):
         for path in directories.files_in(
-            directories.organization_files_dir(self.organization)):
+                directories.organization_files_dir(self.organization)):
             yield {
                 'type': 'Handleidingen e.d.',
                 'filename': os.path.basename(path),
@@ -117,11 +114,11 @@ class DownloadHomeView(ProjectsView):
 
     def _make_url(self, filetype, project, contractor, path):
         return reverse('lizard_progress_downloadview', kwargs={
-                'filetype': filetype,
-                'project_slug': project.slug,
-                'contractor_slug': contractor.slug if contractor else 'x',
-                'filename': os.path.basename(path)
-                })
+            'filetype': filetype,
+            'project_slug': project.slug,
+            'contractor_slug': contractor.slug if contractor else 'x',
+            'filename': os.path.basename(path)
+        })
 
     def _project_files(self):
         for path in directories.files_in(
@@ -140,8 +137,8 @@ class DownloadHomeView(ProjectsView):
         for contractor in self.project.contractor_set.all():
             if has_access(self.user, self.project, contractor):
                 for path in directories.files_in(
-                    directories.reports_dir(self.project, contractor)):
-                        yield {
+                        directories.reports_dir(self.project, contractor)):
+                    yield {
                         'type': 'Rapporten {0}'.format(
                             contractor.organization.name),
                         'filename': os.path.basename(path),
@@ -150,14 +147,14 @@ class DownloadHomeView(ProjectsView):
                                               self.project,
                                               contractor,
                                               path)
-                        }
+                    }
 
     def _results_files(self):
         for contractor in self.project.contractor_set.all():
             if has_access(self.user, self.project, contractor):
                 for path in directories.files_in(
-                    directories.results_dir(self.project, contractor)):
-                        yield {
+                        directories.results_dir(self.project, contractor)):
+                    yield {
                         'type': 'Resultaten {0}'.format(
                             contractor.organization.name),
                         'filename': os.path.basename(path),
@@ -188,17 +185,17 @@ class DownloadHomeView(ProjectsView):
         if has_access(self.user, self.project):
             for path in directories.all_files_in(
                 directories.hydrovakken_dir(self.project),
-                extension=".shp"):
+                    extension=".shp"):
                 yield {
-                'description':
+                    'description':
                     "Hydrovakken {project}".format(project=self.project),
-                'urls': {
-                    'shp': self._make_url(
+                    'urls': {
+                        'shp': self._make_url(
                             'hydrovakken', self.project, None, path),
-                    'dbf': self._make_url(
+                        'dbf': self._make_url(
                             'hydrovakken', self.project, None,
                             path.replace('.shp', '.dbf')),
-                    'shx': self._make_url(
+                        'shx': self._make_url(
                             'hydrovakken', self.project, None,
                             path.replace('.shp', '.shx'))
                     }}
@@ -211,7 +208,6 @@ class DownloadHomeView(ProjectsView):
                     key=lambda f: f.get('filename', '').lower())
 
             try:
-                #import pdb; pdb.set_trace()
                 self._files = {
                     'organization': sorted_on_filename(
                         self._project_files()),

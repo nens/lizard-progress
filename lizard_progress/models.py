@@ -465,53 +465,6 @@ class Project(models.Model):
             for contractor in self.contractor_set.all())
 
 
-# class Contractor(models.Model):
-#     # "Tijhuis", "Van der Zwaan", etc
-#     project = models.ForeignKey(Project)
-#     name = models.CharField(max_length=50)
-#     slug = models.SlugField(max_length=50)
-#     organization = models.ForeignKey(Organization, null=True, blank=True,
-#                                      verbose_name='organisatie')
-
-#     def set_slug_and_save(self):
-#         """Call on an unsaved contractor.
-
-#         Sets a random slug, saves the project, then sets a new slug
-#         based on primary key and name."""
-#         chars = list(string.lowercase)
-#         random.shuffle(chars)
-#         self.slug = ''.join(chars)
-#         self.save()
-
-#         self.slug = "{id}-{slug}".format(
-#             id=self.id,
-#             slug=slugify(self.organization.name))
-#         self.save()
-
-#     def show_measurement_type(self, measurement_type):
-#         """Only show that measurement type for this contractor if there are
-#         scheduled measurements for it, or if all contractors can freely upload
-#         measurements."""
-
-#         if self.project.needs_predefined_locations(measurement_type.mtype):
-#             return ScheduledMeasurement.objects.filter(
-#                 project=self.project,
-#                 contractor=self,
-#                 measurement_type=measurement_type).exists()
-#         else:
-#             return True
-
-#     def has_measurements(self):
-#         return Measurement.objects.filter(
-#             scheduled__contractor=self).exists()
-
-#     def __unicode__(self):
-#         return u"%s in %s" % (self.organization, self.project.name)
-
-#     class Meta:
-#         unique_together = (("project", "organization"))
-
-
 class Location(models.Model):
     # A location in an activity
     activity = models.ForeignKey('Activity', null=True)

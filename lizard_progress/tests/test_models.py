@@ -51,7 +51,7 @@ class UserProfileF(factory.DjangoModelFactory):
         model = models.UserProfile
 
     user = factory.SubFactory(UserF)
-    organization = factory.LazyAttribute(lambda a: OrganizationF())
+    organization = factory.SubFactory(OrganizationF)
 
 
 class ProjectF(factory.DjangoModelFactory):
@@ -64,17 +64,6 @@ class ProjectF(factory.DjangoModelFactory):
     slug = "testproject"
 
     organization = factory.SubFactory(OrganizationF)
-
-
-class ContractorF(factory.DjangoModelFactory):
-    """Factory for Contractor models."""
-    class Meta:
-        model = models.Contractor
-
-    project = factory.LazyAttribute(lambda a: ProjectF())
-    name = "Nelen & Schuurmans"
-    slug = "nens"
-    organization = None
 
 
 class ActivityF(factory.DjangoModelFactory):
@@ -104,15 +93,6 @@ class AvailableMeasurementTypeF(factory.DjangoModelFactory):
     slug = "metingtype"
 
 
-class MeasurementTypeF(factory.DjangoModelFactory):
-    """Factory for MeasurementType objects."""
-    class Meta:
-        model = models.MeasurementType
-
-    mtype = factory.LazyAttribute(lambda a: AvailableMeasurementTypeF())
-    project = factory.LazyAttribute(lambda a: ProjectF())
-
-
 class ScheduledMeasurementF(factory.DjangoModelFactory):
     """Factory for ScheduledMeasurement objects."""
     class Meta:
@@ -131,7 +111,7 @@ class MeasurementF(factory.DjangoModelFactory):
     class Meta:
         model = models.Measurement
 
-    scheduled = factory.LazyAttribute(lambda a: ScheduledMeasurementF())
+    scheduled = factory.SubFactory(ScheduledMeasurementF)
     data = {"testkey": "testvalue"}
     filename = "test.txt"
 
@@ -143,7 +123,7 @@ class UploadedFileF(factory.DjangoModelFactory):
 
     activity = factory.SubFactory(ActivityF)
     organization = factory.SubFactory(OrganizationF)
-    uploaded_by = factory.LazyAttribute(lambda a: UserF())
+    uploaded_by = factory.SubFactory(UserF)
     uploaded_at = datetime.datetime(2013, 3, 8, 10, 0)
     path = "/path/to/file/file.met"
     ready = False
@@ -154,7 +134,7 @@ class UploadedFileErrorF(factory.DjangoModelFactory):
     class Meta:
         model = models.UploadedFileError
 
-    uploaded_file = factory.LazyAttribute(lambda a: UploadedFileF())
+    uploaded_file = factory.SubFactory(UploadedFileF)
     line = 0
     error_code = "NOCODE"
     error_message = "Some error message"
@@ -164,10 +144,10 @@ class ExportRunF(factory.DjangoModelFactory):
     class Meta:
         model = models.ExportRun
 
-    project = factory.LazyAttribute(lambda a: ProjectF())
-    contractor = factory.LazyAttribute(lambda a: ContractorF())
-    measurement_type = factory.LazyAttribute(
-        lambda a: AvailableMeasurementTypeF())
+    project = factory.SubFactory(ProjectF)
+    organization = factory.SubFactory(OrganizationF)
+    measurement_type = factory.SubFactory(AvailableMeasurementTypeF)
+
     exporttype = "someexporttype"
     generates_file = True
     created_at = None

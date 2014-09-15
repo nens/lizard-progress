@@ -4,8 +4,9 @@
 from django.test import TestCase
 
 from lizard_progress.layers import ProgressAdapter
-from lizard_progress.models import Project, Contractor,\
-    MeasurementType, AvailableMeasurementType, Organization
+from lizard_progress.models import Project
+from lizard_progress.models import AvailableMeasurementType
+from lizard_progress.models import Organization
 from lizard_map.models import WorkspaceEdit, WorkspaceEditItem
 from lizard_progress.specifics import ProgressParser, UnSuccessfulParserResult
 

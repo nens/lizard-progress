@@ -614,40 +614,6 @@ class MeasurementTypeAllowed(models.Model):
     visible = models.BooleanField(default=True)
 
 
-# class MeasurementType(models.Model):
-#     """The way this is implemented now, there is basically a
-#     many-to-many relationship between AvailableMeasurementType and
-#     Project, and it is implemented through this table.  Previous
-#     properties of this model (name and slug) that are now in
-#     AvailableMeasurementType are available through property functions
-#     for ease of use and backward compatibility."""
-
-#     mtype = models.ForeignKey(AvailableMeasurementType)
-#     project = models.ForeignKey(Project)
-
-#     icon_missing = models.CharField(max_length=50, null=True, blank=True)
-#     icon_complete = models.CharField(max_length=50, null=True, blank=True)
-
-#     class Meta:
-#         # Measurement types occur only once in a project
-#         unique_together = (("project", "mtype"),)
-
-#     @property
-#     def name(self):
-#         return self.mtype.name
-
-#     @property
-#     def slug(self):
-#         return self.mtype.slug
-
-#     def __unicode__(self):
-#         return u"Type '%s' in %s" % (self.mtype.name, self.project.name)
-
-#     def has_measurements(self):
-#         return Measurement.objects.filter(
-#             scheduled__measurement_type=self).exists()
-
-
 class ScheduledMeasurement(models.Model):
     # What
     available_measurement_type = models.ForeignKey(

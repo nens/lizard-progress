@@ -315,15 +315,6 @@ class Project(models.Model):
         return lizard_progress.specifics.Specifics(
             self, available_measurement_type)
 
-    def has_measurement_type(self, mtype_slug):
-        try:
-            MeasurementType.objects.get(
-                project=self,
-                mtype__slug=mtype_slug)
-            return True
-        except MeasurementType.DoesNotExist:
-            return False
-
     def needs_predefined_locations(self, available_measurement_type):
         if available_measurement_type.needs_predefined_locations:
             return True

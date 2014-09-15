@@ -13,10 +13,8 @@ import logging
 import mapnik
 import pyproj
 
-from lizard_progress.models import Contractor
 from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
-from lizard_progress.models import MeasurementType
 from lizard_progress.models import Project
 from lizard_progress.models import ScheduledMeasurement
 

@@ -369,14 +369,15 @@ class DashboardView(ProjectsView):
     def graphs(self):
         """Generator for the links for the dashboard graphs."""
 
-        for contractor in Contractor.objects.filter(project=self.project):
-            if has_access(self.request.user, self.project, contractor):
+        for activity in models.Activity.objects.filter(project=self.project):
+            if has_access(
+                    self.request.user, self.project, activity.contractor):
                 yield (
-                    contractor,
+                    activity,
                     reverse('lizard_progress_dashboardgraphview',
                             kwargs={
-                            'contractor_slug': contractor.slug,
-                            'project_slug': self.project.slug}))
+                                'activity_id': activity.id,
+                                'project_slug': self.project.slug}))
 
 
 class DashboardCsvView(ProjectsView):

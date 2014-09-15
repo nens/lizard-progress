@@ -15,8 +15,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from lizard_progress import models
-from lizard_progress.models import (AvailableMeasurementType, Contractor,
-                                    Project)
 
 import os
 

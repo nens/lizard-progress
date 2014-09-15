@@ -20,7 +20,7 @@ from lizard_ui.layout import Action
 from lizard_progress import models
 from lizard_progress import tasks
 from lizard_progress.util import directories
-from lizard_progress.models import Contractor
+
 from lizard_progress.models import Project
 from lizard_progress.models import has_access
 from lizard_progress.models import Organization

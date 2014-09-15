@@ -13,6 +13,7 @@ import logging
 import mapnik
 import pyproj
 
+from lizard_progress import models
 from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
 from lizard_progress.models import Project
@@ -36,19 +37,20 @@ def mapnik_datasource(query):
 class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def __init__(self, *args, **kwargs):
         if ('layer_arguments' not in kwargs or
-            not isinstance(kwargs['layer_arguments'], dict)):
+                not isinstance(kwargs['layer_arguments'], dict)):
             raise ValueError(
                 'Argument layer_arguments of adapter should be a dict.')
 
         project_slug = kwargs['layer_arguments'].get('project_slug', None)
-        contractor_slug = (kwargs['layer_arguments'].
-                           get('contractor_slug', None))
-        measurement_type_slug = (kwargs['layer_arguments'].
-                                 get('measurement_type_slug', None))
+        activity_id = kwargs['layer_arguments'].get('activity_id', None)
 
         self.project = None
         self.contractor = None
         self.measurement_type = None
+        self.activity = None
+
+        if not project_slug or not activity_id:
+            return
 
         try:
             self.project = Project.objects.get(slug=project_slug)
@@ -56,17 +58,12 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             return
 
         try:
-            self.contractor = Contractor.objects.get(project=self.project,
-                                                     slug=contractor_slug)
-        except Contractor.DoesNotExist:
+            self.activity = models.Activity.objects.get(pk=activity_id)
+        except models.Activity.DoesNotExist:
             return
 
-        try:
-            self.measurement_type = (MeasurementType.objects.
-                                     get(project=self.project,
-                                         mtype__slug=measurement_type_slug))
-        except MeasurementType.DoesNotExist:
-            pass  # Show for all measurement types
+        if self.activity.project != self.project:
+            return
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
@@ -96,69 +93,37 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         return style
 
     def mapnik_query(self, complete):
-        if self.measurement_type is None:
-            # If there is no measurement_type, we combine them all and
-            # show different icons in case there are no measurements
-            # complete (or is false and and is false), they are all
-            # complete (or is true and and is true) and also if only
-            # some of them are complete (or is true and and is false).
-            q = """(SELECT
-                        loc.the_geom
-                    FROM
-                        lizard_progress_location loc
-                    INNER JOIN
-                         lizard_progress_scheduledmeasurement sm
-                    ON
-                         sm.location_id = loc.id
-                    WHERE
-                         sm.contractor_id=%d AND
-                         sm.project_id=%d AND
-                         loc.the_geom IS NOT NULL
-                    GROUP BY
-                         loc.the_geom
-                    HAVING bool_or(sm.complete)=%s AND
-                           bool_and(sm.complete)=%s
-                   ) data"""
-            if complete is True:
-                return q % (self.contractor.id, self.project.id,
-                            "true", "true")
-            elif complete is False:
-                return q % (self.contractor.id, self.project.id,
-                            "false", "false")
-            elif complete == "some":
-                return q % (self.contractor.id, self.project.id,
-                            "true", "false")
-
-        else:
-            return ("""(
-                  SELECT
-                      loc.the_geom
-                  FROM
-                      lizard_progress_location loc
-                  INNER JOIN
-                      lizard_progress_scheduledmeasurement sm
-                  ON
-                      sm.location_id = loc.id
-                  WHERE
-                      sm.complete=%s
-                  AND sm.contractor_id=%d
-                  AND sm.project_id=%d
-                  AND sm.measurement_type_id=%d
-                  AND loc.the_geom IS NOT NULL) data""" %
-                    (str(complete).lower(),
-                     self.contractor.id,
-                     self.project.id,
-                     self.measurement_type.id))
+        q = """(SELECT
+                    loc.the_geom
+                FROM
+                    lizard_progress_location loc
+                INNER JOIN
+                    lizard_progress_scheduledmeasurement sm
+                ON
+                    sm.location_id = loc.id
+                WHERE
+                    loc.activity_id = %d AND
+                    loc.the_geom IS NOT NULL
+                GROUP BY
+                    loc.the_geom
+                HAVING bool_or(sm.complete)=%s AND
+                       bool_and(sm.complete)=%s
+                ) data"""
+        if complete is True:
+            return q % (self.contractor.id, self.project.id,
+                        "true", "true")
+        elif complete is False:
+            return q % (self.contractor.id, self.project.id,
+                        "false", "false")
+        elif complete == "some":
+            return q % (self.contractor.id, self.project.id,
+                        "true", "false")
 
     def layer_desc(self, complete):
-        mtname = self.measurement_type.name if self.measurement_type else "all"
-        return str(" ".join([
-                    self.project.slug,
-                    self.contractor.slug,
-                    mtname,
-                    str(complete)]))
+        return "{} {} {}".format(
+            self.project.slug, self.activity.id, str(complete))
 
-    def layer_all_types(self, layer_ids=None, request=None):
+    def layer(self, layer_ids=None, request=None):
         "Return mapnik layers and styles for all measurement types."
         layers = []
         styles = {}
@@ -172,39 +137,6 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             else:
                 img = self.symbol_img("ball_yellow.png")
 
-            styles[layer_desc] = self.make_style(img)
-
-            layer = mapnik.Layer(layer_desc, RD)
-            layer.datasource = mapnik_datasource(
-                self.mapnik_query(complete))
-            layer.styles.append(layer_desc)
-            layers.append(layer)
-
-        return layers, styles
-
-    def layer(self, layer_ids=None, request=None):
-        """Return mapnik layers and styles for a specific measurement
-        type."""
-        layers = []
-        styles = {}
-
-        if not self.project or not self.contractor:
-            return
-
-        if not self.measurement_type:
-            return self.layer_all_types(layer_ids, request)
-
-        for complete in (True, False):
-            layer_desc = self.layer_desc(complete)
-
-            if complete:
-                img_file = str(self.measurement_type.icon_complete)
-            else:
-                img_file = str(self.measurement_type.icon_missing)
-            if not img_file:
-                img_file = "ball_%s.png" % ("green" if complete else "red",)
-
-            img = self.symbol_img(img_file)
             styles[layer_desc] = self.make_style(img)
 
             layer = mapnik.Layer(layer_desc, RD)
@@ -235,7 +167,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         geod = pyproj.Geod(ellps='WGS84')
 
-        # Django chrashes with:
+        # Django crashes with:
 
         # Rel. 4.7.1, 23 September 2009
         # <(null)>:
@@ -249,37 +181,24 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         results = []
 
-        for location in (Location.objects.
-                         filter(project=self.project,
-                                the_geom__distance_lte=(pt, D(m=distance))).
-                         distance(pt).order_by('distance')):
-            if self.measurement_type:
-                scheduleds = (ScheduledMeasurement.objects.
-                              filter(location=location,
-                                     contractor=self.contractor,
-                                     measurement_type=self.measurement_type))
-            else:
-                scheduleds = (ScheduledMeasurement.objects.
-                              filter(location=location,
-                                     contractor=self.contractor,
-                               measurement_type__mtype__can_be_displayed=True).
-                              order_by('measurement_type__mtype__name'))
+        for location in (Location.objects.filter(
+                activity=self.activity,
+                the_geom__distance_lte=(pt, D(m=distance))).
+                distance(pt).order_by('distance')):
+            scheduleds = ScheduledMeasurement.objects.filter(location=location)
 
             for scheduled in scheduleds:
                 result = {
-                    'name': '%s %s %s' % (location.location_code,
-                                          scheduled.measurement_type.name,
-                                          self.contractor.name),
+                    'name': '%s %s' % (location.location_code,
+                                       location.activity_id),
                     'distance': location.distance.m,
                     'workspace_item': self.workspace_item,
                     'identifier': {
                         'scheduled_measurement_id': scheduled.id,
-                        },
-                    'grouping_hint': 'lizard_progress %s %s %s %s' % (
+                    },
+                    'grouping_hint': 'lizard_progress %s %s' % (
                         self.workspace_item.id,
-                        self.contractor.slug,
-                        self.project.slug,
-                        scheduled.measurement_type.slug),
+                        self.activity.id)
                     }
                 results.append(result)
             if results:
@@ -301,16 +220,13 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         except ScheduledMeasurement.DoesNotExist:
             return None
 
-        grouping_hint = "lizard_progress::%s::%s::%s" % (
-            scheduled.project.slug,
-            scheduled.contractor.slug,
-            scheduled.measurement_type.slug)
+        grouping_hint = "lizard_progress::%s" % (self.activity.id,)
 
         return {
             "name": "%s %s %s" %
             (scheduled.location.location_code,
-             scheduled.measurement_type.name,
-             scheduled.contractor.name,),
+             self.activity.measurement_type.name,
+             self.activity.contractor.name,),
             "identifier": {
                 "location": scheduled_measurement_id,
                 "grouping_hint": grouping_hint,
@@ -323,9 +239,6 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def symbol_url(self):
         ""
         img_file = "ball_green.png"
-        if self.measurement_type:
-            if self.measurement_type.icon_complete:
-                img_file = str(self.measurement_type.icon_complete)
 
         return settings.STATIC_URL + 'lizard_progress/' + img_file
 
@@ -356,8 +269,9 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         else:
             handler = (self.project.specifics().
-                       html_handler(measurement_type=sm.measurement_type,
-                                    contractor=sm.contractor))
+                       html_handler(
+                           measurement_type=self.activity.measurement_type,
+                           contractor=self.activity.contractor))
 
         if handler is not None:
             return handler(super(ProgressAdapter, self).html_default,
@@ -381,13 +295,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         if not self.project or not self.contractor:
             return {'west': None, 'south': None, 'east': None, 'north': None}
 
-        locations = Location.objects.filter(
-            project=self.project,
-            scheduledmeasurement__contractor=self.contractor)
-
-        if self.measurement_type:
-            locations = locations.filter(
-                scheduledmeasurement__measurement_type=self.measurement_type)
+        locations = Location.objects.filter(activity=self.activity)
 
         if not locations.exists():
             return {'west': None, 'south': None, 'east': None, 'north': None}
@@ -407,10 +315,8 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         if not scheduled_measurements:
             return
 
-        sm = scheduled_measurements[0]
         handler = (self.project.specifics().
-                   image_handler(measurement_type=sm.measurement_type,
-                                 contractor=sm.contractor))
+                   image_handler(activity=self.activity))
 
         if handler is not None:
             return handler(scheduled_measurements)

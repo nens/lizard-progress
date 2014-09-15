@@ -11,7 +11,6 @@ from django.contrib.gis.geos import Point
 from metfilelib.util import linear_algebra
 from metfilelib.parser import parse_metfile
 
-from lizard_progress import configuration
 from lizard_progress import models
 from lizard_progress import specifics
 from lizard_progress import errors
@@ -523,11 +522,6 @@ class MetParser(specifics.ProgressParser):
             line_number,
             *(models.ErrorMessage.format_code(error_code, *args, **kwargs)),
             recovery=recovery)
-
-    def config_value(self, key):
-        project = self.project
-        config = configuration.Configuration(project=project)
-        return config.get(key)
 
     def distance(self, m1, m2):
         try:

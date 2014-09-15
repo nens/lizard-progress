@@ -173,12 +173,12 @@ class TestWaternet(TestOrganization):
         self.organization = test_models.OrganizationF.create(
             name="contractorwaternet")
 
+        self.mtype = dwarsprofiel_available_mtype()
+
         self.activity = test_models.ActivityF.create(
             project=self.project, name="activitywaternet",
-            contractor=self.organization)
-
-        self.mtype = dwarsprofiel_available_mtype()
-        self.activity.measurement_types.add(self.mtype)
+            contractor=self.organization,
+            measurement_type=self.mtype)
 
     def test_correct_file(self, *args):
         pass

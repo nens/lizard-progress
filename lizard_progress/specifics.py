@@ -260,6 +260,9 @@ class ProgressParser(object):
 
         return SuccessfulParserResult(measurements)
 
+    def config_value(self, key):
+        return self.activity.config_value(key)
+
 
 class SuccessfulParserResult(object):
     """

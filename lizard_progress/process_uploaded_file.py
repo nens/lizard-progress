@@ -144,7 +144,7 @@ def try_parser(uploaded_file, parser):
                     and parseresult.measurements):
                 # Get mtype from the parser result, for use in pathname
                 mtype = (parseresult.measurements[0].
-                         scheduled.measurement_type)
+                         scheduled.location.activity.measurement_type)
 
                 # Move the file.
                 target_path = path_for_uploaded_file(uploaded_file, mtype)

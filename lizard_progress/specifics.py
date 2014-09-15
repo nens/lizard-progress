@@ -114,7 +114,7 @@ def _open_uploaded_file(path, file_type):
 
 
 def parser_factory(
-        parser, project, contractor, path, available_measurement_type):
+        parser, activity, organization, path, available_measurement_type):
     """Sets up the parser and returns a parser instance."""
 
     if not issubclass(parser, ProgressParser):
@@ -122,8 +122,9 @@ def parser_factory(
                          "a ProgressParser instance.")
 
     file_object = _open_uploaded_file(path, parser.FILE_TYPE)
+
     return parser(
-        project, contractor, file_object, available_measurement_type)
+        activity, organization, file_object, available_measurement_type)
 
 
 class ProgressParser(object):
@@ -170,9 +171,10 @@ class ProgressParser(object):
     FILE_TYPE = FILE_NORMAL
 
     def __init__(
-        self, project, contractor, file_object, available_measurement_type):
-        self.project = project
-        self.contractor = contractor
+            self, activity, organization, file_object,
+            available_measurement_type):
+        self.activity = activity
+        self.organization = organization
         self.file_object = file_object
         self.available_measurement_type = available_measurement_type
         self.errors = []
@@ -213,7 +215,7 @@ class ProgressParser(object):
         return SuccessfulParserResult(measurements)
 
     def record_error(
-        self, line_number, error_code, error_message, recovery=None):
+            self, line_number, error_code, error_message, recovery=None):
         """Record an error, then continue parsing. Because the error
         is recorded, self._parser_result() will return an
         UnSuccessfulParserResult later.
@@ -236,9 +238,9 @@ class ProgressParser(object):
                 return
 
         self.errors.append(Error(
-                line=line_number,
-                error_code=error_code,
-                error_message=error_message))
+            line=line_number,
+            error_code=error_code,
+            error_message=error_message))
 
         if recovery is not None:
             self.possible_requests.append(recovery)
@@ -257,19 +259,6 @@ class ProgressParser(object):
                 possible_requests=self.possible_requests)
 
         return SuccessfulParserResult(measurements)
-
-    def mtype(self):
-        """Return the measurement_type instance for our
-        AvailableMeasurementType."""
-        from lizard_progress.models import MeasurementType
-        try:
-            return MeasurementType.objects.get(
-                project=self.project,
-                mtype=self.available_measurement_type)
-        except MeasurementType.DoesNotExist:
-            self.record_error(
-                0, "NOMEASUREMENTTYPE",
-                "Measurement type niet geconfigureerd, systeemfout.")
 
 
 class SuccessfulParserResult(object):

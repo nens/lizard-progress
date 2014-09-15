@@ -36,7 +36,7 @@ class ContractorForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super(ContractorForm, self).__init__(*args, **kwargs)
         self.fields['project'].queryset = (
-            Project.objects.filter(superuser=user))
+            Project.objects.all())
 
     class Meta:
         model = Contractor
@@ -53,10 +53,9 @@ class ProjectChoiceForm(forms.Form):
     project = forms.ModelChoiceField(queryset=None)
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
         super(ProjectChoiceForm, self).__init__(*args, **kwargs)
         self.fields['project'].queryset = \
-            Project.objects.filter(superuser=user)
+            Project.objects.all()
 
 
 class ContractorChoiceField(forms.ModelChoiceField):

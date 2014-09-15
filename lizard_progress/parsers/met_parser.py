@@ -36,7 +36,9 @@ class MetParser(specifics.ProgressParser):
 
     def parse(self, check_only=False):
         self.error_config = (
-            errors.ErrorConfiguration(self.project, None, self.mtype().mtype))
+            errors.ErrorConfiguration(
+                self.activity.project, None,
+                self.available_measurement_type))
 
         parsed_metfile = parse_metfile(self.file_object)
 
@@ -144,9 +146,9 @@ class MetParser(specifics.ProgressParser):
         # Profile's start_x and start_y must be the coordinates of one
         # of the measurements
         if not any(
-            measurement.x == profile.start_x
-            and measurement.y == profile.start_y
-            for measurement in profile.measurements):
+                measurement.x == profile.start_x
+                and measurement.y == profile.start_y
+                for measurement in profile.measurements):
             self.record_error_code(
                 profile.line_number,
                 'MET_PROF_COORDS_IN_MEASRMNTS')
@@ -210,7 +212,7 @@ class MetParser(specifics.ProgressParser):
                     profile.line_number, 'MET_LEFTRIGHTXY')
 
             if (m1.profile_point_type != '22' or
-                m2.profile_point_type != '22'):
+                    m2.profile_point_type != '22'):
                 self.record_error_code(
                     profile.line_number, 'MET_22OUTSIDE')
             else:
@@ -307,10 +309,10 @@ class MetParser(specifics.ProgressParser):
         correct_so_far = True
 
         for code, amount, error_code in (
-            ('1', 1, 'MET_ONE_1_CODE'),
-            ('2', 1, 'MET_ONE_2_CODE'),
-            ('22', 2, 'MET_TWO_22_CODES'),
-            ('7', 1, 'MET_ONE_7_CODE')):
+                ('1', 1, 'MET_ONE_1_CODE'),
+                ('2', 1, 'MET_ONE_2_CODE'),
+                ('22', 2, 'MET_TWO_22_CODES'),
+                ('7', 1, 'MET_ONE_7_CODE')):
             found_amount = count_codes(measurements, code)
             if found_amount != amount:
                 self.record_error_code(
@@ -403,8 +405,7 @@ class MetParser(specifics.ProgressParser):
                 'MET_Z1GREATERTHANZ2')
         else:
             max_z1z2_difference = self.config_value('maximum_z1z2_difference')
-            if (abs(measurement.z2 - measurement.z1) >
-                max_z1z2_difference):
+            if (abs(measurement.z2 - measurement.z1) > max_z1z2_difference):
                 self.record_error_code(
                     measurement.line_number,
                     'MET_DIFFERENCE_Z1Z2_MAX_1M',
@@ -422,7 +423,7 @@ class MetParser(specifics.ProgressParser):
                 "lowest_below_water_allowed")
             lowest_allowed = lowest_below_water_allowed + profile.waterlevel
             if (measurement.z1 < lowest_allowed or
-                measurement.z2 < lowest_allowed):
+                    measurement.z2 < lowest_allowed):
                 self.record_error_code(
                     measurement.line_number,
                     'MET_Z_TOO_LOW_BELOW_WATER',
@@ -440,7 +441,7 @@ class MetParser(specifics.ProgressParser):
     def get_scheduled_measurement(self, profile):
         try:
             location = models.Location.objects.get(
-                project=self.project,
+                activity=self.activity,
                 location_code=profile.id)
             location_point = linear_algebra.Point(
                 x=location.the_geom.x, y=location.the_geom.y)
@@ -455,7 +456,8 @@ class MetParser(specifics.ProgressParser):
                     location_id=profile.id,
                     x=location_point.x, y=location_point.y,
                     m=distance, maxm=maxdistance, recovery={
-                        'available_measurement_type': self.mtype().mtype,
+                        'available_measurement_type':
+                        self.available_measurement_type,
                         'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
                         'location_code': profile.id,
                         'x': profile.start_x,
@@ -467,13 +469,15 @@ class MetParser(specifics.ProgressParser):
                 location.save()
 
         except models.Location.DoesNotExist:
-            if self.project.needs_predefined_locations(self.mtype().mtype):
+            if self.activity.project.needs_predefined_locations(
+                    self.available_measurement_type):
                 self.record_error_code(
                     line_number=profile.line_number,
                     error_code="NO_LOCATION",
                     location_id=profile.id,
                     recovery={
-                        'available_measurement_type': self.mtype().mtype,
+                        'available_measurement_type':
+                        self.available_measurement_type,
                         'request_type': Request.REQUEST_TYPE_NEW_LOCATION,
                         'location_code': profile.id,
                         'x': profile.start_x,
@@ -482,18 +486,19 @@ class MetParser(specifics.ProgressParser):
                 return None
             else:
                 location = models.Location.objects.create(
-                    project=self.project,
+                    activity=self.activity,
                     location_code=profile.id,
                     the_geom=Point(profile.start_x, profile.start_y))
         try:
             scheduled_measurement = (
                 models.ScheduledMeasurement.objects.
-                get(project=self.project,
-                    contractor=self.contractor,
+                get(organization=self.organization,
                     location=location,
-                    measurement_type=self.mtype()))
+                    available_measurement_type=self.available_measurement_type)
+            )
         except models.ScheduledMeasurement.DoesNotExist:
-            if self.project.needs_predefined_locations(self.mtype().mtype):
+            if self.activity.project.needs_predefined_locations(
+                    self.available_measurement_type):
                 self.record_error_code(
                     line_number=profile.line_number,
                     error_code="NO_SCHEDULED")
@@ -501,10 +506,10 @@ class MetParser(specifics.ProgressParser):
             else:
                 scheduled_measurement = (
                     models.ScheduledMeasurement.objects.create(
-                        project=self.project,
-                        contractor=self.contractor,
+                        organization=self.organization,
                         location=location,
-                        measurement_type=self.mtype()))
+                        available_measurement_type=
+                        self.available_measurement_type))
 
         return scheduled_measurement
 

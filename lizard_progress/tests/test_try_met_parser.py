@@ -66,10 +66,10 @@ class TestOrganization(TransactionTestCase):
 
     def setup_uploaded_file(self, path):
         uploaded_file = test_models.UploadedFileF.create(
-            project=self.project,
-            contractor=self.contractor,
+            activity=self.activity,
+            organization=self.organization,
             uploaded_by=self.upload_user,
-            mtype=dwarsprofiel_available_mtype(),
+            mtype=self.mtype,
             path=path)
         return uploaded_file
 
@@ -167,17 +167,19 @@ class TestWaternet(TestOrganization):
             'Testuploader', 'test', False)
 
         self.project = test_models.ProjectF.create(
-            name="testproject",
-            slug="testproject",
-            superuser=self.project_user)
+            name="testprojectwaternet",
+            slug="testprojectwaternet")
 
-        self.contractor = test_models.ContractorF.create(
-            project=self.project,
-            organization=self.upload_org)
+        self.activity = test_models.ActivityF.create(
+            project=self.project, name="activitywaternet")
 
-        self.measurementtype = test_models.MeasurementTypeF.create(
-            project=self.project,
-            mtype=dwarsprofiel_available_mtype())
+        self.organization = test_models.OrganizationF.create(
+            name="contractorwaternet")
+
+        self.activity.contractors.add(self.organization)
+
+        self.mtype = dwarsprofiel_available_mtype()
+        self.activity.measurement_types.add(self.mtype)
 
     def test_correct_file(self, *args):
         pass

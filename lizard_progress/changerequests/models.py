@@ -63,7 +63,8 @@ class Request(models.Model):
         REQUEST_STATUS_INVALID: "Ongeldig"
     }
 
-    contractor = models.ForeignKey(pmodels.Contractor)
+    activity = models.ForeignKey(pmodels.Activity, null=True)
+    organization = models.ForeignKey(pmodels.Organization, null=True)
     mtype = models.ForeignKey(pmodels.AvailableMeasurementType)
 
     request_type = models.IntegerField(choices=sorted(TYPES.items()))

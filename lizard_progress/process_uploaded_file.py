@@ -73,7 +73,7 @@ def process(uploaded_file):
     # uploaded file. However, we keep the functionality around of multiple
     # parsers being possible -- maybe we'll have a measurement type with
     # several parsers one day...
-    possible_parsers = uploaded_file.project.specifics(
+    possible_parsers = uploaded_file.activity.project.specifics(
         uploaded_file.mtype).parsers(filename)
 
     for parser in possible_parsers:
@@ -198,8 +198,8 @@ def call_parser(uploaded_file, parser):
 
     parser_instance = specifics.parser_factory(
         parser,
-        uploaded_file.project,
-        uploaded_file.contractor,
+        uploaded_file.activity,
+        uploaded_file.organization,
         uploaded_file.path,
         uploaded_file.mtype)
 

@@ -213,9 +213,9 @@ class UserProfile(models.Model):
 
     def roles_description(self):
         return ", ".join(
-                UserRole.objects.get(code=code).description
-                for code in UserRole.all_role_codes()
-                if self.has_role(code))
+            UserRole.objects.get(code=code).description
+            for code in UserRole.all_role_codes()
+            if self.has_role(code))
 
 
 def has_access(user, project, contractor=None):
@@ -230,10 +230,9 @@ def has_access(user, project, contractor=None):
         # Only organization's project managers have access
         return (userprofile.organization ==
                 project.organization) and (
-                    userprofile.has_role(UserRole.ROLE_MANAGER))
+            userprofile.has_role(UserRole.ROLE_MANAGER))
 
-    if (userprofile.organization ==
-        project.organization):
+    if (userprofile.organization == project.organization):
         # Everybody in the project's organization can see it.
         return True
 
@@ -256,12 +255,13 @@ def has_access(user, project, contractor=None):
     return False
 
 
-def all_measurements(project, contractor):
+def all_measurements(project, organization):
     """Return an iterable of all measurements taken for this
     project and contractor."""
 
     return Measurement.objects.filter(
-        scheduled__project=project, scheduled__contractor=contractor)
+        scheduled__location__activity__project=project,
+        scheduled__organization=organization)
 
 
 def current_files(measurements):
@@ -280,9 +280,7 @@ class Project(models.Model):
     slug = models.SlugField(max_length=50, unique=True)
     organization = models.ForeignKey(Organization, null=False)
     is_archived = models.BooleanField(default=False)
-    # Deprecated
-    superuser = models.ForeignKey(User, null=True, blank=True,
-                                  verbose_name='projectmanager')
+
     project_type = models.ForeignKey(ProjectType, null=True, blank=True)
     created_at = models.DateTimeField(default=datetime.datetime.now)
 
@@ -366,7 +364,7 @@ class Project(models.Model):
 
                 scheduled_measurements = len(
                     ScheduledMeasurement.objects.filter(
-                        project=self,
+                        location__activity__project=self,
                         contractor=c,
                         measurement_type=m))
                 if self.needs_predefined_locations(m.mtype):
@@ -377,7 +375,7 @@ class Project(models.Model):
                             scheduled_measurements))
 
                 measurements = Measurement.objects.filter(
-                    scheduled__project=self,
+                    scheduled__location__activity__project=self,
                     scheduled__contractor=c,
                     scheduled__measurement_type=m).order_by('timestamp')
 
@@ -394,42 +392,42 @@ class Project(models.Model):
                     "?mtype_slug={}".format(m.mtype.slug))
 
                 info_for_contractor.append({
-                        'contractor': c,
-                        'measurement_type': m,
-                        'scheduled_measurements': scheduled_measurements,
-                        'planning_url': planning_url,
-                        'num_measurements': num_m,
-                        'last_measurement': last_m
-                        })
+                    'contractor': c,
+                    'measurement_type': m,
+                    'scheduled_measurements': scheduled_measurements,
+                    'planning_url': planning_url,
+                    'num_measurements': num_m,
+                    'last_measurement': last_m
+                })
             if info_for_contractor:
                 info += info_for_contractor
             else:
                 planning_url = reverse('lizard_progress_planningview', kwargs={
-                        'project_slug': self.slug,
-                        'contractor_slug': c.slug})
+                    'project_slug': self.slug,
+                    'contractor_slug': c.slug})
                 info.append({
-                        'contractor': c,
-                        'measurement_type': None,
-                        'scheduled_measurements': "Geen metingen toegewezen",
-                        'planning_url': planning_url,
-                        'num_measurements': 0,
-                        'last_measurement': None
-                        })
+                    'contractor': c,
+                    'measurement_type': None,
+                    'scheduled_measurements': "Geen metingen toegewezen",
+                    'planning_url': planning_url,
+                    'num_measurements': 0,
+                    'last_measurement': None
+                })
         return info
 
     def number_of_scheduled_measurements(self):
         return ScheduledMeasurement.objects.filter(
-            project=self).count()
+            location__activity__project=self).count()
 
     def number_of_complete_scheduled_measurements(self):
         return ScheduledMeasurement.objects.filter(
-            project=self, complete=True).count()
+            location__activity__project=self, complete=True).count()
 
     def percentage_done(self):
         if any(not self.needs_predefined_locations(available_measurement_type)
                for available_measurement_type in
                AvailableMeasurementType.objects.filter(
-                measurementtype__project=self)):
+                   activity__project=self)):
             return "N/A"
 
         percentage = (
@@ -467,57 +465,58 @@ class Project(models.Model):
             for contractor in self.contractor_set.all())
 
 
-class Contractor(models.Model):
-    # "Tijhuis", "Van der Zwaan", etc
-    project = models.ForeignKey(Project)
-    name = models.CharField(max_length=50)
-    slug = models.SlugField(max_length=50)
-    organization = models.ForeignKey(Organization, null=True, blank=True,
-        verbose_name='organisatie')
+# class Contractor(models.Model):
+#     # "Tijhuis", "Van der Zwaan", etc
+#     project = models.ForeignKey(Project)
+#     name = models.CharField(max_length=50)
+#     slug = models.SlugField(max_length=50)
+#     organization = models.ForeignKey(Organization, null=True, blank=True,
+#                                      verbose_name='organisatie')
 
-    def set_slug_and_save(self):
-        """Call on an unsaved contractor.
+#     def set_slug_and_save(self):
+#         """Call on an unsaved contractor.
 
-        Sets a random slug, saves the project, then sets a new slug
-        based on primary key and name."""
-        chars = list(string.lowercase)
-        random.shuffle(chars)
-        self.slug = ''.join(chars)
-        self.save()
+#         Sets a random slug, saves the project, then sets a new slug
+#         based on primary key and name."""
+#         chars = list(string.lowercase)
+#         random.shuffle(chars)
+#         self.slug = ''.join(chars)
+#         self.save()
 
-        self.slug = "{id}-{slug}".format(
-            id=self.id,
-            slug=slugify(self.organization.name))
-        self.save()
+#         self.slug = "{id}-{slug}".format(
+#             id=self.id,
+#             slug=slugify(self.organization.name))
+#         self.save()
 
-    def show_measurement_type(self, measurement_type):
-        """Only show that measurement type for this contractor if there are
-        scheduled measurements for it, or if all contractors can freely upload
-        measurements."""
+#     def show_measurement_type(self, measurement_type):
+#         """Only show that measurement type for this contractor if there are
+#         scheduled measurements for it, or if all contractors can freely upload
+#         measurements."""
 
-        if self.project.needs_predefined_locations(measurement_type.mtype):
-            return ScheduledMeasurement.objects.filter(
-                project=self.project,
-                contractor=self,
-                measurement_type=measurement_type).exists()
-        else:
-            return True
+#         if self.project.needs_predefined_locations(measurement_type.mtype):
+#             return ScheduledMeasurement.objects.filter(
+#                 project=self.project,
+#                 contractor=self,
+#                 measurement_type=measurement_type).exists()
+#         else:
+#             return True
 
-    def has_measurements(self):
-        return Measurement.objects.filter(
-            scheduled__contractor=self).exists()
+#     def has_measurements(self):
+#         return Measurement.objects.filter(
+#             scheduled__contractor=self).exists()
 
-    def __unicode__(self):
-        return u"%s in %s" % (self.organization, self.project.name)
+#     def __unicode__(self):
+#         return u"%s in %s" % (self.organization, self.project.name)
 
-    class Meta:
-        unique_together = (("project", "organization"))
+#     class Meta:
+#         unique_together = (("project", "organization"))
 
 
 class Location(models.Model):
-    # All relevant locations in the project
+    # A location in an activity
+    activity = models.ForeignKey('Activity', null=True)
+
     location_code = models.CharField(max_length=50, db_index=True)
-    project = models.ForeignKey(Project)
 
     the_geom = models.PointField(null=True, srid=SRID)
     # Any extra known information about the location
@@ -526,8 +525,8 @@ class Location(models.Model):
     objects = models.GeoManager()
 
     class Meta:
-        # Location codes are unique within a project
-        unique_together = (("location_code", "project"))
+        # Location codes are unique within an activity
+        unique_together = ("location_code", "activity")
 
     def __unicode__(self):
         return u"Location with code '%s'" % (self.location_code,)
@@ -632,6 +631,22 @@ class AvailableMeasurementType(models.Model):
         return cls.objects.get(slug='dwarsprofiel')
 
 
+class Activity(models.Model):
+    """An activity is a part of a project. Measurements happen as
+    part of an activity. All measurements in an activity share the
+    same set of locations and the same configuration.
+
+    There can be multiple measurement types and multiple contractors.
+    If there are, all contractors must do all types of measurements
+    at all locations in this activity."""
+
+    project = models.ForeignKey(Project)
+    name = models.CharField(max_length=100, default="Activity name")
+
+    measurement_types = models.ManyToManyField(AvailableMeasurementType)
+    contractors = models.ManyToManyField(Organization)
+
+
 class MeasurementTypeAllowed(models.Model):
     """This model is the "through" model for relationships between
     (project-owning) Organizations, and AvailableMeasurementTypes.
@@ -650,47 +665,51 @@ class MeasurementTypeAllowed(models.Model):
     visible = models.BooleanField(default=True)
 
 
-class MeasurementType(models.Model):
-    """The way this is implemented now, there is basically a
-    many-to-many relationship between AvailableMeasurementType and
-    Project, and it is implemented through this table.  Previous
-    properties of this model (name and slug) that are now in
-    AvailableMeasurementType are available through property functions
-    for ease of use and backward compatibility."""
+# class MeasurementType(models.Model):
+#     """The way this is implemented now, there is basically a
+#     many-to-many relationship between AvailableMeasurementType and
+#     Project, and it is implemented through this table.  Previous
+#     properties of this model (name and slug) that are now in
+#     AvailableMeasurementType are available through property functions
+#     for ease of use and backward compatibility."""
 
-    mtype = models.ForeignKey(AvailableMeasurementType)
-    project = models.ForeignKey(Project)
+#     mtype = models.ForeignKey(AvailableMeasurementType)
+#     project = models.ForeignKey(Project)
 
-    icon_missing = models.CharField(max_length=50, null=True, blank=True)
-    icon_complete = models.CharField(max_length=50, null=True, blank=True)
+#     icon_missing = models.CharField(max_length=50, null=True, blank=True)
+#     icon_complete = models.CharField(max_length=50, null=True, blank=True)
 
-    class Meta:
-        # Measurement types occur only once in a project
-        unique_together = (("project", "mtype"),)
+#     class Meta:
+#         # Measurement types occur only once in a project
+#         unique_together = (("project", "mtype"),)
 
-    @property
-    def name(self):
-        return self.mtype.name
+#     @property
+#     def name(self):
+#         return self.mtype.name
 
-    @property
-    def slug(self):
-        return self.mtype.slug
+#     @property
+#     def slug(self):
+#         return self.mtype.slug
 
-    def __unicode__(self):
-        return u"Type '%s' in %s" % (self.mtype.name, self.project.name)
+#     def __unicode__(self):
+#         return u"Type '%s' in %s" % (self.mtype.name, self.project.name)
 
-    def has_measurements(self):
-        return Measurement.objects.filter(
-            scheduled__measurement_type=self).exists()
+#     def has_measurements(self):
+#         return Measurement.objects.filter(
+#             scheduled__measurement_type=self).exists()
 
 
 class ScheduledMeasurement(models.Model):
-    project = models.ForeignKey(Project)
-    contractor = models.ForeignKey(Contractor)
-    measurement_type = models.ForeignKey(MeasurementType)
+    # What
+    available_measurement_type = models.ForeignKey(
+        AvailableMeasurementType, null=True)
+    # By whom
+    organization = models.ForeignKey(
+        Organization, null=True)
+    # Where
     location = models.ForeignKey(Location)
-    timestamp = models.DateTimeField(auto_now=True)
 
+    timestamp = models.DateTimeField(auto_now=True)
     complete = models.BooleanField(default=False)
 
     @property
@@ -707,8 +726,9 @@ class ScheduledMeasurement(models.Model):
             return None
 
     class Meta:
-        unique_together = ("project", "contractor",
-            "measurement_type", "location")
+        unique_together = ("location",
+                           "available_measurement_type",
+                           "organization")
 
     def __unicode__(self):
         return (("Scheduled measurement of type '%s' at location '%s' "
@@ -853,8 +873,9 @@ class UploadedFile(models.Model):
     uploaded file is only finally deleted if there are no uploadedfile
     instances referring to it anymore."""
 
-    project = models.ForeignKey(Project)
-    contractor = models.ForeignKey(Contractor)
+    activity = models.ForeignKey(Activity, null=True)
+    organization = models.ForeignKey(Organization, null=True)
+
     uploaded_by = models.ForeignKey(User)
     uploaded_at = models.DateTimeField()
 
@@ -887,7 +908,7 @@ class UploadedFile(models.Model):
         file could be treated with possible requests, they were all
         requested and all accepted."""
         new_uf = UploadedFile.objects.create(
-            project=self.project, contractor=self.contractor,
+            activity=self.activity, organization=self.organization,
             uploaded_by=self.uploaded_by, uploaded_at=datetime.datetime.now(),
             path=self.path, ready=False, linelike=self.linelike,
             mtype=self.mtype)
@@ -922,17 +943,17 @@ class UploadedFile(models.Model):
             # What can we log... project, contractor, the time, the
             # filename, measurement type, number of measurements
             UploadLog.objects.create(
-                project=self.project,
-                uploading_organization=self.contractor.organization,
+                project=self.activity.project,
+                uploading_organization=self.organization,
                 when=datetime.datetime.now(),
                 filename=self.filename,
-                mtype=measurements[0].scheduled.measurement_type.mtype,
+                mtype=self.mtype,
                 num_measurements=num_measurements)
 
     def delete_self(self):
         try:
             if os.path.exists(self.path) and UploadedFile.objects.filter(
-                path=self.path).count() == 1:
+                    path=self.path).count() == 1:
                 # File exists and only we refer to it
                 os.remove(self.path)
             # Try to remove empty directory
@@ -946,8 +967,8 @@ class UploadedFile(models.Model):
         """This will be turned into JSON to send to the UI."""
         return {
             'id': self.id,
-            'project_id': self.project.id,
-            'contractor_id': self.contractor.id,
+            'project_id': self.activity.project.id,
+            'contractor_id': self.organization.id,
             'uploaded_by': self.uploaded_by.get_full_name(),
             'uploaded_at': self.uploaded_at.strftime("%d/%m/%y %H:%M"),
             'filename': os.path.basename(self.path),
@@ -1003,7 +1024,7 @@ class ExportRun(models.Model):
     export the same data."""
 
     project = models.ForeignKey(Project)
-    contractor = models.ForeignKey(Contractor)
+    organization = models.ForeignKey(Organization, null=True)
     measurement_type = models.ForeignKey(AvailableMeasurementType)
     exporttype = models.CharField(max_length=20)
     # Some export runs generate a file to download, others (the Lizard export)
@@ -1020,7 +1041,7 @@ class ExportRun(models.Model):
 
     class Meta:
         unique_together = (
-            'project', 'contractor', 'measurement_type', 'exporttype')
+            'project', 'organization', 'measurement_type', 'exporttype')
 
     def __unicode__(self):
         return ("Export '{exporttype}' of all data of type "
@@ -1073,7 +1094,7 @@ class ExportRun(models.Model):
                         # Export to Lizard for Almere superusers
                         organization = project.organization
                         if (organization.lizard_config and
-                            project.superuser == user):
+                                project.is_manager(user)):
                             exportrun = cls.get_or_create(
                                 project, contractor, mtype.mtype, 'lizard')
                             exportrun.generates_file = False

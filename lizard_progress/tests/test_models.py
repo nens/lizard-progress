@@ -64,7 +64,6 @@ class ProjectF(factory.DjangoModelFactory):
     slug = "testproject"
 
     organization = factory.SubFactory(OrganizationF)
-    superuser = factory.SubFactory(UserF)
 
 
 class ContractorF(factory.DjangoModelFactory):
@@ -78,13 +77,21 @@ class ContractorF(factory.DjangoModelFactory):
     organization = None
 
 
+class ActivityF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.Activity
+
+    name = "Testactivity"
+    project = factory.SubFactory(ProjectF)
+
+
 class LocationF(factory.DjangoModelFactory):
     """Factory for Location models."""
     class Meta:
         model = models.Location
 
     location_code = "SOME_ID"
-    project = factory.LazyAttribute(lambda a: ProjectF())
+    activity = factory.SubFactory(ActivityF)
 
     information = {"key": "value"}
 
@@ -111,12 +118,11 @@ class ScheduledMeasurementF(factory.DjangoModelFactory):
     class Meta:
         model = models.ScheduledMeasurement
 
-    project = factory.LazyAttribute(lambda a: ProjectF())
-    contractor = factory.LazyAttribute(
-        lambda a: ContractorF(project=a.project))
-    measurement_type = factory.LazyAttribute(
-        lambda a: MeasurementTypeF(project=a.project))
-    location = factory.LazyAttribute(lambda a: LocationF(project=a.project))
+    activity = factory.SubFactory(ActivityF)
+    organization = factory.SubFactory(OrganizationF)
+    available_measurement_type = factory.SubFactory(
+        AvailableMeasurementTypeF)
+    location = factory.SubFactory(LocationF)
     complete = False
 
 
@@ -135,8 +141,8 @@ class UploadedFileF(factory.DjangoModelFactory):
     class Meta:
         model = models.UploadedFile
 
-    project = factory.LazyAttribute(lambda a: ProjectF())
-    contractor = factory.LazyAttribute(lambda a: ContractorF())
+    activity = factory.SubFactory(ActivityF)
+    organization = factory.SubFactory(OrganizationF)
     uploaded_by = factory.LazyAttribute(lambda a: UserF())
     uploaded_at = datetime.datetime(2013, 3, 8, 10, 0)
     path = "/path/to/file/file.met"
@@ -301,7 +307,7 @@ class TestSecurity(TestCase):
 
         projectorganization = OrganizationF.create(name="organization")
         projectuser = UserF(is_superuser=True)
-        project = ProjectF.create(superuser=projectuser)
+        project = ProjectF.create()
         UserProfileF.create(
             user=projectuser, organization=projectorganization)
         contractor = ContractorF(
@@ -341,58 +347,12 @@ class TestProject(TestCase):
         self.assertEquals(project.num_open_requests, 0)
 
 
-class TestContractor(TestCase):
-    """Tests for the Contractor model."""
-    def test_unicode(self):
-        """Tests unicode method."""
-        contractor = ContractorF(
-            name="test",
-            organization=OrganizationF(name="testorg"),
-            project=ProjectF(name="testproject"))
-        self.assertEquals(unicode(contractor), "testorg in testproject")
-
-    def test_set_slug_and_save(self):
-        organization = OrganizationF.create(name="some_org")
-        user = UserF.create(username="whee")
-        UserProfileF.create(
-            user=user,
-            organization=organization)
-        project = ProjectF.create(name="testproject", superuser=user)
-
-        contractor = ContractorF.build(
-            project=project,
-            name="test",
-            organization=organization,
-            slug=None)
-
-        contractor.set_slug_and_save()
-        self.assertTrue(contractor.slug)
-        self.assertTrue(unicode(contractor.id) in contractor.slug)
-        self.assertTrue("some_org" in contractor.slug)
-
-    def test_show_measurement_type(self):
-        """Just checking that it doesn't crash"""
-        contractor = ContractorF.create()
-        measurement_type = MeasurementTypeF.create(
-            project=contractor.project)
-        contractor.show_measurement_type(measurement_type)
-
-
 class TestLocation(TestCase):
     """Tests for the Location model."""
     def test_unicode(self):
         """Tests unicode method."""
         location = LocationF(location_code="TESTID")
         self.assertEquals(unicode(location), "Location with code 'TESTID'")
-
-
-class TestMeasurementType(TestCase):
-    """Tests for the MeasurementType model."""
-    def test_unicode(self):
-        """Tests unicode method."""
-        mtype = MeasurementTypeF(
-            name='testtype', project=ProjectF(name='testproject'))
-        self.assertEquals(unicode(mtype), "Type 'Metingtype' in testproject")
 
 
 class TestScheduledMeasurement(TestCase):

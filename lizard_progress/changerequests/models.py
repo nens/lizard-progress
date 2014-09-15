@@ -109,7 +109,7 @@ class Request(models.Model):
                 codes=(self.location_code +
                        (", vervangt " + self.old_location_code
                         if self.old_location_code else "")),
-                contractor=self.contractor,
+                contractor=self.organization,
                 status=self.status_description))
 
     def adapter_layer_name(self):
@@ -120,11 +120,11 @@ class Request(models.Model):
                 codes=(self.location_code +
                        (", " + self.old_location_code
                         if self.old_location_code else "")),
-                organization=self.contractor.organization))
+                organization=self.organization))
 
     @property
     def project(self):
-        return self.contractor.project
+        return self.activity.project
 
     @property
     def type_description(self):
@@ -180,7 +180,7 @@ class Request(models.Model):
             location = self.get_location()
             if not location:
                 return self.set_invalid("Locatie bestaat niet")
-            if location.has_measurements(self.mtype, self.contractor):
+            if location.has_measurements(self.mtype, self.organization):
                 return self.set_invalid("Locatie heeft al metingen")
 
         elif self.request_type == Request.REQUEST_TYPE_MOVE_LOCATION:
@@ -198,7 +198,7 @@ class Request(models.Model):
             location = self.get_location()
             if location:
                 if location.has_scheduled_measurements(
-                    mtype=self.mtype, contractor=self.contractor):
+                        mtype=self.mtype, contractor=self.contractor):
                     return self.set_invalid("Locatie bestaat al.")
 
             if self.old_location_code:
@@ -207,7 +207,7 @@ class Request(models.Model):
                 if not old_location:
                     return self.set_invalid("Oude locatie bestaat niet.")
                 if old_location.has_measurements(
-                    mtype=self.mtype, contractor=self.contractor):
+                        mtype=self.mtype, contractor=self.contractor):
                     return self.set_invalid(
                         "Er zijn al metingen op de oude locatie.")
 
@@ -328,8 +328,8 @@ class Request(models.Model):
             if self.request_status == Request.REQUEST_STATUS_INVALID:
                 return False  # Invalid was caused elsewhere
             elif self.request_status in (
-                Request.REQUEST_STATUS_ACCEPTED,
-                Request.REQUEST_STATUS_REFUSED):
+                    Request.REQUEST_STATUS_ACCEPTED,
+                    Request.REQUEST_STATUS_REFUSED):
                 return organization == self.contractor.project.organization
             elif self.request_status == Request.REQUEST_STATUS_WITHDRAWN:
                 return organization == self.contractor.organization
@@ -354,7 +354,7 @@ class Request(models.Model):
     def can_see(self, profile):
         """Return True if profile is allowed to see this request."""
         if (profile.has_role(pmodels.UserRole.ROLE_MANAGER) and
-            self.contractor.project.organization == profile.organization):
+                self.contractor.project.organization == profile.organization):
             return True
 
         if profile.has_role(pmodels.UserRole.ROLE_UPLOADER):
@@ -378,12 +378,12 @@ class Request(models.Model):
 
     def adapter_layer_json(self):
         return json.dumps({
-                'changerequest_id': self.id})
+            'changerequest_id': self.id})
 
     def detail_url(self):
         url = reverse('changerequests_detail', kwargs={
-                'project_slug': self.contractor.project.slug,
-                'request_id': str(self.id)})
+            'project_slug': self.contractor.project.slug,
+            'request_id': str(self.id)})
         return url
 
     def record_comment(self, user, comment):

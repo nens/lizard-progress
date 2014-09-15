@@ -71,8 +71,9 @@ class ProjectsMixin(object):
             self.project = get_object_or_404(Project, slug=self.project_slug)
             if has_access(request.user, self.project):
                 self.has_full_access = all(
-                    has_access(request.user, self.project, contractor)
-                    for contractor in self.project.contractor_set.all())
+                    has_access(
+                        request.user, self.project, activity.contractor)
+                    for activity in self.project.activity_set.all())
             else:
                 raise PermissionDenied()
         else:
@@ -126,9 +127,9 @@ class ProjectsMixin(object):
         """User is an upload if his organization is a contractor in
         this project and user has role ROLE_UPLOADER."""
         return (self.user_has_uploader_role() and
-                (not self.project or models.Contractor.objects.filter(
+                (not self.project or models.Activity.objects.filter(
                     project=self.project,
-                    organization=self.profile.organization)
+                    contractor=self.profile.organization)
                  .exists()))
 
     def user_has_uploader_role(self):

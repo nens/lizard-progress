@@ -570,6 +570,9 @@ class Activity(models.Model):
     contractor = models.ForeignKey(
         Organization, null=True)
 
+    def __unicode__(self):
+        return "{} door {}".format(self.measurement_type, self.contractor)
+
     def config_value(self, key):
         project = self.project
         from lizard_progress import configuration
@@ -588,6 +591,16 @@ class Activity(models.Model):
         return (
             self.project.is_manager(user)
             or self.contractor == Organization.get_by_user(user))
+
+    def num_locations(self):
+        return self.location_set.all().count()
+
+    def num_complete_locations(self):
+        return self.location_set.filter(complete=True).count()
+
+    def num_measurements(self):
+        return Measurement.objects.filter(
+            location__activity=self).count()
 
 
 class MeasurementTypeAllowed(models.Model):

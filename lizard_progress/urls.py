@@ -97,7 +97,8 @@ urlpatterns = patterns(
         login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),
 
-    url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/planning/$',
+    url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/'
+        'planning/$',
         login_required(views.PlanningView.as_view()),
         name='lizard_progress_planningview'),
 
@@ -160,7 +161,7 @@ urlpatterns = patterns(
         name='lizard_progress_upload_hydrovakken'),
 
     url('^(?P<project_slug>[^/]+)/dashboard/' +
-        '(?P<contractor_slug>[^/]+)/graph/$',
+        '(?P<activity_id>\d+)/graph/$',
         dashboard_graph,
         name='lizard_progress_dashboardgraphview'),
     url('^file/(?P<project_slug>[^/]+)/' +

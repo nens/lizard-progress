@@ -41,6 +41,16 @@ Navigation
 {% endif %}
   </ul>
 {% endif %}
+
+  {% if view.project %}
+    <h2>Werkzaamheden {{view.project}}</h2>
+    <ul class="nav nav-list">
+      {% for activity in view.project.activity_set.all %}
+        <li>{{ activity }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
   <h2>Projecten</h2>
   <ul class="nav nav-pills nav-stacked">
   {% for project in view.projects %}

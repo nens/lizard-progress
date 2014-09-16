@@ -341,10 +341,12 @@ class MapView(View):
 
 
 class DashboardView(ProjectsView):
-    """Show the dashboard page. The page shows contractors and
-    measurement types,  number of planned and uploaded measurements,
-    links to pages for planning and for adding and removing contractors
-    and measurement types, and progress graphs."""
+    """Show the dashboard page. The page shows activities in this project,
+    number of planned and uploaded measurements, links to pages for
+    planning and for adding and removing contractors and measurement
+    types, and progress graphs.
+
+    """
 
     template_name = 'lizard_progress/dashboard.html'
     active_menu = "dashboard"
@@ -365,19 +367,6 @@ class DashboardView(ProjectsView):
                     kwargs={'project_slug': self.project_slug})))
 
         return crumbs
-
-    def graphs(self):
-        """Generator for the links for the dashboard graphs."""
-
-        for activity in models.Activity.objects.filter(project=self.project):
-            if has_access(
-                    self.request.user, self.project, activity.contractor):
-                yield (
-                    activity,
-                    reverse('lizard_progress_dashboardgraphview',
-                            kwargs={
-                                'activity_id': activity.id,
-                                'project_slug': self.project.slug}))
 
 
 class DashboardCsvView(ProjectsView):
@@ -513,23 +502,23 @@ class ScreenFigure(figure.Figure):
 
 @login_required
 def dashboard_graph(
-        request, project_slug, contractor_slug, *args, **kwargs):
+        request, project_slug, activity_id):
     """Show the work in progress in pie charts.
 
     A single PNG image is returned as a response.
     """
     project = get_object_or_404(Project, slug=project_slug)
-    contractor = get_object_or_404(Contractor, project=project,
-                                   slug=contractor_slug)
+    activity = get_object_or_404(models.Activity, pk=activity_id)
 
-    if not has_access(request.user, project, contractor):
+    if (not has_access(request.user, project, activity.contractor)
+            or activity.project != project):
         raise PermissionDenied()
 
     fig = ScreenFigure(600, 350)  # in pixels
     fig.text(
         0.5, 0.85,
-        ('Uitgevoerde werkzaamheden {contractor}'
-         .format(contractor=contractor.organization.name)),
+        ('Uitgevoerde werkzaamheden {activity}'
+         .format(activity=activity)),
         fontsize=14, ha='center')
     fig.subplots_adjust(left=0.05, right=0.95)  # smaller margins
     y_title = -0.2  # a bit lower
@@ -553,29 +542,22 @@ def dashboard_graph(
             n += 1
             yield start + n
 
-    mtypes = project.measurementtype_set.all()
-    subplots = subplot_generator(len(mtypes))
+    subplots = subplot_generator(1)
 
-    for mtype in mtypes:
-        # Profiles to be measured
-        total = (ScheduledMeasurement.objects.
-                 filter(project=project,
-                        contractor=contractor,
-                        measurement_type=mtype).count())
+    # Profiles to be measured
+    total = activity.num_locations()
 
-        # Measured profiles
-        done = ScheduledMeasurement.objects.filter(
-            project=project, contractor=contractor, measurement_type=mtype,
-            complete=True).count()
+    # Measured profiles
+    done = activity.num_complete_locations()
 
-        todo = total - done
-        x = [done, todo]
-        labels = ['Wel', 'Niet']
-        colors = ['#50CD34', '#FE6535']
-        ax = fig.add_subplot(subplots.next())
-        ax.pie(x, labels=labels, colors=colors, autopct=autopct)
-        ax.set_title(mtype.name, y=y_title)
-        ax.set_aspect('equal')  # circle
+    todo = total - done
+    x = [done, todo]
+    labels = ['Wel', 'Niet']
+    colors = ['#50CD34', '#FE6535']
+    ax = fig.add_subplot(subplots.next())
+    ax.pie(x, labels=labels, colors=colors, autopct=autopct)
+    ax.set_title(unicode(activity), y=y_title)
+    ax.set_aspect('equal')  # circle
 
     # Create the response
     response = http.HttpResponse(content_type='image/png')

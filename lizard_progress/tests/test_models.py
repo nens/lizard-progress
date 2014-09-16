@@ -424,3 +424,21 @@ class TestExportRun(TestCase):
         self.assertEquals(run.error_message, "Testmessage")
         self.assertFalse(run.export_running)
         self.assertFalse(run.available)
+
+
+class TestActivity(TestCase):
+    def test_num_locations(self):
+        activity = ActivityF.create()
+        LocationF.create(activity=activity, location_code='a')
+        LocationF.create(activity=activity, location_code='b')
+        self.assertEquals(activity.num_locations(), 2)
+
+    def test_num_complete_locations(self):
+        activity = ActivityF.create()
+        LocationF.create(
+            activity=activity, complete=False, location_code='a')
+        LocationF.create(
+            activity=activity, complete=True, location_code='b')
+        LocationF.create(
+            activity=activity, complete=True, location_code='c')
+        self.assertEquals(activity.num_complete_locations(), 2)

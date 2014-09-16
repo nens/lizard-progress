@@ -64,8 +64,6 @@ class Request(models.Model):
     }
 
     activity = models.ForeignKey(pmodels.Activity, null=True)
-    organization = models.ForeignKey(pmodels.Organization, null=True)
-    mtype = models.ForeignKey(pmodels.AvailableMeasurementType)
 
     request_type = models.IntegerField(choices=sorted(TYPES.items()))
     request_status = models.IntegerField(
@@ -109,18 +107,18 @@ class Request(models.Model):
                 codes=(self.location_code +
                        (", vervangt " + self.old_location_code
                         if self.old_location_code else "")),
-                contractor=self.organization,
+                contractor=self.activity.organization,
                 status=self.status_description))
 
     def adapter_layer_name(self):
         """Sort of a simplied Unicode."""
         return (
-            "Aanvraag {requesttype} {codes} door {organization}".format(
+            "Aanvraag {requesttype} {codes} in {activity}".format(
                 requesttype=self.type_description.lower(),
                 codes=(self.location_code +
                        (", " + self.old_location_code
                         if self.old_location_code else "")),
-                organization=self.organization))
+                activity=self.activity))
 
     @property
     def project(self):
@@ -161,7 +159,7 @@ class Request(models.Model):
         try:
             return pmodels.Location.objects.get(
                 location_code=location_code,
-                project=self.project)
+                activity=self.activity)
         except pmodels.Location.DoesNotExist:
             return None
 
@@ -180,7 +178,7 @@ class Request(models.Model):
             location = self.get_location()
             if not location:
                 return self.set_invalid("Locatie bestaat niet")
-            if location.has_measurements(self.mtype, self.organization):
+            if location.has_measurements():
                 return self.set_invalid("Locatie heeft al metingen")
 
         elif self.request_type == Request.REQUEST_TYPE_MOVE_LOCATION:
@@ -197,17 +195,14 @@ class Request(models.Model):
             # contractor yet.
             location = self.get_location()
             if location:
-                if location.has_scheduled_measurements(
-                        mtype=self.mtype, contractor=self.contractor):
-                    return self.set_invalid("Locatie bestaat al.")
+                return self.set_invalid("Locatie bestaat al.")
 
             if self.old_location_code:
                 old_location = self.get_location(
                     location_code=self.old_location_code)
                 if not old_location:
                     return self.set_invalid("Oude locatie bestaat niet.")
-                if old_location.has_measurements(
-                        mtype=self.mtype, contractor=self.contractor):
+                if old_location.has_measurements():
                     return self.set_invalid(
                         "Er zijn al metingen op de oude locatie.")
 
@@ -264,22 +259,7 @@ class Request(models.Model):
 
     def do_remove_code(self, location_code=None):
         location = self.get_location(location_code)
-
-        # Delete the scheduled measurements, which shouldn't have
-        # measurements connected to them (then this request would
-        # be invalid).
-        mtype = pmodels.MeasurementType.objects.get(
-            mtype=self.mtype, project=self.contractor.project)
-
-        scheduleds = pmodels.ScheduledMeasurement.objects.filter(
-            location=location,
-            measurement_type=mtype,
-            contractor=self.contractor)
-
-        scheduleds.delete()
-
-        if not location.has_scheduled_measurements():
-            location.delete()
+        location.delete()
 
     def do_move_location(self):
         location = self.get_location()
@@ -288,16 +268,9 @@ class Request(models.Model):
 
     def do_add_location(self):
         location, created = pmodels.Location.objects.get_or_create(
-            location_code=self.location_code, project=self.project,
-            defaults={'the_geom': self.the_geom})
-
-        mtype, created = pmodels.MeasurementType.objects.get_or_create(
-            mtype=self.mtype, project=self.project)
-
-        pmodels.ScheduledMeasurement.objects.get_or_create(
-            project=self.project, contractor=self.contractor,
-            location=location,
-            measurement_type=mtype)
+            location_code=self.location_code,
+            activity=self.activity,
+            defaults={'the_geom': self.the_geom, 'complete': False})
 
     def refuse(self, reason):
         self.refusal_reason = reason
@@ -330,9 +303,9 @@ class Request(models.Model):
             elif self.request_status in (
                     Request.REQUEST_STATUS_ACCEPTED,
                     Request.REQUEST_STATUS_REFUSED):
-                return organization == self.contractor.project.organization
+                return organization == self.activity.project.organization
             elif self.request_status == Request.REQUEST_STATUS_WITHDRAWN:
-                return organization == self.contractor.organization
+                return organization == self.activity.contractor
 
         # Laatste comment
         comments = list(self.requestcomment_set.all())
@@ -354,11 +327,11 @@ class Request(models.Model):
     def can_see(self, profile):
         """Return True if profile is allowed to see this request."""
         if (profile.has_role(pmodels.UserRole.ROLE_MANAGER) and
-                self.contractor.project.organization == profile.organization):
+                self.activity.project.organization == profile.organization):
             return True
 
         if profile.has_role(pmodels.UserRole.ROLE_UPLOADER):
-            return self.contractor.organization == profile.organization
+            return self.activity.contractor == profile.organization
 
         return False
 
@@ -366,14 +339,14 @@ class Request(models.Model):
     def open_requests_for_profile(cls, project, profile):
         return [
             request for request in
-            cls.open_requests().filter(contractor__project=project)
+            cls.open_requests().filter(activity__project=project)
             if request.check_validity() and request.can_see(profile)]
 
     @classmethod
     def closed_requests_for_profile(cls, project, profile):
         return [
             request for request in
-            cls.closed_requests().filter(contractor__project=project)
+            cls.closed_requests().filter(activity__project=project)
             if request.can_see(profile)]
 
     def adapter_layer_json(self):
@@ -421,10 +394,6 @@ class PossibleRequest(models.Model):
     requested = models.BooleanField(default=False)
     accepted = models.BooleanField(default=False)
 
-    # The following fields are the same values as in
-    # Request. Motivation and optionally old_location_code need to be
-    # given by the user.
-    mtype = models.ForeignKey(pmodels.AvailableMeasurementType)
     request_type = models.IntegerField(choices=sorted(Request.TYPES.items()))
     location_code = models.CharField(max_length=50)
     # Contains coordinates of the point.
@@ -469,9 +438,9 @@ class PossibleRequest(models.Model):
 
         try:
             location = pmodels.Location.objects.get(
-                project=self.uploaded_file.project,
+                activity=self.uploaded_file.activity,
                 location_code=self.location_code)
-            if location.has_measurements(mtype=self.mtype):
+            if location.has_measurements():
                 return "Kan aanvraag niet doen, de locatie heeft al metingen."
         except pmodels.Location.DoesNotExist:
             pass
@@ -482,20 +451,17 @@ class PossibleRequest(models.Model):
         # this code, such is life. Can be made one query with Q
         # objects, but I'm pressed for time.
         if (Request.objects.filter(
-                mtype=self.mtype,
-                contractor__project=self.uploaded_file.project,
+                activity=self.uploaded_file.activity,
                 request_status=Request.REQUEST_STATUS_OPEN,
                 location_code=self.location_code).exists() or
             Request.objects.filter(
-                mtype=self.mtype,
-                contractor__project=self.uploaded_file.project,
+                activity=self.uploaded_file.activity,
                 request_status=Request.REQUEST_STATUS_OPEN,
                 old_location_code=self.location_code).exists()):
             return "Er is al een open aanvraag voor deze locatie."
 
         Request.objects.create(
-            contractor=self.uploaded_file.contractor,
-            mtype=self.mtype,
+            activity=self.uploaded_file.activity,
             request_status=Request.REQUEST_STATUS_OPEN,
             location_code=self.location_code,
             request_type=self.request_type,
@@ -515,7 +481,6 @@ class PossibleRequest(models.Model):
 
         cls.objects.create(
             uploaded_file=uploaded_file,
-            mtype=possible_request['available_measurement_type'],
             request_type=possible_request['request_type'],
             location_code=possible_request['location_code'],
             the_geom='POINT({x} {y})'.format(**possible_request))

@@ -52,8 +52,6 @@ INSTALLED_APPS = [
     ]
 ROOT_URLCONF = 'lizard_progress.urls'
 
-SOUTH_TESTS_MIGRATE = False
-
 TEMPLATE_CONTEXT_PROCESSORS = (
     # Uncomment this one if you use lizard-map.
     # 'lizard_map.context_processors.processor.processor',

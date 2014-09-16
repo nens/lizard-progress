@@ -20,7 +20,6 @@ from django.db import transaction
 from lizard_progress import models
 from lizard_progress.changerequests.models import PossibleRequest
 from lizard_progress import specifics
-from lizard_progress.util import directories
 from lizard_progress.tools import unique_filename
 
 logger = logging.getLogger(__name__)
@@ -74,7 +73,7 @@ def process(uploaded_file):
     # parsers being possible -- maybe we'll have a measurement type with
     # several parsers one day...
     possible_parsers = uploaded_file.activity.project.specifics(
-        uploaded_file.mtype).parsers(filename)
+        uploaded_file.activity.measurement_type).parsers(filename)
 
     for parser in possible_parsers:
         # Try_parser takes care of moving the file to its correct
@@ -142,12 +141,8 @@ def try_parser(uploaded_file, parser):
             parseresult = call_parser(uploaded_file, parser)
             if (parseresult.success and hasattr(parseresult, 'measurements')
                     and parseresult.measurements):
-                # Get mtype from the parser result, for use in pathname
-                mtype = (parseresult.measurements[0].
-                         scheduled.location.activity.measurement_type)
-
                 # Move the file.
-                target_path = path_for_uploaded_file(uploaded_file, mtype)
+                target_path = path_for_uploaded_file(uploaded_file)
                 shutil.move(uploaded_file.path, target_path)
 
                 # Update measurements.
@@ -199,15 +194,13 @@ def call_parser(uploaded_file, parser):
     parser_instance = specifics.parser_factory(
         parser,
         uploaded_file.activity,
-        uploaded_file.organization,
-        uploaded_file.path,
-        uploaded_file.mtype)
+        uploaded_file.path)
 
     parseresult = parser_instance.parse()
     return parseresult
 
 
-def path_for_uploaded_file(uploaded_file, measurement_type):
+def path_for_uploaded_file(uploaded_file):
     """Create dirname based on project etc. Guaranteed not to
     exist yet at the time of checking."""
 

@@ -40,28 +40,16 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             raise ValueError(
                 'Argument layer_arguments of adapter should be a dict.')
 
-        project_slug = kwargs['layer_arguments'].get('project_slug', None)
         activity_id = kwargs['layer_arguments'].get('activity_id', None)
 
+        self.activity = None
         self.project = None
         self.contractor = None
         self.measurement_type = None
-        self.activity = None
-
-        if not project_slug or not activity_id:
-            return
-
-        try:
-            self.project = Project.objects.get(slug=project_slug)
-        except Project.DoesNotExist:
-            return
 
         try:
             self.activity = models.Activity.objects.get(pk=activity_id)
         except models.Activity.DoesNotExist:
-            return
-
-        if self.activity.project != self.project:
             return
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)
@@ -280,7 +268,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         Returns extent {'west':.., 'south':.., 'east':.., 'north':..}
         in google projection. None for each key means unknown.
         """
-        if not self.project or not self.contractor:
+        if not self.activity:
             return {'west': None, 'south': None, 'east': None, 'north': None}
 
         locations = Location.objects.filter(activity=self.activity)

@@ -7,6 +7,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ("changerequests", "0008_auto__add_field_points_dx__add_field_points_dy"),
+    )
+
     def forwards(self, orm):
         # Deleting model 'Area'
         db.delete_table(u'lizard_progress_area')

@@ -58,13 +58,12 @@ class MetParser(specifics.ProgressParser):
         # Save the measured profiles.
         for series in parsed_metfile.series:
             for profile in series.profiles:
-                scheduled_measurement = (
-                    self.get_scheduled_measurement(profile))
-                if scheduled_measurement is None:
+                location = self.get_location(profile)
+                if location is None:
                     continue
 
                 m, created = models.Measurement.objects.get_or_create(
-                    scheduled=scheduled_measurement)
+                    location=location)
                 m.date = profile.date_measurement
 
                 m.data = [{
@@ -83,8 +82,8 @@ class MetParser(specifics.ProgressParser):
                         m.data[0]['x'], m.data[0]['y'], srid=models.SRID)
                     m.save()
 
-                scheduled_measurement.complete = True
-                scheduled_measurement.save()
+                location.complete = True
+                location.save()
 
                 measurements.append(m)
 
@@ -437,7 +436,7 @@ class MetParser(specifics.ProgressParser):
                     'MET_DISTANCE_TO_MIDLINE',
                     distance, max_allowed_distance)
 
-    def get_scheduled_measurement(self, profile):
+    def get_location(self, profile):
         try:
             location = models.Location.objects.get(
                 activity=self.activity,
@@ -488,29 +487,8 @@ class MetParser(specifics.ProgressParser):
                     activity=self.activity,
                     location_code=profile.id,
                     the_geom=Point(profile.start_x, profile.start_y))
-        try:
-            scheduled_measurement = (
-                models.ScheduledMeasurement.objects.
-                get(organization=self.organization,
-                    location=location,
-                    available_measurement_type=self.available_measurement_type)
-            )
-        except models.ScheduledMeasurement.DoesNotExist:
-            if self.activity.project.needs_predefined_locations(
-                    self.available_measurement_type):
-                self.record_error_code(
-                    line_number=profile.line_number,
-                    error_code="NO_SCHEDULED")
-                return None
-            else:
-                scheduled_measurement = (
-                    models.ScheduledMeasurement.objects.create(
-                        organization=self.organization,
-                        location=location,
-                        available_measurement_type=
-                        self.available_measurement_type))
 
-        return scheduled_measurement
+        return location
 
     def record_error_code(self, line_number, error_code, *args, **kwargs):
         if error_code not in self.error_config:

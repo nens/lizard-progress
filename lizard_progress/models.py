@@ -440,9 +440,10 @@ class Project(models.Model):
 
     @property
     def num_open_requests(self):
-        return sum(
-            contractor.request_set.filter(request_status=1).count()
-            for contractor in self.contractor_set.all())
+        from lizard_progress.changerequests.models import Request
+        return Request.objects.filter(
+            request_status=1,
+            activity__project=self).count()
 
 
 class Location(models.Model):
@@ -646,11 +647,11 @@ class Measurement(models.Model):
         """Return the URL to the uploaded file that contained this
         measurement."""
 
-        sm = self.scheduled
+        activity = self.location.activity
         return reverse('lizard_progress_filedownload', kwargs={
-            'project_slug': sm.project.slug,
-            'contractor_slug': sm.contractor.slug,
-            'measurement_type_slug': sm.measurement_type.slug,
+            'project_slug': activity.project.slug,
+            'contractor_id': activity.contractor_id,
+            'measurement_type_slug': activity.measurement_type.slug,
             'filename': os.path.basename(self.filename)})
 
 
@@ -809,10 +810,10 @@ class UploadedFile(models.Model):
             # filename, measurement type, number of measurements
             UploadLog.objects.create(
                 project=self.activity.project,
-                uploading_organization=self.organization,
+                uploading_organization=self.activity.contractor,
                 when=datetime.datetime.now(),
                 filename=self.filename,
-                mtype=self.mtype,
+                mtype=self.activity.measurement_type,
                 num_measurements=num_measurements)
 
     def delete_self(self):

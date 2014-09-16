@@ -20,10 +20,9 @@ class RequestF(factory.DjangoModelFactory):
     class Meta:
         model = models.Request
 
-    contractor = factory.LazyAttribute(
-        lambda a: progresstestmodels.ContractorF())
-    mtype = factory.LazyAttribute(
-        lambda a: progresstestmodels.AvailableMeasurementTypeF())
+    activity = factory.SubFactory(progresstestmodels.ActivityF)
+    mtype = factory.LazyAttribute(lambda a: a.activity.measurement_type)
+    organization = factory.LazyAttribute(lambda a: a.activity.contractor)
 
     request_type = models.Request.REQUEST_TYPE_NEW_LOCATION
     request_status = models.Request.REQUEST_STATUS_OPEN

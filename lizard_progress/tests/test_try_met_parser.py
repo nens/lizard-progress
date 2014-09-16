@@ -67,9 +67,7 @@ class TestOrganization(TransactionTestCase):
     def setup_uploaded_file(self, path):
         uploaded_file = test_models.UploadedFileF.create(
             activity=self.activity,
-            organization=self.organization,
             uploaded_by=self.upload_user,
-            mtype=self.mtype,
             path=path)
         return uploaded_file
 

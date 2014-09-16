@@ -113,8 +113,7 @@ def _open_uploaded_file(path, file_type):
     return open(path, 'rU')
 
 
-def parser_factory(
-        parser, activity, organization, path, available_measurement_type):
+def parser_factory(parser, activity, path):
     """Sets up the parser and returns a parser instance."""
 
     if not issubclass(parser, ProgressParser):
@@ -123,8 +122,7 @@ def parser_factory(
 
     file_object = _open_uploaded_file(path, parser.FILE_TYPE)
 
-    return parser(
-        activity, organization, file_object, available_measurement_type)
+    return parser(activity, file_object)
 
 
 class ProgressParser(object):
@@ -171,12 +169,11 @@ class ProgressParser(object):
     FILE_TYPE = FILE_NORMAL
 
     def __init__(
-            self, activity, organization, file_object,
-            available_measurement_type):
+            self, activity, file_object):
         self.activity = activity
-        self.organization = organization
+        self.organization = activity.contractor
         self.file_object = file_object
-        self.available_measurement_type = available_measurement_type
+        self.available_measurement_type = activity.measurement_type
         self.errors = []
         self.possible_requests = []
 

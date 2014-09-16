@@ -164,7 +164,7 @@ urlpatterns = patterns(
         dashboard_graph,
         name='lizard_progress_dashboardgraphview'),
     url('^file/(?P<project_slug>[^/]+)/' +
-        '(?P<contractor_slug>[^/]+)/(?P<measurement_type_slug>[^/]+)/' +
+        '(?P<contractor_id>[^/]+)/(?P<measurement_type_slug>[^/]+)/' +
         '(?P<filename>[^/]+)$',
         protected_file_download,
         name='lizard_progress_filedownload'),

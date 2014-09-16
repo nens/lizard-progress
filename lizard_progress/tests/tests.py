@@ -3,12 +3,15 @@
 
 from django.test import TestCase
 
+from lizard_progress.models import Activity
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress.models import Project
 from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.models import Organization
 from lizard_map.models import WorkspaceEdit, WorkspaceEditItem
 from lizard_progress.specifics import ProgressParser, UnSuccessfulParserResult
+
+from lizard_progress.tests.test_models import ActivityF
 
 
 class AdapterTest(TestCase):
@@ -18,45 +21,38 @@ class AdapterTest(TestCase):
         self.workspace_item = WorkspaceEditItem(workspace=self.workspace)
         self.workspace_item.save()
 
-    def init_adapter(self, layer_arguments, project,
-                     contractor, measurement_type):
+    def init_adapter(self, layer_arguments, activity):
         # Create adapter with given layer_arguments
         self.adapter = ProgressAdapter(workspace_item=self.workspace_item,
                                        layer_arguments=layer_arguments)
 
         # Check if project, contractor and measurement_type are as expected
-        self.assertEquals(self.adapter.project, project)
-        self.assertEquals(self.adapter.contractor, contractor)
-        self.assertEquals(self.adapter.measurement_type, measurement_type)
+        self.assertEquals(self.adapter.activity, activity)
 
     def test_empty_adapter(self):
-        self.init_adapter({}, None, None, None)
+        self.init_adapter({}, None)
 
     def test_unexisting_adapter(self):
-        self.init_adapter({'project_slug': 'wheeeeeee'}, None, None, None)
+        self.init_adapter({'activity_id': 5332}, None)
 
     def test_weird_adapter_input(self):
         self.assertRaises(
-            ValueError, self.init_adapter, None, None, None, None)
+            ValueError, self.init_adapter, None, None)
 
     def test_full_adapter(self):
         project = Project(
             slug='test', organization=Organization.objects.create(name="test"))
         project.save()
-        contractor = Contractor(slug='contractor')
-        contractor.project = project
-        contractor.save()
+
         available_measurement_type = AvailableMeasurementType(slug='mtype')
         available_measurement_type.save()
-        measurement_type = MeasurementType(mtype=available_measurement_type)
-        measurement_type.project = project
-        measurement_type.save()
+
+        activity = Activity.objects.create(
+            project=project, measurement_type=available_measurement_type)
 
         self.init_adapter({
-                'project_slug': 'test',
-                'contractor_slug': 'contractor',
-                'measurement_type_slug': 'mtype',
-                }, project, contractor, measurement_type)
+            'activity_id': activity.id
+        }, activity)
 
 
 class TestParsers(TestCase):
@@ -70,7 +66,7 @@ class TestParsers(TestCase):
         name = 'filename'
 
     def setUp(self):
-        self.parser = TestParsers.MockParser(None, None, None, None)
+        self.parser = TestParsers.MockParser(ActivityF.build(), None)
 
     def test_error(self):
         result = self.parser.error('key')  # No message, but shouldn't fail

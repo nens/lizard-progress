@@ -459,7 +459,7 @@ class PossibleRequest(models.Model):
             return
 
         if self.uploaded_file.possiblerequest_set.filter(
-            accepted=False).count() == 0:
+                accepted=False).count() == 0:
             self.uploaded_file.re_upload()
 
     def activate(self, motivation, old_location_code=None):

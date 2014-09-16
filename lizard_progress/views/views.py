@@ -42,7 +42,6 @@ from lizard_progress.changerequests import models as cmodels
 from lizard_progress import models
 from lizard_progress.models import Hydrovak
 from lizard_progress.models import Project
-from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
 
@@ -586,7 +585,7 @@ def dashboard_graph(
 
 
 @login_required
-def protected_file_download(request, project_slug, contractor_slug,
+def protected_file_download(request, project_slug, contractor_id,
                             measurement_type_slug, filename):
     """
     We need our own file_download view because contractors can only see their
@@ -602,6 +601,7 @@ def protected_file_download(request, project_slug, contractor_slug,
     there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
     """
 
+    # XXXX
     project = get_object_or_404(Project, slug=project_slug)
     contractor = get_object_or_404(Contractor, slug=contractor_slug,
                                    project=project)

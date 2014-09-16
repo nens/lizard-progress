@@ -273,12 +273,14 @@ class TestSecurity(TestCase):
 
         projectorganization = OrganizationF.create(name="organization")
         projectuser = UserF(is_superuser=True)
-        project = ProjectF.create()
+        project = ProjectF.create(organization=projectorganization)
         UserProfileF.create(
             user=projectuser, organization=projectorganization)
-        contractor = ContractorF(
-            project=project, organization=uploaderorganization)
-        has_access = models.has_access(uploader, project, contractor)
+
+        ActivityF.create(
+            project=project, contractor=uploaderorganization)
+
+        has_access = models.has_access(uploader, project, uploaderorganization)
         self.assertTrue(has_access)
 
 
@@ -300,10 +302,10 @@ class TestProject(TestCase):
         organization = OrganizationF.create(name='A')
         project = ProjectF.create(organization=organization)
         organizationB = OrganizationF.create(name='B')
-        contractor = ContractorF.create(
-            project=project, organization=organizationB)
+        activity = ActivityF.create(
+            project=project, contractor=organizationB)
 
-        RequestF.create(contractor=contractor)
+        RequestF.create(activity=activity)
         self.assertEquals(project.num_open_requests, 1)
 
     def test_num_open_change_requests_returns_zero(self):
@@ -346,39 +348,71 @@ class TestMeasurement(TestCase):
     """Tests for the Measurement model."""
     def test_url_works(self):
         """Just check whether we get some URL."""
-        measurement = MeasurementF()
+        measurement_type = AvailableMeasurementTypeF.build(slug="test")
+        activity = ActivityF.build(measurement_type=measurement_type)
+        location = LocationF.build(activity=activity)
+        measurement = MeasurementF.build(location=location)
         url = measurement.url
         self.assertTrue(url)
 
 
 class TestExportRun(TestCase):
     def test_exportrun_without_file_is_not_available(self):
-        project = ProjectF.create()
-        contractor = ContractorF.create(project=project)
-        run = ExportRunF.build(
-            project=project,
+        measurement_type = AvailableMeasurementTypeF.build()
+        contractor = OrganizationF.build()
+        project = ProjectF.build()
+
+        activity = ActivityF.build(
+            measurement_type=measurement_type,
             contractor=contractor,
+            project=project
+        )
+
+        run = ExportRunF.build(
+            project=activity.project,
+            organization=activity.contractor,
+            measurement_type=activity.measurement_type,
             file_path="/some/nonexisting/path",
             generates_file=True)
         self.assertFalse(run.available)
 
     def test_exportrun_has_run_doesnt_generate_file_is_available(self):
-        project = ProjectF.create()
-        contractor = ContractorF.create(project=project)
-        run = ExportRunF.build(
-            project=project,
+        measurement_type = AvailableMeasurementTypeF.build()
+        contractor = OrganizationF.build()
+        project = ProjectF.build()
+
+        activity = ActivityF.build(
+            measurement_type=measurement_type,
             contractor=contractor,
+            project=project
+        )
+
+        run = ExportRunF.build(
+            project=activity.project,
+            organization=activity.contractor,
+            measurement_type=activity.measurement_type,
+            file_path="/some/nonexisting/path",
             generates_file=False,
-            created_at=datetime.datetime(1980, 1, 1))
+            created_at=datetime.datetime.now())
+
         self.assertTrue(run.available)
 
     def test_exportrun_that_fails_is_not_available(self):
+        measurement_type = AvailableMeasurementTypeF.create()
+        contractor = OrganizationF.create()
         project = ProjectF.create()
-        contractor = ContractorF.create(project=project)
-        run = ExportRunF.build(
-            project=project,
+
+        activity = ActivityF.create(
+            measurement_type=measurement_type,
             contractor=contractor,
-            file_path=None,
+            project=project
+        )
+
+        run = ExportRunF.create(
+            project=activity.project,
+            organization=activity.contractor,
+            measurement_type=activity.measurement_type,
+            file_path="/some/nonexisting/path",
             generates_file=True)
 
         run.record_start(None)

@@ -772,16 +772,11 @@ class UploadedFile(models.Model):
     instances referring to it anymore."""
 
     activity = models.ForeignKey(Activity, null=True)
-    organization = models.ForeignKey(Organization, null=True)
 
     uploaded_by = models.ForeignKey(User)
     uploaded_at = models.DateTimeField()
 
     path = models.CharField(max_length=255)
-
-    # Which measurement type this file was uploaded as, only null for
-    # old data.
-    mtype = models.ForeignKey(AvailableMeasurementType, null=True)
 
     # If ready is True but success is False, uploading was unsuccessful.
     # In that case, there should be error messages in the UploadedFileError

@@ -620,12 +620,6 @@ class MeasurementTypeAllowed(models.Model):
 
 
 class ScheduledMeasurement(models.Model):
-    # What
-    available_measurement_type = models.ForeignKey(
-        AvailableMeasurementType, null=True)
-    # By whom
-    organization = models.ForeignKey(
-        Organization, null=True)
     # Where
     location = models.ForeignKey(Location)
 
@@ -644,11 +638,6 @@ class ScheduledMeasurement(models.Model):
             return Measurement.objects.get(scheduled=self)
         except Measurement.DoesNotExist:
             return None
-
-    class Meta:
-        unique_together = ("location",
-                           "available_measurement_type",
-                           "organization")
 
     def __unicode__(self):
         return (("Scheduled measurement of type '%s' at location '%s' "

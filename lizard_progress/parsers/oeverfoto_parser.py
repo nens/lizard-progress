@@ -13,7 +13,6 @@ from lizard_map.coordinates import wgs84_to_rd
 from lizard_progress.models import Location
 from lizard_progress.models import Measurement
 from lizard_progress.models import SRID
-from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.specifics import ProgressParser
 from lizard_progress.specifics import UnSuccessfulParserResult
 from lizard_progress.util.image import get_exif_data, get_lat_lon

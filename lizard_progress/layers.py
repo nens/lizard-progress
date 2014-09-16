@@ -17,7 +17,6 @@ from lizard_progress import models
 from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
 from lizard_progress.models import Project
-from lizard_progress.models import ScheduledMeasurement
 
 logger = logging.getLogger(__name__)
 
@@ -97,17 +96,13 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                     loc.the_geom
                 FROM
                     lizard_progress_location loc
-                INNER JOIN
-                    lizard_progress_scheduledmeasurement sm
-                ON
-                    sm.location_id = loc.id
                 WHERE
                     loc.activity_id = %d AND
                     loc.the_geom IS NOT NULL
                 GROUP BY
                     loc.the_geom
-                HAVING bool_or(sm.complete)=%s AND
-                       bool_and(sm.complete)=%s
+                HAVING bool_or(loc.complete)=%s AND
+                       bool_and(loc.complete)=%s
                 ) data"""
         if complete is True:
             return q % (self.contractor.id, self.project.id,
@@ -185,55 +180,50 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                 activity=self.activity,
                 the_geom__distance_lte=(pt, D(m=distance))).
                 distance(pt).order_by('distance')):
-            scheduleds = ScheduledMeasurement.objects.filter(location=location)
 
-            for scheduled in scheduleds:
-                result = {
-                    'name': '%s %s' % (location.location_code,
-                                       location.activity_id),
-                    'distance': location.distance.m,
-                    'workspace_item': self.workspace_item,
-                    'identifier': {
-                        'scheduled_measurement_id': scheduled.id,
+            results = [{
+                'name': '%s %s' % (location.location_code,
+                                   location.activity_id),
+                'distance': location.distance.m,
+                'workspace_item': self.workspace_item,
+                'identifier': {
+                    'location_id': location.id,
                     },
-                    'grouping_hint': 'lizard_progress %s %s' % (
-                        self.workspace_item.id,
-                        self.activity.id)
-                    }
-                results.append(result)
-            if results:
-                # For now, only show info from one location because
-                # our templates don't really work with more yet
-                break
+                'grouping_hint': 'lizard_progress %s %s' % (
+                    self.workspace_item.id,
+                    self.activity.id)
+            }]
+            # For now, only show info from one location because
+            # our templates don't really work with more yet
+            break
 
         logger.debug("Results=" + str(results))
         return results
 
-    def location(self, scheduled_measurement_id, layout=None):
+    def location(self, location_id, layout=None):
         """
         Who knows what a location function has to return?
         Hacked something together based on what fewsjdbc does.
         """
         try:
-            scheduled = (ScheduledMeasurement.objects.
-                         get(pk=scheduled_measurement_id))
-        except ScheduledMeasurement.DoesNotExist:
+            location = Location.objects.get(pk=location_id)
+        except Location.DoesNotExist:
             return None
 
         grouping_hint = "lizard_progress::%s" % (self.activity.id,)
 
         return {
             "name": "%s %s %s" %
-            (scheduled.location.location_code,
+            (location.location_code,
              self.activity.measurement_type.name,
              self.activity.contractor.name,),
             "identifier": {
-                "location": scheduled_measurement_id,
+                "location": location_id,
                 "grouping_hint": grouping_hint,
                 },
             "workspace_item": self.workspace_item,
-            "google_coords": (scheduled.location.the_geom.x,
-                              scheduled.location.the_geom.y),
+            "google_coords": (location.the_geom.x,
+                              location.the_geom.y),
             }
 
     def symbol_url(self):
@@ -250,22 +240,20 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def html(self, identifiers=None, layout_options=None):
         """
         """
-        scheduled_measurements = [ScheduledMeasurement.objects.
-                                  get(pk=id['scheduled_measurement_id'])
-                                  for id in identifiers]
+        locations = list(Location.objects.filter(
+            pk__in=[identifier['location_id'] for identifier in identifiers]))
 
-        if not scheduled_measurements:
+        if not locations:
             return
 
-        sm = scheduled_measurements[0]
+        location = locations[0]
 
-        if not sm.complete:
+        if not location.complete:
             return super(ProgressAdapter, self).html_default(
                 identifiers=identifiers,
                 layout_options=layout_options,
                 template='lizard_progress/incomplete_measurement.html',
-                extra_render_kwargs={
-                    'scheduled_measurements': scheduled_measurements})
+                extra_render_kwargs={'locations': locations})
 
         else:
             handler = (self.project.specifics().
@@ -275,7 +263,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         if handler is not None:
             return handler(super(ProgressAdapter, self).html_default,
-                           scheduled_measurements,
+                           locations,
                            identifiers=identifiers,
                            layout_options=layout_options)
 
@@ -308,18 +296,17 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def image(self, identifiers=None, start_date=None, end_date=None,
               width=None, height=None, layout_extra=None):
 
-        scheduled_measurements = [ScheduledMeasurement.objects.
-                                  get(pk=id['scheduled_measurement_id'])
-                                  for id in identifiers]
+        locations = list(Location.objects.filter(
+            pk__in=[identifier['location_id'] for identifier in identifiers]))
 
-        if not scheduled_measurements:
+        if not locations:
             return
 
         handler = (self.project.specifics().
                    image_handler(activity=self.activity))
 
         if handler is not None:
-            return handler(scheduled_measurements)
+            return handler(locations)
 
 
 class HydrovakAdapter(WorkspaceItemAdapter):

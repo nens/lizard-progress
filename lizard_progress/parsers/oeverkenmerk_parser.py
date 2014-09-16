@@ -4,7 +4,6 @@ import logging
 
 from lizard_progress.models import Location
 from lizard_progress.models import Measurement
-from lizard_progress.models import ScheduledMeasurement
 from lizard_progress.specifics import ProgressParser
 from lizard_progress.specifics import UnSuccessfulParserResult
 

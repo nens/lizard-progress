@@ -93,25 +93,12 @@ class AvailableMeasurementTypeF(factory.DjangoModelFactory):
     slug = "metingtype"
 
 
-class ScheduledMeasurementF(factory.DjangoModelFactory):
-    """Factory for ScheduledMeasurement objects."""
-    class Meta:
-        model = models.ScheduledMeasurement
-
-    activity = factory.SubFactory(ActivityF)
-    organization = factory.SubFactory(OrganizationF)
-    available_measurement_type = factory.SubFactory(
-        AvailableMeasurementTypeF)
-    location = factory.SubFactory(LocationF)
-    complete = False
-
-
 class MeasurementF(factory.DjangoModelFactory):
     """Factory for Measurement objects."""
     class Meta:
         model = models.Measurement
 
-    scheduled = factory.SubFactory(ScheduledMeasurementF)
+    location = factory.SubFactory(LocationF)
     data = {"testkey": "testvalue"}
     filename = "test.txt"
 
@@ -122,7 +109,6 @@ class UploadedFileF(factory.DjangoModelFactory):
         model = models.UploadedFile
 
     activity = factory.SubFactory(ActivityF)
-    organization = factory.SubFactory(OrganizationF)
     uploaded_by = factory.SubFactory(UserF)
     uploaded_at = datetime.datetime(2013, 3, 8, 10, 0)
     path = "/path/to/file/file.met"
@@ -334,38 +320,26 @@ class TestLocation(TestCase):
         location = LocationF(location_code="TESTID")
         self.assertEquals(unicode(location), "Location with code 'TESTID'")
 
-
-class TestScheduledMeasurement(TestCase):
-    """Tests for the ScheduledMeasurement model."""
-    def test_unicode(self):
-        """Tests unicode method."""
-        project = ProjectF(name='testproject')
-        scheduled = ScheduledMeasurementF(
-            project=project,
-            measurement_type=MeasurementTypeF(
-                project=project, name='testtype'),
-            location=LocationF(project=project, location_code='TEST'),
-            contractor=ContractorF(project=project, name="testcontractor"))
-
-        self.assertEquals(
-            unicode(scheduled),
-            ("Scheduled measurement of type 'Metingtype' at location 'TEST' "
-             "in project 'testproject' by contractor 'testcontractor'."))
-
     def test_measurement(self):
         """Tests the measurement property."""
-        scheduled = ScheduledMeasurementF()
-        measurement = MeasurementF(scheduled=scheduled)
+        location = LocationF()
+        measurement = MeasurementF(location=location)
 
-        self.assertEqual(scheduled.measurement, measurement)
+        self.assertEqual(location.measurement, measurement)
 
     def test_measurement_exception(self):
         """Two measurements for one scheduled should mean that the measurement
         property fails."""
-        scheduled = ScheduledMeasurementF()
-        MeasurementF(scheduled=scheduled)
-        MeasurementF(scheduled=scheduled)
-        self.assertRaises(Exception, lambda: scheduled.measurement)
+        location = LocationF()
+        MeasurementF(location=location)
+        MeasurementF(location=location)
+        self.assertRaises(Exception, lambda: location.measurement)
+
+    def test_has_measurements(self):
+        location = LocationF()
+        MeasurementF(location=location)
+
+        self.assertTrue(location.has_measurements())
 
 
 class TestMeasurement(TestCase):

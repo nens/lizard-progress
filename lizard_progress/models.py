@@ -260,8 +260,8 @@ def all_measurements(project, organization):
     project and contractor."""
 
     return Measurement.objects.filter(
-        scheduled__location__activity__project=project,
-        scheduled__organization=organization)
+        location__activity__project=project,
+        location__activity__contractor=organization)
 
 
 def current_files(measurements):
@@ -327,16 +327,6 @@ class Project(models.Model):
             return config.get('use_predefined_locations')
 
         return False
-
-    def can_upload(self, user):
-        """User can upload if he is the superuser or with one of the
-        contractors."""
-
-        return (
-            self.is_manager(user) or
-            Contractor.objects.filter(
-                project=self, organization=Organization.get_by_user(user))
-            .exists())
 
     def work_to_do(self):
         """Returns list of contractor/measurement type combinations
@@ -407,12 +397,11 @@ class Project(models.Model):
         return info
 
     def number_of_scheduled_measurements(self):
-        return ScheduledMeasurement.objects.filter(
-            location__activity__project=self).count()
+        return Location.objects.filter(activity__project=self).count()
 
     def number_of_complete_scheduled_measurements(self):
-        return ScheduledMeasurement.objects.filter(
-            location__activity__project=self, complete=True).count()
+        return Location.objects.filter(
+            activity__project=self, complete=True).count()
 
     def percentage_done(self):
         if any(not self.needs_predefined_locations(available_measurement_type)
@@ -457,7 +446,7 @@ class Project(models.Model):
 
 
 class Location(models.Model):
-    # A location in an activity
+    # A location / scheduled measurement in an activity
     activity = models.ForeignKey('Activity', null=True)
 
     location_code = models.CharField(max_length=50, db_index=True)
@@ -491,36 +480,11 @@ class Location(models.Model):
     def __unicode__(self):
         return u"Location with code '%s'" % (self.location_code,)
 
-    def has_scheduled_measurements(self, mtype=None, contractor=None):
-        scheduleds = ScheduledMeasurement.objects.filter(
-            location=self)
-
-        if mtype is not None:
-            scheduleds = scheduleds.filter(
-                measurement_type__mtype=mtype)
-
-        if contractor is not None:
-            scheduleds = scheduleds.filter(
-                contractor=contractor)
-
-        return scheduleds.count() > 0
-
-    def has_measurements(self, mtype=None, contractor=None):
+    def has_measurements(self):
         """Return True if there are any uploaded measurements at this
         location, for this mtype (=AvailableMeasurementType) or
         contractor, if given."""
-        measurements = Measurement.objects.filter(
-            scheduled__location=self)
-
-        if mtype is not None:
-            measurements = measurements.filter(
-                scheduled__measurement_type__mtype=mtype)
-
-        if contractor is not None:
-            measurements = measurements.filter(
-                scheduled__contractor=contractor)
-
-        return measurements.count() > 0
+        return self.measurement_set.count() > 0
 
 
 class AvailableMeasurementType(models.Model):
@@ -533,12 +497,12 @@ class AvailableMeasurementType(models.Model):
     # Several measurement types can have the same implementation
     # If implementation is '', slug is used instead.
     implementation = models.CharField(max_length=50, unique=False, choices=(
-            ('dwarsprofiel', 'dwarsprofiel'),
-            ('oeverfoto', 'oeverfoto'),
-            ('oeverkenmerk', 'oeverkenmerk'),
-            ('foto', 'foto'),
-            ('meting', 'meting'),
-            ('laboratorium_csv', 'laboratorium_csv')))
+        ('dwarsprofiel', 'dwarsprofiel'),
+        ('oeverfoto', 'oeverfoto'),
+        ('oeverkenmerk', 'oeverkenmerk'),
+        ('foto', 'foto'),
+        ('meting', 'meting'),
+        ('laboratorium_csv', 'laboratorium_csv')))
 
     default_icon_missing = models.CharField(max_length=50)
     default_icon_complete = models.CharField(max_length=50)
@@ -616,6 +580,14 @@ class Activity(models.Model):
         return directories.measurement_type_dir(
             self.project, self.contractor, self.measurement_type)
 
+    def can_upload(self, user):
+        """User can upload if he is with the contractor, or if user is a
+        manager in this project.  """
+
+        return (
+            self.project.is_manager(user)
+            or self.contractor == Organization.get_by_user(user))
+
 
 class MeasurementTypeAllowed(models.Model):
     """This model is the "through" model for relationships between
@@ -676,10 +648,10 @@ class Measurement(models.Model):
 
         sm = self.scheduled
         return reverse('lizard_progress_filedownload', kwargs={
-                    'project_slug': sm.project.slug,
-                    'contractor_slug': sm.contractor.slug,
-                    'measurement_type_slug': sm.measurement_type.slug,
-                    'filename': os.path.basename(self.filename)})
+            'project_slug': sm.project.slug,
+            'contractor_slug': sm.contractor.slug,
+            'measurement_type_slug': sm.measurement_type.slug,
+            'filename': os.path.basename(self.filename)})
 
 
 class Hydrovak(models.Model):
@@ -946,16 +918,6 @@ class ExportRun(models.Model):
             measurement_type=self.measurement_type)
 
     @property
-    def measurement_type_in_project(self):
-        """Returns the MeasurementType connected to this export run's project
-        and AvailableMeasurementType."""
-        try:
-            return MeasurementType.objects.get(
-                project=self.project, mtype=self.measurement_type)
-        except MeasurementType.DoesNotExist:
-            return None
-
-    @property
     def filename(self):
         return self.file_path and os.path.basename(self.file_path)
 
@@ -970,34 +932,32 @@ class ExportRun(models.Model):
     def all_in_project(cls, project, user):
         """Yield all the export runs user has access to in this
         project."""
-        mtypes = MeasurementType.objects.filter(project=project)
-        contractors = Contractor.objects.filter(project=project)
 
-        for mtype in mtypes:
-            for contractor in contractors:
-                if has_access(user, project, contractor):
-                    if mtype.mtype.implementation_slug == 'dwarsprofiel':
-                        yield cls.get_or_create(
-                            project, contractor, mtype.mtype, 'met')
-                        yield cls.get_or_create(
-                            project, contractor, mtype.mtype, 'dxf')
-                        yield cls.get_or_create(
-                            project, contractor, mtype.mtype, 'csv')
-
-                        # Export to Lizard for Almere superusers
-                        organization = project.organization
-                        if (organization.lizard_config and
-                                project.is_manager(user)):
-                            exportrun = cls.get_or_create(
-                                project, contractor, mtype.mtype, 'lizard')
-                            exportrun.generates_file = False
-                            exportrun.save()
-                            yield exportrun
-
+        for activity in project.activity_set.all():
+            mtype = activity.measurement_type
+            if has_access(user, project, activity.contractor):
+                if mtype.implementation_slug == 'dwarsprofiel':
                     yield cls.get_or_create(
-                        project, contractor, mtype.mtype, 'allfiles')
+                        project, activity.contractor, mtype, 'met')
                     yield cls.get_or_create(
-                        project, contractor, mtype.mtype, 'pointshape')
+                        project, activity.contractor, mtype, 'dxf')
+                    yield cls.get_or_create(
+                        project, activity.contractor, mtype, 'csv')
+
+                    # Export to Lizard for Almere superusers
+                    organization = project.organization
+                    if (organization.lizard_config and
+                            project.is_manager(user)):
+                        exportrun = cls.get_or_create(
+                            project, activity.contractor, mtype, 'lizard')
+                        exportrun.generates_file = False
+                        exportrun.save()
+                        yield exportrun
+
+                yield cls.get_or_create(
+                    project, activity.contractor, mtype, 'allfiles')
+                yield cls.get_or_create(
+                    project, activity.contractor, mtype, 'pointshape')
 
     @property
     def available(self):
@@ -1014,7 +974,7 @@ class ExportRun(models.Model):
         """Check if a file generated by the export run is present. Always false
         if this export run doesn't generate files."""
         return bool(self.file_path and self.ready_for_download
-                        and os.path.exists(self.file_path))
+                    and os.path.exists(self.file_path))
 
     def clear(self):
         """Make current data unavailable."""

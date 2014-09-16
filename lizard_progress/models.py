@@ -635,33 +635,6 @@ class MeasurementTypeAllowed(models.Model):
     visible = models.BooleanField(default=True)
 
 
-class ScheduledMeasurement(models.Model):
-    # Where
-    location = models.ForeignKey(Location)
-
-    timestamp = models.DateTimeField(auto_now=True)
-    complete = models.BooleanField(default=False)
-
-    @property
-    def measurement(self):
-        """Note: ONLY use this if you are sure there will be only a single
-        measurement object per scheduledmeasurement object you call this on.
-        It makes no sense in other situations.
-
-        Returns None if there is no measurement. If there are multiple
-        measurements, MultipleObjectsReturned is raised."""
-        try:
-            return Measurement.objects.get(scheduled=self)
-        except Measurement.DoesNotExist:
-            return None
-
-    def __unicode__(self):
-        return (("Scheduled measurement of type '%s' at location '%s' "
-                 "in project '%s' by contractor '%s'.") %
-                (self.measurement_type.name, self.location.location_code,
-                 self.project.name, self.contractor.name))
-
-
 class Measurement(models.Model):
     """Although most ScheduledMeasurements will have only a single
     associated measurements, some will have more because there is only
@@ -673,7 +646,6 @@ class Measurement(models.Model):
     there are two different files. However, there is only one
     scheduled measurement."""
 
-    scheduled = models.ForeignKey(ScheduledMeasurement)
     location = models.ForeignKey(Location, null=True)
 
     # Dict with the data.

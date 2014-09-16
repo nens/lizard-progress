@@ -466,7 +466,23 @@ class Location(models.Model):
     # Any extra known information about the location
     information = JSONField(null=True, blank=True)
 
+    timestamp = models.DateTimeField(auto_now=True)
+    complete = models.BooleanField(default=False)
+
     objects = models.GeoManager()
+
+    @property
+    def measurement(self):
+        """Note: ONLY use this if you are sure there will be only a single
+        measurement object per location object you call this on.
+        It makes no sense in other situations.
+
+        Returns None if there is no measurement. If there are multiple
+        measurements, MultipleObjectsReturned is raised."""
+        try:
+            return Measurement.objects.get(location=self)
+        except Measurement.DoesNotExist:
+            return None
 
     class Meta:
         # Location codes are unique within an activity
@@ -658,6 +674,7 @@ class Measurement(models.Model):
     scheduled measurement."""
 
     scheduled = models.ForeignKey(ScheduledMeasurement)
+    location = models.ForeignKey(Location, null=True)
 
     # Dict with the data.
     # Site decides what to store.

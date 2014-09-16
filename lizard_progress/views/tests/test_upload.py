@@ -2,8 +2,7 @@ from django.test import TestCase
 
 from lizard_progress.views.upload import UploadedFileErrorsView
 
-from lizard_progress.tests.test_models import ContractorF
-from lizard_progress.tests.test_models import ProjectF
+from lizard_progress.tests.test_models import ActivityF
 from lizard_progress.tests.test_models import UploadedFileErrorF
 from lizard_progress.tests.test_models import UploadedFileF
 from lizard_progress.tests.test_models import UserF
@@ -11,13 +10,12 @@ from lizard_progress.tests.test_models import UserF
 
 class TestUploadedFileErrorsView(TestCase):
     def test_errors_returns_right_error_lines(self):
-        project = ProjectF.create()
-        contractor = ContractorF.create(project=project)
+        activity = ActivityF.create()
+
         uploaded_by = UserF(username="whee")
 
         uploaded_file = UploadedFileF.create(
-            project=project,
-            contractor=contractor,
+            activity=activity,
             uploaded_by=uploaded_by)
         error1 = UploadedFileErrorF.create(
             uploaded_file=uploaded_file, line=2)

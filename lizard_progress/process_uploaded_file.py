@@ -211,8 +211,8 @@ def path_for_uploaded_file(uploaded_file, measurement_type):
     """Create dirname based on project etc. Guaranteed not to
     exist yet at the time of checking."""
 
-    dirname = directories.measurement_type_dir(
-        uploaded_file.project, uploaded_file.contractor, measurement_type)
+    activity = uploaded_file.activity
+    dirname = activity.upload_directory()
 
     # Figure out a filename that doesn't exist yet
     orig_filename = os.path.basename(uploaded_file.filename)

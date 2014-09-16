@@ -28,24 +28,24 @@ def mk(directory):
 def project_dir(project):
     """Return base directory for this project."""
     return mk(os.path.join(
-            BASE_DIR,
-            project.organization.name,
-            project.slug))
+        BASE_DIR,
+        project.organization.name,
+        project.slug))
 
 
 def contractor_dir(project, contractor):
     """Return base directory for this contractor in this project."""
     return mk(os.path.join(
-            project_dir(project),
-            contractor.slug))
+        project_dir(project),
+        str(contractor.id)))
 
 
 def measurement_type_dir(project, contractor, measurement_type):
     """Return base directory for this measurement type in this project
     for this contractor."""
     return mk(os.path.join(
-            contractor_dir(project, contractor),
-            measurement_type.slug))
+        contractor_dir(project, contractor),
+        measurement_type.slug))
 
 
 def make_uploaded_file_path(root, project, contractor,

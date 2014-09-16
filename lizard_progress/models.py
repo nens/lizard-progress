@@ -595,6 +595,11 @@ class Activity(models.Model):
         config = configuration.Configuration(project=project)
         return config.get(key)
 
+    def upload_directory(self):
+        """Directory where the files for this activity will be stored."""
+        return directories.measurement_type_dir(
+            self.project, self.contractor, self.measurement_type)
+
 
 class MeasurementTypeAllowed(models.Model):
     """This model is the "through" model for relationships between

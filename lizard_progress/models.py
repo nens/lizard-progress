@@ -571,7 +571,7 @@ class Activity(models.Model):
         Organization, null=True)
 
     def __unicode__(self):
-        return "{} door {}".format(self.measurement_type, self.contractor)
+        return "{}: {}".format(self.contractor, self.measurement_type)
 
     def config_value(self, key):
         project = self.project
@@ -847,7 +847,7 @@ class UploadedFile(models.Model):
         return {
             'id': self.id,
             'project_id': self.activity.project.id,
-            'contractor_id': self.organization.id,
+            'activity_id': self.activity.id,
             'uploaded_by': self.uploaded_by.get_full_name(),
             'uploaded_at': self.uploaded_at.strftime("%d/%m/%y %H:%M"),
             'filename': os.path.basename(self.path),
@@ -857,12 +857,12 @@ class UploadedFile(models.Model):
                 'lizard_progress_uploaded_file_error_view', args=(self.id,)),
             'delete_url': reverse(
                 'lizard_progress_remove_uploaded_file', kwargs={
-                    'project_slug': self.project.slug,
+                    'project_slug': self.activity.project.slug,
                     'uploaded_file_id': self.id
                     }),
             'requests_url': reverse(
                 'changerequests_possiblerequests', kwargs={
-                    'project_slug': self.project.slug,
+                    'project_slug': self.activity.project.slug,
                     'uploaded_file_id': self.id
                     }),
             'has_possible_requests': self.has_possible_requests()

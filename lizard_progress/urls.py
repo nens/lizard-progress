@@ -22,8 +22,6 @@ from lizard_progress.views import DownloadOrganizationDocumentView
 from lizard_progress.views import MapView
 from lizard_progress.views import ProjectsView
 from lizard_progress.views import UploadDialogView
-from lizard_progress.views import UploadHomeView
-from lizard_progress.views import UploadMeasurementsView
 from lizard_progress.views import UploadReportsView
 from lizard_progress.views import UploadShapefilesView
 from lizard_progress.views import UploadedFileErrorsView
@@ -47,11 +45,6 @@ urlpatterns = patterns(
     # Change requests are in a subapp
     url(r'^projects/(?P<project_slug>[^/]+)/changerequests/',
         include('lizard_progress.changerequests.urls')),
-
-    # "Projects" page is basically same as homepage
-    url('^projects/$',
-        login_required(ProjectsView.as_view()),
-        name='lizard_progress_projecten'),
 
     # Administration pages from projectspage
     url('^newproject/$',
@@ -83,10 +76,6 @@ urlpatterns = patterns(
         login_required(DownloadOrganizationDocumentView.as_view()),
         name='lizard_progress_download_organization_document'),
 
-    # Project page per project
-    url('^projects/(?P<project_slug>[^/]+)/$',
-        login_required(ProjectsView.as_view()),
-        name='lizard_progress_view'),
     # Kaartlagen view
     url('^projects/(?P<project_slug>[^/]+)/map/$',
         login_required(MapView.as_view()),
@@ -117,13 +106,13 @@ urlpatterns = patterns(
         login_required(UploadDialogView.as_view()),
         name='lizard_progress_uploaddialogview'),
     # The upload page
-    url('^projects/(?P<project_slug>[^/]+)/upload/$',
-        login_required(UploadHomeView.as_view()),
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/upload/$',
+        login_required(views.activity.UploadHomeView.as_view()),
         name='lizard_progress_uploadhomeview'),
 
     # API for the tables that refresh when processing uploaded files
-    url('^projects/(?P<project_slug>[^/]+)/upload/uploaded_files/$',
-        login_required(views.UploadedFilesView.as_view()),
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/files/$',
+        login_required(views.activity.UploadedFilesView.as_view()),
         name='lizard_progress_uploaded_files_api'),
     # Remove an uploaded file
     url('^projects/(?P<project_slug>[^/]+)/upload/'
@@ -131,9 +120,8 @@ urlpatterns = patterns(
         login_required(views.remove_uploaded_file_view),
         name='lizard_progress_remove_uploaded_file'),
     # Various uploads
-    url('^projects/(?P<project_slug>[^/]+)/upload/'
-        'measurements/(?P<mtype_slug>[^/]+)/$',
-        login_required(UploadMeasurementsView.as_view()),
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/uploadfile/$',
+        login_required(views.upload.UploadMeasurementsView.as_view()),
         name='lizard_progress_uploadmeasurementsview'),
     url('^projects/(?P<project_slug>[^/]+)/upload/reports/$',
         login_required(UploadReportsView.as_view()),
@@ -160,10 +148,17 @@ urlpatterns = patterns(
         login_required(views.UploadHydrovakkenView.as_view()),
         name='lizard_progress_upload_hydrovakken'),
 
+    # Activity dashboard
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/$',
+        views.activity.ActivityDashboard.as_view(),
+        name='lizard_progress_activity_dashboard'),
+
+    # Dashboard graphs
     url('^(?P<project_slug>[^/]+)/dashboard/' +
         '(?P<activity_id>\d+)/graph/$',
         dashboard_graph,
         name='lizard_progress_dashboardgraphview'),
+
     url('^file/(?P<project_slug>[^/]+)/' +
         '(?P<contractor_id>[^/]+)/(?P<measurement_type_slug>[^/]+)/' +
         '(?P<filename>[^/]+)$',

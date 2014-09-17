@@ -59,6 +59,7 @@ class ProjectsMixin(object):
     """Helper functions for working with projects in views"""
     project_slug = None
     project = None
+    activity = None
 
     def dispatch(self, request, *args, **kwargs):
         self.request = request
@@ -168,12 +169,8 @@ class ProjectsMixin(object):
         if not self.project_slug:
             return reverse('lizard_progress_projecten')
 
-        if self.user_is_uploader():
-            return reverse('lizard_progress_uploadhomeview',
-                           kwargs={'project_slug': self.project_slug})
-        else:
-            return reverse('lizard_progress_dashboardview',
-                           kwargs={'project_slug': self.project_slug})
+        return reverse('lizard_progress_dashboardview',
+                       kwargs={'project_slug': self.project_slug})
 
     @property
     def breadcrumbs(self):
@@ -514,7 +511,7 @@ def dashboard_graph(
             or activity.project != project):
         raise PermissionDenied()
 
-    fig = ScreenFigure(600, 350)  # in pixels
+    fig = ScreenFigure(500, 300)  # in pixels
     fig.text(
         0.5, 0.85,
         ('Uitgevoerde werkzaamheden {activity}'

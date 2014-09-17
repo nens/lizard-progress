@@ -52,14 +52,14 @@
 {% endfor %}
 </table>
 
-  <ul class="without-bullets">
 {% for activity in view.project.activity_set.all %}
-<img src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=activity.id %}" title="Voortgang {{ activity }}"/>
+  <img src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=activity.id %}" title="Voortgang {{ activity }}"/>
 {% endfor %}
-  </ul>
 
 {% if view.user_is_manager %}
-<a href="{% url "lizard_progress_edit_contractors" project_slug=view.project_slug %}">Opdrachtnemers of werkzaamheden toevoegen / verwijderen</a>
+  <p>
+    <a href="{% url "lizard_progress_edit_contractors" project_slug=view.project_slug %}">Opdrachtnemers of werkzaamheden toevoegen / verwijderen</a>
+  </p>
 {% endif %}
 
 {% endblock contentpage %}

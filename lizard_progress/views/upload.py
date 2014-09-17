@@ -22,15 +22,13 @@ from django.views.generic import TemplateView
 from django.views.generic import View
 
 from lizard_ui.views import ViewContextMixin
-from lizard_ui.layout import Action
 
 from lizard_progress import forms
 from lizard_progress import tasks
 from lizard_progress import models
 from lizard_progress.util import directories
 from lizard_progress.views.views import ProjectsView
-from lizard_progress import configuration
-
+from lizard_progress.views.activity import ActivityView
 
 APP_LABEL = models.Project._meta.app_label
 
@@ -65,7 +63,7 @@ def remove_uploaded_file_view(request, **kwargs):
     uploaded_file_id = kwargs.get('uploaded_file_id')
     uploaded_file = models.UploadedFile.objects.get(pk=uploaded_file_id)
     if (uploaded_file.contractor != contractor
-        or uploaded_file.project != project):
+            or uploaded_file.project != project):
         raise PermissionDenied()
 
     uploaded_file.delete_self()
@@ -88,159 +86,7 @@ class UploadDialogView(TemplateView):
     template_name = "lizard_progress/upload.html"
 
 
-class UploadHomeView(ProjectsView):
-    """The homepage for uploading files.
-
-    Within a project, there are various files to be uploaded:
-    measurements, shapefiles, reports, etc. This view is the
-    starting point for a contractor who has to upload data.
-    """
-    template_name = "lizard_progress/upload_page.html"
-    active_menu = "upload"
-
-    def __init__(self, *args, **kwargs):
-        super(UploadHomeView, self).__init__(*args, **kwargs)
-        self.project_slug = None
-        self.project = None
-
-    def get(self, request, *args, **kwargs):
-        self.project_slug = kwargs.get('project_slug', None)
-        self.project = get_object_or_404(
-            models.Project, slug=self.project_slug)
-
-        if not self.project.can_upload(request.user):
-            return HttpResponseForbidden()
-
-        try:
-            self.contractor = models.Contractor.objects.get(
-                project=self.project,
-                organization__userprofile__user=request.user)
-        except models.Contractor.DoesNotExist:
-            self.contractor = None
-
-        if models.has_access(request.user, self.project):
-            return super(UploadHomeView, self).get(request, *args, **kwargs)
-        else:
-            return HttpResponseForbidden()
-
-    @staticmethod
-    def upload_dialog_url():
-        """Returns URL to the file upload dialog."""
-        return reverse('lizard_progress_uploaddialogview')
-
-    def upload_measurements_urls(self):
-        """Returns URLs to post measurements to."""
-        return [
-            (mtype.mtype.name,
-             reverse(
-                    'lizard_progress_uploadmeasurementsview',
-                    kwargs=dict(
-                        project_slug=self.project_slug,
-                        mtype_slug=mtype.mtype.slug)))
-            for mtype in self.project.measurementtype_set.all()]
-
-    def upload_reports_url(self):
-        """Returns URL to post project reports to."""
-        return reverse('lizard_progress_uploadreportsview',
-                       kwargs={'project_slug': self.project_slug})
-
-    def upload_shapefiles_url(self):
-        """Returns URL to post a project's (mother) shapefile to."""
-        return reverse('lizard_progress_uploadshapefilesview',
-                       kwargs={'project_slug': self.project_slug})
-
-    @property
-    def breadcrumbs(self):
-        """Breadcrumbs for this page."""
-        crumbs = super(UploadHomeView, self).breadcrumbs
-
-        crumbs.append(
-            Action(
-                description=("Uploads for {project}"
-                             .format(project=self.project.name)),
-                name="Upload",
-                url=reverse(
-                    'lizard_progress_uploadhomeview',
-                    kwargs={'project_slug': self.project_slug})))
-
-        return crumbs
-
-    def files_ready(self):
-        if not self.contractor:
-            return []
-
-        if not hasattr(self, '_files_ready'):
-            self._files_ready = list(models.UploadedFile.objects.filter(
-                    project=self.project,
-                    contractor=self.contractor,
-                    ready=True))
-        return self._files_ready
-
-    def files_not_ready(self):
-        if not self.contractor:
-            return []
-
-        if not hasattr(self, '_files_not_ready'):
-            self._files_not_ready = list(models.UploadedFile.objects.filter(
-                    project=self.project,
-                    contractor=self.contractor,
-                    ready=False))
-        return self._files_not_ready
-
-
-class UploadedFilesView(UploadHomeView):
-    """Return uploaded files as a JSON array."""
-    def get(self, request, *args, **kwargs):
-        self.project_slug = kwargs.get('project_slug', None)
-        self.project = get_object_or_404(
-            models.Project, slug=self.project_slug)
-
-        if not self.project.can_upload(request.user):
-            return HttpResponseForbidden()
-
-        try:
-            self.contractor = models.Contractor.objects.get(
-                project=self.project,
-                organization__userprofile__user=request.user)
-        except models.Contractor.DoesNotExist:
-            self.contractor = None
-
-        if not models.has_access(request.user, self.project):
-            return HttpResponseForbidden()
-
-        if not self.contractor:
-            return []
-
-        return HttpResponse(
-            json.dumps([
-                    uploaded_file.as_dict()
-                    for uploaded_file in
-                    models.UploadedFile.objects.filter(
-                        project=self.project,
-                        contractor=self.contractor)]),
-            content_type="application/json")
-
-
-class UploadView(View):
-
-    def dispatch(self, request, *args, **kwargs):
-        """Find project and contractor objects. A successful upload
-        can only be performed by a contractor for some specific
-        project.  Check if user has access to this project, and if he
-        can upload files."""
-
-        self.project_slug = kwargs.get('project_slug', None)
-        self.project = get_object_or_404(
-            models.Project, slug=self.project_slug)
-
-        if not models.has_access(request.user, self.project):
-            return HttpResponseForbidden()
-
-        self.user = request.user
-
-        return super(UploadView, self).dispatch(
-            request, *args, **kwargs)
-
+class UploadView(ActivityView):
     def post(self, request, *args, **kwargs):
         """Handle file upload.
 
@@ -256,18 +102,8 @@ class UploadView(View):
         # Usually we return JSON, but not with the simple upload form (for IE)
         return_json = not request.POST.get("simple-upload")
 
-        self.mtype_slug = kwargs.get("mtype_slug")
-
-        try:
-            self.contractor = models.Contractor.objects.get(
-                project=self.project,
-                organization__userprofile__user=request.user)
-        except models.Contractor.DoesNotExist:
-            if return_json:
-                return json_response({'error': {
-                            'details': "User not allowed to upload files."}})
-            else:
-                raise PermissionDenied("User not allowed to upload files.")
+        if not self.activity.can_upload(request.user):
+            raise PermissionDenied()
 
         uploaded_file = request.FILES['file']
         filename = request.POST.get('filename', uploaded_file.name)
@@ -307,20 +143,16 @@ class UploadView(View):
     def url(self):
         return reverse(
             'lizard_progress_uploadhomeview',
-            kwargs={'project_slug': self.project_slug})
+            kwargs={'project_slug': self.project_slug,
+                    'activity_id': self.activity_id})
 
 
 class UploadMeasurementsView(UploadView):
     def process_file(self, path):
-        mtype = models.AvailableMeasurementType.objects.get(
-            slug=self.mtype_slug)
-
         uploaded_file = models.UploadedFile.objects.create(
-            project=self.project,
-            contractor=self.contractor,
+            activity=self.activity,
             uploaded_by=self.user,
             uploaded_at=datetime.datetime.now(),
-            mtype=mtype,
             path=path)
         tasks.process_uploaded_file_task.delay(uploaded_file.id)
 

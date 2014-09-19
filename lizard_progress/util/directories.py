@@ -33,18 +33,17 @@ def project_dir(project):
         project.slug))
 
 
-def contractor_dir(project, contractor):
+def activity_dir(activity):
     """Return base directory for this contractor in this project."""
     return mk(os.path.join(
-        project_dir(project),
-        str(contractor.id)))
+        project_dir(activity.project), str(activity.id)))
 
 
-def measurement_type_dir(project, contractor, measurement_type):
+def measurement_type_dir(activity, measurement_type):
     """Return base directory for this measurement type in this project
     for this contractor."""
     return mk(os.path.join(
-        contractor_dir(project, contractor),
+        activity_dir(activity),
         measurement_type.slug))
 
 
@@ -77,57 +76,47 @@ def make_uploaded_file_path(root, project, contractor,
                         os.path.basename(filename))
 
 
-def results_dir(project, contractor):
+def results_dir(activity):
     """Directory where scripts put result files for this contractor in
     this project."""
-    return mk(os.path.join(
-            contractor_dir(project, contractor),
-            'final_results'))
+    return mk(os.path.join(activity_dir(activity), 'final_results'))
 
 
-def exports_dir(project, contractor):
+def exports_dir(activity):
     """Directory where scripts put result files for this contractor in
     this project."""
-    return mk(os.path.join(
-            contractor_dir(project, contractor),
-            'export'))
+    return mk(os.path.join(activity_dir(activity), 'export'))
 
 
-def reports_dir(project, contractor):
+def reports_dir(activity):
     """Directory where uploads put reports from this contractor in
     this project."""
     return mk(os.path.join(
-            contractor_dir(project, contractor),
-            'reports'))
+        activity_dir(activity),
+        'reports'))
 
 
-def shapefile_dir(project, contractor):
+def shapefile_dir(activity):
     """Directory where uploads put shapefiles from this contractor in
     this project."""
-    return mk(os.path.join(
-            contractor_dir(project, contractor),
-            'shapefile'))
+    return mk(os.path.join(activity_dir(activity), 'shapefile'))
 
 
-def location_shapefile_dir(project, contractor):
+def location_shapefile_dir(activity):
     """Directory where wizards put location shapefiles from this
     contractor in this project."""
-    return mk(os.path.join(
-            contractor_dir(project, contractor),
-            'locations'))
+    return mk(os.path.join(activity_dir(activity), 'locations'))
 
 
-def location_shapefile_path(project, contractor, available_mtype):
+def location_shapefile_path(activity, available_mtype):
     return os.path.join(
-        location_shapefile_dir(project, contractor),
+        location_shapefile_dir(activity),
         b'meetlocaties-{mtype}'.format(mtype=available_mtype.slug))
 
 
 def hydrovakken_dir(project):
     """Directory where wizards put hydrovakken shapefiles for this project."""
-    return mk(os.path.join(
-            project_dir(project),
-            'hydrovakken'))
+    return mk(os.path.join(project_dir(project), 'hydrovakken'))
 
 
 def project_files_dir(project):
@@ -136,10 +125,7 @@ def project_files_dir(project):
 
 
 def organization_files_dir(organization):
-    return mk(os.path.join(
-            BASE_DIR,
-            organization.name,
-            'files'))
+    return mk(os.path.join(BASE_DIR, organization.name, 'files'))
 
 
 def files_in(d):

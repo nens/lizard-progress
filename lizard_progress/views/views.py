@@ -721,41 +721,30 @@ class NewProjectView(ProjectsView):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
 
-        profile = models.UserProfile.get_by_user(request.user)
-        organization = profile.organization
-        ptype = self.form.cleaned_data['ptype']
-        project_type = None
-        if ptype is None:
-            projecttypes = models.ProjectType.objects.filter(
-                organization=self.profile.organization,
-                default=True)
-            if projecttypes.exists():
-                project_type = projecttypes[0]
-        else:
-            project_type = models.ProjectType.objects.get(
-                organization=self.profile.organization, name=ptype)
+        project_type = self.form.cleaned_data['ptype']
 
         project = models.Project(
             name=self.form.cleaned_data['name'],
-            organization=organization,
+            organization=self.organization,
             project_type=project_type)
         project.set_slug_and_save()
 
-        for contractor in self.form.cleaned_data['contractors']:
-            c = models.Contractor(
-                project=project,
-                organization=contractor,
-                name=unicode(contractor))
-            c.set_slug_and_save()
+        for i in range(1, 1 + self.form.NUM_ACTIVITIES):
+            activity = self.form.cleaned_data['activity' + str(i)]
+            contractor = self.form.cleaned_data['contractor' + str(i)]
+            mtype = self.form.cleaned_data['measurementtype' + str(i)]
 
-        for mtype in self.form.cleaned_data['mtypes']:
-            c = models.MeasurementType.objects.create(
-                project=project,
-                mtype=mtype,
-                icon_missing=mtype.default_icon_missing,
-                icon_complete=mtype.default_icon_complete)
+            if None in (activity, contractor, mtype):
+                continue
 
-        org_files_dir = directories.organization_files_dir(organization)
+            models.Activity.objects.create(
+                name=activity,
+                project=project,
+                measurement_type=mtype,
+                contractor=contractor)
+
+        org_files_dir = directories.organization_files_dir(
+            self.profile.organization)
         project_files_dir = directories.project_files_dir(project)
         for filename in os.listdir(org_files_dir):
             shutil.copy(os.path.join(org_files_dir, filename),
@@ -764,6 +753,16 @@ class NewProjectView(ProjectsView):
         return HttpResponseRedirect(
             reverse('lizard_progress_project_configuration_view',
                     kwargs={'project_slug': project.slug}))
+
+    def grouped_form_fields(self):
+        listed_fields = list(self.form)
+
+        fields = [[listed_fields[0]], [listed_fields[1]]]
+
+        for i in range(2, len(listed_fields), 3):
+            fields.append(listed_fields[i:i+3])
+
+        return fields
 
 
 class PlanningView(ProjectsView):

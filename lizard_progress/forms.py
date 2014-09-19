@@ -60,6 +60,8 @@ def project_name_validator(name):
 
 
 class NewProjectForm(forms.Form):
+    NUM_ACTIVITIES = 3
+
     def __init__(self, *args, **kwargs):
         if 'organization' in kwargs:
             self.organization = kwargs['organization']
@@ -68,23 +70,35 @@ class NewProjectForm(forms.Form):
             self.organization = None
 
         super(NewProjectForm, self).__init__(*args, **kwargs)
+
         self.fields['ptype'] = forms.ModelChoiceField(
-            label=_("Project type (optional)."),
+            label=_("Project type (optional)"),
             queryset=models.ProjectType.objects.filter(
                 organization=self.organization),
             required=False)
 
-        self.fields['mtypes'] = forms.ModelMultipleChoiceField(
-            label=_("Choose one or more measurement types"),
-            queryset=self.organization.visible_available_measurement_types())
+        for i in range(1, 1 + self.NUM_ACTIVITIES):
+            self.fields['activity{}'.format(i)] = forms.CharField(
+                label="Activiteit {}".format(i),
+                max_length=40, required=False)
+
+            self.fields['contractor' + str(i)] = forms.ModelChoiceField(
+                label=_("Contractor {}").format(i),
+                queryset=models.Organization.objects.all(),
+                required=False
+            )
+
+            self.fields['measurementtype' + str(i)] = forms.ModelChoiceField(
+                label=_("Activity {}").format(i),
+                queryset=self.organization.
+                visible_available_measurement_types(),
+                required=False
+            )
 
     name = forms.CharField(
         label=_("Project name"),
         max_length=50,
         validators=[project_name_validator])
-    contractors = forms.ModelMultipleChoiceField(
-        label=_("Choose one or more contractors"),
-        queryset=models.Organization.objects.all())
 
 
 class SingleUserForm(forms.Form):
@@ -211,3 +225,26 @@ class AddContractorMeasurementTypeForm(forms.Form):
     measurementtype = forms.IntegerField(required=False)
     remove_contractor = forms.IntegerField(required=False)
     remove_mtype = forms.IntegerField(required=False)
+
+
+class ShapefileForm(forms.Form):
+    """Form for uploading a shapefile."""
+    dbf = ExtFileField(exts=[".dbf"], label=".dbf bestand")
+    shp = ExtFileField(exts=[".shp"], label=".shp bestand")
+    shx = ExtFileField(exts=[".shx"], label=".shx bestand")
+
+    def clean(self):
+        cleaned_data = super(ShapefileForm, self).clean()
+        if self.errors:
+            return cleaned_data
+        # Since there are no errors, `cleaned_data` has all required fields.
+        dbf = os.path.splitext(cleaned_data.get("dbf").name)[0]
+        shp = os.path.splitext(cleaned_data.get("shp").name)[0]
+        shx = os.path.splitext(cleaned_data.get("shx").name)[0]
+        if dbf == shp == shx:
+            pass
+        else:
+            msg = ("De geselecteerde bestanden horen "
+                   + "niet tot dezelfde shapefile.")
+            raise forms.ValidationError(msg)
+        return cleaned_data

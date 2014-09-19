@@ -4,17 +4,30 @@
 {% endblock %}
 
 {% block contentpage %}
-<h2>Project toevoegen</h2>
-{% if not view.user_is_manager %}
-<p>U bent geen projectbeheerder en mag dus geen nieuwe projecten toevoegen.</p>
-{% else %}
-<form action="" method="post">{% csrf_token %}
-<table>
-{{ view.form }}
-</table>
-<input type="submit" class="btn btn-primary" value="Nieuw project toevoegen">
-</form>
+  <h2>Project toevoegen</h2>
+  {% if not view.user_is_manager %}
+    <p>U bent geen projectbeheerder en mag dus geen nieuwe projecten toevoegen.</p>
+  {% else %}
+    <form action="" method="post">{% csrf_token %}
+      {{ form.non_field_errors }}
+      <table>
+        {% for fields in view.grouped_form_fields %}
+          <tr>
+            {% if forloop.counter <= 2 %}
+              <td colspan="3">{{ fields.0.label_tag }}{{ fields.0 }}{{ fields.0.errors }}</td>
+            {% else %}
+              {% for field in fields %}
+                <td>{{ field.label_tag}}{{ field }}{{ field.errors }}</td>
+              {% endfor %}
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </table>
+      <input type="submit" class="btn btn-primary" value="Nieuw project toevoegen">
+    </form>
 
-<p>Instellen uit welke metingtypes hier gekozen kan worden? Zie de <a href="{% url "lizard_progress_editvisibility" %}"><i class="icon-pencil"></i> "Zichtbaarheid Metingtypes"</a> pagina.</p>
-{% endif %}
+    <p>Instellen uit welke metingtypes hier gekozen kan worden? Zie
+    de <a href="{% url "lizard_progress_editvisibility" %}"><i
+    class="icon-pencil"></i> "Zichtbaarheid Metingtypes"</a> pagina.</p>
+  {% endif %}
 {% endblock contentpage %}

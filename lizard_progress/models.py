@@ -958,7 +958,7 @@ class ExportRun(models.Model):
                     yield cls.get_or_create(
                         project, activity.contractor, mtype, 'csv')
 
-                    # Export to Lizard for Almere superusers
+                    # Export to Lizard for Almere managers
                     organization = project.organization
                     if (organization.lizard_config and
                             project.is_manager(user)):

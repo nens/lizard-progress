@@ -43,7 +43,8 @@ urlpatterns = patterns(
         name='lizard_progress_projecten'),
 
     # Change requests are in a subapp
-    url(r'^projects/(?P<project_slug>[^/]+)/changerequests/',
+    url(r'^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/'
+        'changerequests/',
         include('lizard_progress.changerequests.urls')),
 
     # Administration pages from projectspage
@@ -135,7 +136,7 @@ urlpatterns = patterns(
         login_required(DownloadHomeView.as_view()),
         name='lizard_progress_downloadhomeview'),
     url('^download/(?P<filetype>[^/]+)/(?P<project_slug>[^/]+)/' +
-        '(?P<contractor_slug>[^/]+)/(?P<filename>[^/]+)',
+        '(?P<activity_id>\d+)/(?P<filename>[^/]+)',
         login_required(DownloadView.as_view()),
         name='lizard_progress_downloadview'),
     url('^organization_file_upload/$',

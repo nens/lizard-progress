@@ -23,6 +23,7 @@ from django.views.generic import View
 
 from lizard_ui.views import ViewContextMixin
 
+from lizard_progress import configuration
 from lizard_progress import forms
 from lizard_progress import tasks
 from lizard_progress import models
@@ -331,7 +332,8 @@ class UploadHydrovakkenView(ProjectsView):
         for ext in ['shp', 'dbf', 'shx']:
             uploaded_file = request.FILES[ext]
             with open(
-                os.path.join(hydrovakken_dir, uploaded_file.name), 'wb+') as f:
+                    os.path.join(hydrovakken_dir, uploaded_file.name),
+                    'wb+') as f:
                 for chunk in uploaded_file.chunks():
                     f.write(chunk)
 
@@ -346,5 +348,9 @@ class UploadHydrovakkenView(ProjectsView):
             return self.get(request, *args, **kwargs)
 
         return HttpResponseRedirect(reverse(
-                'lizard_progress_downloadhomeview', kwargs={
-                    'project_slug': self.project.slug}))
+            'lizard_progress_downloadhomeview', kwargs={
+                'project_slug': self.project.slug}))
+
+    @property
+    def hydrovakken_id_field(self):
+        return configuration.get(self.project, 'hydrovakken_id_field')

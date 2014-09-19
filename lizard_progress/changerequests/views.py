@@ -18,7 +18,7 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 
-from lizard_progress.views import ProjectsView
+from lizard_progress.views.activity import ActivityView
 from lizard_progress import models as pmodels
 
 from . import models
@@ -32,13 +32,13 @@ def JSONResponse(ob):
         json.dumps(ob), mimetype="application/json")
 
 
-class ChangeRequestsPage(ProjectsView):
+class ChangeRequestsPage(ActivityView):
     template_name = 'changerequests/overview.html'
     active_menu = "requests"
 
     def open_requests(self):
         requests = models.Request.open_requests_for_profile(
-                self.project, self.profile)
+            self.project, self.profile)
 
         for request in requests:
             request.view = self
@@ -50,27 +50,27 @@ class ChangeRequestsPage(ProjectsView):
 
         requests = list(
             models.Request.closed_requests().filter(
-                contractor=self.contractor(),
+                activity=self.activity,
                 seen=False))
         for request in requests:
             request.view = self
         return requests
 
 
-class AllClosedChangeRequestsPage(ProjectsView):
+class AllClosedChangeRequestsPage(ActivityView):
     template_name = 'changerequests/closed_overview.html'
     active_menu = 'requests'
 
     def closed_requests(self):
         requests = models.Request.closed_requests_for_profile(
-                self.project, self.profile)
+            self.project, self.profile)
 
         for request in requests:
             request.view = self
         return requests
 
 
-class RequestDetailPage(ProjectsView):
+class RequestDetailPage(ActivityView):
     template_name = 'changerequests/detail.html'
     active_menu = 'requests'
 
@@ -96,10 +96,10 @@ class RequestDetailPage(ProjectsView):
         project slug and changerequest as helper kwargs."""
 
         kwargs.update({
-                'request': self.request,
-                'project_slug': self.project_slug,
-                'changerequest': self.changerequest
-                })
+            'request': self.request,
+            'project_slug': self.project_slug,
+            'changerequest': self.changerequest
+        })
 
         return formclass(*args, **kwargs)
 
@@ -159,7 +159,7 @@ class AcceptOrRefuseRequest(RequestDetailPage):
                 self.acceptance_error = "Afwijzing kan alleen met reden."
                 if wantsjson:
                     return JSONResponse({
-                            'success': False, 'error': self.acceptance_error})
+                        'success': False, 'error': self.acceptance_error})
                 else:
                     return self.get(request, project_slug)
         elif request.POST.get('withdraw'):
@@ -168,14 +168,13 @@ class AcceptOrRefuseRequest(RequestDetailPage):
             self.changerequest.withdraw()
 
         if wantsjson:
-            return JSONResponse({
-                    'success': True})
+            return JSONResponse({'success': True})
         else:
             return HttpResponseRedirect(
                 self.changerequest.detail_url())
 
 
-class NewRequestView(ProjectsView):
+class NewRequestView(ActivityView):
     template_name = "changerequests/new_request.html"
     active_menu = "requests"
 
@@ -232,8 +231,8 @@ class NewRequestView(ProjectsView):
                 request.accept()
 
             return HttpResponseRedirect(reverse(
-                    'changerequests_main',
-                    kwargs={'project_slug': self.project_slug}))
+                'changerequests_main',
+                kwargs={'project_slug': self.project_slug}))
 
         return self.get(request, project_slug)
 
@@ -301,7 +300,7 @@ class NewRequestRemoveCode(NewRequestView):
             the_geom=location.the_geom)
 
 
-class RequestSeen(ProjectsView):
+class RequestSeen(ActivityView):
     def post(self, request, project_slug, request_id):
         try:
             changerequest = models.Request.objects.get(pk=request_id)
@@ -315,7 +314,7 @@ class RequestSeen(ProjectsView):
         return HttpResponse("OK")
 
 
-class PossibleRequestsView(ProjectsView):
+class PossibleRequestsView(ActivityView):
     template_name = "changerequests/possible_requests.html"
 
     def dispatch(self, request, uploaded_file_id, *args, **kwargs):
@@ -331,11 +330,12 @@ class PossibleRequestsView(ProjectsView):
             raise Http404()
 
 
-class ActivatePossibleRequest(ProjectsView):
+class ActivatePossibleRequest(ActivityView):
     """Called from Ajax, answers in JSON."""
 
     def post(
-        self, request, project_slug, uploaded_file_id, possible_request_id):
+            self, request, project_slug, uploaded_file_id,
+            possible_request_id):
         try:
             possible_request = models.PossibleRequest.objects.get(
                 uploaded_file_id=uploaded_file_id,
@@ -347,11 +347,11 @@ class ActivatePossibleRequest(ProjectsView):
 
         if not form.is_valid():
             return JSONResponse({
-                    'success': False,
-                    'error': "Motivatie is verplicht.",
-                    "error_span_id": (
-                        "#submit-errors-{}".format(possible_request_id))
-                    })
+                'success': False,
+                'error': "Motivatie is verplicht.",
+                "error_span_id": (
+                    "#submit-errors-{}".format(possible_request_id))
+            })
 
         # Actually make request
         error = possible_request.activate(
@@ -362,8 +362,8 @@ class ActivatePossibleRequest(ProjectsView):
             return JSONResponse({'success': True})
         else:
             return JSONResponse({
-                    'success': False,
-                    'error': error,
-                    "error_span_id": (
-                        "#submit-errors-{}".format(possible_request_id))
-                    })
+                'success': False,
+                'error': error,
+                "error_span_id": (
+                    "#submit-errors-{}".format(possible_request_id))
+            })

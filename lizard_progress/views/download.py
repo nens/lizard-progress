@@ -112,11 +112,11 @@ class DownloadHomeView(ProjectsView):
     template_name = "lizard_progress/download_home.html"
     active_menu = "download"
 
-    def _make_url(self, filetype, project, contractor, path):
+    def _make_url(self, filetype, project, activity, path):
         return reverse('lizard_progress_downloadview', kwargs={
             'filetype': filetype,
             'project_slug': project.slug,
-            'contractor_slug': contractor.slug if contractor else 'x',
+            'activity_id': activity.id if activity else '0',
             'filename': os.path.basename(path)
         })
 
@@ -134,52 +134,48 @@ class DownloadHomeView(ProjectsView):
                 }
 
     def _reports_files(self):
-        for contractor in self.project.contractor_set.all():
-            if has_access(self.user, self.project, contractor):
+        for activity in self.project.activity_set.all():
+            if has_access(self.user, self.project, activity.contractor):
                 for path in directories.files_in(
-                        directories.reports_dir(self.project, contractor)):
+                        directories.reports_dir(activity)):
                     yield {
-                        'type': 'Rapporten {0}'.format(
-                            contractor.organization.name),
+                        'type': 'Rapporten {}'.format(activity),
                         'filename': os.path.basename(path),
                         'size': directories.human_size(path),
                         'url': self._make_url('reports',
                                               self.project,
-                                              contractor,
+                                              activity,
                                               path)
                     }
 
     def _results_files(self):
-        for contractor in self.project.contractor_set.all():
-            if has_access(self.user, self.project, contractor):
+        for activity in self.project.activity_set.all():
+            if has_access(self.user, self.project, activity.contractor):
                 for path in directories.files_in(
-                        directories.results_dir(self.project, contractor)):
+                        directories.results_dir(activity)):
                     yield {
-                        'type': 'Resultaten {0}'.format(
-                            contractor.organization.name),
+                        'type': 'Resultaten {}'.format(activity),
                         'filename': os.path.basename(path),
                         'size': directories.human_size(path),
-                        'url': self._make_url('results',
-                                              self.project,
-                                              contractor,
-                                              path)
+                        'url': self._make_url(
+                            'results', self.project,
+                            activity, path)
                         }
 
     def _shapefile_files(self):
-        for contractor in self.project.contractor_set.all():
-            if has_access(self.user, self.project, contractor):
+        for activity in self.project.activity_set.all():
+            if has_access(self.user, self.project, activity.contractor):
                 for path in directories.all_files_in(
-                    directories.shapefile_dir(
-                        self.project, contractor)):
-                        yield {
-                            'type': 'Ingevulde hydrovakken shapefile '.format(
-                                contractor.organization.name),
-                            'filename': os.path.basename(path),
-                            'size': directories.human_size(path),
-                            'url': self._make_url(
-                                'contractor_hydrovakken', self.project,
-                                contractor, path)
-                        }
+                        directories.shapefile_dir(activity)):
+                    yield {
+                        'type': 'Ingevulde hydrovakken shapefile {}'
+                        .format(activity.contractor.name),
+                        'filename': os.path.basename(path),
+                        'size': directories.human_size(path),
+                        'url': self._make_url(
+                            'contractor_hydrovakken', self.project,
+                            activity, path)
+                    }
 
     def _hydrovakken_files(self):
         if has_access(self.user, self.project):
@@ -279,23 +275,25 @@ class DownloadView(View):
     """Downloading files."""
 
     def get(self, request, filetype, project_slug,
-            contractor_slug, filename):
+            activity_id, filename):
         project = get_object_or_404(Project, slug=project_slug)
-        if contractor_slug == 'x':
-            contractor = None
-        else:
-            contractor = get_object_or_404(Contractor, slug=contractor_slug)
 
-        if not has_access(request.user, project, contractor):
+        if activity_id != '0':
+            activity = get_object_or_404(models.Activity, pk=activity_id)
+        else:
+            activity = None
+
+        if not has_access(
+                request.user, project,
+                activity.contractor if activity else None):
             return HttpResponseForbidden()
 
         if filetype == 'reports':
-            directory = directories.reports_dir(project, contractor)
+            directory = directories.reports_dir(activity)
         elif filetype == 'results':
-            directory = directories.reports_dir(project, contractor)
+            directory = directories.reports_dir(activity)
         elif filetype == 'organization':
-            directory = directories.project_files_dir(
-                project)
+            directory = directories.project_files_dir(project)
         elif filetype == 'hydrovakken':
             directory = directories.hydrovakken_dir(project)
             for path in directories.all_files_in(directory):
@@ -305,7 +303,7 @@ class DownloadView(View):
             else:
                 raise http.Http404()
         elif filetype == 'contractor_hydrovakken':
-            directory = directories.shapefile_dir(project, contractor)
+            directory = directories.shapefile_dir(activity)
             for path in directories.all_files_in(directory):
                 if os.path.basename(path) == filename:
                     directory = os.path.dirname(path)
@@ -323,11 +321,11 @@ class DownloadView(View):
         return serve(request, path, '/')
 
     def delete(self, request, filetype, project_slug,
-            contractor_slug, filename):
+               activity_id, filename):
         """Delete a downloadable file. For now, only for files without
-        contractor ('organization files')."""
+        activity ('organization files')."""
 
-        if contractor_slug != 'x' or filetype != 'organization':
+        if activity_id != '0' or filetype != 'organization':
             return HttpResponseForbidden()
 
         project = get_object_or_404(Project, slug=project_slug)
@@ -335,8 +333,7 @@ class DownloadView(View):
         if not project.is_manager(request.user):
             return HttpResponseForbidden()
 
-        directory = directories.project_files_dir(
-            project)
+        directory = directories.project_files_dir(project)
         path = os.path.join(directory, filename)
         if os.path.exists(path) and os.path.isfile(path):
             os.remove(path)
@@ -362,7 +359,7 @@ def start_export_run_view(request, project_slug, export_run_id):
         return HttpResponseForbidden()
 
     if not models.has_access(
-        request.user, export_run.project, export_run.contractor):
+            request.user, export_run.project, export_run.contractor):
         logger.debug("No access")
         return HttpResponseForbidden()
 

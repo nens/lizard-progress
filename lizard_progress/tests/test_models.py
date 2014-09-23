@@ -369,9 +369,7 @@ class TestExportRun(TestCase):
         )
 
         run = ExportRunF.build(
-            project=activity.project,
-            organization=activity.contractor,
-            measurement_type=activity.measurement_type,
+            activity=activity,
             file_path="/some/nonexisting/path",
             generates_file=True)
         self.assertFalse(run.available)
@@ -388,9 +386,7 @@ class TestExportRun(TestCase):
         )
 
         run = ExportRunF.build(
-            project=activity.project,
-            organization=activity.contractor,
-            measurement_type=activity.measurement_type,
+            activity=activity,
             file_path="/some/nonexisting/path",
             generates_file=False,
             created_at=datetime.datetime.now())
@@ -409,9 +405,7 @@ class TestExportRun(TestCase):
         )
 
         run = ExportRunF.create(
-            project=activity.project,
-            organization=activity.contractor,
-            measurement_type=activity.measurement_type,
+            activity=activity,
             file_path="/some/nonexisting/path",
             generates_file=True)
 

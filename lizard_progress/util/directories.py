@@ -33,29 +33,24 @@ def project_dir(project):
         project.slug))
 
 
-def activity_dir(activity):
+def contractor_dir(activity):
     """Return base directory for this contractor in this project."""
     return mk(os.path.join(
-        project_dir(activity.project), str(activity.id)))
+        project_dir(activity.project), activity.contractor.name))
 
 
-def measurement_type_dir(activity, measurement_type):
+def measurement_type_dir(activity):
     """Return base directory for this measurement type in this project
     for this contractor."""
     return mk(os.path.join(
-        activity_dir(activity),
-        measurement_type.slug))
+        contractor_dir(activity),
+        activity.measurement_type.slug))
 
 
-def make_uploaded_file_path(root, project, contractor,
-                            measurement_type, filename):
+def make_uploaded_file_path(root, activity, filename):
     """Gives the path to some uploaded file, which depends on the
     project it is for, the contractor that uploaded it and the
     measurement type that got its data from this file.
-
-    Project, contractor, measurement_type can each be either a
-    model instance of that type or a string containing the slug
-    of one.
 
     Can be used both for absolute file paths (pass in
     directories.BASE_DIR as root) or for URLs that will be passed to
@@ -64,48 +59,41 @@ def make_uploaded_file_path(root, project, contractor,
     External URLs should use a reverse() call to the
     lizard_progress_filedownload view instead of this function."""
 
-    project_slug = getattr(project, 'slug', project)
-    contractor_slug = getattr(contractor, 'slug', contractor)
-    measurement_type_slug = getattr(measurement_type, 'slug', measurement_type)
-
-    return os.path.join(root,
-                        project.organization.name,
-                        project_slug,
-                        contractor_slug,
-                        measurement_type_slug,
-                        os.path.basename(filename))
+    return os.path.join(
+        measurement_type_dir(activity),
+        os.path.basename(filename)).replace(BASE_DIR, root)
 
 
 def results_dir(activity):
     """Directory where scripts put result files for this contractor in
     this project."""
-    return mk(os.path.join(activity_dir(activity), 'final_results'))
+    return mk(os.path.join(contractor_dir(activity), 'final_results'))
 
 
 def exports_dir(activity):
     """Directory where scripts put result files for this contractor in
     this project."""
-    return mk(os.path.join(activity_dir(activity), 'export'))
+    return mk(os.path.join(contractor_dir(activity), 'export'))
 
 
 def reports_dir(activity):
     """Directory where uploads put reports from this contractor in
     this project."""
     return mk(os.path.join(
-        activity_dir(activity),
+        contractor_dir(activity),
         'reports'))
 
 
 def shapefile_dir(activity):
     """Directory where uploads put shapefiles from this contractor in
     this project."""
-    return mk(os.path.join(activity_dir(activity), 'shapefile'))
+    return mk(os.path.join(contractor_dir(activity), 'shapefile'))
 
 
 def location_shapefile_dir(activity):
     """Directory where wizards put location shapefiles from this
     contractor in this project."""
-    return mk(os.path.join(activity_dir(activity), 'locations'))
+    return mk(os.path.join(contractor_dir(activity), 'locations'))
 
 
 def location_shapefile_path(activity, available_mtype):

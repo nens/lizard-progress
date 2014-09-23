@@ -328,74 +328,6 @@ class Project(models.Model):
 
         return False
 
-    def work_to_do(self):
-        """Returns list of contractor/measurement type combinations
-        and some statistics about them."""
-
-        contractors = self.contractor_set.all()
-        measurement_types = self.measurementtype_set.all()
-
-        info = []
-
-        for c in contractors:
-            info_for_contractor = []
-            for m in measurement_types:
-                if not c.show_measurement_type(m):
-                    continue
-
-                scheduled_measurements = len(
-                    ScheduledMeasurement.objects.filter(
-                        location__activity__project=self,
-                        contractor=c,
-                        measurement_type=m))
-                if self.needs_predefined_locations(m.mtype):
-                    scheduled_measurements = str(scheduled_measurements)
-                else:
-                    scheduled_measurements = (
-                        "{}, vrij uploaden mogelijk".format(
-                            scheduled_measurements))
-
-                measurements = Measurement.objects.filter(
-                    scheduled__location__activity__project=self,
-                    scheduled__contractor=c,
-                    scheduled__measurement_type=m).order_by('timestamp')
-
-                num_m = len(measurements)
-                if num_m > 0:
-                    last_m = measurements[0].timestamp
-                else:
-                    last_m = None
-
-                planning_url = (
-                    reverse('lizard_progress_planningview', kwargs={
-                            'project_slug': self.slug,
-                            'contractor_slug': c.slug}) +
-                    "?mtype_slug={}".format(m.mtype.slug))
-
-                info_for_contractor.append({
-                    'contractor': c,
-                    'measurement_type': m,
-                    'scheduled_measurements': scheduled_measurements,
-                    'planning_url': planning_url,
-                    'num_measurements': num_m,
-                    'last_measurement': last_m
-                })
-            if info_for_contractor:
-                info += info_for_contractor
-            else:
-                planning_url = reverse('lizard_progress_planningview', kwargs={
-                    'project_slug': self.slug,
-                    'contractor_slug': c.slug})
-                info.append({
-                    'contractor': c,
-                    'measurement_type': None,
-                    'scheduled_measurements': "Geen metingen toegewezen",
-                    'planning_url': planning_url,
-                    'num_measurements': 0,
-                    'last_measurement': None
-                })
-        return info
-
     def number_of_scheduled_measurements(self):
         return Location.objects.filter(activity__project=self).count()
 
@@ -581,8 +513,7 @@ class Activity(models.Model):
 
     def upload_directory(self):
         """Directory where the files for this activity will be stored."""
-        return directories.measurement_type_dir(
-            self.project, self.contractor, self.measurement_type)
+        return directories.measurement_type_dir(self)
 
     def can_upload(self, user):
         """User can upload if he is with the contractor, or if user is a
@@ -902,9 +833,8 @@ class ExportRun(models.Model):
     like 'met' or 'autocad' to make it possilbe to have different ways to
     export the same data."""
 
-    project = models.ForeignKey(Project)
-    organization = models.ForeignKey(Organization, null=True)
-    measurement_type = models.ForeignKey(AvailableMeasurementType)
+    activity = models.ForeignKey(Activity, null=True)
+
     exporttype = models.CharField(max_length=20)
     # Some export runs generate a file to download, others (the Lizard export)
     # send data somewhere.
@@ -919,27 +849,19 @@ class ExportRun(models.Model):
     error_message = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
-        unique_together = (
-            'project', 'organization', 'measurement_type', 'exporttype')
+        unique_together = (('activity', 'exporttype'), )
 
     def __unicode__(self):
-        return ("Export '{exporttype}' of all data of type "
-                "'{measurement_type}' by {contractor} in {project}"
-                ).format(
-            exporttype=self.exporttype,
-            contractor=self.contractor.organization,
-            project=self.project,
-            measurement_type=self.measurement_type)
+        return ("Export '{}' of {}").format(self.exporttype, self.activity)
 
     @property
     def filename(self):
         return self.file_path and os.path.basename(self.file_path)
 
     @classmethod
-    def get_or_create(cls, project, contractor, measurement_type, exporttype):
+    def get_or_create(cls, activity, exporttype):
         instance, created = cls.objects.get_or_create(
-            project=project, contractor=contractor,
-            measurement_type=measurement_type, exporttype=exporttype)
+            activity=activity, exporttype=exporttype)
         return instance
 
     @classmethod
@@ -951,27 +873,21 @@ class ExportRun(models.Model):
             mtype = activity.measurement_type
             if has_access(user, project, activity.contractor):
                 if mtype.implementation_slug == 'dwarsprofiel':
-                    yield cls.get_or_create(
-                        project, activity.contractor, mtype, 'met')
-                    yield cls.get_or_create(
-                        project, activity.contractor, mtype, 'dxf')
-                    yield cls.get_or_create(
-                        project, activity.contractor, mtype, 'csv')
+                    yield cls.get_or_create(activity, 'met')
+                    yield cls.get_or_create(activity, 'dxf')
+                    yield cls.get_or_create(activity, 'csv')
 
                     # Export to Lizard for Almere managers
                     organization = project.organization
                     if (organization.lizard_config and
                             project.is_manager(user)):
-                        exportrun = cls.get_or_create(
-                            project, activity.contractor, mtype, 'lizard')
+                        exportrun = cls.get_or_create(activity, 'lizard')
                         exportrun.generates_file = False
                         exportrun.save()
                         yield exportrun
 
-                yield cls.get_or_create(
-                    project, activity.contractor, mtype, 'allfiles')
-                yield cls.get_or_create(
-                    project, activity.contractor, mtype, 'pointshape')
+                yield cls.get_or_create(activity, 'allfiles')
+                yield cls.get_or_create(activity, 'pointshape')
 
     @property
     def available(self):
@@ -1027,10 +943,8 @@ class ExportRun(models.Model):
 
     def measurements_to_export(self):
         return Measurement.objects.filter(
-            scheduled__project=self.project,
-            scheduled__contractor=self.contractor,
-            scheduled__measurement_type__mtype=self.measurement_type,
-            scheduled__complete=True).select_related()
+            location__activity=self.activity,
+            location__complete=True).select_related()
 
     def files_to_export(self):
         return set(
@@ -1039,13 +953,13 @@ class ExportRun(models.Model):
 
     def export_filename(self, extension="zip"):
         """Return the filename that the result file should use."""
-        directory = directories.exports_dir(self.project, self.contractor)
+        directory = directories.exports_dir(self.activity)
         return os.path.join(
             directory,
             "{project}-{contractor}-{mtype}.{extension}").format(
-            project=self.project.slug,
-            contractor=self.contractor.slug,
-            mtype=self.measurement_type.slug,
+            project=self.activity.project.slug,
+            contractor=self.activity.contractor.slug,
+            mtype=self.activity.measurement_type.slug,
             extension=extension).encode('utf8')
 
     def fail(self, error_message):

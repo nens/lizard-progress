@@ -98,7 +98,7 @@ urlpatterns = patterns(
         name='lizard_progress_edit_contractors'),
 
     # CSV file generation
-    url('^dashboardcsv/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/$',
+    url('^dashboardcsv/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/$',
         login_required(DashboardCsvView.as_view()),
         name='lizard_progress_dashboardcsvview'),
 

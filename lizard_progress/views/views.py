@@ -564,8 +564,8 @@ def dashboard_graph(
 
 
 @login_required
-def protected_file_download(request, project_slug, contractor_id,
-                            measurement_type_slug, filename):
+def protected_file_download(request, project_slug, activity_id,
+                            filename):
     """
     We need our own file_download view because contractors can only see their
     own files, and the URLs of other contractor's files are easy to guess.
@@ -581,12 +581,11 @@ def protected_file_download(request, project_slug, contractor_id,
     """
 
     # XXXX
-    project = get_object_or_404(Project, slug=project_slug)
-    contractor = get_object_or_404(Contractor, slug=contractor_slug,
-                                   project=project)
-    mtype = get_object_or_404(
-        MeasurementType, mtype__slug=measurement_type_slug,
-        project=project)
+    project = get_object_or_404(models.Project, slug=project_slug)
+    activity = get_object_or_404(models.Activity, pk=activity_id)
+
+    if activity.project != project:
+        return http.HttpResponseForbidden()
 
     logger.debug("Incoming programfile request for %s", filename)
 
@@ -595,16 +594,14 @@ def protected_file_download(request, project_slug, contractor_id,
         logger.warn("Returned Forbidden on suspect path %s" % (filename,))
         return http.HttpResponseForbidden()
 
-    if not has_access(request.user, project, contractor):
+    if not has_access(request.user, project, activity.contractor):
         logger.warn("Not allowed to access %s", filename)
         return http.HttpResponseForbidden()
 
     file_path = directories.make_uploaded_file_path(
-        directories.BASE_DIR, project, contractor,
-        mtype, filename)
+        directories.BASE_DIR, activity, filename)
     nginx_path = directories.make_uploaded_file_path(
-        '/protected', project, contractor,
-        mtype, filename)
+        '/protected', activity, filename)
 
     # This is where the magic takes place.
     response = http.HttpResponse()
@@ -627,7 +624,6 @@ def protected_file_download(request, project_slug, contractor_id,
 
 
 class ArchiveProjectsOverview(ProjectsView):
-
     template_name = 'lizard_progress/archive.html'
 
     def archive_years(self):

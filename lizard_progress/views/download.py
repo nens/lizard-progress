@@ -219,23 +219,24 @@ class DownloadHomeView(ProjectsView):
         return self._files
 
     def csv(self):
-        """Links to CSV downloads. One per contractor."""
+        """Links to CSV downloads. One per activity."""
 
         if hasattr(self, '_csvs'):
             return self._csvs
 
         csvs = []
 
-        for contractor in Contractor.objects.filter(project=self.project):
-            if has_access(self.request.user, self.project, contractor):
+        for activity in self.project.activity_set.all():
+            if has_access(
+                    self.request.user, self.project, activity.contractor):
                 url = reverse(
                     'lizard_progress_dashboardcsvview',
                     kwargs={
                         'project_slug': self.project_slug,
-                        'contractor_slug': contractor.slug,
+                        'activity_id': activity.id
                         })
 
-                csvs.append((contractor, url))
+                csvs.append((activity, url))
 
         self._csvs = csvs
         return csvs
@@ -245,8 +246,6 @@ class DownloadHomeView(ProjectsView):
             exportrun
             for exportrun in models.ExportRun.all_in_project(
                 self.project, self.request.user)
-            if exportrun.contractor.show_measurement_type(
-                exportrun.measurement_type_in_project)
             ]
 
     @property
@@ -354,12 +353,13 @@ def start_export_run_view(request, project_slug, export_run_id):
         logger.debug("No such export run")
         return HttpResponseForbidden()
 
-    if export_run.project.slug != project_slug:
+    if export_run.activity.project.slug != project_slug:
         logger.debug("Wrong project slug")
         return HttpResponseForbidden()
 
     if not models.has_access(
-            request.user, export_run.project, export_run.contractor):
+            request.user, export_run.activity.project,
+            export_run.activity.contractor):
         logger.debug("No access")
         return HttpResponseForbidden()
 

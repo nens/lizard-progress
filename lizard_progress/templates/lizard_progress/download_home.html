@@ -84,8 +84,8 @@
   </thead>
 {% for export_run in view.exports %}
   <tr {% if not export_run.present and export_run.export_running %}class="please-reload-me"{% endif %}>
-    <td>{{ export_run.contractor.organization }}</td>
-    <td>{{ export_run.measurement_type }}</td>
+    <td>{{ export_run.activity.contractor }}</td>
+    <td>{{ export_run.activity.measurement_type }}</td>
     <td>
       {% if export_run.exporttype == "allfiles" %}ZIP bestand
       {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties
@@ -119,7 +119,7 @@
       <button type="button"
               autocomplete="off" {# So it doesn't stay disabled after reloading in Firefox #}
               {% if export_run.export_running %}disabled="disabled"{% endif %}
-              data-export-run-url="{% url "lizard_progress_start_export_run_view" project_slug=export_run.project.slug export_run_id=export_run.id %}"
+              data-export-run-url="{% url "lizard_progress_start_export_run_view" project_slug=export_run.activity.project.slug export_run_id=export_run.id %}"
               data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif"
               data-export-run-id="{{ export_run.id }}"
               class="export-run-button btn btn-primary">
@@ -136,9 +136,9 @@
     <th>Opdrachtnemer</th>
     <th style="width: 6em;">CSV bestand</th>
   </thead>
-{% for contractor, url in view.csv %}
+{% for activity, url in view.csv %}
   <tr>
-    <td class="filename">{{ contractor.organization.name }}</td>
+    <td class="filename">{{ activity }}</td>
     <td class="download"><a href="{{ url }}">CSV file voortgang</a></td>
   </tr>
 {% endfor %}

@@ -56,7 +56,7 @@ def start_run(export_run_id, user):
 
     try:
         with send_email_on_exception(
-            "Start export run, id={}".format(export_run.id)):
+                "Start export run, id={}".format(export_run.id)):
             if export_run.exporttype == "met":
                 export_as_metfile(export_run)
             elif export_run.exporttype == "dxf":
@@ -241,32 +241,29 @@ def create_csv(measurement, temp):
         writer.writerow(["Gemeten waterstand:", profile.waterlevel])
         writer.writerow([])
         writer.writerow([
-                "Afstand tot midden (m)",
-                "Hoogte (m NAP)",
-                "Hoogte zachte bodem (m NAP)"])
+            "Afstand tot midden (m)",
+            "Hoogte (m NAP)",
+            "Hoogte zachte bodem (m NAP)"])
 
         for m in profile.sorted_measurements:
             distance = base_line.distance_to_midpoint(m.point)
 
             writer.writerow([
-                    "{0:.2f}".format(distance),
-                    "{0:.2f}".format(m.z1),
-                    "{0:.2f}".format(m.z2)])
+                "{0:.2f}".format(distance),
+                "{0:.2f}".format(m.z1),
+                "{0:.2f}".format(m.z2)])
 
     return filepath
 
 
 def create_png(measurement, temp):
     from lizard_progress import mtype_specifics
-    handler = mtype_specifics.MetfileSpecifics(
-        measurement.scheduled.project,
-        measurement.scheduled.measurement_type,
-        measurement.scheduled.contractor)
-    location_code = measurement.scheduled.location.location_code
+    handler = mtype_specifics.MetfileSpecifics(measurement.location.activity)
+    location_code = measurement.location.location_code
     filename = "{id}.png".format(id=location_code)
     filepath = os.path.join(temp, filename)
 
-    handler.image_handler([measurement.scheduled], open(filepath, 'wb'))
+    handler.image_handler([measurement.location], open(filepath, 'wb'))
     return filepath
 
 
@@ -301,10 +298,7 @@ def export_as_shapefile(export_run):
     """Use pyshp to generate a shapefile."""
 
     locations = list(models.Location.objects.filter(
-        scheduledmeasurement__project=export_run.project,
-        scheduledmeasurement__contractor=export_run.contractor,
-        scheduledmeasurement__measurement_type__mtype=(
-            export_run.measurement_type),
+        activity=export_run.activity,
         the_geom__isnull=False))
 
     if not locations:
@@ -322,7 +316,7 @@ def export_as_shapefile(export_run):
 
     shp = shapefile.Writer(shapefile.POINT)
     shp.field(
-        configuration.get(export_run.project, 'location_id_field')
+        configuration.get(export_run.activity.project, 'location_id_field')
         .strip().encode('utf8'))
     shp.field(b'X', b'F', 11, 5)
     shp.field(b'Y', b'F', 11, 5)
@@ -334,12 +328,7 @@ def export_as_shapefile(export_run):
             location.location_code,
             float(location.the_geom.x),
             float(location.the_geom.y),
-            models.ScheduledMeasurement.objects.filter(
-                location=location,
-                contractor=export_run.contractor,
-                measurement_type__mtype=export_run.measurement_type,
-                complete=True).exists()
-            )
+            location.complete)
 
     shp.save(shape_filepath)
 
@@ -349,9 +338,7 @@ def export_as_shapefile(export_run):
 
     with zipfile.ZipFile(zipfile_path, 'w') as z:
         for file_path in os.listdir(temp_dir):
-            z.write(
-                os.path.join(temp_dir, file_path),
-                file_path)
+            z.write(os.path.join(temp_dir, file_path), file_path)
         # Add a .prj too, if we can find it
         prj = pkg_resources.resource_filename(
             'lizard_progress', 'rijksdriehoek.prj')

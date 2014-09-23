@@ -41,17 +41,18 @@ class GenericSpecifics(object):
     - To have a class with this name.
     """
 
-    def __init__(self, project, measurement_type, contractor=None):
-        self.project = project
-        self.measurement_type = measurement_type
-        self.contractor = contractor
+    def __init__(self, activity):
+        self.activity = activity
+        self.project = activity.project
+        self.measurement_type = activity.measurement_type
+        self.organization = activity.contractor
 
     ## The below are named "sample_" so that the adapter can see that
     ## the real html_handler and image_handler aren't implemented.  In
     ## your own Specifics objects, they need to be named
     ## 'html_handler' and 'image_handler'.
 
-    def sample_html_handler(self, html_default, scheduled_measurements,
+    def sample_html_handler(self, html_default, locations,
                             identifiers, layout_options):
         """
         A function that can generate popup HTML for this measurement
@@ -65,12 +66,12 @@ class GenericSpecifics(object):
         """
         pass
 
-    def sample_image_handler(self, scheduled_measurements):
-        """
-        A function that implements an adapter's image() function.
+    def sample_image_handler(self, locations):
+        """A function that implements an adapter's image() function.
 
-        Scheduled_measurements is a list of ScheduledMeasurement
-        objects belonging to the identifiers passed in.
+        Locations is a list of Location objects belonging to the
+        identifiers passed in.
+
         """
         pass
 
@@ -82,17 +83,17 @@ class MetfileSpecifics(GenericSpecifics):
 
     # Note that the response_object argument is used from exports.py, to
     # save images to a file instead of an HTTP response.
-    def image_handler(self, scheduled_measurements, response_object=None):
-        if not scheduled_measurements:
+    def image_handler(self, locations, response_object=None):
+        if not locations:
             # Should not happen
             logger.critical(
                 "dwarsprofiel_image_handler called without measurements!")
             return
 
         # Currently only works for the first
-        sm = scheduled_measurements[0]
+        location = locations[0]
 
-        if not sm.complete:
+        if not location.complete:
             # Should not happen, incomplete dwarsprofiel measurements
             # don't have a graph in their popup.
             logger.critical(
@@ -101,12 +102,12 @@ class MetfileSpecifics(GenericSpecifics):
             return
 
         try:
-            m = Measurement.objects.get(scheduled=sm)
+            m = Measurement.objects.get(location=location)
         except Measurement.DoesNotExist:
             # Again, should not happen.
             logger.critical(
-                "ScheduledMeasurement id=%d is complete, but there " +
-                "is no Measurement for it!" % sm.id)
+                "Location id=%d is complete, but there " +
+                "is no Measurement for it!" % location.id)
             return
 
         data = m.data
@@ -126,9 +127,9 @@ class MetfileSpecifics(GenericSpecifics):
         ax = fig.add_subplot(111)
         ax.set_title(
             'Dwarsprofiel {code}, project {project}, {contractor} {date}'
-            .format(code=sm.location.location_code,
-                    project=sm.project,
-                    contractor=sm.contractor.organization,
+            .format(code=location.location_code,
+                    project=self.project,
+                    contractor=self.organization,
                     date=m.date.strftime("%d/%m/%y")))
 
         ax.set_xlabel('Afstand tot middelpunt watergang (m)')
@@ -184,24 +185,24 @@ class OeverfotoSpecifics(GenericSpecifics):
     parser = lizard_progress.parsers.oeverfoto_parser.OeverfotoParser
     linelike = False
 
-    def html_handler(self, html_default, scheduled_measurements,
+    def html_handler(self, html_default, locations,
                      identifiers, layout_options):
-        if not scheduled_measurements:
+        if not locations:
             # Should not happen
             logger.critical("foto_html_handler called without measurements!")
             return
 
         # Only works for the first right now
-        sm = scheduled_measurements[0]
+        location = locations[0]
 
-        if not sm.complete:
+        if not location.complete:
             logger.critical(
                 "foto_html_handler called for a graph " +
                 "of noncomplete measurement!")
             return
 
         photos = {}
-        for photo in sm.measurement_set.all():
+        for photo in location.measurement_set.all():
             photos[photo.data] = photo
 
         oevers = []
@@ -213,12 +214,12 @@ class OeverfotoSpecifics(GenericSpecifics):
 
             photo = photos[oever]
             dutch = 'Linkeroever' if oever == 'left' else 'Rechteroever'
-            name = '%s %s' % (sm.location.location_code, dutch)
+            name = '%s %s' % (location.location_code, dutch)
 
             oevers.append({
-                    'photo_url': photo.url,
-                    'photo_name': name,
-                    })
+                'photo_url': photo.url,
+                'photo_name': name,
+            })
 
         layout_options = {'height': '400px'}
         return html_default(
@@ -234,14 +235,14 @@ class OeverkenmerkSpecifics(GenericSpecifics):
     parser = lizard_progress.parsers.oeverkenmerk_parser.OeverkenmerkParser
     linelike = True
 
-    def html_handler(self, html_default, scheduled_measurements,
-                         identifiers, layout_options):
+    def html_handler(self, html_default, locations,
+                     identifiers, layout_options):
         return html_default(
             identifiers=identifiers,
             template="lizard_progress/measurement_types/oeverkenmerk.html",
             layout_options=layout_options,
             extra_render_kwargs={
-                'scheduled_measurements': scheduled_measurements})
+                'locations': locations})
 
 
 class PeilschaalFotoSpecifics(GenericSpecifics):
@@ -249,17 +250,17 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
     parser = lizard_progress.parsers.peilschaal_jpg_parser.PeilschaalJpgParser
     linelike = False
 
-    def html_handler(self, html_default, scheduled_measurements,
-                          identifiers, layout_options):
-        if not scheduled_measurements:
+    def html_handler(self, html_default, locations,
+                     identifiers, layout_options):
+        if not locations:
             # Should not happen
             logger.critical("foto_html_handler called without measurements!")
             return
 
         # Only works for the first right now
-        sm = scheduled_measurements[0]
+        location = locations[0]
 
-        m = Measurement.objects.get(scheduled=sm)
+        m = Measurement.objects.get(location=location)
 
         layout_options = {'height': '400px'}
 
@@ -267,7 +268,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
             identifiers=identifiers,
             layout_options=layout_options,
             template="lizard_progress/measurement_types/peilschaal_foto.html",
-            extra_render_kwargs={'location': sm.location.location_code,
+            extra_render_kwargs={'location': location.location_code,
                                  'url': m.url})
 
 
@@ -276,13 +277,12 @@ class PeilschaalMetingSpecifics(GenericSpecifics):
     parser = lizard_progress.parsers.peilschaal_csv_parser.PeilschaalCsvParser
     linelike = True
 
-    def html_handler(self, html_default, scheduled_measurements,
+    def html_handler(self, html_default, locations,
                      identifiers, layout_options):
         return html_default(
             identifiers=identifiers,
             template="lizard_progress/measurement_types/peilschaalmeting.html",
-            extra_render_kwargs={
-                'scheduled_measurements': scheduled_measurements})
+            extra_render_kwargs={'locations': locations})
 
 
 class LaboratoriumCsvSpecifics(GenericSpecifics):

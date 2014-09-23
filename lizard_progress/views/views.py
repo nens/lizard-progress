@@ -233,7 +233,7 @@ class KickOutMixin(object):
             Action(
                 icon='icon-question-sign',
                 name="Handleiding",
-                description=(_("Download de handleiding")),
+                description=(_("Download the manual")),
                 url=settings.STATIC_URL +
                 "lizard_progress/Gebruikershandleiding_Uploadserver.pdf")
             ]

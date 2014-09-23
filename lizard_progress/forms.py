@@ -74,21 +74,36 @@ class NewProjectForm(forms.Form):
 
         for i in range(1, 1 + self.NUM_ACTIVITIES):
             self.fields['activity{}'.format(i)] = forms.CharField(
-                label="Activiteit {}".format(i),
+                label=_("Activity") + " " + str(i),
                 max_length=40, required=False)
 
             self.fields['contractor' + str(i)] = forms.ModelChoiceField(
-                label=_("Contractor {}").format(i),
+                label=_("Contractor") + " " + str(i),
                 queryset=models.Organization.objects.all(),
                 required=False
             )
 
             self.fields['measurementtype' + str(i)] = forms.ModelChoiceField(
-                label=_("Activity {}").format(i),
+                label=_("Measurement type") + " " + str(i),
                 queryset=self.organization.
                 visible_available_measurement_types(),
                 required=False
             )
+
+    def clean(self):
+        cleaned_data = super(NewProjectForm, self).clean()
+
+        if self.errors:
+            return cleaned_data
+
+        for i in range(1, 1 + self.NUM_ACTIVITIES):
+            data = [cleaned_data.get(field + str(i))
+                    for field in ('activity', 'contractor', 'measurementtype')]
+            if any(data) and not all(data):
+                self._errors['activity' + str(i)] = self.error_class([
+                    _("Not all activity fields filled in.")])
+
+        return cleaned_data
 
     name = forms.CharField(
         label=_("Project name"),

@@ -54,15 +54,15 @@ class GenericSpecifics(object):
 
     def sample_html_handler(self, html_default, locations,
                             identifiers, layout_options):
-        """
-        A function that can generate popup HTML for this measurement
+        """A function that can generate popup HTML for this measurement
         type. Only called for complete measurements, from
         lizard-progress' adapter's html() function.
 
         Html_default is the html_default function of the adapter.
-        Scheduled_measurements is a list of ScheduledMeasurement
-        objects belonging to the identifiers passed in identifiers.
-        Layout_options mean the same as in a normal adapter.
+        Locations is a list of Location objects belonging to the
+        identifiers passed in identifiers.  Layout_options mean the
+        same as in a normal adapter.
+
         """
         pass
 

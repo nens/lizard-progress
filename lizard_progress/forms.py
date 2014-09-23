@@ -1,17 +1,12 @@
 # coding=UTF-8
 """Forms, mainly used as steps by form wizards."""
 
-from itertools import chain
-
 from tls import request  # ! So that form validation can know about
                          # the current user
 
 from django import forms
 from django.contrib.auth import models as authmodels
 from django.core.exceptions import ValidationError
-from django.utils.encoding import force_unicode
-from django.utils.html import conditional_escape
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from lizard_progress import models

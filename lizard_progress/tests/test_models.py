@@ -130,9 +130,7 @@ class ExportRunF(factory.DjangoModelFactory):
     class Meta:
         model = models.ExportRun
 
-    project = factory.SubFactory(ProjectF)
-    organization = factory.SubFactory(OrganizationF)
-    measurement_type = factory.SubFactory(AvailableMeasurementTypeF)
+    activity = factory.SubFactory(ActivityF)
 
     exporttype = "someexporttype"
     generates_file = True
@@ -396,7 +394,8 @@ class TestExportRun(TestCase):
     def test_exportrun_that_fails_is_not_available(self):
         measurement_type = AvailableMeasurementTypeF.create()
         contractor = OrganizationF.create()
-        project = ProjectF.create()
+        project = ProjectF.create(
+            name='test_exportrun_that_fails_is_not_available')
 
         activity = ActivityF.create(
             measurement_type=measurement_type,

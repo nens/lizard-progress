@@ -16,7 +16,6 @@ import pyproj
 from lizard_progress import models
 from lizard_progress.models import Hydrovak
 from lizard_progress.models import Location
-from lizard_progress.models import Project
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +39,11 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             raise ValueError(
                 'Argument layer_arguments of adapter should be a dict.')
 
-        activity_id = kwargs['layer_arguments'].get('activity_id', None)
-
-        self.activity = None
-        self.project = None
-        self.contractor = None
-        self.measurement_type = None
+        self.activity_id = kwargs['layer_arguments'].get('activity_id', None)
 
         try:
-            self.activity = models.Activity.objects.get(pk=activity_id)
+            self.activity = models.Activity.objects.get(
+                pk=self.activity_id)
         except models.Activity.DoesNotExist:
             return
 
@@ -82,43 +77,32 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def mapnik_query(self, complete):
         q = """(SELECT
                     loc.the_geom
-                FROM
+                 FROM
                     lizard_progress_location loc
                 WHERE
                     loc.activity_id = %d AND
-                    loc.the_geom IS NOT NULL
-                GROUP BY
-                    loc.the_geom
-                HAVING bool_or(loc.complete)=%s AND
-                       bool_and(loc.complete)=%s
+                    loc.the_geom IS NOT NULL AND
+                    loc.complete = %s
                 ) data"""
-        if complete is True:
-            return q % (self.contractor.id, self.project.id,
-                        "true", "true")
-        elif complete is False:
-            return q % (self.contractor.id, self.project.id,
-                        "false", "false")
-        elif complete == "some":
-            return q % (self.contractor.id, self.project.id,
-                        "true", "false")
+
+        return q % (self.activity_id,
+                    "true" if complete else "false")
 
     def layer_desc(self, complete):
         return "{} {} {}".format(
-            self.project.slug, self.activity.id, str(complete))
+            self.activity.project.slug, self.activity.id, complete)
 
     def layer(self, layer_ids=None, request=None):
         "Return mapnik layers and styles for all measurement types."
         layers = []
         styles = {}
 
-        for complete in (True, False, "some"):
+        for complete in (True, False):
             layer_desc = self.layer_desc(complete)
             if complete is True:
                 img = self.symbol_img("ball_green.png")
             elif complete is False:
                 img = self.symbol_img("ball_red.png")
-            else:
-                img = self.symbol_img("ball_yellow.png")
 
             styles[layer_desc] = self.make_style(img)
 

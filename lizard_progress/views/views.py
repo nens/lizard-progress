@@ -251,46 +251,25 @@ class MapView(View):
     template_name = 'lizard_progress/map.html'
 
     def available_layers(self):
-        """List of layers available to draw. Per contractor,
-        there is one layer for each measurement type and one layer
-        that shows all measurement types simultaneously. If the user
-        has access to that contractor's data."""
+        """List of layers available to draw. One layer per activity."""
 
         logger.debug("Available layers:")
         layers = []
-        for contractor in self.project.contractor_set.all():
-            if has_access(self.request.user, self.project, contractor):
-                mtype_layers = []
-                for measurement_type in self.project.measurementtype_set.all():
-                    if (measurement_type.mtype.can_be_displayed
-                        and contractor.show_measurement_type(
-                            measurement_type)):
-                        mtype_layers.append({
-                            'name': '%s %s %s' %
-                            (self.project.name,
-                             contractor.name,
-                             measurement_type.name),
-                            'adapter': 'adapter_progress',
-                            'json': json.dumps({
-                                "contractor_slug":
-                                contractor.slug,
-                                "measurement_type_slug":
-                                measurement_type.slug,
-                                "project_slug":
-                                self.project.slug}),
-                        })
+        for activity in self.project.activity_set.all():
+            if not has_access(
+                    self.request.user, self.project, activity.contractor):
+                continue
 
-                if len(mtype_layers) > 1:
-                    layers.append({
-                        'name': '%s %s Alle metingen'
-                        % (self.project.name, contractor.name),
-                        'adapter': 'adapter_progress',
-                        'json': json.dumps({
-                            "contractor_slug":
-                            contractor.slug,
-                            "project_slug": self.project.slug})
-                    })
-                layers += mtype_layers
+            if not activity.measurement_type.can_be_displayed:
+                continue
+
+            layers.append({
+                'name': '%s %s' %
+                (self.project.name,
+                 activity),
+                'adapter': 'adapter_progress',
+                'json': json.dumps({"activity_id": activity.id})
+            })
 
         if Hydrovak.objects.filter(project=self.project).exists():
             layers.append({

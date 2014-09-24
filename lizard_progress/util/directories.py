@@ -92,14 +92,15 @@ def shapefile_dir(activity):
 
 def location_shapefile_dir(activity):
     """Directory where wizards put location shapefiles from this
-    contractor in this project."""
+    activity in this project."""
     return mk(os.path.join(contractor_dir(activity), 'locations'))
 
 
-def location_shapefile_path(activity, available_mtype):
+def location_shapefile_path(activity):
     return os.path.join(
         location_shapefile_dir(activity),
-        b'meetlocaties-{mtype}'.format(mtype=available_mtype.slug))
+        b'meetlocaties-{activityid}'.format(
+            activityid=activity.id))
 
 
 def hydrovakken_dir(project):

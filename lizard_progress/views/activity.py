@@ -4,10 +4,14 @@
 
 import json
 
+from django.contrib import messages
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
+from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
+
+import osgeo.ogr
 
 from lizard_ui.layout import Action
 
@@ -18,6 +22,11 @@ from lizard_progress.views.views import UiView
 from lizard_progress import configuration
 from lizard_progress import forms
 from lizard_progress import models
+from lizard_progress.util import directories
+
+
+class NoSuchFieldException(Exception):
+    pass
 
 
 class ActivityMixin(object):
@@ -148,21 +157,13 @@ class PlanningView(ActivityView):
         return super(PlanningView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        self.form = forms.ShapefileForm(request.POST)
+        self.form = forms.ShapefileForm(request.POST, request.FILES)
 
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
 
-        contractor = models.Contractor.objects.get(slug=self.contractor_slug)
-        amtype = models.AvailableMeasurementType.objects.get(
-            slug=self.form.cleaned_data['mtype_slug'])
+        shapefilepath = self.__save_uploaded_files(request)
 
-        mtype = models.MeasurementType.objects.get_or_create(
-            mtype=amtype, project=self.project, defaults={
-                'icon_missing': amtype.default_icon_missing,
-                'icon_complete': amtype.default_icon_complete})[0]
-
-        shapefilepath = self.__save_uploaded_files(request, contractor, amtype)
         try:
             locations_from_shapefile = dict(
                 self.__locations_from_shapefile(shapefilepath))
@@ -177,40 +178,34 @@ class PlanningView(ActivityView):
             return self.get(request, *args, **kwargs)
 
         existing_measurements = list(
-            self.__existing_measurements(self.project, mtype, contractor))
+            self.__existing_measurements())
 
         locations_with_measurements = set(
-            existing_measurement.scheduled.location.location_code
+            existing_measurement.location.location_code
             for existing_measurement in existing_measurements)
 
         locations_to_keep = (set(locations_from_shapefile) |
                              locations_with_measurements)
 
         # Remove not needed scheduled measurements
-        models.ScheduledMeasurement.objects.filter(
-            project=self.project, contractor=contractor,
-            measurement_type=mtype).exclude(
-            location__location_code__in=locations_to_keep).delete()
+        models.Location.objects.filter(
+            activity=self.activity).exclude(
+            location_code__in=locations_to_keep).delete()
 
         for location_code, geom in locations_from_shapefile.iteritems():
             location, created = models.Location.objects.get_or_create(
-                location_code=location_code, project=self.project)
+                location_code=location_code, activity=self.activity)
             if location.the_geom != geom:
                 location.the_geom = geom
                 location.save()
-            if location_code not in locations_with_measurements:
-                models.ScheduledMeasurement.objects.get_or_create(
-                    project=self.project, contractor=contractor,
-                    measurement_type=mtype, location=location,
-                    complete=False)
 
         return HttpResponseRedirect(
             reverse('lizard_progress_dashboardview', kwargs={
                     'project_slug': self.project.slug}))
 
-    def __save_uploaded_files(self, request, contractor, amtype):
+    def __save_uploaded_files(self, request):
         shapefilepath = directories.location_shapefile_path(
-            self.project, contractor, amtype)
+            self.activity)
 
         with open(shapefilepath + '.shp', 'wb+') as dest:
             for chunk in request.FILES['shp'].chunks():
@@ -255,9 +250,6 @@ class PlanningView(ActivityView):
 
                 yield (location_code, geometry)
 
-    def __existing_measurements(self, project, mtype, contractor):
+    def __existing_measurements(self):
         return models.Measurement.objects.filter(
-            scheduled__project=project,
-            scheduled__measurement_type=mtype,
-            scheduled__contractor=contractor).select_related(
-            "scheduled", "scheduled__location")
+            location__activity=self.activity).select_related("location")

@@ -16,8 +16,6 @@ import os
 import platform
 import shutil
 
-import osgeo.ogr
-
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
@@ -45,14 +43,9 @@ from lizard_progress.models import Project
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
 
-from lizard_progress import configuration
 from lizard_progress import forms
 
 logger = logging.getLogger(__name__)
-
-
-class NoSuchFieldException(Exception):
-    pass
 
 
 class ProjectsMixin(object):

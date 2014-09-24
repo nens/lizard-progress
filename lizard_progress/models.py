@@ -503,7 +503,7 @@ class Activity(models.Model):
         Organization, null=True)
 
     def __unicode__(self):
-        return "{}: {}".format(self.contractor, self.measurement_type)
+        return "Werkzaamheid: {}".format(self.name)
 
     def config_value(self, key):
         project = self.project
@@ -532,6 +532,9 @@ class Activity(models.Model):
     def num_measurements(self):
         return Measurement.objects.filter(
             location__activity=self).count()
+
+    def has_measurements(self):
+        return self.num_measurements() > 0
 
 
 class MeasurementTypeAllowed(models.Model):

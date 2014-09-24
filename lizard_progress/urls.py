@@ -87,15 +87,19 @@ urlpatterns = patterns(
         login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),
 
-    url('^projects/(?P<project_slug>[^/]+)/(?P<contractor_slug>[^/]+)/'
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>[^/]+)/'
         'planning/$',
-        login_required(views.PlanningView.as_view()),
+        login_required(views.activity.PlanningView.as_view()),
         name='lizard_progress_planningview'),
 
-    # Edit contractors and measurement types
-    url('^projects/(?P<project_slug>[^/]+)/edit_contractors/$',
-        login_required(views.EditContractorsMeasurementTypes.as_view()),
-        name='lizard_progress_edit_contractors'),
+    # Edit activities
+    url('^projects/(?P<project_slug>[^/]+)/edit_activities/$',
+        login_required(views.EditActivities.as_view()),
+        name='lizard_progress_edit_activities'),
+    url('^projects/(?P<project_slug>[^/]+)/delete_activity/'
+        '(?P<activity_id>\d+)/$',
+        login_required(views.DeleteActivity.as_view()),
+        name='lizard_progress_delete_activity'),
 
     # CSV file generation
     url('^dashboardcsv/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/$',

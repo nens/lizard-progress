@@ -228,13 +228,21 @@ class SingleUserForm(forms.Form):
                 required=False)
 
 
-class AddContractorMeasurementTypeForm(forms.Form):
-    # We use a single form with no required fields for four different
-    # submits...
-    contractor = forms.IntegerField(required=False)
-    measurementtype = forms.IntegerField(required=False)
-    remove_contractor = forms.IntegerField(required=False)
-    remove_mtype = forms.IntegerField(required=False)
+class AddActivityForm(forms.Form):
+    def __init__(self, args, project):
+        super(AddActivityForm, self).__init__(args)
+
+        self.fields['measurementtype'] = forms.ModelChoiceField(
+            label=_("Measurement type"),
+            queryset=project.organization
+            .visible_available_measurement_types(),
+            required=True)
+
+    description = forms.CharField(required=True)
+    contractor = forms.ModelChoiceField(
+        label=_("Contractor"),
+        queryset=models.Organization.objects.all(),
+        required=True)
 
 
 class ShapefileForm(forms.Form):

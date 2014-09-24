@@ -44,7 +44,7 @@
   <td>{{ activity.measurement_type }}</td>
   <td>{{ activity.num_locations }}</td>
   {% if view.user_is_manager %}
-    <td></td>
+    <td><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=activity.id %}">planning</a></td>
   {% endif %}
   <td>{{ activity.num_measurements }}</td>
   <td></td>
@@ -58,7 +58,7 @@
 
 {% if view.user_is_manager %}
   <p>
-    <a href="{% url "lizard_progress_edit_contractors" project_slug=view.project_slug %}">Opdrachtnemers of werkzaamheden toevoegen / verwijderen</a>
+    <a href="{% url "lizard_progress_edit_activities" project_slug=view.project_slug %}">Opdrachtnemers of werkzaamheden toevoegen / verwijderen</a>
   </p>
 {% endif %}
 

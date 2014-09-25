@@ -45,6 +45,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             self.activity = models.Activity.objects.get(
                 pk=self.activity_id)
         except models.Activity.DoesNotExist:
+            self.activity = None
             return
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)

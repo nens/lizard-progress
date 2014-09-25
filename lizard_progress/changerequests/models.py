@@ -356,6 +356,7 @@ class Request(models.Model):
     def detail_url(self):
         url = reverse('changerequests_detail', kwargs={
             'project_slug': self.contractor.project.slug,
+            'activity_id': self.activity.id,
             'request_id': str(self.id)})
         return url
 

@@ -179,47 +179,16 @@ class NewRequestView(ActivityView):
     active_menu = "requests"
 
     def get_form_class(self, request_type):
-        if self.user_is_manager():
-            # A manager has to choose which contractor this request is for
-            contractors = [
-                (contractor.id, unicode(contractor.organization))
-                for contractor in self.project.contractor_set.select_related()]
-        else:
-            # Don't show field
-            contractors = []
+        return forms.new_request_form_factory(self.activity, request_type)
 
-        mtypes = [
-            (mtype.mtype.id, unicode(mtype.mtype))
-            for mtype in self.project.measurementtype_set.all()]
-
-        return forms.new_request_form_factory(
-            self.project, request_type, mtypes, contractors)
-
-    def chosen_contractor(self):
-        """Assume form was valid, which contractor was chosen?"""
-        if self.user_is_manager():
-            return pmodels.Contractor.objects.get(
-                pk=self.form.cleaned_data['contractor'])
-        else:
-            return self.contractor()
-
-    def chosen_measurement_type(self):
-        if 'mtype' in self.form.cleaned_data:
-            return pmodels.AvailableMeasurementType.objects.get(
-                pk=self.form.cleaned_data['mtype'])
-        else:
-            # There is only one?
-            return pmodels.AvailableMeasurementType.objects.filter(
-                measurementtype__project=self.project).get()
-
-    def get(self, request, project_slug):
+    def get(self, request, project_slug, activity_id):
         if not hasattr(self, 'form'):
             self.form = self.get_form_class(
                 request_type=self.request_type)()
 
         return super(NewRequestView, self).get(request, project_slug)
 
-    def post(self, request, project_slug):
+    def post(self, request, project_slug, activity_id):
         self.form = self.get_form_class(
             request_type=self.request_type)(request.POST)
 
@@ -232,14 +201,16 @@ class NewRequestView(ActivityView):
 
             return HttpResponseRedirect(reverse(
                 'changerequests_main',
-                kwargs={'project_slug': self.project_slug}))
+                kwargs={'project_slug': self.project_slug,
+                        'activity_id': self.activity_id}))
 
         return self.get(request, project_slug)
 
     def url(self):
         return reverse(
             self.url_name,
-            kwargs={'project_slug': self.project_slug})
+            kwargs={'project_slug': self.project_slug,
+                    'activity_id': self.activity_id})
 
 
 class NewRequestNewLocation(NewRequestView):
@@ -249,8 +220,7 @@ class NewRequestNewLocation(NewRequestView):
 
     def create_new_request(self):
         return models.Request.objects.create(
-            contractor=self.chosen_contractor(),
-            mtype=self.chosen_measurement_type(),
+            activity=self.activity,
             request_type=self.request_type,
             request_status=models.Request.REQUEST_STATUS_OPEN,
             location_code=self.form.cleaned_data['location_code'],
@@ -269,8 +239,7 @@ class NewRequestMoveLocation(NewRequestView):
 
     def create_new_request(self):
         return models.Request.objects.create(
-            contractor=self.chosen_contractor(),
-            mtype=self.chosen_measurement_type(),
+            activity=self.activity,
             request_type=self.request_type,
             request_status=models.Request.REQUEST_STATUS_OPEN,
             location_code=self.form.cleaned_data['location_code'],
@@ -288,11 +257,10 @@ class NewRequestRemoveCode(NewRequestView):
     def create_new_request(self):
         location = pmodels.Location.objects.get(
             location_code=self.form.cleaned_data['location_code'],
-            project=self.chosen_contractor().project)
+            activity=self.activity)
 
         return models.Request.objects.create(
-            contractor=self.chosen_contractor(),
-            mtype=self.chosen_measurement_type(),
+            activity=self.activity,
             request_type=self.request_type,
             request_status=models.Request.REQUEST_STATUS_OPEN,
             location_code=self.form.cleaned_data['location_code'],

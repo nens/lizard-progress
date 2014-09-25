@@ -12,6 +12,9 @@
 div#actions li.active a {
     color: #fafaf9;
 }
+div#actions2 li.active a {
+    color: #fafaf9;
+}
 
 .sidebarbox-stretched .without-bullets {
     line-height: 2em;
@@ -79,12 +82,27 @@ div#actions {
     padding-top: 0;
 }
 
+div#actions2 {
+    background-color: #F3F3F3;
+    height: 18px;
+    border-bottom: solid 1px #7FA9AE;
+    padding-bottom: 15px;
+    padding-top: 0;
+}
+
 #sidebar h2 {
     padding-top: 7px;
     padding-bottom: 8px;
 }
 
 div#actions a {
+    margin-right: 10px;
+    color: #000;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+div#actions2 a {
     margin-right: 10px;
     color: #000;
     font-weight: bold;
@@ -202,4 +220,3 @@ td.clickable:hover {
 .dl-horizontal dt {
     white-space: normal;
 }
-

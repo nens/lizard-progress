@@ -53,7 +53,7 @@ class ActivityView(KickOutMixin, ProjectsMixin, ActivityMixin, UiView):
 
 
 class ActivityDashboard(ActivityView):
-    active_menu = "dashboard"
+    active_menu = "activitydashboard"
     template_name = "lizard_progress/activity_dashboard.html"
 
 

@@ -1,0 +1,37 @@
+{% extends "lizard_ui/realbase.html" %}
+
+
+{% block breadcrumbs %}
+
+  {% if view.breadcrumbs_with_fallback %}
+    <ul>
+      {% for action in view.breadcrumbs_with_fallback %}
+        <li {% if action.description %}
+              title="{{ action.name }}"
+              data-content="{{ action.description }}"
+            {% endif %}
+              {% if action.element_id %}
+                id="{{ action.element_id }}"
+              {% endif %}>
+          <a href="{{ action.url }}"
+            {% if action.klass %}
+              class="{{ action.klass }}"
+            {% endif %}
+             {% for item in action.data_attributes.items %}
+               data-{{ item.0 }}="{{ item.1 }}"
+             {% endfor %}
+             >
+            {% if action.icon %}
+              <i class="{{ action.icon }}"></i>
+            {% endif %}
+            {{ action.name }}
+          </a>
+          {% if not forloop.last %}
+            &rarr;
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+{% endblock breadcrumbs %}

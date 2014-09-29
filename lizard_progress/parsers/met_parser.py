@@ -449,8 +449,6 @@ class MetParser(specifics.ProgressParser):
                     location_id=profile.id,
                     x=location_point.x, y=location_point.y,
                     m=distance, maxm=maxdistance, recovery={
-                        'available_measurement_type':
-                        self.available_measurement_type,
                         'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
                         'location_code': profile.id,
                         'x': profile.start_x,

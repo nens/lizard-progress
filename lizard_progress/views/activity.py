@@ -149,6 +149,7 @@ class UploadedFilesView(UploadHomeView):
 
 class PlanningView(ActivityView):
     template_name = 'lizard_progress/planning.html'
+    active_menu = 'planning'
 
     def get(self, request, *args, **kwargs):
         if not hasattr(self, 'form'):

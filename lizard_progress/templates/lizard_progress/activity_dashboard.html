@@ -20,10 +20,15 @@
     <li {% if view.active_menu == "activitydashboard" %}class="active"{% endif %}>
       <a title="Dashboard" href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity_id %}">Dashboard</a>
     </li>
+    {% if view.user_is_manager %}
+      <li {% if view.active_menu == "planning" %}class="active"{% endif %}>
+        <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">Planning</a>
+      </li>
+    {% endif %}
     {% if view.user_is_uploader %}
-    <li {% if view.active_menu == "upload" %}class="active"{% endif %}>
-      <a title="Upload files" href="{% url "lizard_progress_uploadhomeview" project_slug=view.project_slug activity_id=view.activity_id %}">Upload</a>
-    </li>
+      <li {% if view.active_menu == "upload" %}class="active"{% endif %}>
+        <a title="Upload files" href="{% url "lizard_progress_uploadhomeview" project_slug=view.project_slug activity_id=view.activity_id %}">Upload</a>
+      </li>
     {% endif %}
     <li {% if view.active_menu == "requests" %}class="active"{% endif %}>
       <a title="Aanvragen" href="{% url "changerequests_main" project_slug=view.project_slug activity_id=view.activity_id %}">Aanvragen{{ view.change_requests_menu_string }}</a>
@@ -41,8 +46,8 @@
     <dt>Type meting:</dt>
     <dd>{{ view.activity.measurement_type }}</dd>
     {% if view.user_is_manager %}
-    <dt>Planning:</dt>
-    <dd><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">inplannen</a></dd>
+      <dt>Planning:</dt>
+      <dd><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">inplannen</a></dd>
     {% endif %}
     <dt>Open aanvragen:</dt>
     <dd>{{ view.activity.open_requests.count }}</dd>

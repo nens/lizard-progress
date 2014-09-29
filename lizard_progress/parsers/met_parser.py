@@ -462,8 +462,6 @@ class MetParser(specifics.ProgressParser):
                     error_code="NO_LOCATION",
                     location_id=profile.id,
                     recovery={
-                        'available_measurement_type':
-                        self.activity.measurement_type,
                         'request_type': Request.REQUEST_TYPE_NEW_LOCATION,
                         'location_code': profile.id,
                         'x': profile.start_x,

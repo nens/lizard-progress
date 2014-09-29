@@ -45,7 +45,7 @@ CONFIG_OPTIONS = {
         option='use_predefined_locations',
         short_description='Accepteer alleen voorgedefinieerde locaties',
         long_description=(
-            'Hiervoor moet dan een locatie shapefile geupload worden bij '
+            'Hiervoor moet dan een locatie shapefile geüpload worden bij '
             'het toewijzen van activiteiten aan een uitvoerder.'),
         type='boolean',
         default='',

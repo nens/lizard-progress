@@ -3,14 +3,36 @@
 {% block contentpage %}
 <h2>Planning {{ view.activity }}</h2>
 
-<p>Metingen kunnen gepland worden door het uploaden van een punten-shapefile. Eerder geplande metingen worden verwijderd, tenzij er al een meting geupload is. Al geuploade data blijft altijd bestaan.</p>
+{% with mtype=view.activity.measurement_type %}
+  <p>Het metingtype van deze werkzaamheid is <strong>{{ mtype }}</strong>. Bij dit metingtype is het
+    {% if mtype.needs_predefined_locations %}
+      noodzakelijk
+    {% elif mtype.likes_predefined_locations %}
+      onder <a href="{% url "lizard_progress_project_configuration_view" project_slug=view.project_slug %}">Configuratie</a> in te stellen of het nodig is
+    {% else %}
+      onmogelijk
+    {% endif %} om vooraf locaties te plannen.
+ </p>
+{% endwith %}
 
-<p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder "Configuratie".</p>
+{% if view.activity.needs_predefined_locations %}
+  <p>Metingen kunnen op twee manieren gepland worden:</p>
+  <ol>
+    <li>Door het uploaden van een punten-shapefile. Eerder geplande metingen worden verwijderd, tenzij er al een meting ge&uuml;pload is. Al ge&uuml;ploade data blijft altijd bestaan.</li>
+    <li>Door de werkzaamheid aan een andere werkzaamheid te koppelen. De locaties uit de andere werkzaamheid worden gekopieerd naar deze, voor zover de locatiecodes nog niet gebruikt worden in deze werkzaamheid. Als een onbekende code ge&uuml;pload wordt, wordt ook in de andere werkzaamheid gekeken of de code daar bekend is, en zo ja dan wordt deze locatie overgenomen.</li>
+  </ol>
 
-<form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
-  {{ view.form.as_p }}
-  <input type="submit" value="Versturen" class="btn btn-primary">
-  {% csrf_token %}
-</form>
+  <h3>Planning door middel van een shapefile</h3>
+  <p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder "Configuratie".</p>
 
+  <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
+    {{ view.form.as_p }}
+    <input type="submit" value="Versturen" class="btn btn-primary">
+    {% csrf_token %}
+  </form>
+
+  <h3>Planning door koppelen met een andere werkzaamheid</h3>
+{% else %}
+  <p>Voor deze werkzaamheid kunnen nieuwe locaties vrij worden ge&uuml;pload, en plannen is niet mogelijk.</p>
+{% endif %}
 {% endblock %}

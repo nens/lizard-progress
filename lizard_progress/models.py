@@ -1041,8 +1041,9 @@ class ExportRun(models.Model):
         directory = directories.exports_dir(self.activity)
         return os.path.join(
             directory,
-            "{project}-{contractor}-{mtype}.{extension}").format(
+            "{project}-{activityid}-{contractor}-{mtype}.{extension}").format(
             project=self.activity.project.slug,
+            activityid=self.activity.id,
             contractor=self.activity.contractor.slug,
             mtype=self.activity.measurement_type.slug,
             extension=extension).encode('utf8')

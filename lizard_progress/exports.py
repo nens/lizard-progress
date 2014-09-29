@@ -122,11 +122,10 @@ def export_as_metfile(export_run):
         measurement_type=models.AvailableMeasurementType.dwarsprofiel()
         ).wants_sorted_measurements()
 
-    metfile = retrieve_profile.recreate_metfile(
-        [
-            (measurement.filename,
-             measurement.scheduled.location.location_code)
-            for measurement in measurements])
+    metfile = retrieve_profile.recreate_metfile([
+        (measurement.filename,
+         measurement.location.location_code)
+        for measurement in measurements])
 
     exporter = exporters.MetfileExporter(want_sorted_measurements)
 
@@ -169,17 +168,17 @@ def export_as_dxf(export_run):
 def create_dxf(measurement, temp):
     retrieved_profile = retrieve_profile.retrieve(
         measurement.filename,
-        measurement.scheduled.location.location_code)
+        measurement.location.location_code)
 
     if retrieved_profile is None:
         raise ValueError("Profile {} not found in file {}".format(
-                measurement.scheduled.location.location_code,
-                measurement.filename))
+            measurement.location.location_code,
+            measurement.filename))
 
     series_id, series_name, profile = retrieved_profile
 
     filename = "{id}.dxf".format(
-        id=measurement.scheduled.location.location_code)
+        id=measurement.location.location_code)
     filepath = os.path.join(temp, filename)
 
     success = dxf.save_as_dxf(profile, filepath)
@@ -217,7 +216,7 @@ def export_as_csv(export_run):
 
 
 def create_csv(measurement, temp):
-    location_code = measurement.scheduled.location.location_code
+    location_code = measurement.location.location_code
     series_id, series_name, profile = retrieve_profile.retrieve(
         measurement.filename,
         location_code)
@@ -226,7 +225,9 @@ def create_csv(measurement, temp):
     midpoint = profile.midpoint
     if base_line is None or midpoint is None:
         # No base line. Skip!
-        return    # Get a tmp dir
+        return
+
+    # Get a tmp dir
     temp = tempfile.mkdtemp()
 
     filename = "{id}.csv".format(id=location_code)

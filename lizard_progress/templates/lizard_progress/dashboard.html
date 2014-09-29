@@ -34,18 +34,14 @@
   <th>Uitvoerder</th>
   <th>Werkzaamheid</th>
   <th>Geplande metingen</th>
-  {% if view.user_is_manager %}<th>Planning</th>{% endif %}
   <th>Ingevoerde metingen</th>
   <th>Laatste upload</th>
 </thead>
 {% for activity in view.project.activity_set.all %}
-<tr>
+<tr class="clickable" data-url="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
   <td>{{ activity.contractor }}</td>
   <td>{{ activity.measurement_type }}</td>
   <td>{{ activity.num_locations }}</td>
-  {% if view.user_is_manager %}
-    <td><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=activity.id %}">planning</a></td>
-  {% endif %}
   <td>{{ activity.num_measurements }}</td>
   <td></td>
 </tr>

@@ -147,6 +147,7 @@ span.small {
 tr.clickable:hover {
     cursor: pointer;
     *cursor: hand;
+    background: #ddd;
 }
 
 td.clickable:hover {

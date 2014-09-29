@@ -40,6 +40,10 @@
     <dd>{{ view.activity.contractor }}</dd>
     <dt>Type meting:</dt>
     <dd>{{ view.activity.measurement_type }}</dd>
+    {% if view.user_is_manager %}
+    <dt>Planning:</dt>
+    <dd><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">inplannen</a></dd>
+    {% endif %}
     <dt>Open aanvragen:</dt>
     <dd>{{ view.activity.open_requests.count }}</dd>
   </dl>

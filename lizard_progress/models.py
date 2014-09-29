@@ -315,19 +315,6 @@ class Project(models.Model):
         return lizard_progress.specifics.Specifics(
             self, available_measurement_type)
 
-    def needs_predefined_locations(self, available_measurement_type):
-        if available_measurement_type.needs_predefined_locations:
-            return True
-
-        if available_measurement_type.likes_predefined_locations:
-            # We only import configuration here, because it imports this module
-            # for the OrganizationConfig and ProjectConfig models below.
-            from lizard_progress import configuration
-            config = configuration.Configuration(project=self)
-            return config.get('use_predefined_locations')
-
-        return False
-
     def number_of_scheduled_measurements(self):
         return Location.objects.filter(activity__project=self).count()
 
@@ -336,10 +323,8 @@ class Project(models.Model):
             activity__project=self, complete=True).count()
 
     def percentage_done(self):
-        if any(not self.needs_predefined_locations(available_measurement_type)
-               for available_measurement_type in
-               AvailableMeasurementType.objects.filter(
-                   activity__project=self)):
+        if any(activity.needs_predefined_locations()
+               for activity in self.activity_set.all()):
             return "N/A"
 
         percentage = (
@@ -524,9 +509,21 @@ class Activity(models.Model):
             self.measurement_type)
 
     def needs_predefined_locations(self):
-        """Needs to be per-activity."""
-        return self.project.needs_predefined_locations(
-            self.measurement_type)
+        """Is uploading to an unknown location an error in this activity?"""
+        if self.measurement_type.needs_predefined_locations:
+            return True
+
+        if self.measurement_type.likes_predefined_locations:
+            # This means that for this measurement type, it is
+            # configurable.
+
+            # We only import configuration here, because it imports this module
+            # for the OrganizationConfig and ProjectConfig models below.
+            from lizard_progress import configuration
+            config = configuration.Configuration(project=self.project)
+            return config.get('use_predefined_locations')
+
+        return False
 
     def upload_directory(self):
         """Directory where the files for this activity will be stored."""

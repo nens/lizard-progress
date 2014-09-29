@@ -458,10 +458,6 @@ class MetParser(specifics.ProgressParser):
                         'x': profile.start_x,
                         'y': profile.start_y
                         })
-            else:
-                # Update location!
-                location.the_geom = profile_point.as_wkt
-                location.save()
 
         except models.Location.DoesNotExist:
             if self.activity.needs_predefined_locations():
@@ -479,6 +475,8 @@ class MetParser(specifics.ProgressParser):
                         })
                 return None
             else:
+                # If the location is newly created, use actual measurement
+                # location as the_geom.
                 location = models.Location.objects.create(
                     activity=self.activity,
                     location_code=profile.id,

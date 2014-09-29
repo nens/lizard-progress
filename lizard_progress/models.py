@@ -413,6 +413,12 @@ class Location(models.Model):
     def __unicode__(self):
         return u"Location with code '%s'" % (self.location_code,)
 
+    def plan_location(self, point):
+        """Set our geometrical location, IF it wasn't set yet."""
+        if self.the_geom is None:
+            self.the_geom = point
+            self.save()
+
     def has_measurements(self):
         """Return True if there are any uploaded measurements at this
         location, for this mtype (=AvailableMeasurementType) or
@@ -602,6 +608,14 @@ class Measurement(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
 
     objects = models.GeoManager()
+
+    def record_location(self, point):
+        """Save where this measurement was taken. THEN, plan that
+        location in our Location object (only sets it if the location
+        didn't have a point yet."""
+        self.the_geom = point
+        self.save()
+        self.location.plan_location(point)
 
     @property
     def url(self):

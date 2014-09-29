@@ -13,7 +13,6 @@ from metfilelib.parser import parse_metfile
 
 from lizard_progress import models
 from lizard_progress import specifics
-from lizard_progress import errors
 from lizard_progress.changerequests.models import Request
 
 logger = logging.getLogger(__name__)
@@ -75,9 +74,8 @@ class MetParser(specifics.ProgressParser):
 
                 if len(m.data) > 0:
                     # Use x, y of first point
-                    m.the_geom = Point(
-                        m.data[0]['x'], m.data[0]['y'], srid=models.SRID)
-                    m.save()
+                    m.record_location(Point(
+                        m.data[0]['x'], m.data[0]['y'], srid=models.SRID))
 
                 location.complete = True
                 location.save()

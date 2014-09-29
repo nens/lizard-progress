@@ -88,8 +88,7 @@ class OeverfotoParser(ProgressParser):
             measurements[data_field] = measurement
 
             measurement.date = None
-            measurement.the_geom = Point(x, y, srid=SRID)
-            measurement.save()
+            measurement.record_location(Point(x, y, srid=SRID))  # Saves
 
             if 'left' in measurements and 'right' in measurements:
                 location.complete = True

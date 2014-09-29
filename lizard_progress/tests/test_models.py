@@ -13,6 +13,7 @@ from __future__ import division
 import datetime
 import factory
 
+from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
 from django.test import TestCase
 
@@ -352,6 +353,15 @@ class TestMeasurement(TestCase):
         measurement = MeasurementF.build(location=location)
         url = measurement.url
         self.assertTrue(url)
+
+    def test_record_location(self):
+        activity = ActivityF.create()
+        location = LocationF(
+            activity=activity, location_code="whee", the_geom=None)
+        measurement = MeasurementF(location=location)
+        point = Point(0, 0)
+        measurement.record_location(point)
+        self.assertEquals(location.the_geom, point)
 
 
 class TestExportRun(TestCase):

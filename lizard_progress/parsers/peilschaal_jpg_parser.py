@@ -67,11 +67,11 @@ class PeilschaalJpgParser(ProgressParser):
 
             m.data = {}
             m.date = None
-            m.the_geom = Point(x, y, srid=SRID)
-            m.save()
+            m.record_location(Point(x, y, srid=SRID))  # Saves
 
             location.complete = True
             location.save()
+
             measurements = (m,)
         else:
             measurements = ()

@@ -879,6 +879,7 @@ class UploadedFile(models.Model):
             'requests_url': reverse(
                 'changerequests_possiblerequests', kwargs={
                     'project_slug': self.activity.project.slug,
+                    'activity_id': self.activity.id,
                     'uploaded_file_id': self.id
                     }),
             'has_possible_requests': self.has_possible_requests()

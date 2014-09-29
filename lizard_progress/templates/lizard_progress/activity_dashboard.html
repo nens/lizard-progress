@@ -39,7 +39,7 @@
 
 {% block contentpage %}
   {# Override this on the other pages #}
-  <img src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=view.activity_id %}" title="Voortgang {{ view.activity }}" style="float: left;"/>
+  <img width="500" height="300" src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=view.activity_id %}" title="Voortgang {{ view.activity }}" style="float: left;"/>
   <dl style="float: left;">
     <dt>Opdrachtnemer:</dt>
     <dd>{{ view.activity.contractor }}</dd>

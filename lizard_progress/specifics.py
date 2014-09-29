@@ -171,9 +171,7 @@ class ProgressParser(object):
     def __init__(
             self, activity, file_object):
         self.activity = activity
-        self.organization = activity.contractor
         self.file_object = file_object
-        self.available_measurement_type = activity.measurement_type
         self.errors = []
         self.possible_requests = []
 

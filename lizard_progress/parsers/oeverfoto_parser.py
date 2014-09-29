@@ -53,7 +53,7 @@ class OeverfotoParser(ProgressParser):
         try:
             location = Location.objects.get(
                 location_code=uniek_id,
-                project=self.project)
+                activity=self.activity)
         except Location.DoesNotExist:
             return self.error('nolocation', uniek_id)
 
@@ -70,23 +70,13 @@ class OeverfotoParser(ProgressParser):
         if d > 75.0:
             return self.error('toofar', d)
 
-        measurement_type = self.mtype()
-        try:
-            scheduled_measurement = (ScheduledMeasurement.objects.
-                                     get(project=self.project,
-                                         contractor=self.contractor,
-                                         location=location,
-                                         measurement_type=measurement_type))
-        except ScheduledMeasurement.DoesNotExist:
-            return self.error('notscheduled', id, str(measurement_type))
-
         # Several measurements per scheduled measurement, find if ours exists
         # The measurements store 'left' or 'right' in the data field.
         data_field = 'left' if is_left else 'right'
 
         if not check_only:
             measurements = {}
-            for m in scheduled_measurement.measurement_set.all():
+            for m in location.measurement_set.all():
                 measurements[m.data] = m
 
             if data_field in measurements:
@@ -94,7 +84,7 @@ class OeverfotoParser(ProgressParser):
             else:
                 # New
                 measurement = Measurement(
-                    scheduled=scheduled_measurement, data=data_field)
+                    location=location, data=data_field)
             measurements[data_field] = measurement
 
             measurement.date = None
@@ -102,8 +92,8 @@ class OeverfotoParser(ProgressParser):
             measurement.save()
 
             if 'left' in measurements and 'right' in measurements:
-                scheduled_measurement.complete = True
-                scheduled_measurement.save()
+                location.complete = True
+                location.save()
 
             return self.success((measurement,))
         else:

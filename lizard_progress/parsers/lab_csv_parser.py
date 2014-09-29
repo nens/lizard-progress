@@ -64,25 +64,17 @@ class LabCsvParser(ProgressParser):
             for hydrovak_code in data:
                 # Get or create a location
                 location, _ = models.Location.objects.get_or_create(
-                    project=self.project,
+                    activity=self.activity,
                     location_code=hydrovak_code)
-
-                # Get or create a scheduled measurement
-                scheduled, _ = (
-                    models.ScheduledMeasurement.objects.get_or_create(
-                        location=location,
-                        project=self.project,
-                        measurement_type=self.mtype(),
-                        contractor=self.contractor))
 
                 # And a measurement to go along with it
                 measurement, _ = models.Measurement.objects.get_or_create(
-                    scheduled=scheduled)
+                    location=location)
                 measurement.data = data[hydrovak_code]
                 measurement.save()
 
-                scheduled.complete = True
-                scheduled.save()
+                location.complete = True
+                location.save()
 
                 measurements.append(measurement)
 

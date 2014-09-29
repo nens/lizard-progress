@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def pairs(iterable):
-    helper_iter = iter(iterable)
+    iterable, helper_iter = itertools.tee(iterable)
     helper_iter.next()
 
     return itertools.izip(iterable, helper_iter)
@@ -34,10 +34,7 @@ class MetParser(specifics.ProgressParser):
     FILE_TYPE = specifics.FILE_READER
 
     def parse(self, check_only=False):
-        self.error_config = (
-            errors.ErrorConfiguration(
-                self.activity.project, None,
-                self.available_measurement_type))
+        self.error_config = self.activity.error_configuration()
 
         parsed_metfile = parse_metfile(self.file_object)
 
@@ -467,15 +464,14 @@ class MetParser(specifics.ProgressParser):
                 location.save()
 
         except models.Location.DoesNotExist:
-            if self.activity.project.needs_predefined_locations(
-                    self.available_measurement_type):
+            if self.activity.needs_predefined_locations():
                 self.record_error_code(
                     line_number=profile.line_number,
                     error_code="NO_LOCATION",
                     location_id=profile.id,
                     recovery={
                         'available_measurement_type':
-                        self.available_measurement_type,
+                        self.activity.measurement_type,
                         'request_type': Request.REQUEST_TYPE_NEW_LOCATION,
                         'location_code': profile.id,
                         'x': profile.start_x,

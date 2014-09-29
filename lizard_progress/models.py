@@ -511,6 +511,17 @@ class Activity(models.Model):
         config = configuration.Configuration(project=project)
         return config.get(key)
 
+    def error_configuration(self):
+        from lizard_progress import errors
+        return errors.ErrorConfiguration(
+            self.project, None,
+            self.measurement_type)
+
+    def needs_predefined_locations(self):
+        """Needs to be per-activity."""
+        return self.project.needs_predefined_locations(
+            self.measurement_type)
+
     def upload_directory(self):
         """Directory where the files for this activity will be stored."""
         return directories.measurement_type_dir(self)

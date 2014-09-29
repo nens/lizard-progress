@@ -43,7 +43,7 @@ class PeilschaalCsvParser(ProgressParser):
             # all filled in (and possibly comment), or none are filled in
             # and comment is.
             filled_in = (bool(x) for x in (
-                    locationid, date, time, peilschaal, measurement))
+                locationid, date, time, peilschaal, measurement))
             not_filled_in = (not x for x in filled_in)
 
             if all(filled_in):
@@ -53,35 +53,20 @@ class PeilschaalCsvParser(ProgressParser):
             else:
                 return self.error('missingdata', str(row))
 
-            mtype = self.mtype()
-
             try:
-                l = Location.objects.get(
+                location = Location.objects.get(
                     location_code=locationid,
-                    project=self.project)
+                    activity=self.activity)
             except Location.DoesNotExist:
-                if self.project.needs_predefined_locations(mtype.mtype):
+                if self.activity.needs_predefined_locations():
                     return self.error('location', locationid)
                 else:
-                    l, created = Location.objects.get_or_create(
+                    location, created = Location.objects.get_or_create(
                         location_code=locationid,
-                        project=self.project)
-
-            try:
-                sm = ScheduledMeasurement.objects.get(
-                    project=self.project, contractor=self.contractor,
-                    measurement_type=mtype, location=l)
-            except ScheduledMeasurement.DoesNotExist:
-                if self.project.needs_predefined_locations(mtype.mtype):
-                    return self.error('scheduled', self.project.name,
-                                      self.contractor.name,
-                                      mtype.name, l.location_code)
-                sm = ScheduledMeasurement.objects.create(
-                    project=self.project, contractor=self.contractor,
-                    measurement_type=mtype, location=l)
+                        activity=self.activity)
 
             if not check_only:
-                m, _ = Measurement.objects.get_or_create(scheduled=sm)
+                m, _ = Measurement.objects.get_or_create(location=location)
                 m.data = {
                     'date': date,
                     'time': time,
@@ -90,8 +75,8 @@ class PeilschaalCsvParser(ProgressParser):
                     'comment': comment,
                     }
                 m.save()
-                sm.complete = True
-                sm.save()
+                location.complete = True
+                location.save()
                 measurements.append(m)
 
         return self.success(measurements)

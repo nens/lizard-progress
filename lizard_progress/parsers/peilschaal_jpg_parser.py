@@ -37,8 +37,6 @@ class PeilschaalJpgParser(ProgressParser):
             logger.critical("No ImageFile")
             return UnSuccessfulParserResult()
 
-        mtype = self.mtype()
-
         # Uniek_id: Part of the filename before the extension, in
         # upper case.
         uniek_id = os.path.splitext(self.file_object.name)[0].upper()
@@ -46,7 +44,7 @@ class PeilschaalJpgParser(ProgressParser):
         try:
             location = Location.objects.get(
                 location_code=uniek_id,
-                project=self.project)
+                activity=self.activity)
         except Location.DoesNotExist:
             return self.error(uniek_id)
 
@@ -63,26 +61,17 @@ class PeilschaalJpgParser(ProgressParser):
         if d > 75.0:
             return self.error('toofar', d)
 
-        try:
-            scheduled_measurement = (ScheduledMeasurement.objects.
-                                     get(project=self.project,
-                                         contractor=self.contractor,
-                                         location=location,
-                                         measurement_type=mtype))
-        except ScheduledMeasurement.DoesNotExist:
-            return self.error('scheduled', id, str(mtype))
-
         if not check_only:
             m, _ = Measurement.objects.get_or_create(
-                scheduled=scheduled_measurement)
+                location=location)
 
             m.data = {}
             m.date = None
             m.the_geom = Point(x, y, srid=SRID)
             m.save()
 
-            scheduled_measurement.complete = True
-            scheduled_measurement.save()
+            location.complete = True
+            location.save()
             measurements = (m,)
         else:
             measurements = ()

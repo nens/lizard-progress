@@ -254,3 +254,27 @@ class PlanningView(ActivityView):
     def __existing_measurements(self):
         return models.Measurement.objects.filter(
             location__activity=self.activity).select_related("location")
+
+
+class ConnectActivityView(ActivityView):
+    template_name = 'lizard_progress/planning_connect_activity.html'
+    active_menu = 'planning'
+
+    def get(self, request, *args, **kwargs):
+        if not hasattr(self, 'form'):
+            self.form = forms.ConnectActivityForm(self.activity)
+
+        return super(ConnectActivityView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.form = forms.ConnectActivityForm(self.activity, request.POST)
+
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        self.activity.connect_to_activity(self.form.cleaned_data['activity'])
+
+        return HttpResponseRedirect(reverse(
+            'lizard_progress_planningview',
+            kwargs={'project_slug': self.project_slug,
+                    'activity_id': self.activity_id}))

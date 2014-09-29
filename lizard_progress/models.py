@@ -493,6 +493,10 @@ class Activity(models.Model):
     contractor = models.ForeignKey(
         Organization, null=True)
 
+    source_activity = models.ForeignKey(
+        'Activity', verbose_name='Activity to copy locations from',
+        null=True, blank=True)
+
     def __unicode__(self):
         return self.name
 
@@ -524,6 +528,26 @@ class Activity(models.Model):
             return config.get('use_predefined_locations')
 
         return False
+
+    def connect_to_activity(self, source_activity):
+        self.source_activity = source_activity
+        self.save()
+
+        self.copy_locations_from_source_activity()
+
+    def copy_locations_from_source_activity(self):
+        if self.source_activity is None:
+            return  # Nothing to do
+
+        # Don't copy codes we already have
+        own_location_codes = set(
+            location.location_code for location in self.location_set.all())
+
+        for location in self.source_activity.location_set.exclude(
+                location_code__in=own_location_codes):
+            Location.objects.create(
+                activity=self, location_code=location.location_code,
+                the_geom=location.the_geom, complete=False)
 
     def upload_directory(self):
         """Directory where the files for this activity will be stored."""

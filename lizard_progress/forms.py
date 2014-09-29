@@ -266,3 +266,12 @@ class ShapefileForm(forms.Form):
                    + "niet tot dezelfde shapefile.")
             raise forms.ValidationError(msg)
         return cleaned_data
+
+
+class ConnectActivityForm(forms.Form):
+    def __init__(self, activity, *args, **kwargs):
+        super(ConnectActivityForm, self).__init__(*args, **kwargs)
+        self.fields['activity'] = forms.ModelChoiceField(
+            label=_('Activity'), queryset=models.Activity.objects.filter(
+                project=activity.project).exclude(
+                pk=activity.id))

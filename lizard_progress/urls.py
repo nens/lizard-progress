@@ -91,6 +91,10 @@ urlpatterns = patterns(
         'planning/$',
         login_required(views.activity.PlanningView.as_view()),
         name='lizard_progress_planningview'),
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>[^/]+)/'
+        'planning/connect/$',
+        login_required(views.activity.ConnectActivityView.as_view()),
+        name='lizard_progress_connect_activity'),
 
     # Edit activities
     url('^projects/(?P<project_slug>[^/]+)/edit_activities/$',
@@ -187,7 +191,6 @@ urlpatterns = patterns(
     url('^projects/(?P<project_slug>[^/]+)/config/$',
         login_required(views.ConfigurationView.as_view()),
         name="lizard_progress_project_configuration_view"),
-
     url('^projects/(?P<project_slug>[^/]+)/config/$',
         login_required(views.ConfigurationView.as_view()),
         name="lizard_progress_project_configuration_post"),

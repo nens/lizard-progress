@@ -84,9 +84,9 @@ def check_mothershape(project, contractor, shape_path, report_file):
 
     t = get_template("lizard_progress/moedershape_testrapport.txt")
     report_file.write(t.render(Context({
-                    'erratic_locations': errors,
-                    'shapefilename': os.path.basename(shape_path),
-                })))
+        'erratic_locations': errors,
+        'shapefilename': os.path.basename(shape_path),
+    })))
 
 
 def test():

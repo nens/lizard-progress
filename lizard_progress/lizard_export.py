@@ -69,9 +69,12 @@ def insert(measurement):
     # If this measurement already exists in the database, we first delete it
     # (easiest way of updating...)
     connection.execute(the_table.delete().where(and_(
-  the_table.c.proident == measurement.scheduled.location.location_code,
-  the_table.c.pro_naam == measurement.scheduled.project.name,
-  the_table.c.opdr_nem == measurement.scheduled.contractor.organization.name)))
+        the_table.c.proident ==
+        measurement.scheduled.location.location_code,
+        the_table.c.pro_naam ==
+        measurement.scheduled.project.name,
+        the_table.c.opdr_nem ==
+        measurement.scheduled.contractor.organization.name)))
 
     # Now insert the new one
     connection.execute(

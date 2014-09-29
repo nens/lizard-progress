@@ -255,8 +255,8 @@ class Configuration(object):
 
         for (option_key, option) in sorted(CONFIG_OPTIONS.iteritems()):
             if (option.only_for_error is None or
-                option.only_for_error in error_config):
-                    yield (option, self.get(option.option))
+                    option.only_for_error in error_config):
+                yield (option, self.get(option.option))
 
 
 def get(project, config_option):

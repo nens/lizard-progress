@@ -23,7 +23,7 @@
   </ol>
 
   <h3>Planning door middel van een shapefile</h3>
-  <p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder "Configuratie".</p>
+  <p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder <a href="{% url "lizard_progress_project_configuration_view" project_slug=view.project_slug %}">Configuratie</a>.</p>
 
   <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
     {{ view.form.as_p }}

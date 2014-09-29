@@ -433,13 +433,13 @@ class MetParser(specifics.ProgressParser):
 
     def get_location(self, profile):
         try:
-            location = models.Location.objects.get(
-                activity=self.activity,
-                location_code=profile.id)
-            location_point = linear_algebra.Point(
-                x=location.the_geom.x, y=location.the_geom.y)
+            point = Point(profile.start_x, profile.start_y)
+            location = models.Activity.get_or_create_location(
+                location_code=profile.id, point=point)
             profile_point = profile.start_point
 
+            location_point = linear_algebra.Point(
+                (location.the_geom.x, location.the_geom.y))
             distance = location_point.distance(profile_point)
             maxdistance = self.config_value('maximum_location_distance')
             if distance > maxdistance:
@@ -447,36 +447,26 @@ class MetParser(specifics.ProgressParser):
                     line_number=profile.line_number,
                     error_code="TOO_FAR_FROM_LOCATION",
                     location_id=profile.id,
-                    x=location_point.x, y=location_point.y,
+                    x=location.the_geom.x, y=location.the_geom.y,
                     m=distance, maxm=maxdistance, recovery={
                         'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
                         'location_code': profile.id,
                         'x': profile.start_x,
                         'y': profile.start_y
                         })
-
-        except models.Location.DoesNotExist:
-            if self.activity.needs_predefined_locations():
-                self.record_error_code(
-                    line_number=profile.line_number,
-                    error_code="NO_LOCATION",
-                    location_id=profile.id,
-                    recovery={
-                        'request_type': Request.REQUEST_TYPE_NEW_LOCATION,
-                        'location_code': profile.id,
-                        'x': profile.start_x,
-                        'y': profile.start_y
-                        })
-                return None
-            else:
-                # If the location is newly created, use actual measurement
-                # location as the_geom.
-                location = models.Location.objects.create(
-                    activity=self.activity,
-                    location_code=profile.id,
-                    the_geom=Point(profile.start_x, profile.start_y))
-
-        return location
+            return location
+        except models.Activity.NoLocationException:
+            self.record_error_code(
+                line_number=profile.line_number,
+                error_code="NO_LOCATION",
+                location_id=profile.id,
+                recovery={
+                    'request_type': Request.REQUEST_TYPE_NEW_LOCATION,
+                    'location_code': profile.id,
+                    'x': profile.start_x,
+                    'y': profile.start_y
+                })
+            return None
 
     def record_error_code(self, line_number, error_code, *args, **kwargs):
         if error_code not in self.error_config:

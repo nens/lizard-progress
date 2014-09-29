@@ -1,0 +1,15 @@
+{% extends "lizard_progress/activity_dashboard.html" %}
+
+{% block contentpage %}
+<h2>Werkzaamheid koppelen aan een andere werkzaamheid.</h2>
+
+<p>De werkzaamheid {{ view.activity }} moet locaties kopi&euml;ren van:</p>
+
+  <form method="post">
+    {{ view.form.as_p }}
+    <input type="submit" value="Locaties kopi&euml;ren" class="btn btn-primary">
+    {% csrf_token %}
+  </form>
+
+<p><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">Terug naar de planningspagina.</a></p>
+{% endblock %}

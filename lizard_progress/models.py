@@ -497,6 +497,9 @@ class Activity(models.Model):
         'Activity', verbose_name='Activity to copy locations from',
         null=True, blank=True)
 
+    class NoLocationException(Exception):
+        pass
+
     def __unicode__(self):
         return self.name
 
@@ -545,9 +548,7 @@ class Activity(models.Model):
 
         for location in self.source_activity.location_set.exclude(
                 location_code__in=own_location_codes):
-            Location.objects.create(
-                activity=self, location_code=location.location_code,
-                the_geom=location.the_geom, complete=False)
+            self.copy_location(location)
 
     def upload_directory(self):
         """Directory where the files for this activity will be stored."""
@@ -576,6 +577,38 @@ class Activity(models.Model):
 
     def open_requests(self):
         return self.request_set.filter(request_status=1)
+
+    def copy_location(self, other_location):
+        return Location.objects.create(
+            activity=self, location_code=other_location.location_code,
+            the_geom=other_location.the_geom, complete=False)
+
+    def get_or_create_location(self, location_code, point):
+        try:
+            # If it exists, return it
+            return Location.objects.get(
+                activity=self, location_code=location_code)
+        except Location.DoesNotExist:
+            # Does it exist in a source activity?
+            if self.source_activity is not None:
+                try:
+                    other_location = Location.objects.get(
+                        activity=self.source_activity,
+                        location_code=location_code)
+                    return self.copy_location(other_location)
+                except Location.DoesNotExist:
+                    # Pity
+                    pass
+
+        # No luck yet. Are locations necessary? If yes, then this
+        # is an error.
+        if self.needs_predefined_locations():
+            raise Activity.NoLocationException()
+
+        # Let's just make one.
+        return Location.objects.create(
+            activity=self, location_code=location_code,
+            the_geom=point, complete=False)
 
 
 class MeasurementTypeAllowed(models.Model):

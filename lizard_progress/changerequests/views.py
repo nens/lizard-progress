@@ -74,14 +74,14 @@ class RequestDetailPage(ActivityView):
     template_name = 'changerequests/detail.html'
     active_menu = 'requests'
 
-    def dispatch(self, request, project_slug, request_id):
+    def dispatch(self, request, project_slug, activity_id, request_id):
         try:
             self.changerequest = models.Request.objects.get(pk=request_id)
             self.changerequest.check_validity()
         except models.Request.DoesNotExist:
             raise Http404()
 
-        if self.changerequest.contractor.project.slug != project_slug:
+        if self.changerequest.activity.project.slug != project_slug:
             # Trickery
             raise Http404()
 
@@ -89,7 +89,7 @@ class RequestDetailPage(ActivityView):
         self.project_slug = project_slug
 
         return super(RequestDetailPage, self).dispatch(
-            request, project_slug=project_slug)
+            request, project_slug=project_slug, activity_id=activity_id)
 
     def make_form(self, formclass, *args, **kwargs):
         """Helper to create forms, because we always pass request,
@@ -104,7 +104,9 @@ class RequestDetailPage(ActivityView):
         return formclass(*args, **kwargs)
 
     def user_is_contractor(self):
-        return self.contractor() == self.changerequest.contractor
+        """User is with the organization that is contractor for this
+        activity."""
+        return self.activity.contractor.contains_user(self.request.user)
 
 
 class PostRequestDetailComment(RequestDetailPage):

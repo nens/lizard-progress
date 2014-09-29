@@ -38,7 +38,7 @@ COLOR_OLD = "black"
 class ChangeRequestAdapter(WorkspaceItemAdapter):
     def __init__(self, *args, **kwargs):
         if ('layer_arguments' not in kwargs or
-            not isinstance(kwargs['layer_arguments'], dict)):
+                not isinstance(kwargs['layer_arguments'], dict)):
             raise ValueError(
                 'Argument layer_arguments of adapter should be a dict.')
 
@@ -65,7 +65,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             resource_filename(
                 "lizard_progress",
                 ("/static/lizard_progress/%s" % img_file)).encode('utf8'),
-                b"png", 16, 16)
+            b"png", 16, 16)
 
     def make_style(self, img):
         rule = mapnik.Rule()
@@ -102,41 +102,23 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 return self.mapnik_query_location()
 
     def mapnik_query_the_geom(self):
-        # This is an _awful_ way of doing it, I know. I lack time. To
-        # work around a bug in Mapnik, there need to be little points
-        # around the point, and I have no time to switch from postgis
-        # to point symbolizers entirely.
-
-        models.Points.points_around(
-            self.changerequest.location_code + "_the_geom",
-            self.changerequest.the_geom)
-
         return ("""(
             SELECT
-                points.the_geom
+                changerequests_request.the_geom
             FROM
-                changerequests_points AS points
+                changerequests_request
             WHERE
-                location_code = '%s_the_geom') data"""
-                % (self.changerequest.location_code,))
+                id = %d) data"""
+                % (self.changerequest.id,))
 
     def mapnik_query_location(self):
-        location = self.changerequest.get_location()
-
-        if not location:
-            return None
-
-        models.Points.points_around(
-            self.changerequest.location_code,
-            location.the_geom)
-
         q = ("""(
             SELECT
                 the_geom
             FROM
-                changerequests_points
+                lizard_progress_location
             WHERE
-                changerequests_points.location_code = '%s') data""" %
+                location_code = '%s') data""" %
              (self.changerequest.location_code,))
         return q
 
@@ -144,20 +126,13 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         if not self.changerequest.old_location_code:
             return None
 
-        location = self.changerequest.get_location(
-            location_code=self.changerequest.old_location_code)
-
-        models.Points.points_around(
-            self.changerequest.old_location_code,
-            location.the_geom)
-
         q = ("""(
             SELECT
                 the_geom
             FROM
-                changerequests_points
+                lizard_progress_location
             WHERE
-                changerequests_points.location_code = '%s') data""" %
+                location_code = '%s') data""" %
              (self.changerequest.old_location_code,))
         return q
 

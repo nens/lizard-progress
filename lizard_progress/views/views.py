@@ -98,19 +98,6 @@ class ProjectsMixin(object):
         """Return organization name of current user."""
         return self.profile and self.profile.organization.name
 
-    def contractor(self):
-        """Return user-in-this-project's contractor object, if one
-        exists."""
-        profile = self.profile
-        project = self.project
-
-        if profile and project and profile.organization:
-            try:
-                return models.Contractor.objects.get(
-                    project=project, organization=profile.organization)
-            except models.Contractor.DoesNotExist:
-                return None
-
     def user_can_upload_to_project(self):
         if not self.project:
             return False
@@ -486,7 +473,7 @@ def dashboard_graph(
     fig = ScreenFigure(500, 300)  # in pixels
     fig.text(
         0.5, 0.85,
-        ('Uitgevoerde werkzaamheden {activity}'
+        ('Uitgevoerd {activity}'
          .format(activity=activity)),
         fontsize=14, ha='center')
     fig.subplots_adjust(left=0.05, right=0.95)  # smaller margins

@@ -3,7 +3,7 @@
 {% block topbar %}
   <div id="actions" class="sidebar-inner">
   <ul class="nav nav-pills">
-    <li class="active">
+    <li>
       <a href="">{{ view.activity }}</a>
     </li>
     <li>
@@ -18,7 +18,7 @@
   <div id="actions2" class="sidebar-inner">
   <ul class="nav nav-pills" style="clear: both; padding-left: 14px;">
     <li {% if view.active_menu == "activitydashboard" %}class="active"{% endif %}>
-      <a title="Dashboard" href="{% url "lizard_progress_dashboardview" project_slug=view.project_slug %}">Dashboard</a>
+      <a title="Dashboard" href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity_id %}">Dashboard</a>
     </li>
     {% if view.user_is_uploader %}
     <li {% if view.active_menu == "upload" %}class="active"{% endif %}>
@@ -31,3 +31,16 @@
   </ul>
   </div>
 {% endblock %}
+
+{% block contentpage %}
+  {# Override this on the other pages #}
+  <img src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=view.activity_id %}" title="Voortgang {{ view.activity }}" style="float: left;"/>
+  <dl style="float: left;">
+    <dt>Opdrachtnemer:</dt>
+    <dd>{{ view.activity.contractor }}</dd>
+    <dt>Type meting:</dt>
+    <dd>{{ view.activity.measurement_type }}</dd>
+    <dt>Open aanvragen:</dt>
+    <dd>{{ view.activity.open_requests.count }}</dd>
+  </dl>
+{% endblock contentpage %}

@@ -1,7 +1,7 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
 {% block contentpage %}
-<h2>Aanvragen {{ view.project.name }}</h2>
+<h2>Aanvragen {{ view.activity }}</h2>
 
 <table class="table progressbase">
 {% with openrequests=view.open_requests %}
@@ -12,7 +12,6 @@
      <tr>
       <th></th>
       <th>Datum</th>
-      <th>Organisatie</th>
       <th>Werkzaamheid</th>
       <th>Aanvraagtype</th>
       <th>Locatie</th>
@@ -24,8 +23,7 @@
     <tr class="clickable" data-url="{{ request.detail_url }}">
       <td>{% if not request.did_last_action %}<i class="icon icon-warning-sign"></i>{% endif %}</td>
       <td>{{ request.creation_date|date:"d/m" }}</td>
-      <td>{{ request.contractor.organization }}</td>
-      <td>{{ request.mtype }}</td>
+      <td>{{ request.activity }}</td>
       <td>{{ request.type_description }}</td>
       <td>{{ request.location_code }}
         {% if request.old_location_code %} (vervangt {{ request.old_location_code }}){% endif %}</td>

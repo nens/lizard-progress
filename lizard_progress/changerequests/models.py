@@ -107,7 +107,7 @@ class Request(models.Model):
                 codes=(self.location_code +
                        (", vervangt " + self.old_location_code
                         if self.old_location_code else "")),
-                contractor=self.activity.organization,
+                contractor=self.activity.contractor,
                 status=self.status_description))
 
     def adapter_layer_name(self):
@@ -355,7 +355,7 @@ class Request(models.Model):
 
     def detail_url(self):
         url = reverse('changerequests_detail', kwargs={
-            'project_slug': self.contractor.project.slug,
+            'project_slug': self.activity.project.slug,
             'activity_id': self.activity.id,
             'request_id': str(self.id)})
         return url

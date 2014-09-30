@@ -16,11 +16,15 @@ from collections import namedtuple
 from lizard_progress import errors
 from lizard_progress import models
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Option(namedtuple(
         'Option',
         'option, short_description, long_description,'
-        ' type, default, only_for_error')):
+        ' type, default, only_for_error, for_project')):
 
     def translate(self, value):
         if self.type == 'float':
@@ -50,6 +54,7 @@ CONFIG_OPTIONS = {
         type='boolean',
         default='',
         only_for_error=None,
+        for_project=False,
         ),
     'maximum_z1z2_difference': Option(
         option='maximum_z1z2_difference',
@@ -59,6 +64,7 @@ CONFIG_OPTIONS = {
         type="float",
         default='1',
         only_for_error='MET_DIFFERENCE_Z1Z2_MAX_1M',
+        for_project=False,
         ),
     'lowest_z_value_allowed': Option(
         option='lowest_z_value_allowed',
@@ -68,6 +74,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='-10',
         only_for_error='MET_Z_TOO_LOW',
+        for_project=False,
         ),
     'maximum_waterway_width': Option(
         option='maximum_waterway_width',
@@ -76,6 +83,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='100',
         only_for_error='MET_WATERWAY_TOO_WIDE',
+        for_project=False,
         ),
     'maximum_x_coordinate': Option(
         option='maximum_x_coordinate',
@@ -84,6 +92,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='300000',
         only_for_error='MET_INSIDE_EXTENT',
+        for_project=False,
         ),
     'minimum_x_coordinate': Option(
         option='minimum_x_coordinate',
@@ -92,6 +101,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='7000',
         only_for_error='MET_INSIDE_EXTENT',
+        for_project=False,
         ),
     'maximum_y_coordinate': Option(
         option='maximum_y_coordinate',
@@ -100,6 +110,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='629000',
         only_for_error='MET_INSIDE_EXTENT',
+        for_project=False,
         ),
     'minimum_y_coordinate': Option(
         option='minimum_y_coordinate',
@@ -108,6 +119,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='289000',
         only_for_error='MET_INSIDE_EXTENT',
+        for_project=False,
         ),
     'maximum_location_distance': Option(
         option='maximum_location_distance',
@@ -116,6 +128,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='10',
         only_for_error='TOO_FAR_FROM_LOCATION',
+        for_project=False,
         ),
     'maximum_mean_distance_between_points': Option(
         option='maximum_mean_distance_between_points',
@@ -125,6 +138,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='2',
         only_for_error='MET_MEAN_MEASUREMENT_DISTANCE',
+        for_project=False,
         ),
     'max_measurement_distance': Option(
         option='max_measurement_distance',
@@ -134,6 +148,7 @@ CONFIG_OPTIONS = {
         type='float',
         default='2.5',
         only_for_error='MET_DISTANCETOOLARGE',
+        for_project=False,
         ),
     'hydrovakken_id_field': Option(
         option='hydrovakken_id_field',
@@ -143,7 +158,9 @@ CONFIG_OPTIONS = {
             'Daarnaast moeten de shapes bestaan uit lijnen'),
         type='text',
         default='BR_IDENT',
-        only_for_error=None),
+        only_for_error=None,
+        for_project=True,
+    ),
     'location_id_field': Option(
         option='location_id_field',
         short_description=(
@@ -152,7 +169,9 @@ CONFIG_OPTIONS = {
             'Daarnaast moeten de shapes bestaan uit punten'),
         type='text',
         default='ID_DWP',
-        only_for_error=None),
+        only_for_error=None,
+        for_project=False,
+    ),
     'lowest_below_water_allowed': Option(
         option='lowest_below_water_allowed',
         short_description=(
@@ -160,7 +179,9 @@ CONFIG_OPTIONS = {
         long_description=('Altijd een negatief getal'),
         type='float',
         default='-50',
-        only_for_error='MET_Z_TOO_LOW_BELOW_WATER'),
+        only_for_error='MET_Z_TOO_LOW_BELOW_WATER',
+        for_project=False,
+    ),
     'max_distance_to_midline': Option(
         option='max_distance_to_midline',
         short_description=(
@@ -170,27 +191,33 @@ CONFIG_OPTIONS = {
             ),
         type='float',
         default='1',
-        only_for_error='MET_DISTANCE_TO_MIDLINE'),
+        only_for_error='MET_DISTANCE_TO_MIDLINE',
+        for_project=False,
+    ),
 }
 
 
 class Configuration(object):
-    def __init__(self, organization=None, activity=None):
-        """A Configuration is EITHER for an organization, or an
-        activity, not both."""
-        if (organization and activity) or (not organization and not activity):
+    def __init__(self, organization=None, activity=None, project=None):
+        """Give ONE of organization, activity, project."""
+        if (sum(item is not None for item in (organization, activity, project))
+                != 1):
             raise ValueError(
-                "Give either organization or activity, not both.")
+                "Give either organization, project or activity, not more.")
 
         self.organization = organization
         self.activity = activity
+        self.project = project
 
     def get(self, config_option):
         option = CONFIG_OPTIONS.get(config_option)
 
         if self.activity:
             return self.get_activity(option)
-        return self.get_organization(option)
+        elif self.project:
+            return self.get_project(option)
+        else:
+            return self.get_organization(option)
 
     def get_organization(self, option):
         organization_config, created = (
@@ -201,6 +228,23 @@ class Configuration(object):
             organization_config.value = option.default
             organization_config.save()
         return option.translate(organization_config.value)
+
+    def get_project(self, option):
+        project_config, created = (
+            models.ProjectConfig.objects.get_or_create(
+                project=self.project,
+                config_option=option.option))
+        if project_config.value is None:
+            organization_config, created = (
+                models.OrganizationConfig.objects.get_or_create(
+                    organization=self.project.organization,
+                    config_option=option.option))
+            if organization_config.value is None:
+                organization_config.value = option.default
+                organization_config.save()
+            project_config.value = organization_config.value
+            project_config.save()
+        return option.translate(project_config.value)
 
     def get_activity(self, option):
         activity_config, created = (
@@ -223,6 +267,8 @@ class Configuration(object):
         """Save some configuration option to this value, and save it"""
         if self.activity:
             return self.set_activity(option, value)
+        elif self.project:
+            return self.set_project(option, value)
         else:
             return self.set_organization(option, value)
 
@@ -233,6 +279,14 @@ class Configuration(object):
             config_option=option.option)
         activity_config.value = option.to_unicode(value)
         activity_config.save()
+
+    def set_project(self, option, value):
+        """Save a configuration option that was set for a project"""
+        project_config, created = models.ProjectConfig.objects.get_or_create(
+            project=self.project,
+            config_option=option.option)
+        project_config.value = option.to_unicode(value)
+        project_config.save()
 
     def set_organization(self, option, value):
         """Save a configuration option that was set for an organization"""
@@ -245,23 +299,26 @@ class Configuration(object):
 
     def options(self):
         """Return only the options that are relevant for this project,
-        omit options for which the error message is turned off
+        or activity. Omit options for which the error message is turned off
         anyway."""
 
         error_config = errors.ErrorConfiguration(
-            project=self.activity.project if self.activity else None,
+            project=self.activity.project if self.activity else self.project,
             organization=self.organization,
-            measurement_type=models.AvailableMeasurementType.dwarsprofiel())
+            measurement_type=self.activity.measurement_type if self.activity
+            else models.AvailableMeasurementType.dwarsprofiel())
+
+        want_for_project = self.project is not None
 
         for (option_key, option) in sorted(CONFIG_OPTIONS.iteritems()):
-            if (option.only_for_error is None or
-                    option.only_for_error in error_config):
+            if (option.for_project == want_for_project and
+                (option.only_for_error is None or
+                    option.only_for_error in error_config)):
                 yield (option, self.get(option.option))
 
 
-def get(activity, config_option):
+def get(activity, config_option, project=None):
     """Helper function, this is a common way to use this module."""
-    assert isinstance(activity, models.Activity)
 
-    configuration = Configuration(activity=activity)
+    configuration = Configuration(activity=activity, project=project)
     return configuration.get(config_option)

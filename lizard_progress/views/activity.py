@@ -281,7 +281,7 @@ class ConnectActivityView(ActivityView):
 
 
 class ConfigurationView(ActivityView):
-    template_name = 'lizard_progress/project_configuration_page.html'
+    template_name = 'lizard_progress/activity_configuration_page.html'
     active_menu = "config"
 
     def config_options(self):

@@ -188,6 +188,9 @@ urlpatterns = patterns(
         name="lizard_progress_download_export_run_view"),
 
     # Configuration
+    url('^projects/(?P<project_slug>[^/]+)/config/$',
+        login_required(views.ConfigurationView.as_view()),
+        name="lizard_progress_project_configuration_view"),
     url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/config/$',
         login_required(views.activity.ConfigurationView.as_view()),
         name="lizard_progress_activity_configuration_view"),

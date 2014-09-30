@@ -352,4 +352,6 @@ class UploadHydrovakkenView(ProjectsView):
 
     @property
     def hydrovakken_id_field(self):
-        return configuration.get(self.project, 'hydrovakken_id_field')
+        return configuration.get(
+            activity=None, config_option='hydrovakken_id_field',
+            project=self.project)

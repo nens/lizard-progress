@@ -37,6 +37,7 @@ from lizard_ui.layout import Action
 from lizard_ui.views import UiView
 
 from lizard_progress.changerequests import models as cmodels
+from lizard_progress import configuration
 from lizard_progress import models
 from lizard_progress.models import Hydrovak
 from lizard_progress.models import Project
@@ -784,3 +785,33 @@ class DeleteActivity(ProjectsView):
         return HttpResponseRedirect(reverse(
             'lizard_progress_edit_activities', kwargs=dict(
                 project_slug=self.project.slug)))
+
+
+class ConfigurationView(ProjectsView):
+    template_name = 'lizard_progress/project_configuration_page.html'
+    active_menu = "config"
+
+    def config_options(self):
+        config = configuration.Configuration(project=self.project)
+        return list(config.options())
+
+    def post(self, request, *args, **kwargs):
+        redirect = HttpResponseRedirect(reverse(
+            "lizard_progress_project_configuration_view",
+            kwargs={'project_slug': self.project_slug}))
+
+        if not self.project.is_manager(self.user):
+            return redirect
+
+        for key in configuration.CONFIG_OPTIONS:
+            option = configuration.CONFIG_OPTIONS[key]
+            value_str = request.POST.get(key, '')
+            try:
+                value = option.translate(value_str)
+                # No error, set it
+                config = configuration.Configuration(project=self.project)
+                config.set(option, value)
+            except ValueError:
+                pass
+
+        return redirect

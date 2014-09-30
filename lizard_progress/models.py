@@ -715,7 +715,8 @@ class Hydrovak(models.Model):
         # for the OrganizationConfig and ProjectConfig models.
         from lizard_progress import configuration
         id_field_name = configuration.get(
-            project, 'hydrovakken_id_field')
+            activity=None, project=project,
+            config_option='hydrovakken_id_field')
 
         layer = datasource[0]
 

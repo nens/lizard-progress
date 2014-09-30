@@ -3,7 +3,7 @@
 {% block topbar %}
   <div id="actions" class="sidebar-inner">
   <ul class="nav nav-pills">
-    <li>
+    <li class="active">
       <a href="">{{ view.activity }}</a>
     </li>
     <li>
@@ -23,6 +23,11 @@
     {% if view.user_is_manager %}
       <li {% if view.active_menu == "planning" %}class="active"{% endif %}>
         <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">Planning</a>
+      </li>
+    {% endif %}
+    {% if view.user_is_manager %}
+      <li {% if view.active_menu == "config" %}class="active"{% endif %}>
+        <a title="Configuratie" href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">Configuratie</a>
       </li>
     {% endif %}
     {% if view.user_is_uploader %}

@@ -223,7 +223,7 @@ class PlanningView(ActivityView):
     @property
     def location_id_field(self):
         return (
-            configuration.get(self.project, 'location_id_field')
+            configuration.get(self.activity, 'location_id_field')
             .strip().encode('utf8'))
 
     def __locations_from_shapefile(self, shapefilepath):
@@ -278,3 +278,34 @@ class ConnectActivityView(ActivityView):
             'lizard_progress_planningview',
             kwargs={'project_slug': self.project_slug,
                     'activity_id': self.activity_id}))
+
+
+class ConfigurationView(ActivityView):
+    template_name = 'lizard_progress/project_configuration_page.html'
+    active_menu = "config"
+
+    def config_options(self):
+        config = configuration.Configuration(activity=self.activity)
+        return list(config.options())
+
+    def post(self, request, *args, **kwargs):
+        redirect = HttpResponseRedirect(reverse(
+            "lizard_progress_activity_configuration_view",
+            kwargs={'project_slug': self.project_slug,
+                    'activity_id': self.activity_id}))
+
+        if not self.project.is_manager(self.user):
+            return redirect
+
+        for key in configuration.CONFIG_OPTIONS:
+            option = configuration.CONFIG_OPTIONS[key]
+            value_str = request.POST.get(key, '')
+            try:
+                value = option.translate(value_str)
+                # No error, set it
+                config = configuration.Configuration(activity=self.activity)
+                config.set(option, value)
+            except ValueError:
+                pass
+
+        return redirect

@@ -82,11 +82,6 @@ Navigation
           <li {% if view.active_menu == "download" %}class="active"{% endif %}>
             <a title="Download files" href="{% url "lizard_progress_downloadhomeview" project_slug=view.project_slug %}">Download</a>
           </li>
-          {% if view.user_is_manager %}
-            <li {% if view.active_menu == "config" %}class="active"{% endif %}>
-              <a title="Configuratie" href="{% url "lizard_progress_project_configuration_view" project_slug=view.project_slug %}">Configuratie</a>
-            </li>
-          {% endif %}
           <li>
             <a title="Kaartlagen" href="{% url "lizard_progress_mapview" project_slug=view.project_slug %}">Kaartlagen</a>
           </li>

@@ -706,7 +706,7 @@ class NewProjectView(ProjectsView):
                         os.path.join(project_files_dir, filename))
 
         return HttpResponseRedirect(
-            reverse('lizard_progress_project_configuration_view',
+            reverse('lizard_progress_dashboardview',
                     kwargs={'project_slug': project.slug}))
 
     def grouped_form_fields(self):

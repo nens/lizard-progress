@@ -504,9 +504,8 @@ class Activity(models.Model):
         return self.name
 
     def config_value(self, key):
-        project = self.project
         from lizard_progress import configuration
-        config = configuration.Configuration(project=project)
+        config = configuration.Configuration(activity=self)
         return config.get(key)
 
     def error_configuration(self):
@@ -523,12 +522,7 @@ class Activity(models.Model):
         if self.measurement_type.likes_predefined_locations:
             # This means that for this measurement type, it is
             # configurable.
-
-            # We only import configuration here, because it imports this module
-            # for the OrganizationConfig and ProjectConfig models below.
-            from lizard_progress import configuration
-            config = configuration.Configuration(project=self.project)
-            return config.get('use_predefined_locations')
+            return self.config_value('use_predefined_locations')
 
         return False
 
@@ -1091,6 +1085,12 @@ class OrganizationConfig(models.Model):
 
 class ProjectConfig(models.Model):
     project = models.ForeignKey(Project)
+    config_option = models.CharField(max_length=50)
+    value = models.CharField(max_length=50, null=True)
+
+
+class ActivityConfig(models.Model):
+    activity = models.ForeignKey(Activity)
     config_option = models.CharField(max_length=50)
     value = models.CharField(max_length=50, null=True)
 

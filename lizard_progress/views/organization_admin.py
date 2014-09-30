@@ -26,7 +26,7 @@ class OrganizationAdminConfiguration(ProjectsView):
             raise PermissionDenied()
 
         redirect = http.HttpResponseRedirect(reverse(
-                "lizard_progress_admin_organization_errorconfiguration"))
+            "lizard_progress_admin_organization_errorconfiguration"))
 
         for key, option in configuration.CONFIG_OPTIONS.iteritems():
             value_str = request.POST.get(key, '')

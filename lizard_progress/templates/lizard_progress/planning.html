@@ -8,7 +8,7 @@
     {% if mtype.needs_predefined_locations %}
       noodzakelijk
     {% elif mtype.likes_predefined_locations %}
-      onder <a href="{% url "lizard_progress_project_configuration_view" project_slug=view.project_slug %}">Configuratie</a> in te stellen of het nodig is
+      onder <a href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">Configuratie</a> in te stellen of het nodig is
     {% else %}
       onmogelijk
     {% endif %} om vooraf locaties te plannen.
@@ -23,7 +23,7 @@
   </ol>
 
   <h3>Planning door middel van een shapefile</h3>
-  <p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder <a href="{% url "lizard_progress_project_configuration_view" project_slug=view.project_slug %}">Configuratie</a>.</p>
+  <p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder <a href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id  %}">Configuratie</a>.</p>
 
   <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
     {{ view.form.as_p }}

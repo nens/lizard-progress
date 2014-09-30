@@ -175,21 +175,21 @@ CONFIG_OPTIONS = {
 
 
 class Configuration(object):
-    def __init__(self, organization=None, project=None):
-        """A Configuration is EITHER for an organization, or a
-        project, not both."""
-        if (organization and project) or (not organization and not project):
+    def __init__(self, organization=None, activity=None):
+        """A Configuration is EITHER for an organization, or an
+        activity, not both."""
+        if (organization and activity) or (not organization and not activity):
             raise ValueError(
-                "Give either organization or project, not both.")
+                "Give either organization or activity, not both.")
 
         self.organization = organization
-        self.project = project
+        self.activity = activity
 
     def get(self, config_option):
         option = CONFIG_OPTIONS.get(config_option)
 
-        if self.project:
-            return self.get_project(option)
+        if self.activity:
+            return self.get_activity(option)
         return self.get_organization(option)
 
     def get_organization(self, option):
@@ -202,37 +202,37 @@ class Configuration(object):
             organization_config.save()
         return option.translate(organization_config.value)
 
-    def get_project(self, option):
-        project_config, created = (
-            models.ProjectConfig.objects.get_or_create(
-                project=self.project,
+    def get_activity(self, option):
+        activity_config, created = (
+            models.ActivityConfig.objects.get_or_create(
+                activity=self.activity,
                 config_option=option.option))
-        if project_config.value is None:
+        if activity_config.value is None:
             organization_config, created = (
                 models.OrganizationConfig.objects.get_or_create(
-                    organization=self.project.organization,
+                    organization=self.activity.project.organization,
                     config_option=option.option))
             if organization_config.value is None:
                 organization_config.value = option.default
                 organization_config.save()
-            project_config.value = organization_config.value
-            project_config.save()
-        return option.translate(project_config.value)
+            activity_config.value = organization_config.value
+            activity_config.save()
+        return option.translate(activity_config.value)
 
     def set(self, option, value):
         """Save some configuration option to this value, and save it"""
-        if self.project:
-            return self.set_project(option, value)
+        if self.activity:
+            return self.set_activity(option, value)
         else:
             return self.set_organization(option, value)
 
-    def set_project(self, option, value):
+    def set_activity(self, option, value):
         """Save a configuration option that was set for a project"""
-        project_config, created = models.ProjectConfig.objects.get_or_create(
-            project=self.project,
+        activity_config, created = models.ActivityConfig.objects.get_or_create(
+            activity=self.activity,
             config_option=option.option)
-        project_config.value = option.to_unicode(value)
-        project_config.save()
+        activity_config.value = option.to_unicode(value)
+        activity_config.save()
 
     def set_organization(self, option, value):
         """Save a configuration option that was set for an organization"""
@@ -249,7 +249,7 @@ class Configuration(object):
         anyway."""
 
         error_config = errors.ErrorConfiguration(
-            project=self.project,
+            project=self.activity.project if self.activity else None,
             organization=self.organization,
             measurement_type=models.AvailableMeasurementType.dwarsprofiel())
 
@@ -259,7 +259,9 @@ class Configuration(object):
                 yield (option, self.get(option.option))
 
 
-def get(project, config_option):
+def get(activity, config_option):
     """Helper function, this is a common way to use this module."""
-    configuration = Configuration(project=project)
+    assert isinstance(activity, models.Activity)
+
+    configuration = Configuration(activity=activity)
     return configuration.get(config_option)

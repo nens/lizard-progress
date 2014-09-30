@@ -1,9 +1,9 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/activity_dashboard.html" %}
 
 {% block contentpage %}
-<h2>Projectconfiguratie {{ view.project }}</h2>
+<h2>Configuratie {{ view.activity }}</h2>
 
-<form method="post" action="{% url "lizard_progress_project_configuration_post" project_slug=view.project.slug %}">
+<form method="post" action="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">
 <table class="table table-bordered progressbase">
 <thead>
 <th>Optie</th>

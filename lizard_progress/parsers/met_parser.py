@@ -118,6 +118,10 @@ class MetParser(specifics.ProgressParser):
             self.record_error_code(
                 profile.line_number, 'MET_2MEASUREMENTS')
 
+        if profile.id.upper() != profile.id:
+            self.record_error_code(
+                profile.line_number, 'MET_PROFILE_ID_ALL_CAPS')
+
         if '_' not in profile.id:
             self.record_error_code(
                 profile.line_number, 'MET_UNDERSCORE_IN_PROFILE_ID')

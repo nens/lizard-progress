@@ -162,10 +162,6 @@ class UploadMeasurementsView(UploadView):
 class UploadReportsView(UploadView):
     exts = [".pdf", ".doc", ".zip"]
 
-    @staticmethod
-    def get_directory(contractor):
-        return directories.reports_dir(contractor.project, contractor)
-
     def process_file(self, path):
 
         ext = os.path.splitext(path)[1].lower()
@@ -174,7 +170,7 @@ class UploadReportsView(UploadView):
             return json_response({'error': {'details': msg}})
 
         # The destination directory.
-        dst = UploadReportsView.get_directory(self.contractor)
+        dst = directories.reports_dir(self.activity)
 
         # Copy the report.
         shutil.copy(path, dst)
@@ -195,8 +191,7 @@ class UploadShapefilesView(UploadView):
         # the shapefile to its permanent location?
 
         # The destination directory.
-        dst = directories.shapefile_dir(
-            self.contractor.project, self.contractor)
+        dst = directories.shapefile_dir(self.activity)
 
         # Copy the report.
         shutil.copy(path, dst)
@@ -284,7 +279,6 @@ class UploadOrganizationFileView(ProjectsView):
 class UploadProjectFileView(ProjectsView):
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def post(self, request, project_slug):
-        #organization = models.Organization.get_by_user(request.user)
         project = get_object_or_404(models.Project, slug=project_slug)
 
         uploaded_file = request.FILES['file']

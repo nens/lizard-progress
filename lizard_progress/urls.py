@@ -129,13 +129,13 @@ urlpatterns = patterns(
         login_required(views.remove_uploaded_file_view),
         name='lizard_progress_remove_uploaded_file'),
     # Various uploads
-    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/uploadfile/$',
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/upload/measurement/$',
         login_required(views.upload.UploadMeasurementsView.as_view()),
         name='lizard_progress_uploadmeasurementsview'),
-    url('^projects/(?P<project_slug>[^/]+)/upload/reports/$',
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/upload/reports/$',
         login_required(UploadReportsView.as_view()),
         name='lizard_progress_uploadreportsview'),
-    url('^projects/(?P<project_slug>[^/]+)/upload/shapefiles/$',
+    url('^projects/(?P<project_slug>[^/]+)/(?P<activity_id>\d+)/upload/shapefiles/$',
         login_required(UploadShapefilesView.as_view()),
         name='lizard_progress_uploadshapefilesview'),
 

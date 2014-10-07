@@ -88,13 +88,21 @@ class UploadHomeView(ActivityView):
 
     def upload_reports_url(self):
         """Returns URL to post project reports to."""
-        return reverse('lizard_progress_uploadreportsview',
-                       kwargs={'project_slug': self.project_slug})
+        return reverse(
+            'lizard_progress_uploadreportsview',
+            kwargs={
+                'project_slug': self.project_slug,
+                'activity_id': self.activity_id
+            })
 
     def upload_shapefiles_url(self):
         """Returns URL to post a project's (mother) shapefile to."""
-        return reverse('lizard_progress_uploadshapefilesview',
-                       kwargs={'project_slug': self.project_slug})
+        return reverse(
+            'lizard_progress_uploadshapefilesview',
+            kwargs={
+                'project_slug': self.project_slug,
+                'activity_id': self.activity_id
+            })
 
     @property
     def breadcrumbs(self):

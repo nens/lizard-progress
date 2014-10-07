@@ -217,7 +217,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         user_is_manager = profile.is_manager_in(
             self.changerequest.project)
         user_is_contractor = (
-            profile.organization == self.changerequest.contractor.organization)
+            profile.organization == self.changerequest.activity.contractor)
 
         context = RequestContext(
             layout_options['request'], {

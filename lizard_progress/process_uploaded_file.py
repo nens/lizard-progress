@@ -72,8 +72,7 @@ def process(uploaded_file):
     # uploaded file. However, we keep the functionality around of multiple
     # parsers being possible -- maybe we'll have a measurement type with
     # several parsers one day...
-    possible_parsers = uploaded_file.activity.project.specifics(
-        uploaded_file.activity.measurement_type).parsers(filename)
+    possible_parsers = uploaded_file.activity.specifics().parsers(filename)
 
     for parser in possible_parsers:
         # Try_parser takes care of moving the file to its correct

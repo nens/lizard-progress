@@ -229,10 +229,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                 extra_render_kwargs={'locations': locations})
 
         else:
-            handler = (self.activity.specifics().
-                       html_handler(
-                           measurement_type=self.activity.measurement_type,
-                           contractor=self.activity.contractor))
+            handler = self.activity.specifics().html_handler()
 
         if handler is not None:
             return handler(super(ProgressAdapter, self).html_default,
@@ -275,8 +272,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         if not locations:
             return
 
-        handler = (self.activity.specifics().
-                   image_handler(activity=self.activity))
+        handler = self.activity.specifics().image_handler()
 
         if handler is not None:
             return handler(locations)

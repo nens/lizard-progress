@@ -311,9 +311,8 @@ class Project(models.Model):
             slug=slugify(self.name))
         self.save()
 
-    def specifics(self, available_measurement_type=None):
-        return lizard_progress.specifics.Specifics(
-            self, available_measurement_type)
+    def specifics(self, activity=None):
+        return lizard_progress.specifics.Specifics(self, activity)
 
     def number_of_scheduled_measurements(self):
         return Location.objects.filter(activity__project=self).count()
@@ -514,8 +513,8 @@ class Activity(models.Model):
             self.project, None,
             self.measurement_type)
 
-    def specifics(self, available_measurement_type=None):
-        return self.project.specifics(available_measurement_type)
+    def specifics(self):
+        return lizard_progress.specifics.Specifics(self.project, self)
 
     def needs_predefined_locations(self):
         """Is uploading to an unknown location an error in this activity?"""

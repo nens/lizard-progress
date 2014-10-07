@@ -385,19 +385,21 @@ def protected_download_export_run(request, project_slug, export_run_id):
     except models.ExportRun.DoesNotExist:
         return HttpResponseForbidden()
 
-    if export_run.project.slug != project_slug:
+    if export_run.activity.project.slug != project_slug:
         return HttpResponseForbidden()
 
-    if not has_access(request.user, export_run.project, export_run.contractor):
+    if not has_access(
+            request.user, export_run.activity.project,
+            export_run.activity.contractor):
         return HttpResponseForbidden()
 
     file_path = export_run.file_path
     logger.debug("File path: " + file_path)
 
     nginx_path = '/'.join([
-            '/protected', 'export',
-            export_run.project.organization.name,
-            os.path.basename(file_path)])
+        '/protected', 'export',
+        export_run.activity.project.organization.name,
+        os.path.basename(file_path)])
 
     # This is where the magic takes place.
     response = HttpResponse()

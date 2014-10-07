@@ -36,6 +36,7 @@ class ActivityMixin(object):
                 self.activity_id = kwargs['activity_id']
                 self.activity = models.Activity.objects.get(
                     pk=self.activity_id)
+                del kwargs['activity_id']
             except models.Activity.DoesNotExist:
                 pass
 

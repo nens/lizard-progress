@@ -39,6 +39,7 @@ bestand aangepast worden en handmatig opnieuw aangeboden worden.</p>
      {% endwith %}
 {% else %}
         <form action="{% url "changerequests_activatepossiblerequest" project_slug=view.project_slug activity_id=view.activity_id uploaded_file_id=uf.id possible_request_id=pr.id %}" method="post">
+          {% csrf_token %}
           {% if pr.request_type == 3 %}
            <dt>Optionele oude locatiecode</dt>
            <dd><input type="text" name="old_location_code"></dd>

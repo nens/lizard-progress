@@ -89,6 +89,18 @@ class Organization(models.Model):
         users = [profile.user for profile in userprofiles]
         return users
 
+    @property
+    def slug(self):
+        """For use in filenames, etc."""
+        slug = self.name.lower()
+        # Remove 'bad' characters
+        for c in "()\"'/\\&.#%{}<>*?$!:@+`|=":
+            slug = slug.replace(c, '')
+
+        # Turn whitespace into '_'
+        slug = '_'.join(slug.split())
+        return slug
+
     @classmethod
     def get_by_user(cls, user):
         user_profile = UserProfile.get_by_user(user)

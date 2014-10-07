@@ -117,7 +117,7 @@ def export_as_metfile(export_run):
     measurements = export_run.measurements_to_export()
 
     want_sorted_measurements = errors.ErrorConfiguration(
-        project=export_run.project,
+        project=export_run.activity.project,
         organization=None,  # Give either project or organization
         measurement_type=models.AvailableMeasurementType.dwarsprofiel()
         ).wants_sorted_measurements()

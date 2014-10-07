@@ -26,14 +26,13 @@ FILE_IMAGE = object()   # An Image object
 FILE_NORMAL = object()  # A normal file object as returned by open()
 FILE_READER = object()  # A file reader with support for line numbers, etc
 
-
 Error = collections.namedtuple('Error', 'line, error_code, error_message')
 
 
 class Specifics(object):
-    def __init__(self, project, available_measurement_type=None):
+    def __init__(self, project, activity=None):
         self.project = project
-        self.available_measurement_type = available_measurement_type
+        self.activity = activity
         self.__set_specifics()
 
     def __set_specifics(self):
@@ -43,10 +42,10 @@ class Specifics(object):
         from lizard_progress.mtype_specifics import AVAILABLE_SPECIFICS
         from lizard_progress.models import AvailableMeasurementType
 
-        if self.available_measurement_type:
+        if self.activity:
             # We know which specifics to use. This is usually when a specific
             # upload button was pressed.
-            slug = self.available_measurement_type.implementation_slug
+            slug = self.activity.measurement_type.implementation_slug
             self._specifics = {
                 slug: AVAILABLE_SPECIFICS[slug]}
         else:
@@ -55,7 +54,7 @@ class Specifics(object):
                 available_measurement_type.implementation_slug
                 for available_measurement_type in
                 AvailableMeasurementType.objects.filter(
-                    measurementtype__project=self.project))
+                    activity__project=self.project))
 
             for implementation in implementations_in_project:
                 # If the key doesn't exist in AVAILABLE_SPECIFICS, we just
@@ -64,12 +63,10 @@ class Specifics(object):
                 self._specifics[implementation] = (
                     AVAILABLE_SPECIFICS[implementation])
 
-    def __instance(self, measurement_type, contractor=None):
-        """measurement_type is an actual MeasurementType, not an
-        AvailableMeasurementType."""
-        slug = measurement_type.mtype.implementation_slug
+    def __instance(self, activity):
+        slug = activity.measurement_type.implementation_slug
         cls = self._specifics[slug]
-        return cls(self.project, measurement_type, contractor)
+        return cls(self.project, activity)
 
     def parsers(self, filename):
         """Return the parsers that have the right extension for this
@@ -83,12 +80,12 @@ class Specifics(object):
             ]
         return parsers
 
-    def html_handler(self, measurement_type, contractor):
-        instance = self.__instance(measurement_type, contractor)
+    def html_handler(self, activity=None):
+        instance = self.__instance(getattr(self, 'activity', activity))
         return getattr(instance, 'html_handler', None)
 
-    def image_handler(self, measurement_type, contractor):
-        instance = self.__instance(measurement_type, contractor)
+    def image_handler(self, activity=None):
+        instance = self.__instance(getattr(self, 'activity', activity))
         return getattr(instance, 'image_handler', None)
 
 

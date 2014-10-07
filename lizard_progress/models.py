@@ -514,6 +514,9 @@ class Activity(models.Model):
             self.project, None,
             self.measurement_type)
 
+    def specifics(self, available_measurement_type=None):
+        return self.project.specifics(available_measurement_type)
+
     def needs_predefined_locations(self):
         """Is uploading to an unknown location an error in this activity?"""
         if self.measurement_type.needs_predefined_locations:

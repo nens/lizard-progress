@@ -66,7 +66,7 @@ class Specifics(object):
     def __instance(self, activity):
         slug = activity.measurement_type.implementation_slug
         cls = self._specifics[slug]
-        return cls(self.project, activity)
+        return cls(activity)
 
     def parsers(self, filename):
         """Return the parsers that have the right extension for this

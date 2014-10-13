@@ -417,8 +417,7 @@ class Location(models.Model):
 
     def has_measurements(self):
         """Return True if there are any uploaded measurements at this
-        location, for this mtype (=AvailableMeasurementType) or
-        contractor, if given."""
+        location."""
         return self.measurement_set.count() > 0
 
 
@@ -812,10 +811,9 @@ class UploadedFile(models.Model):
         file could be treated with possible requests, they were all
         requested and all accepted."""
         new_uf = UploadedFile.objects.create(
-            activity=self.activity, organization=self.organization,
+            activity=self.activity,
             uploaded_by=self.uploaded_by, uploaded_at=datetime.datetime.now(),
-            path=self.path, ready=False, linelike=self.linelike,
-            mtype=self.mtype)
+            path=self.path, ready=False, linelike=self.linelike)
 
         from . import tasks
         tasks.process_uploaded_file_task.delay(new_uf.id)

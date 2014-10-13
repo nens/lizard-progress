@@ -214,19 +214,25 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         """
         """
         locations = list(Location.objects.filter(
-            pk__in=[identifier['location_id'] for identifier in identifiers]))
+            activity_id=self.activity_id,
+            pk__in=[identifier['location_id'] for identifier in identifiers]
+        ))
 
         if not locations:
             return
 
+        # Silly limitation: we only show info for the first of the found
+        # locations. Zoom in further if you need more...
         location = locations[0]
 
-        if not location.complete:
+        if True or not location.complete:
             return super(ProgressAdapter, self).html_default(
                 identifiers=identifiers,
                 layout_options=layout_options,
                 template='lizard_progress/incomplete_measurement.html',
-                extra_render_kwargs={'locations': locations})
+                extra_render_kwargs={
+                    'activity': self.activity,
+                    'location': location})
 
         else:
             handler = self.activity.specifics().html_handler()

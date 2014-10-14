@@ -77,7 +77,7 @@ Navigation
       {% if view.project %}
         <ul class="nav nav-pills">
           <li {% if view.active_menu == "dashboard" %}class="active"{% endif %}>
-            <a title="Dashboard" href="{% url "lizard_progress_dashboardview" project_slug=view.project_slug %}">Dashboard</a>
+            <a title="Project Dashboard" href="{% url "lizard_progress_dashboardview" project_slug=view.project_slug %}">Project Dashboard</a>
           </li>
           <li {% if view.active_menu == "download" %}class="active"{% endif %}>
             <a title="Download files" href="{% url "lizard_progress_downloadhomeview" project_slug=view.project_slug %}">Download</a>

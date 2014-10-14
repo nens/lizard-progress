@@ -39,10 +39,6 @@ activity_urls = [
     # Change requests are in a subapp
     url(r'changerequests/',
         include('lizard_progress.changerequests.urls')),
-    # Activity dashboard
-    url('$',
-        views.activity.ActivityDashboard.as_view(),
-        name='lizard_progress_activity_dashboard'),
     # Dashboard graphs
     url('graph/$',
         dashboard_graph,
@@ -91,6 +87,11 @@ activity_urls = [
     # CSV file generation
     url('dashboardcsv/$', login_required(DashboardCsvView.as_view()),
         name='lizard_progress_dashboardcsvview'),
+
+    # Activity dashboard
+    url('$',
+        views.activity.ActivityDashboard.as_view(),
+        name='lizard_progress_activity_dashboard'),
 ]
 
 

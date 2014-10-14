@@ -637,15 +637,18 @@ class MeasurementTypeAllowed(models.Model):
 
 
 class Measurement(models.Model):
-    """Although most ScheduledMeasurements will have only a single
-    associated measurements, some will have more because there is only
-    a single file associated with a measurements.
+    """Although most Locations will have only a single associated
+    measurement, some will have more because there is only a single
+    file associated with a measurement and there are measurement types
+    that need multiple files.
 
     E.g. HDSR's Dwarsprofielen project has a measurement type "fotos"
     that calls for two photos, one of the left bank and one of the
     right bank. That must be represented by two measurements, since
     there are two different files. However, there is only one
-    scheduled measurement."""
+    location.
+
+    """
 
     location = models.ForeignKey(Location, null=True)
 
@@ -686,8 +689,7 @@ class Measurement(models.Model):
         activity = self.location.activity
         return reverse('lizard_progress_filedownload', kwargs={
             'project_slug': activity.project.slug,
-            'contractor_id': activity.contractor_id,
-            'measurement_type_slug': activity.measurement_type.slug,
+            'activity_id': activity.id,
             'filename': os.path.basename(self.filename)})
 
 

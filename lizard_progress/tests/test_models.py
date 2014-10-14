@@ -347,10 +347,10 @@ class TestMeasurement(TestCase):
     """Tests for the Measurement model."""
     def test_url_works(self):
         """Just check whether we get some URL."""
-        measurement_type = AvailableMeasurementTypeF.build(slug="test")
-        activity = ActivityF.build(measurement_type=measurement_type)
-        location = LocationF.build(activity=activity)
-        measurement = MeasurementF.build(location=location)
+        measurement_type = AvailableMeasurementTypeF.create(slug="test")
+        activity = ActivityF.create(measurement_type=measurement_type)
+        location = LocationF.create(activity=activity)
+        measurement = MeasurementF.create(location=location)
         url = measurement.url
         self.assertTrue(url)
 

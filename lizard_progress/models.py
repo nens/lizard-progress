@@ -207,7 +207,9 @@ class UserProfile(models.Model):
         if not user or not user.is_authenticated():
             return None
         try:
-            return cls.objects.get(user=user)
+            return cls.objects.select_related(
+                'organization', 'user').prefetch_related(
+                'roles').get(user=user)
         except cls.DoesNotExist:
             return None
 
@@ -216,7 +218,13 @@ class UserProfile(models.Model):
                                 self.organization.name)
 
     def has_role(self, role_code):
-        return self.roles.filter(code=role_code).exists()
+        # Cache them, this is used all over the place.
+        # This change plus the prefetch_related in get_by_user
+        # made a random page go from 249 queries to 15!!
+        if not hasattr(self, '_roles'):
+            self._roles = set(role.code for role in self.roles.all())
+
+        return role_code in self._roles
 
     def is_manager_in(self, project):
         return self.has_role(UserRole.ROLE_MANAGER) and (
@@ -229,11 +237,13 @@ class UserProfile(models.Model):
             if self.has_role(code))
 
 
-def has_access(user, project, contractor=None):
+def has_access(user=None, project=None, contractor=None, userprofile=None):
     """Test whether user has access to this project (showing data of
     this contractor organization)."""
 
-    userprofile = UserProfile.get_by_user(user)
+    if userprofile is None:
+        userprofile = UserProfile.get_by_user(user)
+
     if userprofile is None:
         return False
 

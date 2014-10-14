@@ -24,6 +24,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
@@ -56,17 +57,21 @@ class ProjectsMixin(object):
     activity = None
 
     def dispatch(self, request, *args, **kwargs):
-        self.request = request
-        self.user = request.user
-        self.profile = models.UserProfile.get_by_user(self.user)
-
         self.project_slug = kwargs.get('project_slug')
         if self.project_slug:
-            self.project = get_object_or_404(Project, slug=self.project_slug)
-            if has_access(request.user, self.project):
+            try:
+                self.project = Project.objects.select_related(
+                    'organization').prefetch_related('activity_set').get(
+                    slug=self.project_slug)
+            except Project.DoesNotExist:
+                raise Http404()
+
+            if has_access(project=self.project, userprofile=self.profile):
                 self.has_full_access = all(
                     has_access(
-                        request.user, self.project, activity.contractor)
+                        project=self.project,
+                        contractor=activity.contractor,
+                        userprofile=self.profile)
                     for activity in self.project.activity_set.all())
             else:
                 raise PermissionDenied()
@@ -80,8 +85,10 @@ class ProjectsMixin(object):
         """Returns a list of projects the current user has access to."""
 
         projects = []
-        for project in Project.objects.filter(is_archived=False):
-            if has_access(self.request.user, project):
+        for project in Project.objects.select_related(
+                'organization').prefetch_related(
+                'activity_set__contractor').filter(is_archived=False):
+            if has_access(project=project, userprofile=self.profile):
                 projects.append(project)
         return projects
 
@@ -180,8 +187,11 @@ class KickOutMixin(object):
     def dispatch(self, request, *args, **kwargs):
         """You can only get here if you are part of some organization.
         So admin can't."""
-        self.organization = models.Organization.get_by_user(
-            request.user)
+        self.request = request
+        self.user = request.user
+        self.profile = models.UserProfile.get_by_user(self.user)
+        self.organization = self.profile.organization
+
         if not self.organization:
             auth.logout(request)
             return http.HttpResponseRedirect('/')

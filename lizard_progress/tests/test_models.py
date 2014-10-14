@@ -482,3 +482,53 @@ class TestActivity(TestCase):
             models.Activity.get_unique_activity_name(
                 project, contractor, mtype, None),
             'Testorg Testtype (3)')
+
+    def test_get_or_create_location_returns_existing_location(self):
+        activity = ActivityF.create()
+        location = LocationF.create(
+            activity=activity, location_code='testcode')
+
+        location2 = activity.get_or_create_location('testcode', None)
+
+        self.assertEquals(location.id, location2.id)
+
+    def test_get_or_create_location_returns_from_source_activity(self):
+        project = ProjectF.create()
+        mtype = AvailableMeasurementTypeF.create()
+        contractor = OrganizationF.create()
+
+        activity1 = ActivityF.create(
+            name='activity1', project=project, measurement_type=mtype,
+            contractor=contractor)
+        activity2 = ActivityF.create(
+            name='activity2', project=project, measurement_type=mtype,
+            contractor=contractor, source_activity=activity1)
+
+        location = LocationF.create(
+            activity=activity1, location_code='testcode', complete=True)
+        MeasurementF.create(location=location)
+
+        location2 = activity2.get_or_create_location('testcode', None)
+
+        self.assertTrue(location2)
+        self.assertNotEquals(location.id, location2.id)
+
+    def test_get_or_create_location_ignores_locations_w_no_measurements(self):
+        project = ProjectF.create()
+        contractor = OrganizationF.create()
+        mtype = AvailableMeasurementTypeF.create(
+            needs_predefined_locations=True)
+
+        activity1 = ActivityF.create(
+            name='activity1', project=project, measurement_type=mtype,
+            contractor=contractor)
+        activity2 = ActivityF.create(
+            name='activity2', project=project, measurement_type=mtype,
+            contractor=contractor, source_activity=activity1)
+
+        LocationF.create(
+            activity=activity1, location_code='testcode', complete=True)
+
+        self.assertRaises(
+            models.Activity.NoLocationException,
+            lambda: activity2.get_or_create_location('testcode', None))

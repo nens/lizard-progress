@@ -553,7 +553,8 @@ class Activity(models.Model):
             location.location_code for location in self.location_set.all())
 
         for location in self.source_activity.location_set.exclude(
-                location_code__in=own_location_codes):
+                location_code__in=own_location_codes,
+                complete=False).prefetch_related('measurement_set'):
             self.copy_location(location)
 
     def upload_directory(self):
@@ -585,9 +586,19 @@ class Activity(models.Model):
         return self.request_set.filter(request_status=1)
 
     def copy_location(self, other_location):
+        """Copy the other location, IF it already has measurements. Use
+        the coordinates of the actual measurement."""
+        measurements = list(other_location.measurement_set.all())
+        if not measurements:
+            return
+
+        # There will be almost always be 1 measurement, and otherwise
+        # we have no real way of chosing between them.
+        measurement = measurements[0]
+
         return Location.objects.create(
             activity=self, location_code=other_location.location_code,
-            the_geom=other_location.the_geom, complete=False)
+            the_geom=measurement.the_geom, complete=False)
 
     def get_or_create_location(self, location_code, point):
         try:
@@ -601,7 +612,9 @@ class Activity(models.Model):
                     other_location = Location.objects.get(
                         activity=self.source_activity,
                         location_code=location_code)
-                    return self.copy_location(other_location)
+                    copied = self.copy_location(other_location)
+                    if copied:
+                        return copied
                 except Location.DoesNotExist:
                     # Pity
                     pass

@@ -690,8 +690,11 @@ class NewProjectView(ProjectsView):
             contractor = self.form.cleaned_data['contractor' + str(i)]
             mtype = self.form.cleaned_data['measurementtype' + str(i)]
 
-            if None in (activity, contractor, mtype):
+            if None in (contractor, mtype):
                 continue
+
+            activity = models.Activity.get_unique_activity_name(
+                project, contractor, mtype, activity)
 
             models.Activity.objects.create(
                 name=activity,
@@ -709,6 +712,8 @@ class NewProjectView(ProjectsView):
         return HttpResponseRedirect(
             reverse('lizard_progress_dashboardview',
                     kwargs={'project_slug': project.slug}))
+
+        return activity
 
     def grouped_form_fields(self):
         listed_fields = list(self.form)
@@ -760,11 +765,15 @@ class EditActivities(ProjectsView):
         return HttpResponseRedirect(self.url())
 
     def _add_activity(self, form):
+        name = models.Activity.get_unique_activity_name(
+            self.project, form.cleaned_data['contractor'],
+            form.cleaned_data['measurementtype'],
+            form.cleaned_data['description'])
         models.Activity.objects.create(
             project=self.project,
             contractor=form.cleaned_data['contractor'],
             measurement_type=form.cleaned_data['measurementtype'],
-            name=form.cleaned_data['description'])
+            name=name)
 
 
 class DeleteActivity(ProjectsView):

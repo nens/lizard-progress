@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-30 06:40-0500\n"
+"POT-Creation-Date: 2014-10-14 01:42-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,8 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
+#: forms.py:43
+msgid "Incorrect file format."
+msgstr "Verkeerd bestandsformaat."
+
 #: forms.py:50
-#, fuzzy
 msgid "No organization found!"
 msgstr "Geen organisaties gevonden."
 
@@ -30,9 +33,9 @@ msgstr "Deze projectnaam bestaat al."
 msgid "Project type (optional)"
 msgstr "Projecttype (optioneel)"
 
-#: forms.py:77 forms.py:275
-msgid "Activity"
-msgstr "Werkzaamheid"
+#: forms.py:77
+msgid "Activity (name, optional)"
+msgstr "Werkzaamheid (naam, niet verplicht)"
 
 #: forms.py:81 forms.py:243
 msgid "Contractor"
@@ -66,6 +69,10 @@ msgstr "Nieuw wachtwoord"
 msgid "New password confirmation"
 msgstr "Bevestiging nieuw wachtwoord"
 
+#: forms.py:275
+msgid "Activity"
+msgstr "Werkzaamheid"
+
 #: changerequests/forms.py:80
 msgid "Location already exists."
 msgstr "Deze locatie bestaat al."
@@ -98,10 +105,10 @@ msgstr "&lt; Back"
 msgid "Verder &gt;"
 msgstr "Continue &gt;"
 
-#: views/views.py:208
+#: views/views.py:209
 msgid "Your current organization"
 msgstr "Uw huidige organisatie"
 
-#: views/views.py:216
+#: views/views.py:217
 msgid "Download the manual"
 msgstr "Download de handleiding"

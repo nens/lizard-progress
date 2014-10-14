@@ -32,7 +32,6 @@ from django.template.defaultfilters import slugify
 # JSONField was moved for lizard-map 4.0...
 try:
     from jsonfield import JSONField
-    JSONField  # Pyflakes...
 except ImportError:
     from lizard_map.models import JSONField
 
@@ -616,6 +615,25 @@ class Activity(models.Model):
         return Location.objects.create(
             activity=self, location_code=location_code,
             the_geom=point, complete=False)
+
+    @classmethod
+    def get_unique_activity_name(cls, project, contractor, mtype, activity):
+        if not activity:
+            # Default
+            activity = "{} {}".format(contractor, mtype)
+
+        # Check if name doesn't exist yet
+        existing_names = cls.objects.filter(
+            project=project).values_list('name', flat=True)
+
+        if activity in existing_names:
+            i = 2
+            original_activity = activity
+            while activity in existing_names:
+                activity = "{} ({})".format(original_activity, i)
+                i += 1
+
+        return activity
 
 
 class MeasurementTypeAllowed(models.Model):

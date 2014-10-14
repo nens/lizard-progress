@@ -445,3 +445,40 @@ class TestActivity(TestCase):
         LocationF.create(
             activity=activity, complete=True, location_code='c')
         self.assertEquals(activity.num_complete_locations(), 2)
+
+    def test_get_unique_activity_name_combines_contractor_mtype(self):
+        project = ProjectF.create()
+        mtype = AvailableMeasurementTypeF.create(name="Testtype")
+        contractor = OrganizationF.create(name="Testorg")
+
+        self.assertEquals(
+            models.Activity.get_unique_activity_name(
+                project, contractor, mtype, None),
+            'Testorg Testtype')
+
+    def test_get_unique_activity_name_simply_returns_activity(self):
+        project = ProjectF.create()
+        mtype = AvailableMeasurementTypeF.create(name="Testtype")
+        contractor = OrganizationF.create(name="Testorg")
+
+        self.assertEquals(
+            models.Activity.get_unique_activity_name(
+                project, contractor, mtype, 'Activity description'),
+            'Activity description')
+
+    def test_get_unique_activity_name_returns_unique_name(self):
+        project = ProjectF.create()
+        mtype = AvailableMeasurementTypeF.create(name="Testtype")
+        contractor = OrganizationF.create(name="Testorg")
+
+        ActivityF.create(
+            project=project, measurement_type=mtype,
+            contractor=contractor, name='Testorg Testtype')
+        ActivityF.create(
+            project=project, measurement_type=mtype,
+            contractor=contractor, name='Testorg Testtype (2)')
+
+        self.assertEquals(
+            models.Activity.get_unique_activity_name(
+                project, contractor, mtype, None),
+            'Testorg Testtype (3)')

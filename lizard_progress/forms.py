@@ -40,7 +40,7 @@ class ExtFileField(forms.FileField):
         if value:
             ext = os.path.splitext(value.name)[1]
             if ext.lower() not in self.exts:
-                msg = "Verkeerd bestandsformaat."
+                msg = _("Incorrect file format.")
                 raise forms.ValidationError(msg)
 
 
@@ -73,10 +73,6 @@ class NewProjectForm(forms.Form):
             required=False)
 
         for i in range(1, 1 + self.NUM_ACTIVITIES):
-            self.fields['activity{}'.format(i)] = forms.CharField(
-                label=_("Activity") + " " + str(i),
-                max_length=40, required=False)
-
             self.fields['contractor' + str(i)] = forms.ModelChoiceField(
                 label=_("Contractor") + " " + str(i),
                 queryset=models.Organization.objects.all(),
@@ -90,6 +86,10 @@ class NewProjectForm(forms.Form):
                 required=False
             )
 
+            self.fields['activity{}'.format(i)] = forms.CharField(
+                label=_("Activity (name, optional)") + " " + str(i),
+                max_length=40, required=False)
+
     def clean(self):
         cleaned_data = super(NewProjectForm, self).clean()
 
@@ -99,8 +99,8 @@ class NewProjectForm(forms.Form):
         for i in range(1, 1 + self.NUM_ACTIVITIES):
             data = [cleaned_data.get(field + str(i))
                     for field in ('activity', 'contractor', 'measurementtype')]
-            if any(data) and not all(data):
-                self._errors['activity' + str(i)] = self.error_class([
+            if any(data[1:]) and not all(data[1:]):
+                self._errors['contractor' + str(i)] = self.error_class([
                     _("Not all activity fields filled in.")])
 
         return cleaned_data
@@ -238,11 +238,11 @@ class AddActivityForm(forms.Form):
             .visible_available_measurement_types(),
             required=True)
 
-    description = forms.CharField(required=True)
     contractor = forms.ModelChoiceField(
         label=_("Contractor"),
         queryset=models.Organization.objects.all(),
         required=True)
+    description = forms.CharField(required=False)
 
 
 class ShapefileForm(forms.Form):

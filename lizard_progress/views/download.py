@@ -114,9 +114,8 @@ class DownloadHomeView(ProjectsView):
 
     def _make_url(self, filetype, project, activity, path):
         return reverse('lizard_progress_downloadview', kwargs={
-            'filetype': filetype,
             'project_slug': project.slug,
-            'activity_id': activity.id if activity else '0',
+            'filetype': filetype,
             'filename': os.path.basename(path)
         })
 

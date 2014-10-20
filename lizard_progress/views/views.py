@@ -190,7 +190,8 @@ class KickOutMixin(object):
         self.request = request
         self.user = request.user
         self.profile = models.UserProfile.get_by_user(self.user)
-        self.organization = self.profile.organization
+
+        self.organization = getattr(self.profile, 'organization', None)
 
         if not self.organization:
             auth.logout(request)

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-14 01:42-0500\n"
+"POT-Creation-Date: 2014-10-20 04:56-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,17 +33,17 @@ msgstr "Deze projectnaam bestaat al."
 msgid "Project type (optional)"
 msgstr "Projecttype (optioneel)"
 
-#: forms.py:77
-msgid "Activity (name, optional)"
-msgstr "Werkzaamheid (naam, niet verplicht)"
-
-#: forms.py:81 forms.py:243
+#: forms.py:77 forms.py:242
 msgid "Contractor"
 msgstr "Opdrachtnemer"
 
-#: forms.py:87 forms.py:236
+#: forms.py:83 forms.py:236
 msgid "Measurement type"
 msgstr "Metingtype"
+
+#: forms.py:90
+msgid "Activity (name, optional)"
+msgstr "Werkzaamheid (naam, niet verplicht)"
 
 #: forms.py:104
 msgid "Not all activity fields filled in."
@@ -69,7 +69,11 @@ msgstr "Nieuw wachtwoord"
 msgid "New password confirmation"
 msgstr "Bevestiging nieuw wachtwoord"
 
-#: forms.py:275
+#: forms.py:246
+msgid "Description"
+msgstr "Omschrijving"
+
+#: forms.py:276
 msgid "Activity"
 msgstr "Werkzaamheid"
 
@@ -105,10 +109,10 @@ msgstr "&lt; Back"
 msgid "Verder &gt;"
 msgstr "Continue &gt;"
 
-#: views/views.py:209
+#: views/views.py:220
 msgid "Your current organization"
 msgstr "Uw huidige organisatie"
 
-#: views/views.py:217
+#: views/views.py:228
 msgid "Download the manual"
 msgstr "Download de handleiding"

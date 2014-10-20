@@ -242,7 +242,8 @@ class AddActivityForm(forms.Form):
         label=_("Contractor"),
         queryset=models.Organization.objects.all(),
         required=True)
-    description = forms.CharField(required=False)
+    description = forms.CharField(
+        label=_("Description"), required=False)
 
 
 class ShapefileForm(forms.Form):

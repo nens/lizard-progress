@@ -97,55 +97,55 @@ activity_urls = [
 
 project_urls = [
     # Kaartlagen view
-    url('map/$', login_required(MapView.as_view()),
+    url('^map/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
     # Dashboard page
-    url('dashboard/$', login_required(DashboardView.as_view()),
+    url('^dashboard/$', login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),
     # Edit activities
-    url('edit_activities/$',
+    url('^edit_activities/$',
         login_required(views.EditActivities.as_view()),
         name='lizard_progress_edit_activities'),
-    url('delete_activity/(?P<activity_id>\d+)/$',
+    url('^delete_activity/(?P<activity_id>\d+)/$',
         login_required(views.DeleteActivity.as_view()),
         name='lizard_progress_delete_activity'),
 
     # Remove an uploaded file
-    url('upload/remove_uploaded_file/(?P<uploaded_file_id>\d+)/$',
+    url('^upload/remove_uploaded_file/(?P<uploaded_file_id>\d+)/$',
         login_required(views.remove_uploaded_file_view),
         name='lizard_progress_remove_uploaded_file'),
 
     # Project uploads
-    url('project_file_upload/$',
+    url('^project_file_upload/$',
         login_required(views.UploadProjectFileView.as_view()),
         name='lizard_progress_upload_projectfile'),
-    url('hydrovakken_upload/$',
+    url('^hydrovakken_upload/$',
         login_required(views.UploadHydrovakkenView.as_view()),
         name='lizard_progress_upload_hydrovakken'),
 
     # Download page
-    url('download/$',
+    url('^download/$',
         login_required(DownloadHomeView.as_view()),
         name='lizard_progress_downloadhomeview'),
-    url('download/(?P<filetype>[^/]+)/(?P<filename>[^/]+)$',
+    url('^download/(?P<filetype>[^/]+)/(?P<filename>[^/]+)$',
         login_required(DownloadView.as_view()),
         name='lizard_progress_downloadview'),
 
     # Start an export run
-    url('export_run/(?P<export_run_id>[\d]+)/$',
+    url('^export_run/(?P<export_run_id>[\d]+)/$',
         login_required(views.start_export_run_view),
         name="lizard_progress_start_export_run_view"),
-    url('export_run/(?P<export_run_id>[\d]+)/download/',
+    url('^export_run/(?P<export_run_id>[\d]+)/download/',
         login_required(views.protected_download_export_run),
         name="lizard_progress_download_export_run_view"),
 
     # Configuration
-    url('config/$',
+    url('^config/$',
         login_required(views.ConfigurationView.as_view()),
         name="lizard_progress_project_configuration_view"),
 
     # Everything relating to a specific activity in this project
-    url(r'(?P<activity_id>\d+)/', include(activity_urls))
+    url(r'^(?P<activity_id>\d+)/', include(activity_urls))
 ]
 
 urlpatterns = patterns(

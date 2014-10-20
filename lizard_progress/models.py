@@ -920,7 +920,10 @@ class UploadedFile(models.Model):
             'ready': self.ready,
             'success': self.success,
             'error_url': reverse(
-                'lizard_progress_uploaded_file_error_view', args=(self.id,)),
+                'lizard_progress_uploaded_file_error_view', kwargs=dict(
+                    project_slug=self.activity.project.slug,
+                    activity_id=self.activity.id,
+                    uploaded_file_id=self.id)),
             'delete_url': reverse(
                 'lizard_progress_remove_uploaded_file', kwargs={
                     'project_slug': self.activity.project.slug,

@@ -183,14 +183,14 @@ class NewRequestView(ActivityView):
     def get_form_class(self, request_type):
         return forms.new_request_form_factory(self.activity, request_type)
 
-    def get(self, request, project_slug, activity_id):
+    def get(self, request, project_slug):
         if not hasattr(self, 'form'):
             self.form = self.get_form_class(
                 request_type=self.request_type)()
 
         return super(NewRequestView, self).get(request, project_slug)
 
-    def post(self, request, project_slug, activity_id):
+    def post(self, request, project_slug):
         self.form = self.get_form_class(
             request_type=self.request_type)(request.POST)
 

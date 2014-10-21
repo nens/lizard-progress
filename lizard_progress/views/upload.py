@@ -202,7 +202,7 @@ class UploadShapefilesView(UploadView):
 class UploadedFileErrorsView(ViewContextMixin, TemplateView):
     template_name = 'lizard_progress/uploaded_file_error_page.html'
 
-    def get(self, request, uploaded_file_id):
+    def get(self, request, uploaded_file_id, project_slug, activity_id):
         self.uploaded_file = models.UploadedFile.objects.get(
             pk=uploaded_file_id)
         if self.uploaded_file.uploaded_by != request.user:

@@ -13,6 +13,7 @@ from __future__ import division
 import logging
 import os
 import shutil
+import time
 import traceback
 
 from django.db import transaction
@@ -26,6 +27,10 @@ logger = logging.getLogger(__name__)
 
 
 def process_uploaded_file(uploaded_file_id):
+    # Always sleep 2 seconds -- because of transactions and the fact
+    # that this code runs in the Celery process, the UploadedFile may
+    # otherwise not exist yet.
+    time.sleep(2)
     try:
         uploaded_file = models.UploadedFile.objects.get(pk=uploaded_file_id)
         uploaded_file.wait_until_path_exists()

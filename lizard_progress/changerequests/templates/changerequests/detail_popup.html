@@ -3,9 +3,6 @@
 <a href="{{ cr.detail_url }}">Klik hier voor meer details (aanvragenpagina)</a>
 
 <dl class="dl-horizontal">
-  <dt>Aanvrager</dt>
-  <dd>{{ cr.contractor.organization }}</dd>
-
   <dt>Type aanvraag</dt>
   <dd>{{ cr.type_description }}</dd>
 
@@ -23,7 +20,7 @@
   {% endif %}
 
   <dt>Werkzaamheid</dt>
-  <dd>{{ cr.mtype }}</dd>
+  <dd>{{ cr.activity }}</dd>
 
   <dt>Motivatie</dt>
   <dd>{{ cr.motivation }}</dd>

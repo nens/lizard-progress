@@ -139,8 +139,7 @@ class ChangeRequestMotivation(RequestDetailPage):
 
 class AcceptOrRefuseRequest(RequestDetailPage):
     def post(self, request, project_slug):
-        wantsjson = (
-            request.POST.get('wantoutputas') == 'json')
+        wantsjson = request.POST.get('wantoutputas') == 'json'
 
         if request.POST.get('accept'):
             if not self.user_is_manager():

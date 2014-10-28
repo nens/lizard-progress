@@ -53,17 +53,13 @@ def remove_uploaded_file_view(request, **kwargs):
     except models.project.DoesNotExist:
         raise Http404()
 
-    try:
-        contractor = models.Contractor.objects.get(
-            project=project,
-            organization=organization)
-    except models.Contractor.DoesNotExist:
-        raise PermissionDenied()
-
     uploaded_file_id = kwargs.get('uploaded_file_id')
-    uploaded_file = models.UploadedFile.objects.get(pk=uploaded_file_id)
-    if (uploaded_file.contractor != contractor
-            or uploaded_file.project != project):
+    uploaded_file = models.UploadedFile.objects.select_related(
+        'activity', 'activity__project', 'activity__contractor').get(
+        pk=uploaded_file_id)
+
+    if (uploaded_file.activity.contractor != organization
+            or uploaded_file.activity.project != project):
         raise PermissionDenied()
 
     uploaded_file.delete_self()
@@ -73,7 +69,8 @@ def remove_uploaded_file_view(request, **kwargs):
     else:
         return HttpResponseRedirect(
             reverse('lizard_progress_uploadhomeview',
-                    kwargs={'project_slug': project_slug}))
+                    kwargs={'project_slug': project_slug,
+                            'activity_id': uploaded_file.activity_id}))
 
 
 class DummyException(BaseException):

@@ -92,6 +92,19 @@ class ProjectsMixin(object):
                 projects.append(project)
         return projects
 
+    def activities(self):
+        """If there is a current project, generate the activities inside
+        it that this user has access to."""
+        if not self.project:
+            return
+
+        for activity in self.project.activity_set.all():
+            if has_access(
+                    project=self.project,
+                    contractor=activity.contractor,
+                    userprofile=self.profile):
+                yield activity
+
     def projects_archived(self):
         """Returns a list of archived projects the current user has
         access to."""

@@ -13,6 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
+from django.db import connection
 from django.http import HttpResponseRedirect
 from django.http import Http404
 from django.http import HttpResponse
@@ -151,7 +152,11 @@ class UploadMeasurementsView(UploadView):
             uploaded_by=self.user,
             uploaded_at=datetime.datetime.now(),
             path=path)
-        tasks.process_uploaded_file_task.delay(uploaded_file.id)
+
+        # Queue the task when the database connection has committed,
+        # using django-transaction-hooks.
+        connection.on_commit(
+            lambda: tasks.process_uploaded_file_task.delay(uploaded_file.id))
 
         return json_response({})
 

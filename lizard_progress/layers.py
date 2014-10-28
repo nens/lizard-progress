@@ -225,7 +225,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         # locations. Zoom in further if you need more...
         location = locations[0]
 
-        if True or not location.complete:
+        if not location.complete:
             return super(ProgressAdapter, self).html_default(
                 identifiers=identifiers,
                 layout_options=layout_options,

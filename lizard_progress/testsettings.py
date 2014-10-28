@@ -16,21 +16,28 @@ SETTINGS_DIR = os.path.dirname(os.path.realpath(__file__))
 BUILDOUT_DIR = os.path.abspath(os.path.join(SETTINGS_DIR, '..'))
 LOGGING = setup_logging(BUILDOUT_DIR)
 
-# ENGINE: 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-# In case of geodatabase, prepend with:
-# django.contrib.gis.db.backends.(postgis)
+SECRET_KEY = "Does not need to be secret"
+
 DATABASES = {
     # Switched to postgis instead of spatialite because we test a function that
     # uses .extent() and that isn't supported by spatialite.
     'default': {
         'NAME': 'lizard_progress',
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        # For some reason using lizard_progress.db_backend here fails, probably
+        # because of the order in which things are loaded. Using it in the site
+        # works.
+        'ENGINE': 'lizard_progress.db_backend',
         'USER': 'buildout',
         'PASSWORD': 'buildout',
         'HOST': '',  # empty string for localhost.
         'PORT': '',  # empty string for default.
-        }
     }
+}
+SOUTH_DATABASE_ADAPTERS = {
+    'default': 'south.db.postgresql_psycopg2',
+}
+
+
 SITE_ID = 1
 INSTALLED_APPS = [
     'lizard_progress',
@@ -73,8 +80,6 @@ MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'static')
 MEDIA_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'media')
 STATICFILES_FINDERS = STATICFILES_FINDERS
-
-SECRET_KEY = "Does not need to be secret"
 
 try:
     # Import local settings that aren't stored in svn/git.

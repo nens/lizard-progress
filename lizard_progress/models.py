@@ -335,10 +335,10 @@ class Project(models.Model):
     def specifics(self, activity=None):
         return lizard_progress.specifics.Specifics(self, activity)
 
-    def number_of_scheduled_measurements(self):
+    def number_of_locations(self):
         return Location.objects.filter(activity__project=self).count()
 
-    def number_of_complete_scheduled_measurements(self):
+    def number_of_complete_locations(self):
         return Location.objects.filter(
             activity__project=self, complete=True).count()
 
@@ -348,8 +348,8 @@ class Project(models.Model):
             return "N/A"
 
         percentage = (
-            (100 * self.number_of_complete_scheduled_measurements()) /
-            self.number_of_scheduled_measurements())
+            (100 * self.number_of_complete_locations()) /
+            self.number_of_locations())
         return "{percentage:2.0f}%".format(percentage=percentage)
 
     def latest_log(self):
@@ -379,7 +379,7 @@ class Project(models.Model):
     def num_open_requests(self):
         from lizard_progress.changerequests.models import Request
         return Request.objects.filter(
-            request_status=1,
+            request_status=Request.REQUEST_STATUS_OPEN,
             activity__project=self).count()
 
 
@@ -1125,11 +1125,9 @@ class UploadLog(models.Model):
 
     @classmethod
     def latest(cls, project, amount=1):
-        queryset = cls.objects.filter(project=project)
-        if queryset.exists():
-            return queryset[:amount]
-        else:
-            return None
+        queryset = cls.objects.filter(project=project).select_related(
+            'uploading_organization')
+        return queryset[:amount]
 
 
 ### Models for configuration

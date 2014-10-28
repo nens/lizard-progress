@@ -18,6 +18,7 @@ install_requires = [
     'django-extensions',
     'django-jsonfield',
     'django-nose',
+    'django-transaction-hooks',
     'lizard-ui >= 4.40, < 5.0',
     'lizard-map >= 4.50, < 5.0',
     'metfilelib >= 0.14',

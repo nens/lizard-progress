@@ -13,6 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
+from django.db import connection
 from django.http import HttpResponseRedirect
 from django.http import Http404
 from django.http import HttpResponse
@@ -53,17 +54,13 @@ def remove_uploaded_file_view(request, **kwargs):
     except models.project.DoesNotExist:
         raise Http404()
 
-    try:
-        contractor = models.Contractor.objects.get(
-            project=project,
-            organization=organization)
-    except models.Contractor.DoesNotExist:
-        raise PermissionDenied()
-
     uploaded_file_id = kwargs.get('uploaded_file_id')
-    uploaded_file = models.UploadedFile.objects.get(pk=uploaded_file_id)
-    if (uploaded_file.contractor != contractor
-            or uploaded_file.project != project):
+    uploaded_file = models.UploadedFile.objects.select_related(
+        'activity', 'activity__project', 'activity__contractor').get(
+        pk=uploaded_file_id)
+
+    if (uploaded_file.activity.contractor != organization
+            or uploaded_file.activity.project != project):
         raise PermissionDenied()
 
     uploaded_file.delete_self()
@@ -73,7 +70,8 @@ def remove_uploaded_file_view(request, **kwargs):
     else:
         return HttpResponseRedirect(
             reverse('lizard_progress_uploadhomeview',
-                    kwargs={'project_slug': project_slug}))
+                    kwargs={'project_slug': project_slug,
+                            'activity_id': uploaded_file.activity_id}))
 
 
 class DummyException(BaseException):
@@ -154,7 +152,11 @@ class UploadMeasurementsView(UploadView):
             uploaded_by=self.user,
             uploaded_at=datetime.datetime.now(),
             path=path)
-        tasks.process_uploaded_file_task.delay(uploaded_file.id)
+
+        # Queue the task when the database connection has committed,
+        # using django-transaction-hooks.
+        connection.on_commit(
+            lambda: tasks.process_uploaded_file_task.delay(uploaded_file.id))
 
         return json_response({})
 

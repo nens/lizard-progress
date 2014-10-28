@@ -48,7 +48,7 @@ Navigation
       <li {% if view.active_menu == "dashboard" %}class="active"{% endif %}>
         <a href="{% url "lizard_progress_dashboardview" view.project.slug %}">Dashboard</a>
       </li>
-      {% for activity in view.project.activity_set.all %}
+      {% for activity in view.activities %}
         <li {% if activity == view.activity %}class="active"{% endif %}>
           <a href="{% url "lizard_progress_activity_dashboard" activity_id=activity.id project_slug=view.project.slug %}">{{ activity }}</a>
         </li>

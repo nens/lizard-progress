@@ -2,13 +2,13 @@
 
 {% block css %}
 {{block.super}}
-<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/base/jquery-ui.css" type="text/css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/jquery-ui.css" type="text/css" />
 <link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
 {% endblock css %}
 
 {% block javascript %}
 {{block.super}}
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/jquery-ui.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.flash.js"></script>

@@ -26,6 +26,7 @@ from django.contrib.gis.geos import fromstr
 from django.contrib.gis.gdal import DataSource
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db import connection
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
 
@@ -858,8 +859,21 @@ class UploadedFile(models.Model):
             uploaded_by=self.uploaded_by, uploaded_at=datetime.datetime.now(),
             path=self.path, ready=False, linelike=self.linelike)
 
+        new_uf.schedule_processing()
+
+    def schedule_processing(self):
+        """Queue the 'process_uploaded_file' task for this uploaded file when
+        the current database transaction has committed, using
+        django-transaction-hooks.
+        """
+        # Need to import here to prevent circular imports
         from . import tasks
-        tasks.process_uploaded_file_task.delay(new_uf.id)
+
+        # connection.on_commit is provided by our custom database
+        # engine (lizard_progress.db_engine). It takes a callable
+        # without arguments, so we use lambda here.
+        connection.on_commit(
+            lambda: tasks.process_uploaded_file_task.delay(self.id))
 
     @property
     def filename(self):

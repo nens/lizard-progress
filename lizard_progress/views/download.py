@@ -318,12 +318,11 @@ class DownloadView(View):
 
         return serve(request, path, '/')
 
-    def delete(self, request, filetype, project_slug,
-               activity_id, filename):
+    def delete(self, request, filetype, project_slug, filename):
         """Delete a downloadable file. For now, only for files without
         activity ('organization files')."""
 
-        if activity_id != '0' or filetype != 'organization':
+        if filetype != 'organization':
             return HttpResponseForbidden()
 
         project = get_object_or_404(Project, slug=project_slug)

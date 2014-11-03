@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-20 04:56-0500\n"
+"POT-Creation-Date: 2014-11-03 08:11-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -109,10 +109,14 @@ msgstr "&lt; Back"
 msgid "Verder &gt;"
 msgstr "Continue &gt;"
 
-#: views/views.py:220
+#: views/views.py:233
 msgid "Your current organization"
 msgstr "Uw huidige organisatie"
 
-#: views/views.py:228
+#: views/views.py:241
 msgid "Download the manual"
 msgstr "Download de handleiding"
+
+#: views/views.py:645
+msgid "Projects without project type"
+msgstr "Projecten zonder projecttype"

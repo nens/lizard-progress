@@ -613,8 +613,7 @@ class ArchiveProjectsOverview(ProjectsView):
     def archive_years(self):
         years = list(
             set([p.created_at.year for p in self.projects_archived()]))
-        years.sort()
-        years.reverse()
+        years.sort(reverse=True)
         return years
 
     def project_types(self):
@@ -627,18 +626,26 @@ class ArchiveProjectsOverview(ProjectsView):
             id__in=[p.id for p in self.projects_archived()])
 
         for archive_year in self.archive_years():
-            archive_tree.update({archive_year: {}})
+            archive_tree.update({archive_year: []})
 
         for archive_year in self.archive_years():
 
             for project_type in self.project_types():
                 projects = projects_archived.filter(
-                    **{'created_at__year': archive_year,
-                       'project_type': project_type})
+                    created_at__year=archive_year,
+                    project_type=project_type)
                 if projects.exists():
-                    archive_tree[archive_year].update(
-                        {project_type.name: projects})
-        return archive_tree
+                    archive_tree[archive_year].append(
+                        (project_type.name, projects))
+            projects_no_type = projects_archived.filter(
+                created_at__year=archive_year,
+                project_type__isnull=True)
+            if projects_no_type.exists():
+                archive_tree[archive_year].append((
+                    _("Projects without project type"), projects_no_type))
+
+        # Don't return dicts, hard to sort them
+        return sorted(archive_tree.items())
 
 
 class ArchiveProjectsView(ProjectsView):

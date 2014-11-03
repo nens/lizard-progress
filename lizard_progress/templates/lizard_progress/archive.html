@@ -6,29 +6,25 @@
 
 <div class="tree">
     <ul>
-      {% for y in view.archive_years %}
         <li>
-            <span><i class="icon-calendar"></i>{{ y }}</span>
+	  {% for year, types in view.archive_tree %}
+            <span><i class="icon-calendar"></i>{{ year }}</span>
             <ul>
-	      {% for k, v in view.archive_tree.items %}
-	        {% if k == y %}
-	           {% for t, projects in v.items %}
-	         <li style="display: none;">
-                    <span class="badge badge-success"><i class="icon-minus-sign"></i>{{ t }}</span>
-                    <ul>
-		      {% for project in projects %}
-                        <li style="display: none;">
-	                    <a href="{% url "lizard_progress_dashboardview" project.slug %}"><span>{{ project }}</a>
-                        </li>
-		      {% endfor %}
-                    </ul>
+	      {% for projecttype, projects in types %}
+    	        <li style="display: none;">
+                  <span class="badge badge-success"><i class="icon-minus-sign"></i>{{ projecttype }}</span>
+                  <ul>
+		    {% for project in projects %}
+                      <li style="display: none;">
+	                <a href="{% url "lizard_progress_dashboardview" project.slug %}"><span>{{ project }}</a>
+                      </li>
+		    {% endfor %}
+                  </ul>
                 </li>
-		 {% endfor %}
-		 {% endif %}
-		 {% endfor %}
+              {% endfor %}
             </ul>
+	  {% endfor %}
         </li>
-{% endfor %}
     </ul>
 </div>
 {% endblock contentpage %}

@@ -240,7 +240,7 @@ class KickOutMixin(object):
                 name="Handleiding",
                 description=(_("Download the manual")),
                 url=settings.STATIC_URL +
-                "lizard_progress/Gebruikershandleiding_Uploadserver.pdf")
+                "lizard_progress/Gebruikershandleiding_Uploadserver_4.pdf")
             ]
 
         return actions

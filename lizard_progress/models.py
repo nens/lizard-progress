@@ -939,7 +939,7 @@ class UploadedFile(models.Model):
             'id': self.id,
             'project_id': self.activity.project.id,
             'activity_id': self.activity.id,
-            'uploaded_by': self.uploaded_by.get_full_name(),
+            'uploaded_by': self.get_uploaded_by_name(),
             'uploaded_at': self.uploaded_at.strftime("%d/%m/%y %H:%M"),
             'filename': os.path.basename(self.path),
             'ready': self.ready,
@@ -965,6 +965,17 @@ class UploadedFile(models.Model):
 
     def has_possible_requests(self):
         return self.possiblerequest_set.exists()
+
+    def get_uploaded_by_name(self):
+        """Return a user's name. Use username if neither first name or last
+        name are known."""
+        user = self.uploaded_by
+        if not user:
+            return '?'
+        elif user.first_name or user.last_name:
+            return user.get_full_name()
+        else:
+            return user.username
 
     def is_fixable(self):
         """Return True if the number of errors of this file is equal to

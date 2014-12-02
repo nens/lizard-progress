@@ -659,6 +659,17 @@ class Activity(models.Model):
 
         return activity
 
+    def latest_upload(self):
+        """Return the UploadedFile belonging to this activity with the
+        most recent 'uploaded_at' date, or None if there are no such
+        UploadedFiles."""
+        files = list(self.uploadedfile_set.order_by('-uploaded_at')[:1])
+
+        if files:
+            return files[0]
+        else:
+            return None
+
 
 class MeasurementTypeAllowed(models.Model):
     """This model is the "through" model for relationships between

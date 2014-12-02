@@ -23,6 +23,7 @@ from lizard_progress import models
 class UserF(factory.DjangoModelFactory):
     class Meta:
         model = User
+        django_get_or_create = ('username',)
 
     username = "admin"
     is_superuser = True
@@ -532,3 +533,36 @@ class TestActivity(TestCase):
         self.assertRaises(
             models.Activity.NoLocationException,
             lambda: activity2.get_or_create_location('testcode', None))
+
+    def test_latest_upload_without_upload(self):
+        project = ProjectF.create()
+        contractor = OrganizationF.create()
+        mtype = AvailableMeasurementTypeF.create(
+            needs_predefined_locations=True)
+
+        activity = ActivityF.create(
+            name='activity1', project=project, measurement_type=mtype,
+            contractor=contractor)
+
+        self.assertEquals(activity.latest_upload(), None)
+
+    def test_latest_upload_two_uploads(self):
+        project = ProjectF.create()
+        contractor = OrganizationF.create()
+        mtype = AvailableMeasurementTypeF.create(
+            needs_predefined_locations=True)
+
+        activity = ActivityF.create(
+            name='activity1', project=project, measurement_type=mtype,
+            contractor=contractor)
+
+        today = datetime.datetime.now()
+        yesterday = today - datetime.timedelta(days=1)
+
+        UploadedFileF.create(
+            activity=activity, uploaded_at=yesterday)
+        UploadedFileF.create(
+            activity=activity, uploaded_at=today)
+
+        self.assertEquals(
+            activity.latest_upload().uploaded_at, today)

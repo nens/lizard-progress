@@ -43,7 +43,13 @@
   <td>{{ activity.measurement_type }}</td>
   <td>{{ activity.num_locations }}</td>
   <td>{{ activity.num_measurements }}</td>
-  <td></td>
+  <td>
+    {% with activity.latest_upload as latest %}
+      {% if latest %}
+        {{ latest.uploaded_at }}
+      {% endif %}
+    {% endwith %}
+  </td>
 </tr>
 {% endfor %}
 </table>

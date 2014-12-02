@@ -415,6 +415,7 @@ class Location(models.Model):
     class Meta:
         # Location codes are unique within an activity
         unique_together = ("location_code", "activity")
+        ordering = ('location_code',)
 
     def __unicode__(self):
         return u"Location with code '%s'" % (self.location_code,)

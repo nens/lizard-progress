@@ -383,80 +383,48 @@ class DashboardCsvView(ProjectsView):
         return "%s (%s-%s-%s)" % (orig_filename, datestr[:4],
                                   datestr[4:6], datestr[6:])
 
-    def get(self, request, project_slug, contractor_slug):
-        """Returns a CSV file for this contractor and measurement
-        type."""
+    def get(self, request, project_slug, activity_id):
+        """Returns a CSV file for this activity."""
 
-        self.contractor_instance = models.Contractor.objects.get(
-            project=self.project, slug=contractor_slug)
+        self.activity = models.Activity.objects.get(pk=activity_id)
 
         # Setup HttpResponse and a CSV writer
         response = http.HttpResponse(content_type="text/csv")
         writer = csv.writer(response)
 
-        filename = '%s_%s.csv' % (self.project.slug, self.contractor_instance)
+        filename = '%s_%s.csv' % (self.activity.project.slug, activity_id)
 
         response['Content-Disposition'] = ('attachment; filename=%s' %
                                            (filename,))
 
-        # Get measurement types, locations
-        measurement_types = sorted(
-            self.project.measurementtype_set.all(),
-            cmp=lambda a, b: cmp(a.name, b.name))
-
-        locations = sorted(
-            self.project.location_set.all(),
-            cmp=lambda a, b: cmp(a.location_code, b.location_code))
+        locations = self.activity.location_set.all()
 
         # Write header row
-        row1 = ['ID']
-        for mtype in measurement_types:
-            row1.append(mtype.name)
-        writer.writerow(row1)
+        writer.writerow(['Locatie ID', 'Geupload in'])
 
         # Write rest of the rows
-        for l in locations:
-            # Are there any scheduled measurements for this contractor
-            # at this location? Otherwise skip it.
-            if (ScheduledMeasurement.objects.filter(
-                    project=self.project,
-                    contractor=self.contractor_instance,
-                    location=l).count()) == 0:
-                continue
-
+        for location in locations:
             # Row has the location's id first, then some information
             # per measurement type.
-            row = [l.location_code]
-            for mtype in measurement_types:
-                try:
-                    scheduled = ScheduledMeasurement.objects.get(
-                        project=self.project,
-                        contractor=self.contractor_instance,
-                        location=l, measurement_type=mtype)
-                except ScheduledMeasurement.DoesNotExist:
-                    # This measurement type wasn't scheduled here -
-                    # empty cell.
-                    row.append('')
-                    continue
+            row = [location.location_code]
+            if location.complete:
+                # Nice sorted list of filenames and dates.
+                filenames = [self.clean_filename(measurement.filename)
+                             for measurement in
+                             location.measurement_set.all()]
 
-                if scheduled.complete:
-                    # Nice sorted list of filenames and dates.
-                    filenames = [self.clean_filename(measurement.filename)
-                                 for measurement in
-                                 scheduled.measurement_set.all()]
+                # Case insensitive sort
+                filenames = sorted(
+                    filenames,
+                    cmp=lambda a, b: cmp(a.lower(), b.lower()))
 
-                    # Case insensitive sort
-                    filenames = sorted(
-                        filenames,
-                        cmp=lambda a, b: cmp(a.lower(), b.lower()))
-
-                    row.append(', '.join(filenames))
-                else:
-                    # Although it is possible that there is some data already
-                    # (e.g., one photo already uploaded while the measurement
-                    # needs two to be complete), for simplicity we simply say
-                    # that the whole measurement isn't there yet.
-                    row.append('Nog niet aanwezig')
+                row.append(', '.join(filenames))
+            else:
+                # Although it is possible that there is some data already
+                # (e.g., one photo already uploaded while the measurement
+                # needs two to be complete), for simplicity we simply say
+                # that the whole measurement isn't there yet.
+                row.append('Nog niet aanwezig')
 
             writer.writerow(row)
 

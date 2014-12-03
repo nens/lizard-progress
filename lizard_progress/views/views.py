@@ -465,9 +465,8 @@ def dashboard_graph(
 
     fig = ScreenFigure(500, 300)  # in pixels
     fig.text(
-        0.5, 0.85,
-        ('Uitgevoerd {activity}'
-         .format(activity=activity)),
+        0.5, 0.95,
+        'Uitgevoerd {activity}'.format(activity=activity),
         fontsize=14, ha='center')
     fig.subplots_adjust(left=0.05, right=0.95)  # smaller margins
     y_title = -0.2  # a bit lower

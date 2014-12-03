@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.2.1 (unreleased)
-------------------
+2.3 (2014-12-03)
+----------------
 
 - Projects now have one or more Activities, which have a single
   MeasurementType and a single Organisation working as contractor.

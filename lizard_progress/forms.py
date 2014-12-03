@@ -86,9 +86,13 @@ class NewProjectForm(forms.Form):
                 required=False
             )
 
+            # Note that this field is disabled (made hidden) on customer
+            # request. If we later find that it is preferable that activity
+            # names can be set, then it can be enabled again.
             self.fields['activity{}'.format(i)] = forms.CharField(
-                label=_("Activity (name, optional)") + " " + str(i),
-                max_length=40, required=False)
+                label='',
+                max_length=40, required=False,
+                widget=forms.HiddenInput())
 
     def clean(self):
         cleaned_data = super(NewProjectForm, self).clean()

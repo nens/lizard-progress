@@ -1,17 +1,18 @@
 {% extends "lizard_ui/lizardbase.html" %}
 
 {% block title %}
-{% if view.title %}
-{# Managed properly by the view #}
-{{ view.title }}
-{% else %}
-{# By hand in the template #}
-{% block subtitle %}{% endblock subtitle%}
-{% block sitetitle %}Upload Server{% endblock sitetitle%}
-{% endif %}
+  {% if view.title %}
+    {# Managed properly by the view #}
+    {{ view.title }}
+  {% else %}
+    {# By hand in the template #}
+    {% block subtitle %}{% endblock subtitle%}
+    {% block sitetitle %}Upload Server{% endblock sitetitle%}
+  {% endif %}
 {% endblock %}
+
 {% block sidebar-title %}
-Navigation
+  Navigation
 {% endblock %}
 
 {% block css %}
@@ -26,49 +27,54 @@ Navigation
 {% endblock javascript %}
 
 {% block sidebar %}
-<div class="sidebarbox sidebarbox-stretched">
-{% if view.user_has_manager_role or view.user_has_usermanager_role %}
-  <h2>Beheer</h2>
-  <ul class="without-bullets">
-{% if view.user_has_manager_role %}
-  <li><a href="{% url "lizard_progress_newproject" %}"><i class="icon-plus-sign"></i> Project toevoegen</a></li>
-  <li><a href="{% url "lizard_progress_admin_organization_errorconfiguration" %}"><i class="icon-pencil"></i> Configuratie defaults</a></li>
-  <li><a href="{% url "lizard_progress_archive_overview" %}"><i class="icon-briefcase"></i> Archief</a></li>
-  <li><a href="{% url "lizard_progress_documents_download" %}"><i class="icon-file"></i> Documentenbeheer</a></li>
-{% endif %}
-{% if view.user_has_usermanager_role %}
-  <li><a href="{% url "lizard_progress_user_management" %}"><i class="icon-user"></i> Gebruikersbeheer</a></li>
-{% endif %}
-  </ul>
-{% endif %}
+  <div class="sidebarbox sidebarbox-stretched">
+    {% if view.user_has_manager_role or view.user_has_usermanager_role %}
+      <h2>Beheer</h2>
+      <ul class="without-bullets">
+        {% if view.user_has_manager_role %}
+          <li><a href="{% url "lizard_progress_newproject" %}"
+                 ><i class="icon-plus-sign"></i> Project toevoegen</a></li>
+          <li><a href="{% url "lizard_progress_admin_organization_errorconfiguration" %}"
+                 ><i class="icon-pencil"></i> Configuratie defaults</a></li>
+          <li><a href="{% url "lizard_progress_archive_overview" %}"
+                 ><i class="icon-briefcase"></i> Archief</a></li>
+          <li><a href="{% url "lizard_progress_documents_download" %}"
+                 ><i class="icon-file"></i> Documentenbeheer</a></li>
+        {% endif %}
+        {% if view.user_has_usermanager_role %}
+          <li><a href="{% url "lizard_progress_user_management" %}"
+                 ><i class="icon-user"></i> Gebruikersbeheer</a></li>
+        {% endif %}
+      </ul>
+    {% endif %}
 
-  {% if view.project %}
-    <h2>Werkzaamheden {{view.project}}</h2>
-    <ul class="nav nav-list nav-stacked">
-      <li {% if view.active_menu == "dashboard" %}class="active"{% endif %}>
-        <a href="{% url "lizard_progress_dashboardview" view.project.slug %}">Project Dashboard</a>
-      </li>
-      {% for activity in view.activities %}
-        <li {% if activity == view.activity %}class="active"{% endif %}>
-          <a href="{% url "lizard_progress_activity_dashboard" activity_id=activity.id project_slug=view.project.slug %}">{{ activity }}</a>
+    {% if view.project %}
+      <h2>Werkzaamheden {{view.project}}</h2>
+      <ul class="nav nav-list nav-stacked">
+        <li {% if view.active_menu == "dashboard" %}class="active"{% endif %}>
+          <a href="{% url "lizard_progress_dashboardview" view.project.slug %}">Project Dashboard</a>
         </li>
+        {% for activity in view.activities %}
+          <li {% if activity == view.activity %}class="active"{% endif %}>
+            <a href="{% url "lizard_progress_activity_dashboard" activity_id=activity.id project_slug=view.project.slug %}">{{ activity }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <br>
+    {% endif %}
+
+    <h2>Projecten</h2>
+    <ul class="nav nav-list nav-stacked">
+      {% for project in view.projects %}
+        <li {% if project == view.project %}class="active"{% endif %}>
+          <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project }} ({{ project.organization.name }})</a>
+        </li>
+      {% empty %}
+        <p class="small">(Er zijn nog geen projecten)</p>
       {% endfor %}
     </ul>
-
-    <br>
-  {% endif %}
-
-  <h2>Projecten</h2>
-  <ul class="nav nav-list nav-stacked">
-  {% for project in view.projects %}
-    <li {% if project == view.project %}class="active"{% endif %}>
-        <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project }} ({{ project.organization.name }})</a>
-    </li>
-  {% empty %}
-  <p class="small">(Er zijn nog geen projecten)</p>
-  {% endfor %}
-  </ul>
-</div>
+  </div>
 {% endblock sidebar %}
 
 {% block content %}

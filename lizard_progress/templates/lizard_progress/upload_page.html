@@ -1,46 +1,60 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
 {% block css %}
-{{block.super}}
-<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/jquery-ui.css" type="text/css" />
-<link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
+  {{block.super}}
+  <link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/jquery-ui.css" type="text/css" />
+  <link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
 {% endblock css %}
 
 {% block javascript %}
-{{block.super}}
-<script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/jquery-ui.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.full.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/upload_page.js"></script>
+  {{block.super}}
+  <script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.full.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/upload_page.js"></script>
 {% endblock javascript %}
 
 {% block contentpage %}
-<h2>Upload bestanden</h2>
+  <h2>Upload bestanden</h2>
 
   <div id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
     <p>
-      <button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_measurement_url }}" title="Klik hier om ingewonnen metingen te uploaden."><i class="icon-upload"></i> Upload {{ view.activity.measurement_type }}
+      <button type="button" class="upload btn btn-large btn-primary"
+              data-upload-url="{{ view.upload_measurement_url }}"
+              title="Klik hier om ingewonnen metingen te uploaden."
+              ><i class="icon-upload"></i> Upload {{ view.activity.measurement_type }}
       </button>
-      <button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_shapefiles_url }}" title="Klik hier om ingevulde moedershapefiles te uploaden."><i class="icon-upload"></i> Upload moedershapefile</button>
-      <button type="button" class="upload btn btn-large btn-primary" data-upload-url="{{ view.upload_reports_url }}" title="Klik hier om rapportages en overige bestanden (.doc, .pdf of .zip voor de rest) te uploaden."><i class="icon-upload"></i> Upload eindrapportages</button>
+      <button type="button" class="upload btn btn-large btn-primary"
+              data-upload-url="{{ view.upload_shapefiles_url }}"
+              title="Klik hier om ingevulde moedershapefiles te uploaden."
+              ><i class="icon-upload"></i> Upload moedershapefile</button>
+      <button type="button" class="upload btn btn-large btn-primary"
+              data-upload-url="{{ view.upload_reports_url }}"
+              title="Klik hier om rapportages en overige bestanden (.doc, .pdf of .zip voor de rest) te uploaden."
+              ><i class="icon-upload"></i> Upload eindrapportages</button>
     </p>
   </div>
 
-<div id="uploaded_files_not_ready" data-refresh-url="{% url "lizard_progress_uploaded_files_api" project_slug=view.project.slug activity_id=view.activity_id %}" hidden="true">
-  <h3>Nog niet verwerkte bestanden</h3>
-  <table id="files_not_processed" class="table table-bordered progressbase uploadedfiletable">
-    <thead><th>Filenaam</th><th>Ge&uuml;pload door</th><th>Datum</th></thead>
-    <tbody></tbody>
-  </table>
-</div>
+  <div id="uploaded_files_not_ready"
+       data-refresh-url="{% url "lizard_progress_uploaded_files_api"
+                                project_slug=view.project.slug
+                                activity_id=view.activity_id %}"
+       hidden="true">
+    <h3>Nog niet verwerkte bestanden</h3>
+    <table id="files_not_processed" class="table table-bordered progressbase uploadedfiletable">
+      <thead><th>Filenaam</th><th>Ge&uuml;pload door</th><th>Datum</th></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-<div id="uploaded_files_ready" hidden="true">
-  <h3>Verwerkte bestanden</h3>
-  <p class="small">Deze kunnen veilig verwijderd worden, het gaat hier alleen om de melding
-  van het resultaat van de upload. Gegevens van succesvol ge&uuml;ploade bestanden blijven opgeslagen.</p>
-  <table id="files_processed" class="table table-bordered progressbase uploadedfiletable">
-    <thead><th>Filenaam</th><th>Ge&uuml;pload door</th><th>Datum</th><th>Fouten</th><th>Aanvragen</th><th></th></thead>
-    <tbody></tbody>
-  </table>
-</div>
+  <div id="uploaded_files_ready" hidden="true">
+    <h3>Verwerkte bestanden</h3>
+    <p class="small">Deze kunnen veilig verwijderd worden, het gaat hier alleen om de melding
+    van het resultaat van de upload. Gegevens van succesvol ge&uuml;ploade bestanden
+    blijven opgeslagen.</p>
+    <table id="files_processed" class="table table-bordered progressbase uploadedfiletable">
+      <thead><th>Filenaam</th><th>Ge&uuml;pload door</th><th>Datum</th><th>Fouten</th><th>Aanvragen</th><th></th></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 {% endblock contentpage %}

@@ -5,7 +5,35 @@ Changelog of lizard-progress
 2.2.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Projects now have one or more Activities, which have a single
+  MeasurementType and a single Organisation working as contractor.
+  This led to changes _everywhere_.
+
+- Speedups (mostly cache result of has_access).
+
+- Ubuntu 14 compatibility (new mapnik!)
+
+- Show 5 activity fields in the New Project form, not 3.
+
+- Do not let users pick an activity name in the New Project form.
+
+- Fix showing the date of an Activity's latest upload.
+
+- When showing an Activity's last uploader, use username if the user
+  has no first and no last name.
+
+- Add a check that gives an error if MET file profile point types
+  5, 6 or 7 have a Z1 or Z2 level that is above the waterlevel
+  (MET_Z_ABOVE_WATERLEVEL).
+
+- Remove the special topbar for activities, this saves user clicks
+  and although it is ugly, it's not uglier than what we had.
+
+- Reorganize directory structure of files, there are activity
+  directories now. Needs a script to migrate old files.
+
+- Fix progress CSV file generation.
+
 
 
 2.2 (2014-07-04)

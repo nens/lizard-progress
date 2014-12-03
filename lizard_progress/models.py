@@ -415,6 +415,7 @@ class Location(models.Model):
     class Meta:
         # Location codes are unique within an activity
         unique_together = ("location_code", "activity")
+        ordering = ('location_code',)
 
     def __unicode__(self):
         return u"Location with code '%s'" % (self.location_code,)
@@ -658,6 +659,17 @@ class Activity(models.Model):
                 i += 1
 
         return activity
+
+    def latest_upload(self):
+        """Return the UploadedFile belonging to this activity with the
+        most recent 'uploaded_at' date, or None if there are no such
+        UploadedFiles."""
+        files = list(self.uploadedfile_set.order_by('-uploaded_at')[:1])
+
+        if files:
+            return files[0]
+        else:
+            return None
 
 
 class MeasurementTypeAllowed(models.Model):
@@ -928,7 +940,7 @@ class UploadedFile(models.Model):
             'id': self.id,
             'project_id': self.activity.project.id,
             'activity_id': self.activity.id,
-            'uploaded_by': self.uploaded_by.get_full_name(),
+            'uploaded_by': self.get_uploaded_by_name(),
             'uploaded_at': self.uploaded_at.strftime("%d/%m/%y %H:%M"),
             'filename': os.path.basename(self.path),
             'ready': self.ready,
@@ -954,6 +966,17 @@ class UploadedFile(models.Model):
 
     def has_possible_requests(self):
         return self.possiblerequest_set.exists()
+
+    def get_uploaded_by_name(self):
+        """Return a user's name. Use username if neither first name or last
+        name are known."""
+        user = self.uploaded_by
+        if not user:
+            return '?'
+        elif user.first_name or user.last_name:
+            return user.get_full_name()
+        else:
+            return user.username
 
     def is_fixable(self):
         """Return True if the number of errors of this file is equal to

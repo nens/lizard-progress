@@ -415,16 +415,25 @@ class MetParser(specifics.ProgressParser):
                 'MET_Z_TOO_LOW',
                 lowest_allowed)
 
-        if profile.waterlevel is not None:
+        waterlevel = profile.waterlevel
+        if waterlevel is not None:
             lowest_below_water_allowed = self.config_value(
                 "lowest_below_water_allowed")
-            lowest_allowed = lowest_below_water_allowed + profile.waterlevel
+            lowest_allowed = lowest_below_water_allowed + waterlevel
             if (measurement.z1 < lowest_allowed or
                     measurement.z2 < lowest_allowed):
                 self.record_error_code(
                     measurement.line_number,
                     'MET_Z_TOO_LOW_BELOW_WATER',
                     lowest_allowed)
+
+            if (measurement.profile_point_type in ('5', '6', '7') and
+                    ((measurement.z1 > waterlevel) or
+                     (measurement.z2 > waterlevel))):
+                self.record_error_code(
+                    measurement.line_number,
+                    'MET_Z_ABOVE_WATERLEVEL',
+                    waterlevel)
 
         if profile.line is not None and measurement.point is not None:
             distance = profile.line.distance(measurement.point)

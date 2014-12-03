@@ -1,19 +1,5 @@
 {% extends "lizard_progress/progressbase.html" %}
 
-{% block topbar %}
-  <div id="actions" class="sidebar-inner">
-  <ul class="nav nav-pills">
-    <li class="active">
-      <a href="">{{ view.activity }}</a>
-    </li>
-    <li>
-      <a href="{% url "lizard_progress_dashboardview" project_slug=view.project_slug %}">Terug naar project <i class="icon-circle-arrow-right"></i></a>
-    </li>
-  </ul>
-  <br>
-  </div>
-{% endblock %}
-
 {% block extrabar %}
   <div id="actions2" class="sidebar-inner">
   <ul class="nav nav-pills" style="clear: both; padding-left: 14px;">

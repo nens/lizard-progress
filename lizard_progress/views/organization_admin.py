@@ -64,11 +64,11 @@ class VisibleMeasurementTypes(ProjectsView):
             self.update_visibility(slug, new_visibility)
 
         return http.HttpResponseRedirect(reverse(
-                "lizard_progress_editvisibility"))
+            "lizard_progress_editvisibility"))
 
     def update_visibility(self, slug, new_visibility):
         logger.debug("Updating visibility: {} {}".format(
-                slug, new_visibility))
+            slug, new_visibility))
 
         organization = self.profile.organization
 

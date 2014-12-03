@@ -55,7 +55,7 @@ def project_name_validator(name):
 
 
 class NewProjectForm(forms.Form):
-    NUM_ACTIVITIES = 3
+    NUM_ACTIVITIES = 5
 
     def __init__(self, *args, **kwargs):
         if 'organization' in kwargs:

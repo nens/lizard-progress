@@ -91,7 +91,7 @@ class NewProjectForm(forms.Form):
             # names can be set, then it can be enabled again.
             self.fields['activity{}'.format(i)] = forms.CharField(
                 label='',
-                max_length=40, required=False,
+                max_length=100, required=False,
                 widget=forms.HiddenInput())
 
     def clean(self):

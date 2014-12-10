@@ -571,7 +571,7 @@ class Activity(models.Model):
 
     def upload_directory(self):
         """Directory where the files for this activity will be stored."""
-        return directories.measurement_type_dir(self)
+        return directories.activity_dir(self)
 
     def can_upload(self, user):
         """User can upload if he is with the contractor, or if user is a

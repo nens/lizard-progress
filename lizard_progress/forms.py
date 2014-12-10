@@ -246,8 +246,11 @@ class AddActivityForm(forms.Form):
         label=_("Contractor"),
         queryset=models.Organization.objects.all(),
         required=True)
+
+    # Disabled
     description = forms.CharField(
-        label=_("Description"), required=False)
+        label='', required=False, max_length=100,
+        widget=forms.HiddenInput())
 
 
 class ShapefileForm(forms.Form):

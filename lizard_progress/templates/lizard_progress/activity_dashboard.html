@@ -4,7 +4,7 @@
   <div id="actions2" class="sidebar-inner">
   <ul class="nav nav-pills" style="clear: both; padding-left: 14px;">
     <li {% if view.active_menu == "activitydashboard" %}class="active"{% endif %}>
-      <a title="Activity Dashboard" href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity_id %}">Werkzaamheid Dashboard</a>
+      <a title="Activity Dashboard" href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity_id %}">Werkzaamheiddashboard</a>
     </li>
     {% if view.user_is_manager %}
       <li {% if view.active_menu == "planning" %}class="active"{% endif %}>

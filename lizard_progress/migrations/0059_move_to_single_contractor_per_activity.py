@@ -7,7 +7,7 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        "Write your forwards methods here."
+        """Split activities into several activities, if needed."""
 
         for activity in orm['lizard_progress.Activity'].objects.all():
             pairs = [

@@ -14,7 +14,7 @@ class Migration(DataMigration):
             project = request.contractor.project
             activities = list(project.activity_set.all())
             request.activity = activities[0]
-            request.organization = request.activity.contractor
+            request.organization = request.contractor.organization
             request.save()
 
     def backwards(self, orm):

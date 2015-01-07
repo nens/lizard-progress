@@ -571,7 +571,7 @@ class Activity(models.Model):
 
     def upload_directory(self):
         """Directory where the files for this activity will be stored."""
-        return directories.measurement_type_dir(self)
+        return directories.activity_dir(self)
 
     def can_upload(self, user):
         """User can upload if he is with the contractor, or if user is a
@@ -718,7 +718,7 @@ class Measurement(models.Model):
     the_geom = models.PointField(null=True, blank=True, srid=SRID)
 
     # This is the filename of the uploaded file after it was moved
-    # into lizard-progress' archive. Set by the upload view.
+    # into lizard-progress' archive. Set by process_uploaded_file.
     filename = models.CharField(max_length=1000)
 
     # Auto-changes, most likely set in stone the time the file is

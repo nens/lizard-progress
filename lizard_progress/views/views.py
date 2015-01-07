@@ -796,7 +796,7 @@ class DeleteActivity(ProjectsView):
 
 class ConfigurationView(ProjectsView):
     template_name = 'lizard_progress/project_configuration_page.html'
-    active_menu = "config"
+    active_menu = "project_config"
 
     def config_options(self):
         config = configuration.Configuration(project=self.project)

@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.4 (unreleased)
-----------------
+2.3.1 (2015-01-07)
+------------------
 
 - Added a script that migrates files to the new activity-based
   directory structure.

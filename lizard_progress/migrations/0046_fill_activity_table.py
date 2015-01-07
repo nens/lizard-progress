@@ -1,14 +1,36 @@
 # -*- coding: utf-8 -*-
 import datetime
+import os
+import shutil
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 
-class Migration(DataMigration):
+from lizard_progress.util import directories
 
+
+def move_contractor_directory(project, contractor, activity):
+    project_dir = directories.project_dir(project)
+
+    old_dir = os.path.join(project_dir, contractor.slug)
+
+    if not os.path.exists(old_dir):
+        return
+
+    new_dir = directories.activity_dir(activity)
+
+    for name in ('final_results', 'export', 'reports',
+                 'shapefile', 'locations'):
+        if (os.path.exists(os.path.join(old_dir, name)) and not
+                os.path.exists(os.path.join(new_dir, name))):
+            print("Moving {} to {}.".format(
+                os.path.join(old_dir, name), new_dir))
+            shutil.move(os.path.join(old_dir, name), new_dir)
+
+
+class Migration(DataMigration):
     def forwards(self, orm):
         "Write your forwards methods here."
-        # Note: Remember to use orm['appname.ModelName'] rather than "from appname.models..."
 
         for project in orm['lizard_progress.Project'].objects.all():
             activity = orm['lizard_progress.Activity'].objects.create(
@@ -16,6 +38,7 @@ class Migration(DataMigration):
 
             for contractor in project.contractor_set.all():
                 activity.contractors.add(contractor.organization)
+                move_contractor_directory(project, contractor, activity)
 
             for mtype in project.measurementtype_set.all():
                 activity.measurement_types.add(mtype.mtype)

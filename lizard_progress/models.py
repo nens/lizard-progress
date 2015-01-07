@@ -718,7 +718,7 @@ class Measurement(models.Model):
     the_geom = models.PointField(null=True, blank=True, srid=SRID)
 
     # This is the filename of the uploaded file after it was moved
-    # into lizard-progress' archive. Set by the upload view.
+    # into lizard-progress' archive. Set by process_uploaded_file.
     filename = models.CharField(max_length=1000)
 
     # Auto-changes, most likely set in stone the time the file is

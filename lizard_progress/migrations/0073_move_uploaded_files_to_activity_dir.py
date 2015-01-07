@@ -1,59 +1,58 @@
 # -*- coding: utf-8 -*-
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+import os
+import shutil
+import tempfile
+
+from south.v2 import DataMigration
+
+from lizard_progress.util import directories
 
 
-class Migration(SchemaMigration):
-
-    depends_on = (
-        # This migration uses the contractor table, so run it before
-        # that table is deleted.
-        ('changerequests', '0010_fix_changerequest_fields'),
-    )
+class Migration(DataMigration):
 
     def forwards(self, orm):
-        # Removing unique constraint on 'MeasurementType', fields ['project', 'mtype']
-        db.delete_unique(u'lizard_progress_measurementtype', ['project_id', 'mtype_id'])
+        """For all measurements, check if they are already in their
+        Activity's directory. If not, move them and clean up the old
+        directories a bit. Once a file has been moved, measurements
+        using the same file can just be updated.
 
-        # Removing unique constraint on 'Contractor', fields ['project', 'organization']
-        db.delete_unique(u'lizard_progress_contractor', ['project_id', 'organization_id'])
+        """
+        moved_files = dict()
 
-        # Deleting model 'Contractor'
-        db.delete_table(u'lizard_progress_contractor')
+        for measurement in (
+                orm['lizard_progress.Measurement'].objects.all()
+                .select_related('location__activity')):
+            if measurement.filename in moved_files:
+                # Was already moved
+                measurement.filename = moved_files[measurement.filename]
+                measurement.save()
+                continue
 
-        # Deleting model 'MeasurementType'
-        db.delete_table(u'lizard_progress_measurementtype')
+            if not os.path.exists(measurement.filename):
+                print("{} does not exist!!".format(measurement.filename))
+                continue
+
+            activity = measurement.location.activity
+            new_dir = directories.activity_dir(activity)
+
+            new_path = os.path.join(
+                new_dir, os.path.basename(measurement.filename))
+            if os.path.exists(new_path):
+                # Sigh. Just make a temp directory and store it inside it.
+                d = tempfile.mkdtemp(dir=new_dir)
+                new_path = os.path.join(
+                    d, os.path.basename(measurement.filename))
+
+            print("Moving {} to {}".format(measurement.filename, new_path))
+            shutil.move(measurement.filename, new_path)
+            moved_files[measurement.filename] = new_path
+            measurement.filename = new_path
+            measurement.save()
 
 
     def backwards(self, orm):
-        # Adding model 'Contractor'
-        db.create_table(u'lizard_progress_contractor', (
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('project', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lizard_progress.Project'])),
-            ('organization', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lizard_progress.Organization'], null=True, blank=True)),
-            ('slug', self.gf('django.db.models.fields.SlugField')(max_length=50)),
-        ))
-        db.send_create_signal(u'lizard_progress', ['Contractor'])
-
-        # Adding unique constraint on 'Contractor', fields ['project', 'organization']
-        db.create_unique(u'lizard_progress_contractor', ['project_id', 'organization_id'])
-
-        # Adding model 'MeasurementType'
-        db.create_table(u'lizard_progress_measurementtype', (
-            ('project', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lizard_progress.Project'])),
-            ('icon_complete', self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True)),
-            ('mtype', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lizard_progress.AvailableMeasurementType'])),
-            ('icon_missing', self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True)),
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-        ))
-        db.send_create_signal(u'lizard_progress', ['MeasurementType'])
-
-        # Adding unique constraint on 'MeasurementType', fields ['project', 'mtype']
-        db.create_unique(u'lizard_progress_measurementtype', ['project_id', 'mtype_id'])
-
+        "Write your backwards methods here."
+        raise NotImplementedException()
 
     models = {
         u'auth.group': {
@@ -94,11 +93,19 @@ class Migration(SchemaMigration):
         },
         u'lizard_progress.activity': {
             'Meta': {'object_name': 'Activity'},
-            'contractors': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['lizard_progress.Organization']", 'symmetrical': 'False'}),
+            'contractor': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']", 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'measurement_types': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['lizard_progress.AvailableMeasurementType']", 'symmetrical': 'False'}),
+            'measurement_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.AvailableMeasurementType']", 'null': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'default': "u'Activity name'", 'max_length': '100'}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Project']"})
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Project']"}),
+            'source_activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True', 'blank': 'True'})
+        },
+        u'lizard_progress.activityconfig': {
+            'Meta': {'object_name': 'ActivityConfig'},
+            'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']"}),
+            'config_option': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'value': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'})
         },
         u'lizard_progress.availablemeasurementtype': {
             'Meta': {'ordering': "(u'name',)", 'object_name': 'AvailableMeasurementType'},
@@ -121,7 +128,8 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'lizard_progress.exportrun': {
-            'Meta': {'unique_together': "((u'project', u'organization', u'measurement_type', u'exporttype'),)", 'object_name': 'ExportRun'},
+            'Meta': {'unique_together': "((u'activity', u'exporttype'),)", 'object_name': 'ExportRun'},
+            'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),
             'created_by': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'error_message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
@@ -130,9 +138,6 @@ class Migration(SchemaMigration):
             'file_path': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '300', 'null': 'True'}),
             'generates_file': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'measurement_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.AvailableMeasurementType']"}),
-            'organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']", 'null': 'True'}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Project']"}),
             'ready_for_download': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'lizard_progress.hydrovak': {
@@ -152,12 +157,14 @@ class Migration(SchemaMigration):
             'upload_url_template': ('django.db.models.fields.CharField', [], {'max_length': '300'})
         },
         u'lizard_progress.location': {
-            'Meta': {'unique_together': "((u'location_code', u'activity'),)", 'object_name': 'Location'},
+            'Meta': {'ordering': "(u'location_code',)", 'unique_together': "((u'location_code', u'activity'),)", 'object_name': 'Location'},
             'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True'}),
+            'complete': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'information': ('jsonfield.fields.JSONField', [], {'null': 'True', 'blank': 'True'}),
             'location_code': ('django.db.models.fields.CharField', [], {'max_length': '50', 'db_index': 'True'}),
-            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {'srid': '28992', 'null': 'True'})
+            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {'srid': '28992', 'null': 'True'}),
+            'timestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
         u'lizard_progress.measurement': {
             'Meta': {'object_name': 'Measurement'},
@@ -165,7 +172,7 @@ class Migration(SchemaMigration):
             'date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'filename': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'scheduled': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.ScheduledMeasurement']"}),
+            'location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Location']", 'null': 'True'}),
             'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {'srid': '28992', 'null': 'True', 'blank': 'True'}),
             'timestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
@@ -218,22 +225,11 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']"})
         },
-        u'lizard_progress.scheduledmeasurement': {
-            'Meta': {'unique_together': "((u'location', u'available_measurement_type', u'organization'),)", 'object_name': 'ScheduledMeasurement'},
-            'available_measurement_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.AvailableMeasurementType']", 'null': 'True'}),
-            'complete': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Location']"}),
-            'organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']", 'null': 'True'}),
-            'timestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
-        },
         u'lizard_progress.uploadedfile': {
             'Meta': {'object_name': 'UploadedFile'},
             'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'linelike': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'mtype': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.AvailableMeasurementType']", 'null': 'True'}),
-            'organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']", 'null': 'True'}),
             'path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'ready': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'success': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -274,3 +270,4 @@ class Migration(SchemaMigration):
     }
 
     complete_apps = ['lizard_progress']
+    symmetrical = True

@@ -5,7 +5,8 @@ Changelog of lizard-progress
 2.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added a script that migrates files to the new activity-based
+  directory structure.
 
 
 2.3 (2014-12-03)
@@ -36,7 +37,7 @@ Changelog of lizard-progress
   and although it is ugly, it's not uglier than what we had.
 
 - Reorganize directory structure of files, there are activity
-  directories now. Needs a script to migrate old files.
+  directories now.
 
 - Fix progress CSV file generation.
 

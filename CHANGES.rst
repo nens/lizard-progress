@@ -5,6 +5,8 @@ Changelog of lizard-progress
 2.4 (unreleased)
 ----------------
 
+- Fix "Export to Lizard", which was still using the old DB structure.
+
 - Declared migration bankruptcy. If you are upgrading an existing
   database, first checkout lizard-progress 2.3.1 and run its
   migrations.  Then run
@@ -15,6 +17,7 @@ Changelog of lizard-progress
   initial (0001) migration.
 
   The same action is required for the changerequests subapp.
+
 
 
 2.3.1 (2015-01-07)

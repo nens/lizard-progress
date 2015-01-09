@@ -61,46 +61,40 @@ def table(lizard_config):
         lizard_config.geoserver_table_name, metadata, autoload=True)
 
 
-def insert(measurement):
-    lizard_config = measurement.scheduled.project.organization.lizard_config
-
+def insert(measurement, lizard_config):
     connection = engine(lizard_config).connect()
     the_table = table(lizard_config)
     # If this measurement already exists in the database, we first delete it
     # (easiest way of updating...)
     connection.execute(the_table.delete().where(and_(
-        the_table.c.proident ==
-        measurement.scheduled.location.location_code,
-        the_table.c.pro_naam ==
-        measurement.scheduled.project.name,
-        the_table.c.opdr_nem ==
-        measurement.scheduled.contractor.organization.name)))
+        the_table.c.proident == measurement.location.location_code,
+        the_table.c.pro_naam == measurement.project.name,
+        the_table.c.opdr_nem == measurement.contractor.organization.name)))
 
     # Now insert the new one
     connection.execute(
         table(lizard_config).insert().values(
-            proident=measurement.scheduled.location.location_code,
-            xcoord=measurement.scheduled.location.the_geom.x,
-            ycoord=measurement.scheduled.location.the_geom.y,
+            proident=measurement.location.location_code,
+            xcoord=measurement.location.the_geom.x,
+            ycoord=measurement.location.the_geom.y,
             csv=getattr(measurement, 'csv_url', None),
             graph=getattr(measurement, 'png_url', None),
             dxf=getattr(measurement, 'dxf_url', None),
-            pro_naam=measurement.scheduled.project.name,
-            opdr_gev=measurement.scheduled.project.organization.name,
-            opdr_nem=measurement.scheduled.contractor.organization.name,
+            pro_naam=measurement.project.name,
+            opdr_gev=measurement.project.organization.name,
+            opdr_nem=measurement.contractor.organization.name,
             jaar=measurement.date.year,
             datum=measurement.date,
             the_geom=(
                 "SRID=28992; " +
-                unicode(measurement.scheduled.location.the_geom))
+                unicode(measurement.location.the_geom))
             ))
 
 
-def upload(measurement):
-    lizard_config = measurement.scheduled.project.organization.lizard_config
+def upload(measurement, lizard_config):
     upload_config = lizard_config.upload_config
     url_template = lizard_config.upload_url_template
-    project_slug = measurement.scheduled.project.slug
+    project_slug = measurement.location.activity.project.slug
 
     # Fill in project_slug
     upload_config = upload_config.format(project_slug=project_slug)
@@ -118,8 +112,8 @@ def upload(measurement):
 
 
 def upload_ftp(
-    measurement, server, user, password, directories,
-    project_slug, url_template):
+        measurement, server, user, password, directories,
+        project_slug, url_template):
     logger.debug(user)
     logger.debug(password)
 

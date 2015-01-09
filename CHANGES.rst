@@ -5,7 +5,7 @@ Changelog of lizard-progress
 2.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix "Export to Lizard", which was still using the old DB structure.
 
 
 2.3.1 (2015-01-07)

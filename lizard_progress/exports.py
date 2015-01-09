@@ -273,6 +273,8 @@ def export_to_lizard(export_run):
     files on some location that is served by a webserver, so that
     Lizard-wms can show the data."""
 
+    lizard_config = export_run.activity.project.organization.lizard_config
+
     measurements = list(export_run.measurements_to_export())
     # Save CSV and DXF files for those measurements to an FTP server
     # Get a tmp dir
@@ -283,12 +285,12 @@ def export_to_lizard(export_run):
         measurement.dxf = create_dxf(measurement, temp)
         measurement.csv = create_csv(measurement, temp)
         measurement.png = create_png(measurement, temp)
-        lizard_export.upload(measurement)
+        lizard_export.upload(measurement, lizard_config)
 
     # Save measurements data to a database table, for Geoserver, including
     # links to the previously saved files
     for measurement in measurements:
-        lizard_export.insert(measurement)
+        lizard_export.insert(measurement, lizard_config)
 
     # We don't record a downloadable file, so no need to do anything
     # else, just return

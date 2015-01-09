@@ -390,7 +390,10 @@ class Location(models.Model):
 
     location_code = models.CharField(max_length=50, db_index=True)
 
-    the_geom = models.PointField(null=True, srid=SRID)
+    # Geometry can be a point OR a line
+    the_geom = models.GeometryField(null=True, srid=SRID)
+    is_point = models.BooleanField(default=True)
+
     # Any extra known information about the location
     information = JSONField(null=True, blank=True)
 

@@ -5,7 +5,14 @@ Changelog of lizard-progress
 2.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Declared migration bankruptcy. If you are upgrading an existing
+  database, first checkout lizard-progress 2.3.1 and run its
+  migrations.  Then run
+
+    DELETE FROM south_migrationhistory WHERE app_name = 'lizard_progress'"
+
+  upgrade lizard-progress to your desired version and fake the
+  initial (0001) migration.
 
 
 2.3.1 (2015-01-07)

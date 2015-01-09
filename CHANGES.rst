@@ -14,6 +14,8 @@ Changelog of lizard-progress
   upgrade lizard-progress to your desired version and fake the
   initial (0001) migration.
 
+  The same action is required for the changerequests subapp.
+
 
 2.3.1 (2015-01-07)
 ------------------

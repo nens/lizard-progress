@@ -18,6 +18,9 @@ Changelog of lizard-progress
 
   The same action is required for the changerequests subapp.
 
+- Storing Geometries instead of Points now for Locations and Measurements,
+  so that they can be lines as well. Adapted the adapter.
+
 
 
 2.3.1 (2015-01-07)

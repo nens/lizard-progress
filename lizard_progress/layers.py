@@ -32,8 +32,46 @@ def mapnik_datasource(query):
         )
 
 
+def make_point_style(img):
+    def make_rule(min, max, img, overlap):
+        rule = mapnik.Rule()
+        rule.min_scale = min
+        rule.max_scale = max
+
+        filename, extension, x, y = img
+        symbol = mapnik.PointSymbolizer()
+        symbol.filename = filename
+        symbol.allow_overlap = overlap
+        rule.symbols.append(symbol)
+        return rule
+
+    # Below cutoff - allow overlap True
+    rule_detailed = make_rule(0, 50000, img, True)
+
+    # Over cutoff - overlap False
+    rule_global = make_rule(50000, 1000000000.0, img, False)
+
+    style = mapnik.Style()
+    style.rules.append(rule_detailed)
+    style.rules.append(rule_global)
+    return style
+
+
+def make_line_style(color):
+    def make_rule(color):
+        rule = mapnik.Rule()
+        symbol = mapnik.LineSymbolizer(mapnik.Color(color), 4.0)
+        rule.symbols.append(symbol)
+        return rule
+
+    style = mapnik.Style()
+    style.rules.append(make_rule(color))
+    return style
+
+
 class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def __init__(self, *args, **kwargs):
+        logger.debug("{} {}".format(args, kwargs))
         if ('layer_arguments' not in kwargs or
                 not isinstance(kwargs['layer_arguments'], dict)):
             raise ValueError(
@@ -45,37 +83,13 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             self.activity = models.Activity.objects.get(
                 pk=self.activity_id)
         except models.Activity.DoesNotExist:
+            logger.debug("ACTIVITY {} DOES NOT EXIST".format(self.activity_id))
             self.activity = None
             return
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
-    @staticmethod
-    def make_style(img):
-        def make_rule(min, max, img, overlap):
-            rule = mapnik.Rule()
-            rule.min_scale = min
-            rule.max_scale = max
-
-            filename, extension, x, y = img
-            symbol = mapnik.PointSymbolizer()
-            symbol.filename = filename
-            symbol.allow_overlap = overlap
-            rule.symbols.append(symbol)
-            return rule
-
-        # Below cutoff - allow overlap True
-        rule_detailed = make_rule(0, 50000, img, True)
-
-        # Over cutoff - overlap False
-        rule_global = make_rule(50000, 1000000000.0, img, False)
-
-        style = mapnik.Style()
-        style.rules.append(rule_detailed)
-        style.rules.append(rule_global)
-        return style
-
-    def mapnik_query(self, complete):
+    def mapnik_query(self, is_point, complete):
         q = """(SELECT
                     loc.the_geom
                  FROM
@@ -83,10 +97,11 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                 WHERE
                     loc.activity_id = %d AND
                     loc.the_geom IS NOT NULL AND
+                    loc.is_point = %s AND
                     loc.complete = %s
                 ) data"""
 
-        return q % (self.activity_id,
+        return q % (self.activity_id, "true" if is_point else "false",
                     "true" if complete else "false")
 
     def layer_desc(self, complete):
@@ -97,19 +112,24 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         "Return mapnik layers and styles for all measurement types."
         layers = []
         styles = {}
+        logger.debug("WHEEEE")
 
-        for complete in (True, False):
-            layer_desc = self.layer_desc(complete)
-            if complete is True:
-                img = self.symbol_img("ball_green.png")
-            elif complete is False:
-                img = self.symbol_img("ball_red.png")
-
-            styles[layer_desc] = self.make_style(img)
+        for is_point, complete in (
+                (True, True), (True, False), (False, True), (False, False)):
+            if is_point:
+                layer_desc = self.layer_desc(complete)
+                img = (self.symbol_img("ball_green.png") if complete
+                       else self.symbol_img("ball_red.png"))
+                styles[layer_desc] = make_point_style(img)
+            else:
+                # Line
+                layer_desc = self.layer_desc(complete) + 'line'
+                color = '#00FF00' if complete else '#FF0000'
+                styles[layer_desc] = make_line_style(color)
 
             layer = mapnik.Layer(layer_desc, RD)
             layer.datasource = mapnik_datasource(
-                self.mapnik_query(complete))
+                self.mapnik_query(is_point, complete))
             layer.styles.append(layer_desc)
             layers.append(layer)
 
@@ -296,7 +316,7 @@ class HydrovakAdapter(WorkspaceItemAdapter):
         styles = {}
 
         rule = mapnik.Rule()
-        symbol = mapnik.LineSymbolizer(mapnik.Color("#0000FF"), 4.0)
+        symbol = mapnik.LineSybolizer(mapnik.Color("#0000FF"), 4.0)
         rule.symbols.append(symbol)
         style = mapnik.Style()
         style.rules.append(rule)

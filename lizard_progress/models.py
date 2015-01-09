@@ -718,7 +718,8 @@ class Measurement(models.Model):
     date = models.DateTimeField(null=True, blank=True)
 
     # Any available geometry data in the uploaded measurement.
-    the_geom = models.PointField(null=True, blank=True, srid=SRID)
+    the_geom = models.GeometryField(null=True, blank=True, srid=SRID)
+    is_point = models.BooleanField(default=True)
 
     # This is the filename of the uploaded file after it was moved
     # into lizard-progress' archive. Set by process_uploaded_file.

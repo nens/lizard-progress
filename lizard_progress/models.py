@@ -161,7 +161,7 @@ class UserRole(models.Model):
                           # accounts belonging to this organization.
 
     # Rows according to those roles are entered into the database by
-    # means of a data migration.
+    # means of a fixture.
     code = models.CharField(max_length=10)
     description = models.CharField(max_length=100)
 
@@ -423,10 +423,12 @@ class Location(models.Model):
     def __unicode__(self):
         return u"Location with code '%s'" % (self.location_code,)
 
-    def plan_location(self, point):
-        """Set our geometrical location, IF it wasn't set yet."""
+    def plan_location(self, location):
+        """Set our geometrical location, IF it wasn't set yet.
+        location can be either a Point or a LineString."""
         if self.the_geom is None:
-            self.the_geom = point
+            self.the_geom = location
+            self.is_point = not isinstance(location, LineString)
             self.save()
 
     def has_measurements(self):
@@ -482,6 +484,15 @@ class AvailableMeasurementType(models.Model):
     # Description to show to users, e.g. in the wizard where users can choose
     # measurement types.
     description = models.TextField(default='', blank=True)
+
+    # Sewerage data can be a mix of Point and Line locations, other types
+    # are only point data. If lines can be present, change requests are
+    # disabled.
+    has_only_point_locations = models.BooleanField(default=True)
+
+    # For some measurement types, we keep all versions of uploaded data that
+    # have been uploaded. For most, we only keep that last uploaded version.
+    keep_updated_measurements = models.BooleanField(default=False)
 
     @property
     def implementation_slug(self):
@@ -731,13 +742,16 @@ class Measurement(models.Model):
 
     objects = models.GeoManager()
 
-    def record_location(self, point):
+    def record_location(self, location):
         """Save where this measurement was taken. THEN, plan that
         location in our Location object (only sets it if the location
-        didn't have a point yet."""
-        self.the_geom = point
+        didn't have a point yet.
+
+        location can be a Point or a LineString."""
+        self.the_geom = location
+        self.is_point = not isinstance(location, LineString)
         self.save()
-        self.location.plan_location(point)
+        self.location.plan_location(location)
 
     @property
     def url(self):

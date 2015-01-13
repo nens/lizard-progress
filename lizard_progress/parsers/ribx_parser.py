@@ -1,3 +1,12 @@
+# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
+# -*- coding: utf-8 -*-
+
+# Python 3 is coming
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
 from PIL.ImageFile import ImageFile
 import logging
 
@@ -23,16 +32,26 @@ class RibxParser(ProgressParser):
         ribx_parser = parsers.RibxParser()
         ribx_parser.parse(self.file_object)
 
+        measurements = []
+
         for pipe in ribx_parser.pipes():
             try:
                 location = self.activity.location_set.objects.get(
                     location_code=pipe.ref)
             except models.Location.DoesNotExist:
                 self.record_error(
-                    10, 'LOCATION_NOT_FOUND',
-                    unicode(
-                        self.ERRORS['LOCATION_NOT_FOUND'].format(pipe.ref)))
+                    None, 'LOCATION_NOT_FOUND',
+                    self.ERRORS['LOCATION_NOT_FOUND'].format(pipe.ref))
 
             # Always make a new measurement! Never update existing ones.
             measurement = models.Measurement.objects.create(
                 location=location)
+            measurement.date = pipe.inspection_date
+            measurement.record_location(pipe.geom)  # Saves
+
+            location.complete = True
+            location.save()
+
+            measurements.append(measurement)
+
+        return self._parser_result(measurements)

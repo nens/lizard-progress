@@ -38,6 +38,19 @@ from lizard_progress.util import directories
 logger = logging.getLogger(__name__)
 
 
+def is_line(geom):
+    """Decide whether geom is a line geometry (of several possible types)."""
+    if isinstance(geom, LineString):
+        # django.contrib.gis.geos.LineString
+        return True
+
+    if hasattr(geom, 'ExportToWkt') and 'LINESTRING' in geom.ExportToWkt():
+        # osgeo.ogr.Geometry linestring
+        return True
+
+    return False
+
+
 class ErrorMessage(models.Model):
     error_code = models.CharField(max_length=30)
     error_message = models.CharField(max_length=300)
@@ -424,7 +437,7 @@ class Location(models.Model):
         location can be either a Point or a LineString."""
         if self.the_geom is None:
             self.the_geom = location
-            self.is_point = not isinstance(location, LineString)
+            self.is_point = not is_line(location)
             self.save()
 
     def has_measurements(self):
@@ -745,7 +758,7 @@ class Measurement(models.Model):
 
         location can be a Point or a LineString."""
         self.the_geom = location
-        self.is_point = not isinstance(location, LineString)
+        self.is_point = not is_line(location)
         self.save()
         self.location.plan_location(location)
 

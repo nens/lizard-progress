@@ -181,7 +181,7 @@ class MetfileSpecifics(GenericSpecifics):
 
 
 class OeverfotoSpecifics(GenericSpecifics):
-    extension = '.jpg'
+    extensions = ['.jpg']
     parser = lizard_progress.parsers.oeverfoto_parser.OeverfotoParser
     linelike = False
 
@@ -231,7 +231,7 @@ class OeverfotoSpecifics(GenericSpecifics):
 
 
 class OeverkenmerkSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.oeverkenmerk_parser.OeverkenmerkParser
     linelike = True
 
@@ -246,7 +246,7 @@ class OeverkenmerkSpecifics(GenericSpecifics):
 
 
 class PeilschaalFotoSpecifics(GenericSpecifics):
-    extension = '.jpg'
+    extensions = ['.jpg']
     parser = lizard_progress.parsers.peilschaal_jpg_parser.PeilschaalJpgParser
     linelike = False
 
@@ -273,7 +273,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
 
 
 class PeilschaalMetingSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.peilschaal_csv_parser.PeilschaalCsvParser
     linelike = True
 

@@ -72,11 +72,11 @@ class Specifics(object):
         """Return the parsers that have the right extension for this
         filename.
         """
-        # Should not happen anymore
+
         parsers = [
             specifics.parser
-            for specifics in self._specifics.values()
-            if filename.lower().endswith(specifics.extension)
+            for specifics in self._specifics
+            if os.path.splitext(filename)[-1].lower() in specifics.extensions
             ]
         return parsers
 

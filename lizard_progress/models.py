@@ -30,11 +30,7 @@ from django.db import connection
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
 
-# JSONField was moved for lizard-map 4.0...
-try:
-    from jsonfield import JSONField
-except ImportError:
-    from lizard_map.models import JSONField
+from jsonfield import JSONField
 
 import lizard_progress.specifics
 from lizard_progress.util import directories

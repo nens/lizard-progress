@@ -90,6 +90,9 @@ class Organization(models.Model):
         'AvailableMeasurementType',
         through='MeasurementTypeAllowed')
 
+    class Meta:
+        ordering = ('name',)
+
     @classmethod
     def users_in_same_organization(cls, user):
         """Returns a list of user in same organization."""

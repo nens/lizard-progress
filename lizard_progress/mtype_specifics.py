@@ -286,18 +286,25 @@ class PeilschaalMetingSpecifics(GenericSpecifics):
 
 
 class LaboratoriumCsvSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.lab_csv_parser.LabCsvParser
+    linelike = True
+
+
+class RibxSpecifics(GenericSpecifics):
+    extensions = ['.ribx']
+    parser = lizard_progress.parsers.ribx_parser.RixParser
     linelike = True
 
 
 # The keys of this class are also the choices for 'implementation' of
 # an AvailableMeasurementType.
 AVAILABLE_SPECIFICS = {
-    'dwarsprofiel': MetfileSpecifics,
-    'oeverfoto': OeverfotoSpecifics,
-    'oeverkenmerk': OeverkenmerkSpecifics,
-    'foto': PeilschaalFotoSpecifics,
-    'meting': PeilschaalMetingSpecifics,
-    'laboratorium_csv': LaboratoriumCsvSpecifics
+    'dwarsprofiel': [MetfileSpecifics],
+    'oeverfoto': [OeverfotoSpecifics],
+    'oeverkenmerk': [OeverkenmerkSpecifics],
+    'foto': [PeilschaalFotoSpecifics],
+    'meting': [PeilschaalMetingSpecifics],
+    'laboratorium_csv': [LaboratoriumCsvSpecifics],
+    'ribx': [RibxSpecifics],
     }

@@ -461,7 +461,8 @@ class AvailableMeasurementType(models.Model):
         ('oeverkenmerk', 'oeverkenmerk'),
         ('foto', 'foto'),
         ('meting', 'meting'),
-        ('laboratorium_csv', 'laboratorium_csv')))
+        ('laboratorium_csv', 'laboratorium_csv'),
+        ('ribx', 'ribx')))
 
     default_icon_missing = models.CharField(max_length=50)
     default_icon_complete = models.CharField(max_length=50)

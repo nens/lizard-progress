@@ -77,7 +77,7 @@ class GenericSpecifics(object):
 
 
 class MetfileSpecifics(GenericSpecifics):
-    extension = '.met'
+    extensions = ['.met']
     parser = lizard_progress.parsers.met_parser.MetParser
     linelike = True
 

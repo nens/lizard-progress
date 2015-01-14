@@ -55,6 +55,13 @@ def is_line(geom):
     return False
 
 
+def osgeo_3d_line_to_2d_wkt(geom):
+    points = geom.GetPoints()
+    return 'LINESTRING({} {}, {} {})'.format(
+        points[0][0], points[0][1],
+        points[1][0], points[1][1])
+
+
 class ErrorMessage(models.Model):
     error_code = models.CharField(max_length=30)
     error_message = models.CharField(max_length=300)
@@ -442,6 +449,8 @@ class Location(models.Model):
     def plan_location(self, location):
         """Set our geometrical location, IF it wasn't set yet.
         location can be either a Point or a LineString."""
+        if hasattr(location, 'ExportToWkt'):
+            location = osgeo_3d_line_to_2d_wkt(location)
         if self.the_geom is None:
             self.the_geom = location
             self.is_point = not is_line(location)
@@ -451,6 +460,32 @@ class Location(models.Model):
         """Return True if there are any uploaded measurements at this
         location."""
         return self.measurement_set.count() > 0
+
+    def ribx_measurements(self):
+        """Return a dictionary with different types of measurements:
+        {
+            'ribx': [List of RIBX measurements for this location],
+            'files_missing': [Media files that we expect to be uploaded],
+            'files_uploaded': [Measurements referring to uploaded files]
+        }
+        """
+        files_expected = set()
+        files_present = set()
+
+        result = {'ribx': [], 'files_uploaded': []}
+
+        for measurement in self.measurement_set.all().order_by('-date'):
+            if measurement.data.get('filetype') == 'ribx':
+                result['ribx'].append(measurement)
+                files_expected.update(
+                    measurement.data.get('files_expected', []))
+            if measurement.data.get('filetype') == 'media':
+                files_present.add(measurement.base_filename)
+                result['files_uploaded'].append(measurement)
+
+        result['files_missing'] = list(files_expected - files_present)
+
+        return result
 
 
 class AvailableMeasurementType(models.Model):
@@ -769,6 +804,8 @@ class Measurement(models.Model):
         didn't have a point yet.
 
         location can be a Point or a LineString."""
+        if hasattr(location, 'ExportToWkt'):
+            location = osgeo_3d_line_to_2d_wkt(location)
         self.the_geom = location
         self.is_point = not is_line(location)
         self.save()
@@ -784,6 +821,10 @@ class Measurement(models.Model):
             'project_slug': activity.project.slug,
             'activity_id': activity.id,
             'filename': os.path.basename(self.filename)})
+
+    @property
+    def base_filename(self):
+        return self.filename and os.path.basename(self.filename)
 
 
 class Hydrovak(models.Model):

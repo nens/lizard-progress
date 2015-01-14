@@ -19,6 +19,7 @@ import lizard_progress.parsers.oeverkenmerk_parser
 import lizard_progress.parsers.peilschaal_jpg_parser
 import lizard_progress.parsers.peilschaal_csv_parser
 import lizard_progress.parsers.lab_csv_parser
+import lizard_progress.parsers.ribx_parser
 
 from lizard_progress.models import Measurement
 from lizard_progress.views import ScreenFigure
@@ -293,8 +294,19 @@ class LaboratoriumCsvSpecifics(GenericSpecifics):
 
 class RibxSpecifics(GenericSpecifics):
     extensions = ['.ribx']
-    parser = lizard_progress.parsers.ribx_parser.RixParser
+    parser = lizard_progress.parsers.ribx_parser.RibxParser
     linelike = True
+
+    def html_handler(self, html_default, locations,
+                     identifiers, layout_options):
+        location = locations[0]
+
+        print(location)
+
+        return html_default(
+            identifiers=identifiers,
+            template="lizard_progress/measurement_types/ribx.html",
+            extra_render_kwargs={'locations': locations})
 
 
 # The keys of this class are also the choices for 'implementation' of

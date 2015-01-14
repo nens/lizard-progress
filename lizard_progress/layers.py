@@ -60,7 +60,7 @@ def make_point_style(img):
 def make_line_style(color):
     def make_rule(color):
         rule = mapnik.Rule()
-        symbol = mapnik.LineSymbolizer(mapnik.Color(color), 4.0)
+        symbol = mapnik.LineSymbolizer(mapnik.Color(color), 2.5)
         rule.symbols.append(symbol)
         return rule
 
@@ -112,7 +112,6 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         "Return mapnik layers and styles for all measurement types."
         layers = []
         styles = {}
-        logger.debug("WHEEEE")
 
         for is_point, complete in (
                 (True, True), (True, False), (False, True), (False, False)):

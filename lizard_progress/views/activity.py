@@ -27,13 +27,6 @@ from lizard_progress import models
 from lizard_progress.util import directories
 
 
-def osgeo_3d_line_to_2d_wkt(geom):
-    points = geom.GetPoints()
-    return 'LINESTRING({} {}, {} {})'.format(
-        points[0][0], points[0][1],
-        points[1][0], points[1][1])
-
-
 class NoSuchFieldException(Exception):
     pass
 
@@ -210,7 +203,7 @@ class PlanningView(ActivityView):
             location, created = models.Location.objects.get_or_create(
                 location_code=location_code, activity=self.activity)
             location.the_geom = None
-            location.plan_location(osgeo_3d_line_to_2d_wkt(geom))
+            location.plan_location(geom)
 
         return HttpResponseRedirect(
             reverse('lizard_progress_dashboardview', kwargs={

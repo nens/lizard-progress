@@ -36,7 +36,7 @@ class RibxParser(ProgressParser):
 
         for pipe in ribx_parser.pipes():
             try:
-                location = self.activity.location_set.objects.get(
+                location = self.activity.location_set.get(
                     location_code=pipe.ref)
             except models.Location.DoesNotExist:
                 self.record_error(
@@ -47,6 +47,7 @@ class RibxParser(ProgressParser):
             measurement = models.Measurement.objects.create(
                 location=location)
             measurement.date = pipe.inspection_date
+            measurement.data = {'filetype': 'ribx'}  # As opposed to media
             measurement.record_location(pipe.geom)  # Saves
 
             location.complete = True

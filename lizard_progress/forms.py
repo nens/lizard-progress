@@ -276,6 +276,12 @@ class ShapefileForm(forms.Form):
         return cleaned_data
 
 
+class RibxForm(forms.Form):
+    """Form for uploading a RIBX(A) file."""
+    ribx = ExtFileField(
+        exts=[".ribx", ".ribxa", ".xml"], label="RIBX(A) bestand")
+
+
 class ConnectActivityForm(forms.Form):
     def __init__(self, activity, *args, **kwargs):
         super(ConnectActivityForm, self).__init__(*args, **kwargs)

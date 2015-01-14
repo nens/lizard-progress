@@ -48,6 +48,10 @@ def is_line(geom):
         # osgeo.ogr.Geometry linestring
         return True
 
+    if isinstance(geom, basestring) and 'LINESTRING' in geom:
+        # A WKT string
+        return True
+
     return False
 
 
@@ -515,6 +519,10 @@ class AvailableMeasurementType(models.Model):
         slug but can have the slug of the reference implementation as their
         implementation."""
         return self.implementation or self.slug
+
+    @property
+    def planning_uses_ribx(self):
+        return self.implementation_slug == 'ribx'
 
     class Meta:
         ordering = ('name',)

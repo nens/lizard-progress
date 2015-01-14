@@ -413,6 +413,10 @@ class Location(models.Model):
 
     location_code = models.CharField(max_length=50, db_index=True)
 
+    # Often unused, but some types of project can plan when a
+    # location will be planned.
+    planned_date = models.DateTimeField(null=True, blank=True)
+
     # Geometry can be a point OR a line
     the_geom = models.GeometryField(null=True, srid=SRID)
     is_point = models.BooleanField(default=True)

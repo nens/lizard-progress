@@ -292,7 +292,7 @@ class LaboratoriumCsvSpecifics(GenericSpecifics):
     linelike = True
 
 
-class RibxSpecifics(GenericSpecifics):
+class RibxReinigingRioolSpecifics(GenericSpecifics):
     extensions = ['.ribx']
     parser = lizard_progress.parsers.ribx_parser.RibxParser
     linelike = True
@@ -309,6 +309,14 @@ class RibxSpecifics(GenericSpecifics):
             extra_render_kwargs={'locations': locations})
 
 
+class RibxReinigingKolkenSpecifics(RibxReinigingRioolSpecifics):
+    pass
+
+
+class RibxReinigingInspectieRioolSpecifics(RibxReinigingRioolSpecifics):
+    pass
+
+
 # The keys of this class are also the choices for 'implementation' of
 # an AvailableMeasurementType.
 AVAILABLE_SPECIFICS = {
@@ -318,5 +326,7 @@ AVAILABLE_SPECIFICS = {
     'foto': [PeilschaalFotoSpecifics],
     'meting': [PeilschaalMetingSpecifics],
     'laboratorium_csv': [LaboratoriumCsvSpecifics],
-    'ribx': [RibxSpecifics],
+    'ribx_reiniging_riool': [RibxReinigingRioolSpecifics],
+    'ribx_reiniging_kolken': [RibxReinigingKolkenSpecifics],
+    'ribx_reiniging_inspectie_riool': [RibxReinigingInspectieRioolSpecifics],
     }

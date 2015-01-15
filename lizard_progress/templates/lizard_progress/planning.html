@@ -23,7 +23,7 @@
 {% if view.planning_uses_ribx %}
     <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
       {{ view.form.as_p }}
-      <input type="submit" value="Shapefile versturen" class="btn btn-primary">
+      <input type="submit" value="Vooraf ingevuld RIBX(A) versturen" class="btn btn-primary">
       {% csrf_token %}
     </form>
 {% else %}

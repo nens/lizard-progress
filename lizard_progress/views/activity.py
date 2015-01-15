@@ -183,31 +183,34 @@ class PlanningView(ActivityView):
         ribxpath = self.__save_uploaded_ribx(request)
 
         locations_from_ribx = dict(
-            self.__locations_from_ribx(ribxpath))
-        existing_measurements = list(
-            self.__existing_measurements())
+            self.__locations_from_ribx(ribxpath, request))
+        if locations_from_ribx:
+            existing_measurements = list(
+                self.__existing_measurements())
 
-        locations_with_measurements = set(
-            existing_measurement.location.location_code
-            for existing_measurement in existing_measurements)
+            locations_with_measurements = set(
+                existing_measurement.location.location_code
+                for existing_measurement in existing_measurements)
 
-        locations_to_keep = (set(locations_from_ribx) |
-                             locations_with_measurements)
+            locations_to_keep = (set(locations_from_ribx) |
+                                 locations_with_measurements)
 
-        # Remove not needed scheduled measurements
-        models.Location.objects.filter(
-            activity=self.activity).exclude(
-            location_code__in=locations_to_keep).delete()
+            # Remove not needed scheduled measurements
+            models.Location.objects.filter(
+                activity=self.activity).exclude(
+                location_code__in=locations_to_keep).delete()
 
-        for location_code, geom in locations_from_ribx.iteritems():
-            location, created = models.Location.objects.get_or_create(
-                location_code=location_code, activity=self.activity)
-            location.the_geom = None
-            location.plan_location(geom)
+            for location_code, geom in locations_from_ribx.iteritems():
+                location, created = models.Location.objects.get_or_create(
+                    location_code=location_code, activity=self.activity)
+                location.the_geom = None
+                location.plan_location(geom)
 
         return HttpResponseRedirect(
-            reverse('lizard_progress_dashboardview', kwargs={
-                    'project_slug': self.project.slug}))
+            reverse('lizard_progress_planningview', kwargs={
+                'project_slug': self.project.slug,
+                'activity_id': self.activity_id
+            }))
 
     def post_shapefile(self, request, *args, **kwargs):
         shapefilepath = self.__save_uploaded_files(request)
@@ -318,14 +321,31 @@ class PlanningView(ActivityView):
 
                 yield (location_code, geometry)
 
-    def __locations_from_ribx(self, ribxpath):
+    def __locations_from_ribx(self, ribxpath, request):
         """Get pipe locations from ribxpath and generate them as
         (piperef, line) tuples."""
 
-        parser = parsers.RibxParser()
-        parser.parse(ribxpath)
+        ribx, errors = parsers.parse(ribxpath)
 
-        for pipe in parser.pipes():
+        if errors:
+            messages.add_message(
+                request, messages.ERROR,
+                'Er is niets opgeslagen vanwege fouten in het bestand:')
+
+            msgs = [
+                'Fout op regel {}: {}'.format(error['line'], error['message'])
+                for error in errors]
+
+            if len(msgs) > 20:
+                msgs = msgs[:20] + [
+                    'En nog {} andere fouten.'.format(len(msgs) - 20)]
+
+            for message in msgs:
+                messages.add_message(request, messages.ERROR, message)
+
+            return
+
+        for pipe in ribx.pipes:
             yield (pipe.ref, pipe.geom)
 
     def __existing_measurements(self):

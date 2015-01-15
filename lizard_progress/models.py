@@ -508,7 +508,10 @@ class AvailableMeasurementType(models.Model):
         ('foto', 'foto'),
         ('meting', 'meting'),
         ('laboratorium_csv', 'laboratorium_csv'),
-        ('ribx', 'ribx')))
+        ('ribx_reiniging_riool', 'ribx_reiniging_riool'),
+        ('ribx_reiniging_kolken', 'ribx_reiniging_kolken'),
+        ('ribx_reiniging_inspectie_riool', 'ribx_reiniging_inspectie_riool'),
+    ))
 
     default_icon_missing = models.CharField(max_length=50)
     default_icon_complete = models.CharField(max_length=50)

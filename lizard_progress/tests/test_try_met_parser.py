@@ -4,7 +4,6 @@ returns the expected errors."""
 
 from django.test import TransactionTestCase
 
-import importlib
 import mock
 
 from pkg_resources import resource_filename
@@ -14,15 +13,6 @@ from nose.plugins.attrib import attr
 from lizard_progress import models
 from lizard_progress import process_uploaded_file
 from lizard_progress.tests import test_models
-
-migration_0007 = importlib.import_module(
-    'lizard_progress.migrations.0007_add_error_messages')
-migration_0011 = importlib.import_module(
-    'lizard_progress.migrations.0011_add_more_error_codes')
-migration_0016 = importlib.import_module(
-    'lizard_progress.migrations.0016_add_new_error_codes')
-migration_0019 = importlib.import_module(
-    'lizard_progress.migrations.0019_add_even_more_error_messages')
 
 
 def create_org_and_user(orgname, username, is_project_owner):
@@ -52,14 +42,7 @@ def dwarsprofiel_available_mtype():
 class TestOrganization(TransactionTestCase):
     """No actual tests in this, just helper functions. Subclasses
     below for Waternet, etc."""
-    def setUp(self):
-        """Call this from your own setUp() functions."""
-        # Insanely, this is necessary. See
-        # http://stackoverflow.com/questions/6584671/django-1-3-and-south-migrations
-        migration_0007.add_more_error_codes(models.ErrorMessage)
-        migration_0011.add_more_error_codes(models.ErrorMessage)
-        migration_0016.add_more_error_codes(models.ErrorMessage)
-        migration_0019.add_more_error_codes(models.ErrorMessage)
+    fixtures = ['errormessages.json']
 
     def get_errors(self, uploaded_file):
         return list(uploaded_file.uploadedfileerror_set.all())

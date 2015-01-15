@@ -4,37 +4,50 @@
 <h2>Planning {{ view.activity }}</h2>
 
 {% with mtype=view.activity.measurement_type %}
-  <p>Het metingtype van deze werkzaamheid is <strong>{{ mtype }}</strong>. Bij dit metingtype is het
-    {% if mtype.needs_predefined_locations %}
-      noodzakelijk
-    {% elif mtype.likes_predefined_locations %}
-      onder <a href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">Configuratie</a> in te stellen of het nodig is
-    {% else %}
-      onmogelijk
-    {% endif %} om vooraf locaties te plannen.
- </p>
+  {% if view.planning_uses_ribx %}
+    <p>Het metingtype van deze werkzaamheid is <strong>{{ mtype }}</strong>. Bij dit metingtype worden te inspecteren strengen gepland door het uploaden van een RIBX(A) bestand.
+    </p>
+  {% else %}
+    <p>Het metingtype van deze werkzaamheid is <strong>{{ mtype }}</strong>. Bij dit metingtype is het
+      {% if mtype.needs_predefined_locations %}
+        noodzakelijk
+      {% elif mtype.likes_predefined_locations %}
+        onder <a href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">Configuratie</a> in te stellen of het nodig is
+      {% else %}
+        onmogelijk
+      {% endif %} om vooraf locaties te plannen.
+     </p>
+   {% endif %}
 {% endwith %}
 
-{% if view.activity.needs_predefined_locations %}
-  <p>Metingen kunnen op twee manieren gepland worden:</p>
-  <ol>
-    <li>Door het uploaden van een punten-shapefile. Eerder geplande metingen worden verwijderd, tenzij er al een meting ge&uuml;pload is. Al ge&uuml;ploade data blijft altijd bestaan.</li>
-    <li>Door de werkzaamheid aan een andere werkzaamheid te koppelen. De locaties uit de andere werkzaamheid worden gekopieerd naar deze, voor zover de locatiecodes nog niet gebruikt worden in deze werkzaamheid. Als een onbekende code ge&uuml;pload wordt, wordt ook in de andere werkzaamheid gekeken of de code daar bekend is, en zo ja dan wordt deze locatie overgenomen.</li>
-  </ol>
-
-  <h3>Planning door middel van een shapefile</h3>
-  <p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder <a href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id  %}">Configuratie</a>.</p>
-
-  <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
-    {{ view.form.as_p }}
-    <input type="submit" value="Shapefile versturen" class="btn btn-primary">
-    {% csrf_token %}
-  </form>
-
-  <h3>Planning door koppelen met een andere werkzaamheid</h3>
-
-  <p>Koppelen kan op <a href="{% url "lizard_progress_connect_activity" project_slug=view.project_slug activity_id=view.activity_id %}">deze pagina</a>.</p>
+{% if view.planning_uses_ribx %}
+    <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
+      {{ view.form.as_p }}
+      <input type="submit" value="Shapefile versturen" class="btn btn-primary">
+      {% csrf_token %}
+    </form>
 {% else %}
-  <p>Voor deze werkzaamheid kunnen nieuwe locaties momenteel vrij worden ge&uuml;pload, en plannen is dus niet mogelijk.</p>
+  {% if view.activity.needs_predefined_locations %}
+    <p>Metingen kunnen op twee manieren gepland worden:</p>
+    <ol>
+      <li>Door het uploaden van een punten-shapefile. Eerder geplande metingen worden verwijderd, tenzij er al een meting ge&uuml;pload is. Al ge&uuml;ploade data blijft altijd bestaan.</li>
+      <li>Door de werkzaamheid aan een andere werkzaamheid te koppelen. De locaties uit de andere werkzaamheid worden gekopieerd naar deze, voor zover de locatiecodes nog niet gebruikt worden in deze werkzaamheid. Als een onbekende code ge&uuml;pload wordt, wordt ook in de andere werkzaamheid gekeken of de code daar bekend is, en zo ja dan wordt deze locatie overgenomen.</li>
+    </ol>
+
+    <h3>Planning door middel van een shapefile</h3>
+    <p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder <a href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id  %}">Configuratie</a>.</p>
+
+    <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
+      {{ view.form.as_p }}
+      <input type="submit" value="Shapefile versturen" class="btn btn-primary">
+      {% csrf_token %}
+    </form>
+
+    <h3>Planning door koppelen met een andere werkzaamheid</h3>
+
+    <p>Koppelen kan op <a href="{% url "lizard_progress_connect_activity" project_slug=view.project_slug activity_id=view.activity_id %}">deze pagina</a>.</p>
+  {% else %}
+    <p>Voor deze werkzaamheid kunnen nieuwe locaties momenteel vrij worden ge&uuml;pload, en plannen is dus niet mogelijk.</p>
+  {% endif %}
 {% endif %}
 {% endblock %}

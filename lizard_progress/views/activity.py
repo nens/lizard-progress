@@ -13,6 +13,8 @@ from django.core.urlresolvers import reverse
 
 import osgeo.ogr
 
+from ribxlib import parsers
+
 from lizard_ui.layout import Action
 
 from lizard_progress.views.views import KickOutMixin
@@ -162,16 +164,52 @@ class PlanningView(ActivityView):
 
     def get(self, request, *args, **kwargs):
         if not hasattr(self, 'form'):
-            self.form = forms.ShapefileForm()
+            self.form = self.get_form_class()()
 
         return super(PlanningView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        self.form = forms.ShapefileForm(request.POST, request.FILES)
+        self.form = self.get_form_class()(request.POST, request.FILES)
 
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
 
+        if self.planning_uses_ribx:
+            return self.post_ribx(request, *args, **kwargs)
+        else:
+            return self.post_shapefile(request, *args, **kwargs)
+
+    def post_ribx(self, request, *args, **kwargs):
+        ribxpath = self.__save_uploaded_ribx(request)
+
+        locations_from_ribx = dict(
+            self.__locations_from_ribx(ribxpath))
+        existing_measurements = list(
+            self.__existing_measurements())
+
+        locations_with_measurements = set(
+            existing_measurement.location.location_code
+            for existing_measurement in existing_measurements)
+
+        locations_to_keep = (set(locations_from_ribx) |
+                             locations_with_measurements)
+
+        # Remove not needed scheduled measurements
+        models.Location.objects.filter(
+            activity=self.activity).exclude(
+            location_code__in=locations_to_keep).delete()
+
+        for location_code, geom in locations_from_ribx.iteritems():
+            location, created = models.Location.objects.get_or_create(
+                location_code=location_code, activity=self.activity)
+            location.the_geom = None
+            location.plan_location(geom)
+
+        return HttpResponseRedirect(
+            reverse('lizard_progress_dashboardview', kwargs={
+                    'project_slug': self.project.slug}))
+
+    def post_shapefile(self, request, *args, **kwargs):
         shapefilepath = self.__save_uploaded_files(request)
 
         try:
@@ -229,11 +267,31 @@ class PlanningView(ActivityView):
 
         return shapefilepath + '.shp'
 
+    def __save_uploaded_ribx(self, request):
+        ribxpath = directories.location_shapefile_path(
+            self.activity) + '.ribx'
+
+        with open(ribxpath, 'wb+') as dest:
+            for chunk in request.FILES['ribx'].chunks():
+                dest.write(chunk)
+
+        return ribxpath
+
     @property
     def location_id_field(self):
         return (
             configuration.get(self.activity, 'location_id_field')
             .strip().encode('utf8'))
+
+    @property
+    def planning_uses_ribx(self):
+        return self.activity.measurement_type.planning_uses_ribx
+
+    def get_form_class(self):
+        if self.planning_uses_ribx:
+            return forms.RibxForm
+        else:
+            return forms.ShapefileForm
 
     def __locations_from_shapefile(self, shapefilepath):
         """Get locations from shapefile and generate them as
@@ -259,6 +317,16 @@ class PlanningView(ActivityView):
                 geometry = feature.GetGeometryRef().ExportToWkt()
 
                 yield (location_code, geometry)
+
+    def __locations_from_ribx(self, ribxpath):
+        """Get pipe locations from ribxpath and generate them as
+        (piperef, line) tuples."""
+
+        parser = parsers.RibxParser()
+        parser.parse(ribxpath)
+
+        for pipe in parser.pipes():
+            yield (pipe.ref, pipe.geom)
 
     def __existing_measurements(self):
         return models.Measurement.objects.filter(

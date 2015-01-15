@@ -30,16 +30,36 @@ from django.db import connection
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
 
-# JSONField was moved for lizard-map 4.0...
-try:
-    from jsonfield import JSONField
-except ImportError:
-    from lizard_map.models import JSONField
+from jsonfield import JSONField
 
 import lizard_progress.specifics
 from lizard_progress.util import directories
 
 logger = logging.getLogger(__name__)
+
+
+def is_line(geom):
+    """Decide whether geom is a line geometry (of several possible types)."""
+    if isinstance(geom, LineString):
+        # django.contrib.gis.geos.LineString
+        return True
+
+    if hasattr(geom, 'ExportToWkt') and 'LINESTRING' in geom.ExportToWkt():
+        # osgeo.ogr.Geometry linestring
+        return True
+
+    if isinstance(geom, basestring) and 'LINESTRING' in geom:
+        # A WKT string
+        return True
+
+    return False
+
+
+def osgeo_3d_line_to_2d_wkt(geom):
+    points = geom.GetPoints()
+    return 'LINESTRING({} {}, {} {})'.format(
+        points[0][0], points[0][1],
+        points[1][0], points[1][1])
 
 
 class ErrorMessage(models.Model):
@@ -80,6 +100,9 @@ class Organization(models.Model):
     mtypes_allowed = models.ManyToManyField(
         'AvailableMeasurementType',
         through='MeasurementTypeAllowed')
+
+    class Meta:
+        ordering = ('name',)
 
     @classmethod
     def users_in_same_organization(cls, user):
@@ -161,7 +184,7 @@ class UserRole(models.Model):
                           # accounts belonging to this organization.
 
     # Rows according to those roles are entered into the database by
-    # means of a data migration.
+    # means of a fixture.
     code = models.CharField(max_length=10)
     description = models.CharField(max_length=100)
 
@@ -390,7 +413,14 @@ class Location(models.Model):
 
     location_code = models.CharField(max_length=50, db_index=True)
 
-    the_geom = models.PointField(null=True, srid=SRID)
+    # Often unused, but some types of project can plan when a
+    # location will be planned.
+    planned_date = models.DateTimeField(null=True, blank=True)
+
+    # Geometry can be a point OR a line
+    the_geom = models.GeometryField(null=True, srid=SRID)
+    is_point = models.BooleanField(default=True)
+
     # Any extra known information about the location
     information = JSONField(null=True, blank=True)
 
@@ -420,16 +450,46 @@ class Location(models.Model):
     def __unicode__(self):
         return u"Location with code '%s'" % (self.location_code,)
 
-    def plan_location(self, point):
-        """Set our geometrical location, IF it wasn't set yet."""
+    def plan_location(self, location):
+        """Set our geometrical location, IF it wasn't set yet.
+        location can be either a Point or a LineString."""
+        if hasattr(location, 'ExportToWkt'):
+            location = osgeo_3d_line_to_2d_wkt(location)
         if self.the_geom is None:
-            self.the_geom = point
+            self.the_geom = location
+            self.is_point = not is_line(location)
             self.save()
 
     def has_measurements(self):
         """Return True if there are any uploaded measurements at this
         location."""
         return self.measurement_set.count() > 0
+
+    def ribx_measurements(self):
+        """Return a dictionary with different types of measurements:
+        {
+            'ribx': [List of RIBX measurements for this location],
+            'files_missing': [Media files that we expect to be uploaded],
+            'files_uploaded': [Measurements referring to uploaded files]
+        }
+        """
+        files_expected = set()
+        files_present = set()
+
+        result = {'ribx': [], 'files_uploaded': []}
+
+        for measurement in self.measurement_set.all().order_by('-date'):
+            if measurement.data.get('filetype') == 'ribx':
+                result['ribx'].append(measurement)
+                files_expected.update(
+                    measurement.data.get('files_expected', []))
+            if measurement.data.get('filetype') == 'media':
+                files_present.add(measurement.base_filename)
+                result['files_uploaded'].append(measurement)
+
+        result['files_missing'] = list(files_expected - files_present)
+
+        return result
 
 
 class AvailableMeasurementType(models.Model):
@@ -447,7 +507,8 @@ class AvailableMeasurementType(models.Model):
         ('oeverkenmerk', 'oeverkenmerk'),
         ('foto', 'foto'),
         ('meting', 'meting'),
-        ('laboratorium_csv', 'laboratorium_csv')))
+        ('laboratorium_csv', 'laboratorium_csv'),
+        ('ribx', 'ribx')))
 
     default_icon_missing = models.CharField(max_length=50)
     default_icon_complete = models.CharField(max_length=50)
@@ -480,6 +541,15 @@ class AvailableMeasurementType(models.Model):
     # measurement types.
     description = models.TextField(default='', blank=True)
 
+    # Sewerage data can be a mix of Point and Line locations, other types
+    # are only point data. If lines can be present, change requests are
+    # disabled.
+    has_only_point_locations = models.BooleanField(default=True)
+
+    # For some measurement types, we keep all versions of uploaded data that
+    # have been uploaded. For most, we only keep that last uploaded version.
+    keep_updated_measurements = models.BooleanField(default=False)
+
     @property
     def implementation_slug(self):
         """The implementation details are tied to the slug of the first
@@ -488,6 +558,10 @@ class AvailableMeasurementType(models.Model):
         slug but can have the slug of the reference implementation as their
         implementation."""
         return self.implementation or self.slug
+
+    @property
+    def planning_uses_ribx(self):
+        return self.implementation_slug == 'ribx'
 
     class Meta:
         ordering = ('name',)
@@ -715,7 +789,8 @@ class Measurement(models.Model):
     date = models.DateTimeField(null=True, blank=True)
 
     # Any available geometry data in the uploaded measurement.
-    the_geom = models.PointField(null=True, blank=True, srid=SRID)
+    the_geom = models.GeometryField(null=True, blank=True, srid=SRID)
+    is_point = models.BooleanField(default=True)
 
     # This is the filename of the uploaded file after it was moved
     # into lizard-progress' archive. Set by process_uploaded_file.
@@ -727,13 +802,18 @@ class Measurement(models.Model):
 
     objects = models.GeoManager()
 
-    def record_location(self, point):
+    def record_location(self, location):
         """Save where this measurement was taken. THEN, plan that
         location in our Location object (only sets it if the location
-        didn't have a point yet."""
-        self.the_geom = point
+        didn't have a point yet.
+
+        location can be a Point or a LineString."""
+        if hasattr(location, 'ExportToWkt'):
+            location = osgeo_3d_line_to_2d_wkt(location)
+        self.the_geom = location
+        self.is_point = not is_line(location)
         self.save()
-        self.location.plan_location(point)
+        self.location.plan_location(location)
 
     @property
     def url(self):
@@ -745,6 +825,10 @@ class Measurement(models.Model):
             'project_slug': activity.project.slug,
             'activity_id': activity.id,
             'filename': os.path.basename(self.filename)})
+
+    @property
+    def base_filename(self):
+        return self.filename and os.path.basename(self.filename)
 
 
 class Hydrovak(models.Model):

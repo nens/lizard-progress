@@ -1,0 +1,13 @@
+{% with location=locations.0 %}
+  <h2>Rioleringinspectie {{ location.location_code }}</h2>
+  {% with ribx_measurements=location.ribx_measurements %}
+    {% if ribx_measurements.ribx %}
+      <p>RIBX(A) bestanden:</p>
+      <ul>
+        {% for ribx in ribx_measurements.ribx %}
+          <li>{{ ribx.base_filename }} ({{ ribx.date }})</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+{% endwith %}

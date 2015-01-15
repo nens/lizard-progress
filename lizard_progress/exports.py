@@ -302,7 +302,8 @@ def export_as_shapefile(export_run):
 
     locations = list(models.Location.objects.filter(
         activity=export_run.activity,
-        the_geom__isnull=False))
+        the_geom__isnull=False,
+        is_point=True))
 
     if not locations:
         # Can't generate an empty shapefile.

@@ -19,6 +19,7 @@ import lizard_progress.parsers.oeverkenmerk_parser
 import lizard_progress.parsers.peilschaal_jpg_parser
 import lizard_progress.parsers.peilschaal_csv_parser
 import lizard_progress.parsers.lab_csv_parser
+import lizard_progress.parsers.ribx_parser
 
 from lizard_progress.models import Measurement
 from lizard_progress.views import ScreenFigure
@@ -77,7 +78,7 @@ class GenericSpecifics(object):
 
 
 class MetfileSpecifics(GenericSpecifics):
-    extension = '.met'
+    extensions = ['.met']
     parser = lizard_progress.parsers.met_parser.MetParser
     linelike = True
 
@@ -181,7 +182,7 @@ class MetfileSpecifics(GenericSpecifics):
 
 
 class OeverfotoSpecifics(GenericSpecifics):
-    extension = '.jpg'
+    extensions = ['.jpg']
     parser = lizard_progress.parsers.oeverfoto_parser.OeverfotoParser
     linelike = False
 
@@ -231,7 +232,7 @@ class OeverfotoSpecifics(GenericSpecifics):
 
 
 class OeverkenmerkSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.oeverkenmerk_parser.OeverkenmerkParser
     linelike = True
 
@@ -246,7 +247,7 @@ class OeverkenmerkSpecifics(GenericSpecifics):
 
 
 class PeilschaalFotoSpecifics(GenericSpecifics):
-    extension = '.jpg'
+    extensions = ['.jpg']
     parser = lizard_progress.parsers.peilschaal_jpg_parser.PeilschaalJpgParser
     linelike = False
 
@@ -273,7 +274,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
 
 
 class PeilschaalMetingSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.peilschaal_csv_parser.PeilschaalCsvParser
     linelike = True
 
@@ -286,18 +287,36 @@ class PeilschaalMetingSpecifics(GenericSpecifics):
 
 
 class LaboratoriumCsvSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.lab_csv_parser.LabCsvParser
     linelike = True
+
+
+class RibxSpecifics(GenericSpecifics):
+    extensions = ['.ribx']
+    parser = lizard_progress.parsers.ribx_parser.RibxParser
+    linelike = True
+
+    def html_handler(self, html_default, locations,
+                     identifiers, layout_options):
+        location = locations[0]
+
+        print(location)
+
+        return html_default(
+            identifiers=identifiers,
+            template="lizard_progress/measurement_types/ribx.html",
+            extra_render_kwargs={'locations': locations})
 
 
 # The keys of this class are also the choices for 'implementation' of
 # an AvailableMeasurementType.
 AVAILABLE_SPECIFICS = {
-    'dwarsprofiel': MetfileSpecifics,
-    'oeverfoto': OeverfotoSpecifics,
-    'oeverkenmerk': OeverkenmerkSpecifics,
-    'foto': PeilschaalFotoSpecifics,
-    'meting': PeilschaalMetingSpecifics,
-    'laboratorium_csv': LaboratoriumCsvSpecifics
+    'dwarsprofiel': [MetfileSpecifics],
+    'oeverfoto': [OeverfotoSpecifics],
+    'oeverkenmerk': [OeverkenmerkSpecifics],
+    'foto': [PeilschaalFotoSpecifics],
+    'meting': [PeilschaalMetingSpecifics],
+    'laboratorium_csv': [LaboratoriumCsvSpecifics],
+    'ribx': [RibxSpecifics],
     }

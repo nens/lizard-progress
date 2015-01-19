@@ -564,7 +564,7 @@ class AvailableMeasurementType(models.Model):
 
     @property
     def planning_uses_ribx(self):
-        return self.implementation_slug == 'ribx'
+        return 'ribx' in self.implementation_slug
 
     class Meta:
         ordering = ('name',)

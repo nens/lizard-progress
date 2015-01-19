@@ -62,6 +62,11 @@ def osgeo_3d_line_to_2d_wkt(geom):
         points[1][0], points[1][1])
 
 
+def osgeo_3d_point_to_2d_wkt(geom):
+    point = geom.GetPoint()
+    return 'POINT({} {})'.format(point[0], point[1])
+
+
 class ErrorMessage(models.Model):
     error_code = models.CharField(max_length=30)
     error_message = models.CharField(max_length=300)
@@ -408,10 +413,26 @@ class Project(models.Model):
 
 
 class Location(models.Model):
+    LOCATION_TYPE_POINT = 'point'
+    LOCATION_TYPE_PIPE = 'pipe'
+    LOCATION_TYPE_MANHOLE = 'manhole'
+    LOCATION_TYPE_DRAIN = 'drain'
+
+    LOCATION_TYPE_CHOICES = (
+        (LOCATION_TYPE_POINT, ) * 2,
+        (LOCATION_TYPE_PIPE, ) * 2,
+        (LOCATION_TYPE_MANHOLE, ) * 2,
+        (LOCATION_TYPE_DRAIN, ) * 2,
+    )
+
     # A location / scheduled measurement in an activity
     activity = models.ForeignKey('Activity', null=True)
 
     location_code = models.CharField(max_length=50, db_index=True)
+
+    location_type = models.CharField(
+        max_length=10, default=LOCATION_TYPE_POINT, null=False,
+        blank=False, choices=LOCATION_TYPE_CHOICES)
 
     # Often unused, but some types of project can plan when a
     # location will be planned.
@@ -454,7 +475,11 @@ class Location(models.Model):
         """Set our geometrical location, IF it wasn't set yet.
         location can be either a Point or a LineString."""
         if hasattr(location, 'ExportToWkt'):
-            location = osgeo_3d_line_to_2d_wkt(location)
+            if is_line(location):
+                location = osgeo_3d_line_to_2d_wkt(location)
+            else:
+                location = osgeo_3d_point_to_2d_wkt(location)
+
         if self.the_geom is None:
             self.the_geom = location
             self.is_point = not is_line(location)

@@ -200,9 +200,14 @@ class PlanningView(ActivityView):
                 activity=self.activity).exclude(
                 location_code__in=locations_to_keep).delete()
 
-            for location_code, geom in locations_from_ribx.iteritems():
+            for location_code, (geom, loctype) in (
+                    locations_from_ribx.iteritems()):
                 location, created = models.Location.objects.get_or_create(
-                    location_code=location_code, activity=self.activity)
+                    location_code=location_code,
+                    activity=self.activity, defaults=dict(
+                        location_type=loctype,
+                        is_point=loctype != models.Location.LOCATION_TYPE_PIPE
+                    ))
                 location.the_geom = None
                 location.plan_location(geom)
 
@@ -327,8 +332,10 @@ class PlanningView(ActivityView):
                 yield (location_code, geometry)
 
     def __locations_from_ribx(self, ribxpath, request):
-        """Get pipe locations from ribxpath and generate them as
-        (piperef, line) tuples."""
+        """Get pipe, manhole, drain locations from ribxpath and generate them
+        as (piperef, (geom, location_type)) tuples.
+
+        """
 
         ribx, errors = parsers.parse(
             ribxpath, parsers.Mode.PREINSPECTION)
@@ -351,8 +358,21 @@ class PlanningView(ActivityView):
 
             return
 
+        messages.add_message(
+            request, messages.INFO,
+            'Bestand OK, {} pipes {} manholes {} drains'
+            .format(len(ribx.pipes), len(ribx.manholes), len(ribx.drains)))
+
         for pipe in ribx.pipes:
-            yield (pipe.ref, pipe.geom)
+            yield (pipe.ref, (pipe.geom, models.Location.LOCATION_TYPE_PIPE))
+
+        for manhole in ribx.manholes:
+            yield (manhole.ref,
+                   (manhole.geom, models.Location.LOCATION_TYPE_MANHOLE))
+
+        for drain in ribx.drains:
+            yield (drain.ref,
+                   (drain.geom, models.Location.LOCATION_TYPE_DRAIN))
 
     def __existing_measurements(self):
         return models.Measurement.objects.filter(

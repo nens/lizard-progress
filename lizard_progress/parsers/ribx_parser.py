@@ -29,12 +29,17 @@ class RibxParser(ProgressParser):
         if isinstance(self.file_object, ImageFile):
             return UnSuccessfulParserResult()
 
-        ribx_parser = parsers.RibxParser()
-        ribx_parser.parse(self.file_object)
+        ribx, errors = parsers.parse(
+            self.file_object, parsers.Mode.INSPECTION)
+
+        if errors:
+            for error in errors:
+                self.record_error(error['line'], None, error['message'])
+            return self._parser_result([])
 
         measurements = []
 
-        for pipe in ribx_parser.pipes():
+        for pipe in ribx.pipes:
             try:
                 location = self.activity.location_set.get(
                     location_code=pipe.ref)

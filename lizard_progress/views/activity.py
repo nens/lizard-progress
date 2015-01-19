@@ -206,11 +206,16 @@ class PlanningView(ActivityView):
                 location.the_geom = None
                 location.plan_location(geom)
 
-        return HttpResponseRedirect(
-            reverse('lizard_progress_planningview', kwargs={
-                'project_slug': self.project.slug,
-                'activity_id': self.activity_id
-            }))
+            return HttpResponseRedirect(
+                reverse('lizard_progress_dashboardview', kwargs={
+                    'project_slug': self.project.slug}))
+
+        else:
+            return HttpResponseRedirect(
+                reverse('lizard_progress_planningview', kwargs={
+                    'project_slug': self.project.slug,
+                    'activity_id': self.activity_id
+                }))
 
     def post_shapefile(self, request, *args, **kwargs):
         shapefilepath = self.__save_uploaded_files(request)
@@ -325,7 +330,8 @@ class PlanningView(ActivityView):
         """Get pipe locations from ribxpath and generate them as
         (piperef, line) tuples."""
 
-        ribx, errors = parsers.parse(ribxpath)
+        ribx, errors = parsers.parse(
+            ribxpath, parsers.Mode.PREINSPECTION)
 
         if errors:
             messages.add_message(

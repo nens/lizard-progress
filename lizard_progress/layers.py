@@ -174,8 +174,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                 distance(pt).order_by('distance')):
 
             results = [{
-                'name': '%s %s' % (location.location_code,
-                                   location.activity_id),
+                'name': '%s %s' % (location.activity, location.location_code),
                 'distance': location.distance.m,
                 'workspace_item': self.workspace_item,
                 'identifier': {

@@ -75,7 +75,7 @@
   {% endif %}
 
   {% if view.exports or view.csv %}
-    <h3>Resultaten</h3>
+    <h3>Exports</h3>
 
     {% if view.exports %}
       <table class="table table-bordered progressbase">
@@ -96,6 +96,9 @@
               <td>
                 {% if export_run.exporttype == "allfiles" %}ZIP bestand
                 {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties
+                {% elif export_run.exporttype == "pipeshape" %}Shapefile met strengen
+                {% elif export_run.exporttype == "drainshape" %}Shapefile met kolken
+                {% elif export_run.exporttype == "manholeshape" %}Shapefile met putten
                 {% elif export_run.exporttype == "met" %}MET bestand
                 {% elif export_run.exporttype == "dxf" %}Zipped DXF
                 {% elif export_run.exporttype == "csv" %}Zipped CSV

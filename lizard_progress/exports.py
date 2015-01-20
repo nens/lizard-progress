@@ -64,7 +64,13 @@ def start_run(export_run_id, user):
             elif export_run.exporttype == "csv":
                 export_as_csv(export_run)
             elif export_run.exporttype == "pointshape":
-                export_as_shapefile(export_run)
+                export_as_shapefile(export_run, 'point')
+            elif export_run.exporttype == "drainshape":
+                export_as_shapefile(export_run, 'drain')
+            elif export_run.exporttype == "manholeshape":
+                export_as_shapefile(export_run, 'manhole')
+            elif export_run.exporttype == "pipeshape":
+                export_as_shapefile(export_run, 'pipe')
             elif export_run.exporttype == "lizard":
                 export_to_lizard(export_run)
             else:
@@ -297,18 +303,28 @@ def export_to_lizard(export_run):
     return
 
 
-def export_as_shapefile(export_run):
+def export_as_shapefile(export_run, location_type):
     """Use pyshp to generate a shapefile."""
 
     locations = list(models.Location.objects.filter(
         activity=export_run.activity,
         the_geom__isnull=False,
-        is_point=True))
+        location_type=location_type))
 
     if not locations:
         # Can't generate an empty shapefile.
         export_run.fail("Er zijn 0 locaties, kan geen shapefile genereren.")
         return
+
+    if location_type == 'point':
+        fieldname = configuration.get(
+            export_run.activity.project, 'location_id_field'
+        ).strip().encode('utf8')
+    else:
+        fieldname = b'Ref'
+
+    is_point = locations[0].is_point
+    add_planning = export_run.activity.specifics().allow_planning_dates
 
     temp_dir = tempfile.mkdtemp()
     filename = export_run.export_filename(extension="")[:-1]  # Remove '.'
@@ -316,23 +332,49 @@ def export_as_shapefile(export_run):
     zipfile_path = export_run.export_filename(extension="zip")
 
     filename = os.path.basename(zipfile_path)[:-4]  # Remove '.zip'
-    shape_filepath = os.path.join(temp_dir, filename)
 
+    if is_point:
+        export_locations_as_points(
+            export_run, temp_dir, filename, zipfile_path, locations, fieldname,
+            add_planning)
+    else:
+        export_locations_as_lines(
+            export_run, temp_dir, filename, zipfile_path, locations, fieldname,
+            add_planning)
+
+    export_run.file_path = zipfile_path
+    export_run.save()
+
+
+def export_locations_as_points(
+        export_run, temp_dir, filename, zipfile_path, locations, fieldname,
+        add_planning):
+    shape_filepath = os.path.join(temp_dir, filename)
     shp = shapefile.Writer(shapefile.POINT)
-    shp.field(
-        configuration.get(export_run.activity.project, 'location_id_field')
-        .strip().encode('utf8'))
+    shp.field(fieldname)
     shp.field(b'X', b'F', 11, 5)
     shp.field(b'Y', b'F', 11, 5)
-    shp.field(b'Uploaded', b'L', 1)
+    shp.field(b'Complete', b'L', 1)
+    if add_planning:
+        shp.field(b'Jaar', 'C', 4)
+        shp.field(b'Weeknummer', 'C', 2)
+        shp.field(b'Dagnummer', 'C', 1)
 
     for location in locations:
         shp.point(location.the_geom.x, location.the_geom.y)
-        shp.record(
-            location.location_code,
-            float(location.the_geom.x),
-            float(location.the_geom.y),
-            location.complete)
+        record = [location.location_code,
+                  float(location.the_geom.x),
+                  float(location.the_geom.y),
+                  location.complete]
+
+        if add_planning:
+            if location.planned_date:
+                record.extend(
+                    [str(w) for w in location.planned_date.isocalendar()])
+            else:
+                record.extend([b'    ', b'  ', b' '])
+
+        shp.record(*record)
 
     shp.save(shape_filepath)
 
@@ -351,5 +393,46 @@ def export_as_shapefile(export_run):
 
     shutil.rmtree(temp_dir)
 
-    export_run.file_path = zipfile_path
-    export_run.save()
+
+def export_locations_as_lines(
+        export_run, temp_dir, filename, zipfile_path, locations, fieldname,
+        add_planning):
+    shape_filepath = os.path.join(temp_dir, filename)
+    shp = shapefile.Writer(shapefile.POLYLINE)
+    shp.field(fieldname)
+    shp.field(b'Complete', b'L', 1)
+
+    if add_planning:
+        shp.field(b'Jaar', b'C', 4)
+        shp.field(b'Weeknummer', b'C', 2)
+        shp.field(b'Dagnummer', b'C', 1)
+
+    for location in locations:
+        line = [list(c) for c in location.the_geom.coords]
+        shp.poly([line])
+        record = [location.location_code, location.complete]
+
+        if add_planning:
+            if location.planned_date:
+                record.extend(
+                    [str(w) for w in location.planned_date.isocalendar()])
+            else:
+                record.extend([b'    ', b'  ', b' '])
+        shp.record(*record)
+
+    shp.save(shape_filepath)
+
+    # Create ZIP
+    if not os.path.isdir(os.path.dirname(zipfile_path)):
+        os.makedirs(os.path.dirname(zipfile_path))
+
+    with zipfile.ZipFile(zipfile_path, 'w') as z:
+        for file_path in os.listdir(temp_dir):
+            z.write(os.path.join(temp_dir, file_path), file_path)
+        # Add a .prj too, if we can find it
+        prj = pkg_resources.resource_filename(
+            'lizard_progress', 'rijksdriehoek.prj')
+        if prj and os.path.exists(prj):
+            z.write(prj, filename + ".prj")
+
+    shutil.rmtree(temp_dir)

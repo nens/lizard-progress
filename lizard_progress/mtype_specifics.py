@@ -21,7 +21,7 @@ import lizard_progress.parsers.peilschaal_csv_parser
 import lizard_progress.parsers.lab_csv_parser
 import lizard_progress.parsers.ribx_parser
 
-from lizard_progress.models import Measurement
+from lizard_progress import models
 from lizard_progress.views import ScreenFigure
 
 logger = logging.getLogger(__name__)
@@ -41,6 +41,9 @@ class GenericSpecifics(object):
       inherit this class, if you wish).
     - To have a class with this name.
     """
+
+    allow_planning_dates = False
+    location_types = [models.Location.LOCATION_TYPE_POINT]
 
     def __init__(self, activity):
         self.activity = activity
@@ -103,8 +106,8 @@ class MetfileSpecifics(GenericSpecifics):
             return
 
         try:
-            m = Measurement.objects.get(location=location)
-        except Measurement.DoesNotExist:
+            m = models.Measurement.objects.get(location=location)
+        except models.Measurement.DoesNotExist:
             # Again, should not happen.
             logger.critical(
                 "Location id=%d is complete, but there " +
@@ -261,7 +264,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
         # Only works for the first right now
         location = locations[0]
 
-        m = Measurement.objects.get(location=location)
+        m = models.Measurement.objects.get(location=location)
 
         layout_options = {'height': '400px'}
 
@@ -293,7 +296,11 @@ class LaboratoriumCsvSpecifics(GenericSpecifics):
 
 
 class RibxReinigingRioolSpecifics(GenericSpecifics):
-    extensions = ['.ribx']
+    allow_planning_dates = True
+    location_types = [models.Location.LOCATION_TYPE_PIPE,
+                      models.Location.LOCATION_TYPE_MANHOLE]
+
+    extensions = ['.ribx', '.ribxa']
     parser = lizard_progress.parsers.ribx_parser.RibxParser
     linelike = True
 
@@ -310,7 +317,7 @@ class RibxReinigingRioolSpecifics(GenericSpecifics):
 
 
 class RibxReinigingKolkenSpecifics(RibxReinigingRioolSpecifics):
-    pass
+    location_types = [models.Location.LOCATION_TYPE_DRAIN]
 
 
 class RibxReinigingInspectieRioolSpecifics(RibxReinigingRioolSpecifics):

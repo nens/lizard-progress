@@ -68,6 +68,15 @@ class Specifics(object):
         instance = self.__instance()
         return getattr(instance, 'image_handler', None)
 
+    @property
+    def location_types(self):
+        return sorted(set(loctype for specifics in self._specifics
+                          for loctype in specifics.location_types))
+
+    @property
+    def allow_planning_dates(self):
+        return any(spec.allow_planning_dates for spec in self._specifics)
+
 
 def _open_uploaded_file(path, file_type):
     """Open file using PIL.Image.open if it is an image, otherwise

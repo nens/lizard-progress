@@ -439,6 +439,8 @@ class Location(models.Model):
     planned_date = models.DateTimeField(null=True, blank=True)
 
     # Geometry can be a point OR a line
+    # All Locations of the same location_type must have the same geometry
+    # type, because they're all exported to the same shapefile.
     the_geom = models.GeometryField(null=True, srid=SRID)
     is_point = models.BooleanField(default=True)
 
@@ -1174,8 +1176,10 @@ class ExportRun(models.Model):
                         exportrun.save()
                         yield exportrun
 
+                for location_type in activity.specifics().location_types:
+                    yield cls.get_or_create(
+                        activity, '{}shape'.format(location_type))
                 yield cls.get_or_create(activity, 'allfiles')
-                yield cls.get_or_create(activity, 'pointshape')
 
     @property
     def available(self):
@@ -1244,11 +1248,10 @@ class ExportRun(models.Model):
         directory = directories.exports_dir(self.activity)
         return os.path.join(
             directory,
-            "{project}-{activityid}-{contractor}-{mtype}.{extension}").format(
+            "{project}-{activityid}-{exporttype}.{extension}").format(
             project=self.activity.project.slug,
             activityid=self.activity.id,
-            contractor=self.activity.contractor.slug,
-            mtype=self.activity.measurement_type.slug,
+            exporttype=self.exporttype,
             extension=extension).encode('utf8')
 
     def fail(self, error_message):

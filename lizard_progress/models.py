@@ -436,7 +436,7 @@ class Location(models.Model):
 
     # Often unused, but some types of project can plan when a
     # location will be planned.
-    planned_date = models.DateTimeField(null=True, blank=True)
+    planned_date = models.DateField(null=True, blank=True)
 
     # Geometry can be a point OR a line
     # All Locations of the same location_type must have the same geometry
@@ -485,6 +485,13 @@ class Location(models.Model):
         if self.the_geom is None:
             self.the_geom = location
             self.is_point = not is_line(location)
+            self.save()
+
+    def plan_date(self, date):
+        """Set a location's planned date. Can't change anymore once
+        the location is complete."""
+        if not self.complete:
+            self.planned_date = date
             self.save()
 
     def has_measurements(self):

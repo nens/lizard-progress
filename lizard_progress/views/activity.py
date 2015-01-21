@@ -2,7 +2,12 @@
 """Views for the activity-specific pages.
 """
 
+import datetime
 import json
+import logging
+import os
+import shutil
+import tempfile
 
 from django.contrib import messages
 from django.http import Http404
@@ -24,7 +29,11 @@ from lizard_progress.views.views import UiView
 from lizard_progress import configuration
 from lizard_progress import forms
 from lizard_progress import models
+from lizard_progress.util import dates
 from lizard_progress.util import directories
+
+
+logger = logging.getLogger(__name__)
 
 
 class NoSuchFieldException(Exception):
@@ -36,7 +45,7 @@ class ActivityMixin(object):
         if 'activity_id' in kwargs:
             try:
                 self.activity_id = kwargs['activity_id']
-                self.activity = models.Activity.objects.get(
+                self.activity = models.Activity.objects.select_related().get(
                     pk=self.activity_id)
                 del kwargs['activity_id']
             except models.Activity.DoesNotExist:
@@ -47,6 +56,13 @@ class ActivityMixin(object):
 
         return super(
             ActivityMixin, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def user_is_activity_uploader(self):
+        """User is an uploader if this organization is the contractor for
+        this activity and user has role ROLE_UPLOADER."""
+        return (self.user_has_uploader_role() and
+                self.activity.contractor == self.organization)
 
 
 class ActivityView(KickOutMixin, ProjectsMixin, ActivityMixin, UiView):
@@ -238,6 +254,14 @@ class PlanningView(ActivityView):
 
             return self.get(request, *args, **kwargs)
 
+        if locations_from_shapefile:
+            first_geom = locations_from_shapefile.values()[0]
+            if 'POINT' not in first_geom:
+                messages.add_message(
+                    request, messages.ERROR,
+                    'Shapefile moet punten bevatten.')
+            return self.get(request, *args, **kwargs)
+
         existing_measurements = list(
             self.__existing_measurements())
 
@@ -257,8 +281,7 @@ class PlanningView(ActivityView):
             location, created = models.Location.objects.get_or_create(
                 location_code=location_code, activity=self.activity)
             if location.the_geom != geom:
-                location.the_geom = geom
-                location.save()
+                location.plan_location(geom)
 
         return HttpResponseRedirect(
             reverse('lizard_progress_dashboardview', kwargs={
@@ -291,6 +314,18 @@ class PlanningView(ActivityView):
         return ribxpath
 
     @property
+    def location_types(self):
+        if not hasattr(self, '_location_types'):
+            self._location_types = models.Location.objects.filter(
+                activity=self.activity).values_list(
+                'location_type', flat=True).distinct()
+        return self._location_types
+
+    @property
+    def shapefile_form(self):
+        return forms.ShapefileForm()
+
+    @property
     def location_id_field(self):
         return (
             configuration.get(self.activity, 'location_id_field')
@@ -299,6 +334,10 @@ class PlanningView(ActivityView):
     @property
     def planning_uses_ribx(self):
         return self.activity.measurement_type.planning_uses_ribx
+
+    @property
+    def date_planning(self):
+        return self.activity.specifics().allow_planning_dates
 
     def get_form_class(self):
         if self.planning_uses_ribx:
@@ -432,3 +471,113 @@ class ConfigurationView(ActivityView):
                 pass
 
         return redirect
+
+
+class UploadDateShapefiles(PlanningView):
+    def post(self, request, *args, **kwargs):
+        self.form = forms.ShapefileForm(request.POST, request.FILES)
+
+        if not self.form.is_valid():
+            messages.add_message(
+                request, messages.ERROR,
+                'Importeren van de shapefile is mislukt. '
+                'Heeft u alle drie de bestanden verstuurd?')
+        else:
+            dirname = tempfile.mkdtemp()
+            try:
+                shp = self.__save_uploaded_files(request, dirname)
+                location_type = kwargs['location_type']
+                (planned, already_planned, skipped, notfound
+                 ) = self.save_planned_dates(shp, location_type)
+
+                if planned:
+                    messages.add_message(
+                        request, messages.INFO,
+                        '{} locaties ingepland.'.format(planned))
+                if already_planned:
+                    messages.add_message(
+                        request, messages.INFO,
+                        '{} niet ingepland omdat ze al volledig zijn.'.format(
+                            already_planned))
+                if skipped:
+                    messages.add_message(
+                        request, messages.INFO,
+                        '{} locaties overgeslagen omdat er geen '
+                        'weeknummer ingevuld was.'.format(skipped))
+                if notfound:
+                    messages.add_message(
+                        request, messages.INFO,
+                        '{} locaties overgeslagen vanwege onbekende code.'
+                        .format(planned))
+
+            finally:
+                shutil.rmtree(dirname)
+
+        # We always redirect back to the planning view
+        return HttpResponseRedirect(
+            reverse('lizard_progress_planningview', kwargs={
+                'project_slug': self.project.slug,
+                'activity_id': self.activity_id
+            }))
+
+    def __save_uploaded_files(self, request, dirname):
+        shapefilepath = os.path.join(dirname, 'tempshape')
+
+        with open(shapefilepath + '.shp', 'wb+') as dest:
+            for chunk in request.FILES['shp'].chunks():
+                dest.write(chunk)
+        with open(shapefilepath + '.dbf', 'wb+') as dest:
+            for chunk in request.FILES['dbf'].chunks():
+                dest.write(chunk)
+        with open(shapefilepath + '.shx', 'wb+') as dest:
+            for chunk in request.FILES['shx'].chunks():
+                dest.write(chunk)
+
+        return (shapefilepath + '.shp').encode('utf8')
+
+    def save_planned_dates(self, shapefilepath, location_type):
+        shapefile = osgeo.ogr.Open(shapefilepath)
+
+        layer = shapefile.GetLayer(0)
+
+        planned = 0
+        already_planned = 0
+        skipped = 0
+        notfound = 0
+
+        for feature_num in xrange(layer.GetFeatureCount()):
+            feature = layer.GetFeature(feature_num)
+            ref = feature.GetField(0)
+            fields = feature.items()
+            logger.debug(fields)
+            if not fields.get(b'WEEKNUMMER'):
+                # Not planned yet, OK
+                skipped += 1
+                continue
+
+            try:
+                location = models.Location.objects.get(
+                    activity_id=self.activity_id,
+                    location_code=ref,
+                    location_type=location_type)
+            except models.Location.DoesNotExist:
+                # What to do...
+                notfound += 1
+                continue
+
+            year = int(fields.get(b'JAAR') or datetime.datetime.today().year)
+            week = int(fields.get(b'WEEKNUMMER'))
+
+            # If no day is planned, use DAY 7 as the default -- that way
+            # the work is not late as long as it is done inside that week.
+            day = int(fields.get(b'DAGNUMMER') or '7')
+
+            date = dates.weeknumber_to_date(year, week, day)
+
+            if not location.complete:
+                planned += 1
+                location.plan_date(date)
+            else:
+                already_planned += 1
+
+        return (planned, already_planned, skipped, notfound)

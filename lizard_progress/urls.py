@@ -80,6 +80,10 @@ activity_urls = [
     url('planning/connect/$',
         login_required(views.activity.ConnectActivityView.as_view()),
         name='lizard_progress_connect_activity'),
+    # Upload date shapefiles on the planning page
+    url('planning/dates/(?P<location_type>[a-z]+)/$',
+        login_required(views.activity.UploadDateShapefiles.as_view()),
+        name='lizard_progress_upload_date_shapefiles'),
     # API for the tables that refresh when processing uploaded files
     url('files/$',
         login_required(views.activity.UploadedFilesView.as_view()),

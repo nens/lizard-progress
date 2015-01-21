@@ -21,7 +21,7 @@
 {% endwith %}
 
 {% if view.planning_uses_ribx %}
-    <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
+    <form method="post" action="" enctype="multipart/form-data">
       {{ view.form.as_p }}
       <input type="submit" value="Vooraf ingevuld RIBX(A) versturen" class="btn btn-primary">
       {% csrf_token %}
@@ -37,7 +37,7 @@
     <h3>Planning door middel van een shapefile</h3>
     <p>De locatiecodes moeten in de shapefile staan in het veld <strong>{{ view.location_id_field }}</strong>. Dit kan aangepast worden onder <a href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id  %}">Configuratie</a>.</p>
 
-    <form method="post" action="" enctype="multipart/form-data" id="simple-upload-form">
+    <form method="post" action="" enctype="multipart/form-data">
       {{ view.form.as_p }}
       <input type="submit" value="Shapefile versturen" class="btn btn-primary">
       {% csrf_token %}
@@ -49,5 +49,9 @@
   {% else %}
     <p>Voor deze werkzaamheid kunnen nieuwe locaties momenteel vrij worden ge&uuml;pload, en plannen is dus niet mogelijk.</p>
   {% endif %}
+{% endif %}
+
+{% if view.date_planning and view.user_is_activity_uploader %}
+  {% include "lizard_progress/date_planning.html" %}
 {% endif %}
 {% endblock %}

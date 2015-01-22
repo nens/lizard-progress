@@ -89,7 +89,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
-    def mapnik_query(self, is_point, complete):
+    def mapnik_query_no_date(self, is_point, complete):
         q = """(SELECT
                     loc.the_geom
                  FROM
@@ -104,12 +104,55 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         return q % (self.activity_id, "true" if is_point else "false",
                     "true" if complete else "false")
 
+    def mapnik_query_date(self, is_point, planned, ontime, complete):
+        q = """(SELECT
+                    loc.the_geom
+                 FROM
+                    lizard_progress_location loc
+                WHERE
+                    loc.activity_id = %d AND
+                    loc.the_geom IS NOT NULL AND
+                    loc.is_point = %s AND
+                    loc.complete = %s AND
+                    %s
+                ) data"""
+
+        if complete:
+            date_query = "1 = 1"
+        else:
+            if planned:
+                if ontime:
+                    date_query = ("loc.planned_date IS NOT NULL AND "
+                                  "loc.planned_date >= now()::date")
+                else:
+                    date_query = ("loc.planned_date IS NOT NULL AND "
+                                  "loc.planned_date < now()::date")
+            else:
+                date_query = "loc.planned_date IS NULL"
+
+        query = q % (self.activity_id, "true" if is_point else "false",
+                     "true" if complete else "false",
+                     date_query)
+        logger.debug(query)
+        return query
+
     def layer_desc(self, complete):
         return "{} {} {}".format(
             self.activity.project.slug, self.activity.id, complete)
 
+    def layer_desc_date(self, is_point, complete, planned, ontime):
+        return "{} {} {} {} {}".format(
+            self.activity.id, is_point, complete, planned, ontime)
+
     def layer(self, layer_ids=None, request=None):
-        "Return mapnik layers and styles for all measurement types."
+        if self.activity.specifics().allow_planning_dates:
+            return self.layer_date(layer_ids, request)
+        else:
+            return self.layer_no_date(layer_ids, request)
+
+    def layer_no_date(self, layer_ids=None, request=None):
+        """Return mapnik layers and styles for all measurement types,
+        don't care about planned dates."""
         layers = []
         styles = {}
 
@@ -128,7 +171,51 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
             layer = mapnik.Layer(layer_desc, RD)
             layer.datasource = mapnik_datasource(
-                self.mapnik_query(is_point, complete))
+                self.mapnik_query_no_date(is_point, complete))
+            layer.styles.append(layer_desc)
+            layers.append(layer)
+
+        return layers, styles
+
+    def layer_date(self, layer_ids=None, request=None):
+        """Return mapnik layers and styles for all measurement types,
+        don't care about planned dates.
+
+        Four colors:
+        - complete: green
+        - not complete, planned, on time: grey
+        - not complete, planned, late: orange
+        - not complete, not planned: red
+
+        All those for both points and lines.
+        """
+
+        layers = []
+        styles = {}
+
+        for is_point, complete, planned, ontime, color, hexcolor in (
+                (True, True, None, None, "green", "#00FF00"),
+                (True, False, True, True, "grey", "#d3d3d3"),
+                (True, False, True, False, "orange", "#ffa500"),
+                (True, False, False, None, "red", "#ff0000"),
+                (False, True, None, None, "green", "#00ff00"),
+                (False, False, True, True, "grey", "#080808"),
+                (False, False, True, False, "orange", "#ffa500"),
+                (False, False, False, None, "red", "#ff0000"),
+        ):
+            layer_desc = self.layer_desc_date(
+                is_point, complete, planned, ontime)
+
+            if is_point:
+                img = self.symbol_img("ball_{}.png".format(color))
+                styles[layer_desc] = make_point_style(img)
+            else:
+                # Line
+                styles[layer_desc] = make_line_style(hexcolor)
+
+            layer = mapnik.Layer(layer_desc, RD)
+            layer.datasource = mapnik_datasource(
+                self.mapnik_query_date(is_point, planned, ontime, complete))
             layer.styles.append(layer_desc)
             layers.append(layer)
 

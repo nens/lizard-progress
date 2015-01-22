@@ -7,6 +7,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import itertools
+
 from PIL.ImageFile import ImageFile
 import logging
 
@@ -22,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 class RibxParser(ProgressParser):
     ERRORS = {
-        'LOCATION_NOT_FOUND': "Onbekende buis '{}'.",
-        }
+        'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
+    }
 
     def parse(self, check_only=False):
         if isinstance(self.file_object, ImageFile):
@@ -39,25 +41,48 @@ class RibxParser(ProgressParser):
 
         measurements = []
 
-        for pipe in ribx.pipes:
-            try:
-                location = self.activity.location_set.get(
-                    location_code=pipe.ref)
-            except models.Location.DoesNotExist:
-                self.record_error(
-                    None, 'LOCATION_NOT_FOUND',
-                    self.ERRORS['LOCATION_NOT_FOUND'].format(pipe.ref))
-
-            # Always make a new measurement! Never update existing ones.
-            measurement = models.Measurement.objects.create(
-                location=location)
-            measurement.date = pipe.inspection_date
-            measurement.data = {'filetype': 'ribx'}  # As opposed to media
-            measurement.record_location(pipe.geom)  # Saves
-
-            location.complete = True
-            location.save()
-
-            measurements.append(measurement)
+        for item in itertools.chain(ribx.pipes, ribx.manholes, ribx.drains):
+            measurement = self.save_measurement(item)
+            if measurement is not None:
+                measurements.append(measurement)
 
         return self._parser_result(measurements)
+
+    def save_measurement(self, item):
+        """item is a pipe, drain or manhole object that has properties
+        'ref', 'inspection_date', 'geom' and optionally 'media'."""
+        try:
+            location = self.activity.location_set.get(
+                location_code=item.ref)
+        except models.Location.DoesNotExist:
+            self.record_error(
+                None, 'LOCATION_NOT_FOUND',
+                self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
+            return None
+
+        # If measurement already exists with the same date, this upload
+        # isn't new and we don't have to save it. If it doesn't exist
+        # with this date, add a new measurement, don't overwrite the
+        # old one.
+        measurement, created = models.Measurement.objects.get_or_create(
+            location=location, date=item.inspection_date)
+        if created:
+            measurement.data = {'filetype': 'ribx'}  # As opposed to media
+            measurement.record_location(item.geom)  # Saves
+
+        # Check which files are expected to be uploaded along with this
+        # measurement.
+        complete = True
+        for filename in getattr(item, 'media', ()):
+            expected_attachment, created = (
+                models.ExpectedAttachment.objects.get_or_create(
+                    activity=self.activity,
+                    filename=filename))
+            location.expected_attachments.add(expected_attachment)
+            if not expected_attachment.uploaded:
+                complete = False
+
+        location.complete = complete
+        location.save()
+
+        return measurement

@@ -13,6 +13,8 @@ from __future__ import division
 import datetime
 import factory
 
+import osgeo.ogr
+
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -574,3 +576,11 @@ class TestActivity(TestCase):
 
         self.assertEquals(
             activity.latest_upload().uploaded_at, today)
+
+
+class TestIsLine(TestCase):
+    def test_with_point(self):
+        amersfoort = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
+        amersfoort.AddPoint(155000, 463000)
+
+        self.assertFalse(models.is_line(amersfoort))

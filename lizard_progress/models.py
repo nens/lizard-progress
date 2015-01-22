@@ -450,6 +450,8 @@ class Location(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
     complete = models.BooleanField(default=False)
 
+    expected_attachments = models.ManyToManyField('ExpectedAttachment')
+
     objects = models.GeoManager()
 
     @property
@@ -524,6 +526,10 @@ class Location(models.Model):
         result['files_missing'] = list(files_expected - files_present)
 
         return result
+
+    @property
+    def all_expected_attachments_present(self):
+        return not self.expected_attachments.filter(uploaded=False).exists()
 
 
 class AvailableMeasurementType(models.Model):
@@ -783,6 +789,18 @@ class Activity(models.Model):
             return None
 
 
+class ExpectedAttachment(models.Model):
+    """A filename of a file that has to be uploaded for some
+    activity. Locations have a many to many field to this. Used for
+    RIBX, which specifies which media files belong to measurements.
+
+    """
+
+    activity = models.ForeignKey(Activity)
+    filename = models.CharField(max_length=100)
+    uploaded = models.BooleanField(default=False)
+
+
 class MeasurementTypeAllowed(models.Model):
     """This model is the "through" model for relationships between
     (project-owning) Organizations, and AvailableMeasurementTypes.
@@ -845,10 +863,14 @@ class Measurement(models.Model):
         didn't have a point yet.
 
         location can be a Point or a LineString."""
-        if hasattr(location, 'ExportToWkt'):
-            location = osgeo_3d_line_to_2d_wkt(location)
-        self.the_geom = location
         self.is_point = not is_line(location)
+
+        if hasattr(location, 'ExportToWkt'):
+            if self.is_point:
+                location = osgeo_3d_point_to_2d_wkt(location)
+            else:
+                location = osgeo_3d_line_to_2d_wkt(location)
+        self.the_geom = location
         self.save()
         self.location.plan_location(location)
 

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 FILE_IMAGE = object()   # An Image object
 FILE_NORMAL = object()  # A normal file object as returned by open()
 FILE_READER = object()  # A file reader with support for line numbers, etc
+FILE_PATH = object()    # Just a path to the file
 
 Error = collections.namedtuple('Error', 'line, error_code, error_message')
 
@@ -96,7 +97,11 @@ def _open_uploaded_file(path, file_type):
         return metfilelib.util.file_reader.FileReader(
             path, skip_empty_lines=True)
 
-    return open(path, 'rU')
+    if file_type is FILE_NORMAL:
+        return open(path, 'rU')
+
+    if file_type is FILE_PATH:
+        return path
 
 
 def parser_factory(parser, activity, path):

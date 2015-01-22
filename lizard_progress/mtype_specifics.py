@@ -13,12 +13,13 @@ from django.http import HttpResponse
 
 from metfilelib.util.linear_algebra import Line, Point
 
+import lizard_progress.parsers.attachment_parser
+import lizard_progress.parsers.lab_csv_parser
 import lizard_progress.parsers.met_parser
 import lizard_progress.parsers.oeverfoto_parser
 import lizard_progress.parsers.oeverkenmerk_parser
-import lizard_progress.parsers.peilschaal_jpg_parser
 import lizard_progress.parsers.peilschaal_csv_parser
-import lizard_progress.parsers.lab_csv_parser
+import lizard_progress.parsers.peilschaal_jpg_parser
 import lizard_progress.parsers.ribx_parser
 
 from lizard_progress import models
@@ -324,6 +325,16 @@ class RibxReinigingInspectieRioolSpecifics(RibxReinigingRioolSpecifics):
     pass
 
 
+class ExpectedAttachmentSpecifics(GenericSpecifics):
+    extensions = [
+        '.mkv', '.mp4', '.mpeg4', '.mpeg', '.mpg',  # Video
+        '.jpg', '.jpeg', '.png',  # Foto
+        '.ipf',  # Panoramo
+    ]
+    parser = lizard_progress.parsers.attachment_parser.ExpectedAttachmentParser
+    linelike = False
+
+
 # The keys of this class are also the choices for 'implementation' of
 # an AvailableMeasurementType.
 AVAILABLE_SPECIFICS = {
@@ -333,7 +344,10 @@ AVAILABLE_SPECIFICS = {
     'foto': [PeilschaalFotoSpecifics],
     'meting': [PeilschaalMetingSpecifics],
     'laboratorium_csv': [LaboratoriumCsvSpecifics],
-    'ribx_reiniging_riool': [RibxReinigingRioolSpecifics],
-    'ribx_reiniging_kolken': [RibxReinigingKolkenSpecifics],
-    'ribx_reiniging_inspectie_riool': [RibxReinigingInspectieRioolSpecifics],
+    'ribx_reiniging_riool': [
+        RibxReinigingRioolSpecifics, ExpectedAttachmentSpecifics],
+    'ribx_reiniging_kolken': [
+        RibxReinigingKolkenSpecifics, ExpectedAttachmentSpecifics],
+    'ribx_reiniging_inspectie_riool': [
+        RibxReinigingInspectieRioolSpecifics, ExpectedAttachmentSpecifics],
     }

@@ -17,10 +17,12 @@ amersfoort.AddPoint(155000, 463000)
 
 class MockItem(object):
     """Used instead of a drain, manhole, or pipe."""
-    def __init__(self, ref, inspection_date, geom, media=None):
+    def __init__(
+            self, ref, inspection_date, geom, sourceline=None, media=None):
         self.ref = ref
         self.inspection_date = inspection_date
         self.geom = geom
+        self.sourceline = sourceline
         if media is not None:
             self.media = media
 

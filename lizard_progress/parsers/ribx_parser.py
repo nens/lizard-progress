@@ -56,7 +56,7 @@ class RibxParser(ProgressParser):
                 location_code=item.ref)
         except models.Location.DoesNotExist:
             self.record_error(
-                None, 'LOCATION_NOT_FOUND',
+                item.sourceline, 'LOCATION_NOT_FOUND',
                 self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
             return None
 

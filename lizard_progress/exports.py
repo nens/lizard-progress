@@ -400,7 +400,8 @@ def export_locations_as_lines(
     shape_filepath = os.path.join(temp_dir, filename)
     shp = shapefile.Writer(shapefile.POLYLINE)
     shp.field(fieldname)
-    shp.field(b'Complete', b'L', 1)
+    shp.field(b'Lengte (m)')
+    shp.field(b'Compleet', b'L', 1)
 
     if add_planning:
         shp.field(b'Jaar', b'C', 4)
@@ -410,7 +411,10 @@ def export_locations_as_lines(
     for location in locations:
         line = [list(c) for c in location.the_geom.coords]
         shp.poly([line])
-        record = [location.location_code, location.complete]
+        record = [
+            location.location_code,
+            location.the_geom.length,
+            location.complete]
 
         if add_planning:
             if location.planned_date:

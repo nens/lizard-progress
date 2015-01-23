@@ -316,9 +316,10 @@ class PlanningView(ActivityView):
     @property
     def location_types(self):
         if not hasattr(self, '_location_types'):
-            self._location_types = models.Location.objects.filter(
-                activity=self.activity).values_list(
-                'location_type', flat=True).distinct()
+            self._location_types = sorted(set(
+                models.Location.objects.filter(
+                    activity=self.activity).values_list(
+                    'location_type', flat=True)))
         return self._location_types
 
     @property
@@ -412,6 +413,11 @@ class PlanningView(ActivityView):
         for drain in ribx.drains:
             yield (drain.ref,
                    (drain.geom, models.Location.LOCATION_TYPE_DRAIN))
+
+        messages.add_message(
+            request, messages.INFO,
+            'Bestand OK, {} pipes {} manholes {} drains'
+            .format(len(ribx.pipes), len(ribx.manholes), len(ribx.drains)))
 
     def __existing_measurements(self):
         return models.Measurement.objects.filter(

@@ -413,7 +413,7 @@ def export_locations_as_lines(
         shp.poly([line])
         record = [
             location.location_code,
-            location.the_geom.length,
+            round(location.the_geom.length, 2),
             location.complete]
 
         if add_planning:

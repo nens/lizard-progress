@@ -227,6 +227,10 @@ class PlanningView(ActivityView):
                 location.the_geom = None
                 location.plan_location(geom)
 
+            # Move RIBX file to project files
+            shutil.move(ribxpath, directories.project_files_dir(
+                self.activity.project))
+
             return HttpResponseRedirect(
                 reverse('lizard_progress_dashboardview', kwargs={
                     'project_slug': self.project.slug}))
@@ -304,8 +308,9 @@ class PlanningView(ActivityView):
         return shapefilepath + '.shp'
 
     def __save_uploaded_ribx(self, request):
-        ribxpath = directories.location_shapefile_path(
-            self.activity) + '.ribx'
+        ribxpath = os.path.join(
+            directories.project_dir(self.activity.project),
+            request.FILES['ribx'].name)
 
         with open(ribxpath, 'wb+') as dest:
             for chunk in request.FILES['ribx'].chunks():
@@ -398,12 +403,8 @@ class PlanningView(ActivityView):
 
             return
 
-        messages.add_message(
-            request, messages.INFO,
-            'Bestand OK, {} pipes {} manholes {} drains'
-            .format(len(ribx.pipes), len(ribx.manholes), len(ribx.drains)))
-
         for pipe in ribx.pipes:
+            logger.debug("PIPE: {} {}".format(pipe.ref, pipe.geom))
             yield (pipe.ref, (pipe.geom, models.Location.LOCATION_TYPE_PIPE))
 
         for manhole in ribx.manholes:

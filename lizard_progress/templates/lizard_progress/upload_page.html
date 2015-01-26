@@ -24,10 +24,12 @@
               title="Klik hier om ingewonnen metingen te uploaden."
               ><i class="icon-upload"></i> Upload {{ view.activity.measurement_type }}
       </button>
-      <button type="button" class="upload btn btn-large btn-primary"
-              data-upload-url="{{ view.upload_shapefiles_url }}"
-              title="Klik hier om ingevulde moedershapefiles te uploaden."
-              ><i class="icon-upload"></i> Upload moedershapefile</button>
+      {% if view.show_moedershapefile_button %}
+        <button type="button" class="upload btn btn-large btn-primary"
+                data-upload-url="{{ view.upload_shapefiles_url }}"
+                title="Klik hier om ingevulde moedershapefiles te uploaden."
+                ><i class="icon-upload"></i> Upload moedershapefile</button>
+      {% endif %}
       <button type="button" class="upload btn btn-large btn-primary"
               data-upload-url="{{ view.upload_reports_url }}"
               title="Klik hier om rapportages en overige bestanden (.doc, .pdf of .zip voor de rest) te uploaden."

@@ -169,6 +169,13 @@ class UploadHomeView(ActivityView):
                 ready=False))
         return self._files_not_ready
 
+    @property
+    def show_moedershapefile_button(self):
+        """Temporary solution -- just don't show with anything RIBX
+        related."""
+        return ('ribx' not in
+                self.activity.measurement_type.implementation_slug)
+
 
 class UploadedFilesView(UploadHomeView):
     """Return uploaded files as a JSON array."""

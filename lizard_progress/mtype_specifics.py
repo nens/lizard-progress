@@ -331,6 +331,8 @@ class ExpectedAttachmentSpecifics(GenericSpecifics):
         '.jpg', '.jpeg', '.png',  # Foto
         '.ipf',  # Panoramo
     ]
+    location_types = []
+
     parser = lizard_progress.parsers.attachment_parser.ExpectedAttachmentParser
     linelike = False
 

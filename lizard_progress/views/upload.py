@@ -245,10 +245,10 @@ class UploadedFileErrorsView(ViewContextMixin, TemplateView):
             for line_minus_one, line in enumerate(open(path)):
                 line_number = line_minus_one + 1
                 lines.append({
-                        'line_number': line_number,
-                        'has_error': line_number in errordict,
-                        'file_line': line.strip(),
-                        'errors': errordict.get(line_number)})
+                    'line_number': line_number,
+                    'has_error': line_number in errordict,
+                    'file_line': line.strip(),
+                    'errors': errordict.get(line_number)})
 
         return lines
 

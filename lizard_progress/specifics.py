@@ -59,6 +59,7 @@ class Specifics(object):
             for specifics in self._specifics
             if os.path.splitext(filename)[-1].lower() in specifics.extensions
             ]
+
         return parsers
 
     def html_handler(self, activity=None):

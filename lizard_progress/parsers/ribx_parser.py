@@ -46,6 +46,9 @@ class RibxParser(ProgressParser):
             if measurement is not None:
                 measurements.append(measurement)
 
+        if not measurements:
+            self.record_error(0, None, 'Bestand bevat geen gegevens.')
+
         return self._parser_result(measurements)
 
     def save_measurement(self, item):

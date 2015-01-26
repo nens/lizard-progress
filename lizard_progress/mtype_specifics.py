@@ -307,10 +307,6 @@ class RibxReinigingRioolSpecifics(GenericSpecifics):
 
     def html_handler(self, html_default, locations,
                      identifiers, layout_options):
-        location = locations[0]
-
-        print(location)
-
         return html_default(
             identifiers=identifiers,
             template="lizard_progress/measurement_types/ribx.html",

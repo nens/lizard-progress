@@ -236,8 +236,11 @@ class PlanningView(ActivityView):
                 location.plan_location(geom)
 
             # Move RIBX file to project files
-            shutil.move(ribxpath, directories.project_files_dir(
-                self.activity.project))
+            newribxpath = os.path.join(directories.project_files_dir(
+                self.activity.project), os.path.basename(ribxpath))
+            if os.path.exists(newribxpath):
+                os.remove(newribxpath)
+            shutil.move(ribxpath, newribxpath)
 
             return HttpResponseRedirect(
                 reverse('lizard_progress_dashboardview', kwargs={

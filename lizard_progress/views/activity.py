@@ -1,6 +1,14 @@
-# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
+# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
+# -*- coding: utf-8 -*-
+
 """Views for the activity-specific pages.
 """
+
+# Python 3 is coming
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import datetime
 import json
@@ -384,6 +392,16 @@ class PlanningView(ActivityView):
 
         ribx, errors = parsers.parse(
             ribxpath, parsers.Mode.PREINSPECTION)
+
+        # First, if there are no errors, do our own error checking
+        if not errors:
+            errors = []
+            for item in (ribx.pipes + ribx.drains + ribx.manholes):
+                if item.geom is None:
+                    errors.append({
+                        'line': item.sourceline,
+                        'message': 'Geen coördinaten gevonden.'
+                    })
 
         if errors:
             messages.add_message(

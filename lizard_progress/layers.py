@@ -183,8 +183,8 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         Four colors:
         - complete: green
-        - not complete, planned, on time: grey
-        - not complete, planned, late: orange
+        - not complete, planned, on time: black
+        - not complete, planned, late: yellow
         - not complete, not planned: red
 
         All those for both points and lines.
@@ -195,12 +195,12 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         for is_point, complete, planned, ontime, color, hexcolor in (
                 (True, True, None, None, "green", "#00FF00"),
-                (True, False, True, True, "grey", "#d3d3d3"),
-                (True, False, True, False, "orange", "#ffa500"),
+                (True, False, True, True, "black", "#000000"),
+                (True, False, True, False, "yellow", "#ffff00"),
                 (True, False, False, None, "red", "#ff0000"),
                 (False, True, None, None, "green", "#00ff00"),
-                (False, False, True, True, "grey", "#080808"),
-                (False, False, True, False, "orange", "#ffa500"),
+                (False, False, True, True, "black", "#000000"),
+                (False, False, True, False, "orange", "#ffff00"),
                 (False, False, False, None, "red", "#ff0000"),
         ):
             layer_desc = self.layer_desc_date(

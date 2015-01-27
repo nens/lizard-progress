@@ -6,7 +6,7 @@
     <li {% if view.active_menu == "activitydashboard" %}class="active"{% endif %}>
       <a title="Activity Dashboard" href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity_id %}">Werkzaamheiddashboard</a>
     </li>
-    {% if view.user_is_manager %}
+    {% if view.show_planning_menu %}
       <li {% if view.active_menu == "planning" %}class="active"{% endif %}>
         <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">Planning</a>
       </li>

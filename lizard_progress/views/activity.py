@@ -72,6 +72,15 @@ class ActivityMixin(object):
         return (self.user_has_uploader_role() and
                 self.activity.contractor == self.organization)
 
+    @property
+    def date_planning(self):
+        return self.activity.specifics().allow_planning_dates
+
+    @property
+    def show_planning_menu(self):
+        return (self.user_is_manager() or (
+            self.date_planning and self.user_is_activity_uploader))
+
 
 class ActivityView(KickOutMixin, ProjectsMixin, ActivityMixin, UiView):
     """Base class for the Activity pages. It's a ProjectsView with
@@ -358,10 +367,6 @@ class PlanningView(ActivityView):
     @property
     def planning_uses_ribx(self):
         return self.activity.measurement_type.planning_uses_ribx
-
-    @property
-    def date_planning(self):
-        return self.activity.specifics().allow_planning_dates
 
     def get_form_class(self):
         if self.planning_uses_ribx:

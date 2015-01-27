@@ -588,7 +588,15 @@ class UploadDateShapefiles(PlanningView):
         for feature_num in xrange(layer.GetFeatureCount()):
             feature = layer.GetFeature(feature_num)
             ref = feature.GetField(0)
-            fields = feature.items()
+
+            # Some editors (like my localc) change all fields to upper
+            # case, some others (Bram's QGis) don't. Change them all
+            # to upper case here.
+            fields = {
+                key.upper(): value
+                for key, value in feature.items().items()
+            }
+
             logger.debug(fields)
             if not fields.get(b'WEEKNUMMER'):
                 # Not planned yet, OK

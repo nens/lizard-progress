@@ -29,6 +29,7 @@ from django.core.urlresolvers import reverse
 from django.db import connection
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
+from django.utils.translation import ugettext_lazy as _
 
 from jsonfield import JSONField
 
@@ -473,7 +474,19 @@ class Location(models.Model):
         ordering = ('location_code',)
 
     def __unicode__(self):
-        return u"Location with code '%s'" % (self.location_code,)
+        if self.location_type:
+            u = u'{} {}'.format(
+                _(self.location_type).capitalize(),
+                self.location_code)
+        else:
+            u = u"Locatie '%s'" % (self.location_code,)
+
+        if self.complete:
+            u += ", {}".format(_(u"complete"))
+        elif self.planned_date:
+            u += ", {} {}".format(_(u"planned on"), self.planned_date)
+
+        return u
 
     def plan_location(self, location):
         """Set our geometrical location, IF it wasn't set yet.

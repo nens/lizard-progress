@@ -92,6 +92,10 @@ activity_urls = [
     url('dashboardcsv/$', login_required(DashboardCsvView.as_view()),
         name='lizard_progress_dashboardcsvview'),
 
+    # Download files
+    url('^download/(?P<filetype>[^/]+)/(?P<filename>[^/]+)$',
+        login_required(DownloadView.as_view()),
+        name='lizard_progress_activity_downloadview'),
     # Activity dashboard
     url('$',
         views.activity.ActivityDashboard.as_view(),

@@ -113,11 +113,19 @@ class DownloadHomeView(ProjectsView):
     active_menu = "download"
 
     def _make_url(self, filetype, project, activity, path):
-        return reverse('lizard_progress_downloadview', kwargs={
-            'project_slug': project.slug,
-            'filetype': filetype,
-            'filename': os.path.basename(path)
-        })
+        if activity:
+            return reverse('lizard_progress_activity_downloadview', kwargs={
+                'activity_id': activity.id,
+                'project_slug': project.slug,
+                'filetype': filetype,
+                'filename': os.path.basename(path)
+            })
+        else:
+            return reverse('lizard_progress_downloadview', kwargs={
+                'project_slug': project.slug,
+                'filetype': filetype,
+                'filename': os.path.basename(path)
+            })
 
     def _project_files(self):
         for path in directories.files_in(
@@ -273,10 +281,10 @@ class DownloadView(View):
     """Downloading files."""
 
     def get(self, request, filetype, project_slug,
-            activity_id, filename):
+            filename, activity_id=None):
         project = get_object_or_404(Project, slug=project_slug)
 
-        if activity_id != '0':
+        if activity_id and activity_id != '0':
             activity = get_object_or_404(models.Activity, pk=activity_id)
         else:
             activity = None

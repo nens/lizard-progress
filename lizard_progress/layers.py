@@ -233,21 +233,8 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         lon1, lat1 = coordinates.google_to_wgs84(x, y - radius)
         lon2, lat2 = coordinates.google_to_wgs84(x, y + radius)
 
-        # On my computer, a call to Proj() is needed
-
         pyproj.Proj(init='epsg:4326')
-
-        # before Geod
-
         geod = pyproj.Geod(ellps='WGS84')
-
-        # Django crashes with:
-
-        # Rel. 4.7.1, 23 September 2009
-        # <(null)>:
-        # ellipse setup failure
-        # program abnormally terminated
-
         _forward, _backward, distance = geod.inv(lon1, lat1, lon2, lat2)
         distance /= 2.0
 
@@ -260,20 +247,25 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                 the_geom__distance_lte=(pt, D(m=distance))).
                 distance(pt).order_by('distance')):
 
-            results = [{
-                'name': unicode(location),
-                'distance': location.distance.m,
-                'workspace_item': self.workspace_item,
-                'identifier': {
-                    'location_id': location.id,
+            # If we found multiple locations, some of them may be
+            # points and some of them may be line elements. We want to
+            # return the first point if there are points, and the
+            # first line otherwise.
+            if not results or location.is_point:
+                results = [{
+                    'name': unicode(location),
+                    'distance': location.distance.m,
+                    'workspace_item': self.workspace_item,
+                    'identifier': {
+                        'location_id': location.id,
                     },
-                'grouping_hint': 'lizard_progress %s %s' % (
-                    self.workspace_item.id,
-                    self.activity.id)
-            }]
-            # For now, only show info from one location because
-            # our templates don't really work with more yet
-            break
+                    'grouping_hint': 'lizard_progress %s %s' % (
+                        self.workspace_item.id,
+                        self.activity.id)
+                }]
+
+            if location.is_point:
+                break
 
         logger.debug("Results=" + str(results))
         return results

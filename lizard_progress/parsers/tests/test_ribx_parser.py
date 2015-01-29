@@ -47,3 +47,28 @@ class TestSaveMeasurement(TestCase):
         measurement = self.parser.save_measurement(item)
         self.assertTrue(measurement.location.complete)
         self.assertEquals(self.location, measurement.location)
+
+    def test_find_existing_ribx_measurement_two_measurements(self):
+        """Save two measurements, only one of which has the right filetype."""
+        test_models.MeasurementF.create(
+            location=self.location, date=today,
+            data={'filetype': 'media'})
+        m2 = test_models.MeasurementF.create(
+            location=self.location, date=today,
+            data={'filetype': 'ribx'})
+
+        m3 = self.parser.find_existing_ribx_measurement(
+            self.location, today)
+
+        self.assertEquals(m3.id, m2.id)
+
+    def test_find_existing_ribx_measurement_one_wrong_measurement(self):
+        """Save one measurement, with the wrong filetype."""
+        test_models.MeasurementF.create(
+            location=self.location, date=today,
+            data={'filetype': 'media'})
+
+        m = self.parser.find_existing_ribx_measurement(
+            self.location, today)
+
+        self.assertEquals(m, None)

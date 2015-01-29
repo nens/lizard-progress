@@ -67,10 +67,14 @@ class RibxParser(ProgressParser):
         # isn't new and we don't have to save it. If it doesn't exist
         # with this date, add a new measurement, don't overwrite the
         # old one.
-        measurement, created = models.Measurement.objects.get_or_create(
-            location=location, date=item.inspection_date)
-        if created:
-            measurement.data = {'filetype': 'ribx'}  # As opposed to media
+        measurement = self.find_existing_ribx_measurement(
+            location, item.inspection_date)
+
+        if measurement is None:
+            measurement = models.Measurement(
+                location=location,
+                date=item.inspection_date,
+                data={'filetype': 'ribx'})
             measurement.record_location(item.geom)  # Saves
 
         # Check which files are expected to be uploaded along with this
@@ -82,10 +86,19 @@ class RibxParser(ProgressParser):
                     activity=self.activity,
                     filename=filename))
             location.expected_attachments.add(expected_attachment)
-            if not expected_attachment.uploaded:
+            if created or not expected_attachment.uploaded:
                 complete = False
 
         location.complete = complete
         location.save()
 
         return measurement
+
+    def find_existing_ribx_measurement(self, location, inspection_date):
+        for measurement in models.Measurement.objects.filter(
+                location=location, date=inspection_date):
+            if (measurement.data and
+                    measurement.data.get('filetype') == 'ribx'):
+                return measurement
+
+        return None

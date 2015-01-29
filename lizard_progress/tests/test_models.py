@@ -330,7 +330,7 @@ class TestLocation(TestCase):
     def test_unicode(self):
         """Tests unicode method."""
         location = LocationF(location_code="TESTID")
-        self.assertEquals(unicode(location), "Location with code 'TESTID'")
+        self.assertTrue(unicode(location))
 
     def test_measurement(self):
         """Tests the measurement property."""

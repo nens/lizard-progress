@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 FILE_IMAGE = object()   # An Image object
 FILE_NORMAL = object()  # A normal file object as returned by open()
 FILE_READER = object()  # A file reader with support for line numbers, etc
+FILE_PATH = object()    # Just a path to the file
 
 Error = collections.namedtuple('Error', 'line, error_code, error_message')
 
@@ -40,53 +41,43 @@ class Specifics(object):
         # imports this, this imports mtype_specifics, that imports
         # parsers, those import models).
         from lizard_progress.mtype_specifics import AVAILABLE_SPECIFICS
-        from lizard_progress.models import AvailableMeasurementType
 
-        if self.activity:
-            # We know which specifics to use. This is usually when a specific
-            # upload button was pressed.
-            slug = self.activity.measurement_type.implementation_slug
-            self._specifics = {
-                slug: AVAILABLE_SPECIFICS[slug]}
-        else:
-            self._specifics = {}
-            implementations_in_project = set(
-                available_measurement_type.implementation_slug
-                for available_measurement_type in
-                AvailableMeasurementType.objects.filter(
-                    activity__project=self.project))
+        slug = self.activity.measurement_type.implementation_slug
+        self._specifics = AVAILABLE_SPECIFICS[slug]
 
-            for implementation in implementations_in_project:
-                # If the key doesn't exist in AVAILABLE_SPECIFICS, we just
-                # let it throw the exception because something is wrong
-                # anyway.
-                self._specifics[implementation] = (
-                    AVAILABLE_SPECIFICS[implementation])
-
-    def __instance(self, activity):
-        slug = activity.measurement_type.implementation_slug
-        cls = self._specifics[slug]
-        return cls(activity)
+    def __instance(self):
+        cls = self._specifics[0]
+        return cls(self.activity)
 
     def parsers(self, filename):
         """Return the parsers that have the right extension for this
         filename.
         """
-        # Should not happen anymore
+
         parsers = [
             specifics.parser
-            for specifics in self._specifics.values()
-            if filename.lower().endswith(specifics.extension)
+            for specifics in self._specifics
+            if os.path.splitext(filename)[-1].lower() in specifics.extensions
             ]
+
         return parsers
 
     def html_handler(self, activity=None):
-        instance = self.__instance(getattr(self, 'activity', activity))
+        instance = self.__instance()
         return getattr(instance, 'html_handler', None)
 
     def image_handler(self, activity=None):
-        instance = self.__instance(getattr(self, 'activity', activity))
+        instance = self.__instance()
         return getattr(instance, 'image_handler', None)
+
+    @property
+    def location_types(self):
+        return sorted(set(loctype for specifics in self._specifics
+                          for loctype in specifics.location_types))
+
+    @property
+    def allow_planning_dates(self):
+        return any(spec.allow_planning_dates for spec in self._specifics)
 
 
 def _open_uploaded_file(path, file_type):
@@ -107,7 +98,11 @@ def _open_uploaded_file(path, file_type):
         return metfilelib.util.file_reader.FileReader(
             path, skip_empty_lines=True)
 
-    return open(path, 'rU')
+    if file_type is FILE_NORMAL:
+        return open(path, 'rU')
+
+    if file_type is FILE_PATH:
+        return path
 
 
 def parser_factory(parser, activity, path):

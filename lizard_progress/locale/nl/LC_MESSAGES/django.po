@@ -17,6 +17,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
+# Location types
+msgid "point"
+msgstr "punt"
+
+msgid "pipe"
+msgstr "streng"
+
+msgid "manhole"
+msgstr "put"
+
+msgid "drain"
+msgstr "kolk"
+
+msgid "complete"
+msgstr "compleet"
+
+msgid "planned on"
+msgstr "gepland op"
 #: forms.py:43
 msgid "Incorrect file format."
 msgstr "Verkeerd bestandsformaat."

@@ -13,9 +13,12 @@ from __future__ import division
 import datetime
 import factory
 
+import osgeo.ogr
+
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.test import TransactionTestCase
 
 from lizard_progress import models
 
@@ -178,8 +181,9 @@ class TestErrorMessage(TestCase):
         self.assertEquals(error, "Some format string")
 
 
-class TestOrganization(TestCase):
+class TestOrganization(TransactionTestCase):
     """Tests for the Organization model."""
+
     def setUp(self):
         self.organization = OrganizationF(name="test")
 
@@ -236,6 +240,9 @@ class TestOrganization(TestCase):
 
 class TestUserProfile(TestCase):
     """Tests for the UserProfile model."""
+
+    fixtures = ['userroles.json']
+
     def test_unicode(self):
         """Test unicode method."""
         userprofile = UserProfileF(
@@ -260,6 +267,9 @@ class TestUserProfile(TestCase):
 
 class TestSecurity(TestCase):
     """Test for security."""
+
+    fixtures = ['userroles.json']
+
     def test_has_access_contractor(self):
         """Test access for contractor to a project."""
         uploader = UserF.create(username="uploader", is_superuser=False)
@@ -320,7 +330,7 @@ class TestLocation(TestCase):
     def test_unicode(self):
         """Tests unicode method."""
         location = LocationF(location_code="TESTID")
-        self.assertEquals(unicode(location), "Location with code 'TESTID'")
+        self.assertTrue(unicode(location))
 
     def test_measurement(self):
         """Tests the measurement property."""
@@ -566,3 +576,11 @@ class TestActivity(TestCase):
 
         self.assertEquals(
             activity.latest_upload().uploaded_at, today)
+
+
+class TestIsLine(TestCase):
+    def test_with_point(self):
+        amersfoort = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
+        amersfoort.AddPoint(155000, 463000)
+
+        self.assertFalse(models.is_line(amersfoort))

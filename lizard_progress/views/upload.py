@@ -200,6 +200,8 @@ class UploadShapefilesView(UploadView):
 class UploadedFileErrorsView(ViewContextMixin, TemplateView):
     template_name = 'lizard_progress/uploaded_file_error_page.html'
 
+    MAX_GOOD_LINES = 2000
+
     def get(self, request, uploaded_file_id, project_slug, activity_id):
         self.uploaded_file = models.UploadedFile.objects.get(
             pk=uploaded_file_id)
@@ -241,14 +243,23 @@ class UploadedFileErrorsView(ViewContextMixin, TemplateView):
 
         lines = []
         path = self.uploaded_file.path
+        good_lines = 0
         if errordict and os.path.exists(path):
             for line_minus_one, line in enumerate(open(path)):
                 line_number = line_minus_one + 1
+                if line_number not in errordict:
+                    # For speed reasons, if the file is really big,
+                    # we only send a max number of the lines without
+                    # errors.
+                    if good_lines >= self.MAX_GOOD_LINES:
+                        continue
+                    good_lines += 1
+
                 lines.append({
-                        'line_number': line_number,
-                        'has_error': line_number in errordict,
-                        'file_line': line.strip(),
-                        'errors': errordict.get(line_number)})
+                    'line_number': line_number,
+                    'has_error': line_number in errordict,
+                    'file_line': line.strip(),
+                    'errors': errordict.get(line_number)})
 
         return lines
 

@@ -5,7 +5,28 @@ Changelog of lizard-progress
 2.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Declared migration bankruptcy. If you are upgrading an existing
+  database, first checkout lizard-progress 2.3.2 and run its
+  migrations.  Then run
+
+    DELETE FROM south_migrationhistory WHERE app_name = 'lizard_progress'"
+
+  upgrade lizard-progress to your desired version and fake the
+  initial (0001) migration.
+
+  The same action is required for the changerequests subapp.
+
+- Storing Geometries instead of Points now for Locations and Measurements,
+  so that they can be lines as well. Adapted the adapter.
+
+- Support RIBX and RIBXA formats for sewerage data, using ribxlib.
+
+- Support _date planning_; shapefiles can be uploaded that describe when
+  certain locations will be inspected. Map colors use this.
+
+- Add a little wrinkle to MET files checks for HHNK: they check if a
+  MET profile starts with 1 and ends with 2, except it's also allowed
+  to have 99 codes outside those.
 
 
 2.3.2 (2015-01-15)

@@ -297,11 +297,13 @@ class MetParser(specifics.ProgressParser):
         # Exactly one code '1', one code '2', two codes '22',
         # one code '7', codes '5' in between 22 and 7, codes '6' in
         # between 7 and 22.
-        def count_codes(measurements, code):
-            return len([m for m in measurements
-                        if m.profile_point_type == code])
+        point_types = [
+            (m.profile_point_type, m.line_number)
+            for m in profile.measurements
+        ]
 
-        measurements = profile.measurements
+        def count_codes(types, code):
+            return len([t for t in types if t[0] == code])
 
         correct_so_far = True
 
@@ -310,18 +312,18 @@ class MetParser(specifics.ProgressParser):
                 ('2', 1, 'MET_ONE_2_CODE'),
                 ('22', 2, 'MET_TWO_22_CODES'),
                 ('7', 1, 'MET_ONE_7_CODE')):
-            found_amount = count_codes(measurements, code)
+            found_amount = count_codes(point_types, code)
             if found_amount != amount:
                 self.record_error_code(
                     profile.line_number, error_code, found_amount)
                 correct_so_far = False
 
-        if count_codes(measurements, '5') < 1:
+        if count_codes(point_types, '5') < 1:
             self.record_error_code(
                 profile.line_number, 'MET_AT_LEAST_ONE_5_CODE')
             correct_so_far = False
 
-        if count_codes(measurements, '6') < 1:
+        if count_codes(point_types, '6') < 1:
             self.record_error_code(
                 profile.line_number, 'MET_AT_LEAST_ONE_6_CODE')
             correct_so_far = False
@@ -332,21 +334,26 @@ class MetParser(specifics.ProgressParser):
         # Now check if the 1 and 2 codes are in the correct spot
         # We know there are more than 2 measurements or the above would
         # never have been successful.
-        if measurements[0].profile_point_type == '1':
-            # Then last must be 2
-            if measurements[-1].profile_point_type == '2':
-                # Okay
-                pass
-            else:
-                self.record_error_code(
-                    measurements[-1].line_number,
-                    'MET_EXPECTED_CODE_2')
-                return
-        else:
+        if point_types[0][0] != '1':
+            self.record_error_code(point_types[0][1], 'MET_EXPECTED_CODE_1')
+            correct_so_far = False
+        if point_types[-1][0] != '2':
             self.record_error_code(
-                measurements[-1].line_number,
-                'MET_EXPECTED_CODE_1')
-            return
+                point_types[-1][1], 'MET_EXPECTED_CODE_2')
+            correct_so_far = False
+
+        # HHNK wants these same checks -- except they _do_ accept 99
+        # codes anywhere, also at the start and end of the profile. Do
+        # the same check on the profiles minus the 99 codes.
+        hhnk_types = [t for t in point_types if t[0] != '99']
+        if hhnk_types[0][0] != '1':
+            self.record_error_code(
+                point_types[0][1], 'MET_EXPECTED_CODE_1_OR_99')
+            correct_so_far = False
+        if hhnk_types[-1][0] != '2':
+            self.record_error_code(
+                point_types[-1][1], 'MET_EXPECTED_CODE_2_OR_99')
+            correct_so_far = False
 
         # We now know the codes 1, 2, 22 and 7 have the right amounts, and
         # 1 and 2 occur at the right places. Now:
@@ -354,29 +361,24 @@ class MetParser(specifics.ProgressParser):
         # - in between 22 and 7, we may only see 5 and 99
         # - in between 7 and 22, we may only see 6 and 99
         # - in between 22 and 2, we may only see 99
-        indices_22 = [i for i, m in enumerate(measurements)
-                      if m.profile_point_type == '22']
-        index_7 = [i for i, m in enumerate(measurements)
-                   if m.profile_point_type == '7']
+        indices_22 = [i for i, t in enumerate(point_types) if t[0] == '22']
+        index_7 = [i for i, t in enumerate(point_types) if t[0] == '7']
 
         if not (indices_22[0] < index_7[0] < indices_22[1]):
             self.record_error_code(
-                measurements[index_7[0]].line_number,
-                'MET_CODE_7_IN_BETWEEN_22')
+                point_types[index_7[0]][1], 'MET_CODE_7_IN_BETWEEN_22')
             return
 
-        def check_codes(measurements, codes):
-            for m in measurements:
-                if m.profile_point_type not in codes:
+        def check_codes(types, codes):
+            for t, line in types:
+                if t in codes:
                     self.record_error_code(
-                        m.line_number,
-                        'MET_WRONG_PROFILE_POINT_TYPE',
-                        code=code)
+                        line, 'MET_WRONG_PROFILE_POINT_TYPE', code=code)
 
-        check_codes(measurements[1:indices_22[0]], ['99'])
-        check_codes(measurements[indices_22[0] + 1:index_7[0]], ['5', '99'])
-        check_codes(measurements[index_7[0] + 1:indices_22[1]], ['6', '99'])
-        check_codes(measurements[indices_22[1] + 1:-1], ['99'])
+        check_codes(point_types[:indices_22[0]], ['1', '99'])
+        check_codes(point_types[indices_22[0] + 1:index_7[0]], ['5', '99'])
+        check_codes(point_types[index_7[0] + 1:indices_22[1]], ['6', '99'])
+        check_codes(point_types[indices_22[1] + 1:], ['2', '99'])
 
     def check_two_22_codes_with_z1z2_equal(self, profile):
         if len(profile.measurements) >= 2:

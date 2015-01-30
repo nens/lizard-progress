@@ -8,71 +8,30 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'Request'
-        db.create_table(u'changerequests_request', (
+        # Adding model 'ExpectedAttachment'
+        db.create_table(u'lizard_progress_expectedattachment', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('activity', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lizard_progress.Activity'], null=True)),
-            ('request_type', self.gf('django.db.models.fields.IntegerField')()),
-            ('request_status', self.gf('django.db.models.fields.IntegerField')(default=1)),
-            ('refusal_reason', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('invalid_reason', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('creation_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('change_date', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('location_code', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('old_location_code', self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True)),
-            ('motivation', self.gf('django.db.models.fields.TextField')()),
-            ('motivation_changed', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('seen', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('the_geom', self.gf('django.contrib.gis.db.models.fields.PointField')(srid=28992, null=True)),
-            ('possible_request', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['changerequests.PossibleRequest'], null=True, on_delete=models.SET_NULL, blank=True)),
+            ('activity', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lizard_progress.Activity'])),
+            ('filename', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('uploaded', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
-        db.send_create_signal(u'changerequests', ['Request'])
+        db.send_create_signal(u'lizard_progress', ['ExpectedAttachment'])
 
-        # Adding model 'RequestComment'
-        db.create_table(u'changerequests_requestcomment', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('request', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['changerequests.Request'])),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('comment', self.gf('django.db.models.fields.TextField')()),
-            ('comment_time', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+        # Adding M2M table for field expected_attachments on 'Location'
+        db.create_table(u'lizard_progress_location_expected_attachments', (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('location', models.ForeignKey(orm[u'lizard_progress.location'], null=False)),
+            ('expectedattachment', models.ForeignKey(orm[u'lizard_progress.expectedattachment'], null=False))
         ))
-        db.send_create_signal(u'changerequests', ['RequestComment'])
-
-        # Adding model 'PossibleRequest'
-        db.create_table(u'changerequests_possiblerequest', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('uploaded_file', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lizard_progress.UploadedFile'])),
-            ('requested', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('accepted', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('request_type', self.gf('django.db.models.fields.IntegerField')()),
-            ('location_code', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('the_geom', self.gf('django.contrib.gis.db.models.fields.PointField')(srid=28992, null=True)),
-        ))
-        db.send_create_signal(u'changerequests', ['PossibleRequest'])
-
-        # Adding model 'Points'
-        db.create_table(u'changerequests_points', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('location_code', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('dx', self.gf('django.db.models.fields.IntegerField')()),
-            ('dy', self.gf('django.db.models.fields.IntegerField')()),
-            ('the_geom', self.gf('django.contrib.gis.db.models.fields.PointField')(srid=28992)),
-        ))
-        db.send_create_signal(u'changerequests', ['Points'])
+        db.create_unique(u'lizard_progress_location_expected_attachments', ['location_id', 'expectedattachment_id'])
 
 
     def backwards(self, orm):
-        # Deleting model 'Request'
-        db.delete_table(u'changerequests_request')
+        # Deleting model 'ExpectedAttachment'
+        db.delete_table(u'lizard_progress_expectedattachment')
 
-        # Deleting model 'RequestComment'
-        db.delete_table(u'changerequests_requestcomment')
-
-        # Deleting model 'PossibleRequest'
-        db.delete_table(u'changerequests_possiblerequest')
-
-        # Deleting model 'Points'
-        db.delete_table(u'changerequests_points')
+        # Removing M2M table for field expected_attachments on 'Location'
+        db.delete_table('lizard_progress_location_expected_attachments')
 
 
     models = {
@@ -105,50 +64,6 @@ class Migration(SchemaMigration):
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "u'user_set'", 'blank': 'True', 'to': u"orm['auth.Permission']"}),
             'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
         },
-        u'changerequests.points': {
-            'Meta': {'object_name': 'Points'},
-            'dx': ('django.db.models.fields.IntegerField', [], {}),
-            'dy': ('django.db.models.fields.IntegerField', [], {}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'location_code': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {'srid': '28992'})
-        },
-        u'changerequests.possiblerequest': {
-            'Meta': {'ordering': "(u'location_code',)", 'object_name': 'PossibleRequest'},
-            'accepted': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'location_code': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'request_type': ('django.db.models.fields.IntegerField', [], {}),
-            'requested': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {'srid': '28992', 'null': 'True'}),
-            'uploaded_file': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.UploadedFile']"})
-        },
-        u'changerequests.request': {
-            'Meta': {'ordering': "(u'creation_date',)", 'object_name': 'Request'},
-            'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True'}),
-            'change_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'creation_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'invalid_reason': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'location_code': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'motivation': ('django.db.models.fields.TextField', [], {}),
-            'motivation_changed': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'old_location_code': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
-            'possible_request': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['changerequests.PossibleRequest']", 'null': 'True', 'on_delete': 'models.SET_NULL', 'blank': 'True'}),
-            'refusal_reason': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'request_status': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
-            'request_type': ('django.db.models.fields.IntegerField', [], {}),
-            'seen': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {'srid': '28992', 'null': 'True'})
-        },
-        u'changerequests.requestcomment': {
-            'Meta': {'ordering': "(u'comment_time',)", 'object_name': 'RequestComment'},
-            'comment': ('django.db.models.fields.TextField', [], {}),
-            'comment_time': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'request': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['changerequests.Request']"}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
-        },
         u'contenttypes.contenttype': {
             'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
             'app_label': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
@@ -165,14 +80,23 @@ class Migration(SchemaMigration):
             'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Project']"}),
             'source_activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True', 'blank': 'True'})
         },
+        u'lizard_progress.activityconfig': {
+            'Meta': {'object_name': 'ActivityConfig'},
+            'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']"}),
+            'config_option': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'value': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'})
+        },
         u'lizard_progress.availablemeasurementtype': {
             'Meta': {'ordering': "(u'name',)", 'object_name': 'AvailableMeasurementType'},
             'can_be_displayed': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'default_icon_complete': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'default_icon_missing': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'description': ('django.db.models.fields.TextField', [], {'default': "u''", 'blank': 'True'}),
+            'has_only_point_locations': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'implementation': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'keep_updated_measurements': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'likes_predefined_locations': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
             'needs_predefined_locations': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
@@ -185,6 +109,33 @@ class Migration(SchemaMigration):
             'error_message': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
+        u'lizard_progress.expectedattachment': {
+            'Meta': {'object_name': 'ExpectedAttachment'},
+            'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']"}),
+            'filename': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'uploaded': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+        },
+        u'lizard_progress.exportrun': {
+            'Meta': {'unique_together': "((u'activity', u'exporttype'),)", 'object_name': 'ExportRun'},
+            'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),
+            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'}),
+            'error_message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
+            'export_running': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'exporttype': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
+            'file_path': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '300', 'null': 'True'}),
+            'generates_file': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'ready_for_download': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+        },
+        u'lizard_progress.hydrovak': {
+            'Meta': {'unique_together': "((u'project', u'br_ident'),)", 'object_name': 'Hydrovak'},
+            'br_ident': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Project']"}),
+            'the_geom': ('django.contrib.gis.db.models.fields.MultiLineStringField', [], {'srid': '28992'})
+        },
         u'lizard_progress.lizardconfiguration': {
             'Meta': {'object_name': 'LizardConfiguration'},
             'geoserver_database_engine': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
@@ -194,6 +145,31 @@ class Migration(SchemaMigration):
             'upload_config': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
             'upload_url_template': ('django.db.models.fields.CharField', [], {'max_length': '300'})
         },
+        u'lizard_progress.location': {
+            'Meta': {'ordering': "(u'location_code',)", 'unique_together': "((u'location_code', u'activity'),)", 'object_name': 'Location'},
+            'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True'}),
+            'complete': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'expected_attachments': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['lizard_progress.ExpectedAttachment']", 'symmetrical': 'False'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'information': ('jsonfield.fields.JSONField', [], {'null': 'True', 'blank': 'True'}),
+            'is_point': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'location_code': ('django.db.models.fields.CharField', [], {'max_length': '50', 'db_index': 'True'}),
+            'location_type': ('django.db.models.fields.CharField', [], {'default': "u'point'", 'max_length': '10'}),
+            'planned_date': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
+            'the_geom': ('django.contrib.gis.db.models.fields.GeometryField', [], {'srid': '28992', 'null': 'True'}),
+            'timestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
+        u'lizard_progress.measurement': {
+            'Meta': {'object_name': 'Measurement'},
+            'data': ('jsonfield.fields.JSONField', [], {'null': 'True'}),
+            'date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'filename': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_point': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Location']", 'null': 'True'}),
+            'the_geom': ('django.contrib.gis.db.models.fields.GeometryField', [], {'srid': '28992', 'null': 'True', 'blank': 'True'}),
+            'timestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
         u'lizard_progress.measurementtypeallowed': {
             'Meta': {'object_name': 'MeasurementTypeAllowed'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -202,7 +178,7 @@ class Migration(SchemaMigration):
             'visible': ('django.db.models.fields.BooleanField', [], {'default': 'True'})
         },
         u'lizard_progress.organization': {
-            'Meta': {'object_name': 'Organization'},
+            'Meta': {'ordering': "(u'name',)", 'object_name': 'Organization'},
             'description': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'}),
             'errors': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['lizard_progress.ErrorMessage']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -210,6 +186,13 @@ class Migration(SchemaMigration):
             'lizard_config': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.LizardConfiguration']", 'null': 'True', 'blank': 'True'}),
             'mtypes_allowed': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['lizard_progress.AvailableMeasurementType']", 'through': u"orm['lizard_progress.MeasurementTypeAllowed']", 'symmetrical': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'})
+        },
+        u'lizard_progress.organizationconfig': {
+            'Meta': {'object_name': 'OrganizationConfig'},
+            'config_option': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']"}),
+            'value': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'})
         },
         u'lizard_progress.project': {
             'Meta': {'ordering': "(u'name',)", 'unique_together': "[(u'name', u'organization')]", 'object_name': 'Project'},
@@ -220,6 +203,13 @@ class Migration(SchemaMigration):
             'organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']"}),
             'project_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.ProjectType']", 'null': 'True', 'blank': 'True'}),
             'slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'})
+        },
+        u'lizard_progress.projectconfig': {
+            'Meta': {'object_name': 'ProjectConfig'},
+            'config_option': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Project']"}),
+            'value': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'})
         },
         u'lizard_progress.projecttype': {
             'Meta': {'unique_together': "((u'name', u'organization'),)", 'object_name': 'ProjectType'},
@@ -239,7 +229,38 @@ class Migration(SchemaMigration):
             'success': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'uploaded_at': ('django.db.models.fields.DateTimeField', [], {}),
             'uploaded_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
+        },
+        u'lizard_progress.uploadedfileerror': {
+            'Meta': {'object_name': 'UploadedFileError'},
+            'error_code': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'error_message': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'line': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'uploaded_file': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.UploadedFile']"})
+        },
+        u'lizard_progress.uploadlog': {
+            'Meta': {'ordering': "(u'when',)", 'object_name': 'UploadLog'},
+            'filename': ('django.db.models.fields.CharField', [], {'max_length': '250'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'mtype': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.AvailableMeasurementType']"}),
+            'num_measurements': ('django.db.models.fields.IntegerField', [], {}),
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Project']"}),
+            'uploading_organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']"}),
+            'when': ('django.db.models.fields.DateTimeField', [], {})
+        },
+        u'lizard_progress.userprofile': {
+            'Meta': {'object_name': 'UserProfile'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Organization']"}),
+            'roles': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['lizard_progress.UserRole']", 'symmetrical': 'False'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'unique': 'True'})
+        },
+        u'lizard_progress.userrole': {
+            'Meta': {'object_name': 'UserRole'},
+            'code': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
+            'description': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         }
     }
 
-    complete_apps = ['changerequests']
+    complete_apps = ['lizard_progress']

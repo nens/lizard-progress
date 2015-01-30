@@ -125,16 +125,16 @@ def try_parser(uploaded_file, parser):
     errors = []
     possible_requests = []
 
-    try:
-        # We use transaction.commit_on_success to control our
-        # transactions, so that if any unexpected exceptions happen in
-        # the code we call, nothing will be saved to the
-        # database. This also means that we have to raise an exception
-        # in case we want to rollback the transaction for more normal
-        # reasons (in case some error was found in the file).
-        class DummyException(Exception):
-            pass
+    # We use transaction.commit_on_success to control our
+    # transactions, so that if any unexpected exceptions happen in
+    # the code we call, nothing will be saved to the
+    # database. This also means that we have to raise an exception
+    # in case we want to rollback the transaction for more normal
+    # reasons (in case some error was found in the file).
+    class DummyException(Exception):
+        pass
 
+    try:
         with transaction.commit_on_success():
             # Call the parser.
             parseresult = call_parser(uploaded_file, parser)

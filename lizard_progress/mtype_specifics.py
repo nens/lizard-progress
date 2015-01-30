@@ -13,14 +13,16 @@ from django.http import HttpResponse
 
 from metfilelib.util.linear_algebra import Line, Point
 
+import lizard_progress.parsers.attachment_parser
+import lizard_progress.parsers.lab_csv_parser
 import lizard_progress.parsers.met_parser
 import lizard_progress.parsers.oeverfoto_parser
 import lizard_progress.parsers.oeverkenmerk_parser
-import lizard_progress.parsers.peilschaal_jpg_parser
 import lizard_progress.parsers.peilschaal_csv_parser
-import lizard_progress.parsers.lab_csv_parser
+import lizard_progress.parsers.peilschaal_jpg_parser
+import lizard_progress.parsers.ribx_parser
 
-from lizard_progress.models import Measurement
+from lizard_progress import models
 from lizard_progress.views import ScreenFigure
 
 logger = logging.getLogger(__name__)
@@ -40,6 +42,9 @@ class GenericSpecifics(object):
       inherit this class, if you wish).
     - To have a class with this name.
     """
+
+    allow_planning_dates = False
+    location_types = [models.Location.LOCATION_TYPE_POINT]
 
     def __init__(self, activity):
         self.activity = activity
@@ -77,7 +82,7 @@ class GenericSpecifics(object):
 
 
 class MetfileSpecifics(GenericSpecifics):
-    extension = '.met'
+    extensions = ['.met']
     parser = lizard_progress.parsers.met_parser.MetParser
     linelike = True
 
@@ -102,8 +107,8 @@ class MetfileSpecifics(GenericSpecifics):
             return
 
         try:
-            m = Measurement.objects.get(location=location)
-        except Measurement.DoesNotExist:
+            m = models.Measurement.objects.get(location=location)
+        except models.Measurement.DoesNotExist:
             # Again, should not happen.
             logger.critical(
                 "Location id=%d is complete, but there " +
@@ -181,7 +186,7 @@ class MetfileSpecifics(GenericSpecifics):
 
 
 class OeverfotoSpecifics(GenericSpecifics):
-    extension = '.jpg'
+    extensions = ['.jpg']
     parser = lizard_progress.parsers.oeverfoto_parser.OeverfotoParser
     linelike = False
 
@@ -231,7 +236,7 @@ class OeverfotoSpecifics(GenericSpecifics):
 
 
 class OeverkenmerkSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.oeverkenmerk_parser.OeverkenmerkParser
     linelike = True
 
@@ -246,7 +251,7 @@ class OeverkenmerkSpecifics(GenericSpecifics):
 
 
 class PeilschaalFotoSpecifics(GenericSpecifics):
-    extension = '.jpg'
+    extensions = ['.jpg']
     parser = lizard_progress.parsers.peilschaal_jpg_parser.PeilschaalJpgParser
     linelike = False
 
@@ -260,7 +265,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
         # Only works for the first right now
         location = locations[0]
 
-        m = Measurement.objects.get(location=location)
+        m = models.Measurement.objects.get(location=location)
 
         layout_options = {'height': '400px'}
 
@@ -273,7 +278,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
 
 
 class PeilschaalMetingSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.peilschaal_csv_parser.PeilschaalCsvParser
     linelike = True
 
@@ -286,18 +291,61 @@ class PeilschaalMetingSpecifics(GenericSpecifics):
 
 
 class LaboratoriumCsvSpecifics(GenericSpecifics):
-    extension = '.csv'
+    extensions = ['.csv']
     parser = lizard_progress.parsers.lab_csv_parser.LabCsvParser
     linelike = True
+
+
+class RibxReinigingRioolSpecifics(GenericSpecifics):
+    allow_planning_dates = True
+    location_types = [models.Location.LOCATION_TYPE_PIPE,
+                      models.Location.LOCATION_TYPE_MANHOLE]
+
+    extensions = ['.ribx', '.ribxa']
+    parser = lizard_progress.parsers.ribx_parser.RibxParser
+    linelike = True
+
+    def html_handler(self, html_default, locations,
+                     identifiers, layout_options):
+        return html_default(
+            identifiers=identifiers,
+            template="lizard_progress/measurement_types/ribx.html",
+            extra_render_kwargs={'locations': locations})
+
+
+class RibxReinigingKolkenSpecifics(RibxReinigingRioolSpecifics):
+    location_types = [models.Location.LOCATION_TYPE_DRAIN]
+
+
+class RibxReinigingInspectieRioolSpecifics(RibxReinigingRioolSpecifics):
+    pass
+
+
+class ExpectedAttachmentSpecifics(GenericSpecifics):
+    extensions = [
+        '.mkv', '.mp4', '.mpeg4', '.mpeg', '.mpg',  # Video
+        '.jpg', '.jpeg', '.png',  # Foto
+        '.ipf',  # Panoramo
+    ]
+    location_types = []
+
+    parser = lizard_progress.parsers.attachment_parser.ExpectedAttachmentParser
+    linelike = False
 
 
 # The keys of this class are also the choices for 'implementation' of
 # an AvailableMeasurementType.
 AVAILABLE_SPECIFICS = {
-    'dwarsprofiel': MetfileSpecifics,
-    'oeverfoto': OeverfotoSpecifics,
-    'oeverkenmerk': OeverkenmerkSpecifics,
-    'foto': PeilschaalFotoSpecifics,
-    'meting': PeilschaalMetingSpecifics,
-    'laboratorium_csv': LaboratoriumCsvSpecifics
+    'dwarsprofiel': [MetfileSpecifics],
+    'oeverfoto': [OeverfotoSpecifics],
+    'oeverkenmerk': [OeverkenmerkSpecifics],
+    'foto': [PeilschaalFotoSpecifics],
+    'meting': [PeilschaalMetingSpecifics],
+    'laboratorium_csv': [LaboratoriumCsvSpecifics],
+    'ribx_reiniging_riool': [
+        RibxReinigingRioolSpecifics, ExpectedAttachmentSpecifics],
+    'ribx_reiniging_kolken': [
+        RibxReinigingKolkenSpecifics, ExpectedAttachmentSpecifics],
+    'ribx_reiniging_inspectie_riool': [
+        RibxReinigingInspectieRioolSpecifics, ExpectedAttachmentSpecifics],
     }

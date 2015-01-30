@@ -22,6 +22,7 @@ install_requires = [
     'lizard-ui >= 4.40, < 5.0',
     'lizard-map >= 4.50, < 5.0',
     'metfilelib >= 0.14',
+    'ribxlib',
     'pkginfo',
     'factory_boy',
     'mock',

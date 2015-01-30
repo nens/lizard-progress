@@ -1,0 +1,21 @@
+<h2>Weekplanning</h2>
+
+<p>Shapefiles met locaties kunt u vinden onder het "Download" menu. Bij de locaties kan ingevuld worden in welke week en eventueel op welke dag ze gedaan gaan worden. De ingevulde shapefiles kunnen hier weer ge&uuml;pload worden.</p>
+
+{% for location_type in view.location_types %}
+  <div style="float: left;">
+    <h3>
+      {% if location_type == 'point' %}Locaties{% endif %}
+      {% if location_type == 'pipe' %}Strengen{% endif %}
+      {% if location_type == 'manhole' %}Putten{% endif %}
+      {% if location_type == 'drain' %}Kolken{% endif %}
+    </h3>
+    <form method="post"
+          action="{% url "lizard_progress_upload_date_shapefiles" location_type=location_type project_slug=view.project_slug activity_id=view.activity_id %}"
+          enctype="multipart/form-data">
+      {{ view.shapefile_form.as_p }}
+      <input type="submit" value="Shapefile versturen" class="btn btn-primary">
+      {% csrf_token %}
+    </form>
+  </div>
+{% endfor %}

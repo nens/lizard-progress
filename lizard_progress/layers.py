@@ -32,8 +32,46 @@ def mapnik_datasource(query):
         )
 
 
+def make_point_style(img):
+    def make_rule(min, max, img, overlap):
+        rule = mapnik.Rule()
+        rule.min_scale = min
+        rule.max_scale = max
+
+        filename, extension, x, y = img
+        symbol = mapnik.PointSymbolizer()
+        symbol.filename = filename
+        symbol.allow_overlap = overlap
+        rule.symbols.append(symbol)
+        return rule
+
+    # Below cutoff - allow overlap True
+    rule_detailed = make_rule(0, 50000, img, True)
+
+    # Over cutoff - overlap False
+    rule_global = make_rule(50000, 1000000000.0, img, False)
+
+    style = mapnik.Style()
+    style.rules.append(rule_detailed)
+    style.rules.append(rule_global)
+    return style
+
+
+def make_line_style(color):
+    def make_rule(color):
+        rule = mapnik.Rule()
+        symbol = mapnik.LineSymbolizer(mapnik.Color(color), 2.5)
+        rule.symbols.append(symbol)
+        return rule
+
+    style = mapnik.Style()
+    style.rules.append(make_rule(color))
+    return style
+
+
 class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def __init__(self, *args, **kwargs):
+        logger.debug("{} {}".format(args, kwargs))
         if ('layer_arguments' not in kwargs or
                 not isinstance(kwargs['layer_arguments'], dict)):
             raise ValueError(
@@ -45,37 +83,13 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             self.activity = models.Activity.objects.get(
                 pk=self.activity_id)
         except models.Activity.DoesNotExist:
+            logger.debug("ACTIVITY {} DOES NOT EXIST".format(self.activity_id))
             self.activity = None
             return
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
-    @staticmethod
-    def make_style(img):
-        def make_rule(min, max, img, overlap):
-            rule = mapnik.Rule()
-            rule.min_scale = min
-            rule.max_scale = max
-
-            filename, extension, x, y = img
-            symbol = mapnik.PointSymbolizer()
-            symbol.filename = filename
-            symbol.allow_overlap = overlap
-            rule.symbols.append(symbol)
-            return rule
-
-        # Below cutoff - allow overlap True
-        rule_detailed = make_rule(0, 50000, img, True)
-
-        # Over cutoff - overlap False
-        rule_global = make_rule(50000, 1000000000.0, img, False)
-
-        style = mapnik.Style()
-        style.rules.append(rule_detailed)
-        style.rules.append(rule_global)
-        return style
-
-    def mapnik_query(self, complete):
+    def mapnik_query_no_date(self, is_point, complete):
         q = """(SELECT
                     loc.the_geom
                  FROM
@@ -83,33 +97,125 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                 WHERE
                     loc.activity_id = %d AND
                     loc.the_geom IS NOT NULL AND
+                    loc.is_point = %s AND
                     loc.complete = %s
                 ) data"""
 
-        return q % (self.activity_id,
+        return q % (self.activity_id, "true" if is_point else "false",
                     "true" if complete else "false")
+
+    def mapnik_query_date(self, is_point, planned, ontime, complete):
+        q = """(SELECT
+                    loc.the_geom
+                 FROM
+                    lizard_progress_location loc
+                WHERE
+                    loc.activity_id = %d AND
+                    loc.the_geom IS NOT NULL AND
+                    loc.is_point = %s AND
+                    loc.complete = %s AND
+                    %s
+                ) data"""
+
+        if complete:
+            date_query = "1 = 1"
+        else:
+            if planned:
+                if ontime:
+                    date_query = ("loc.planned_date IS NOT NULL AND "
+                                  "loc.planned_date >= now()::date")
+                else:
+                    date_query = ("loc.planned_date IS NOT NULL AND "
+                                  "loc.planned_date < now()::date")
+            else:
+                date_query = "loc.planned_date IS NULL"
+
+        query = q % (self.activity_id, "true" if is_point else "false",
+                     "true" if complete else "false",
+                     date_query)
+        logger.debug(query)
+        return query
 
     def layer_desc(self, complete):
         return "{} {} {}".format(
             self.activity.project.slug, self.activity.id, complete)
 
+    def layer_desc_date(self, is_point, complete, planned, ontime):
+        return "{} {} {} {} {}".format(
+            self.activity.id, is_point, complete, planned, ontime)
+
     def layer(self, layer_ids=None, request=None):
-        "Return mapnik layers and styles for all measurement types."
+        if self.activity.specifics().allow_planning_dates:
+            return self.layer_date(layer_ids, request)
+        else:
+            return self.layer_no_date(layer_ids, request)
+
+    def layer_no_date(self, layer_ids=None, request=None):
+        """Return mapnik layers and styles for all measurement types,
+        don't care about planned dates."""
         layers = []
         styles = {}
 
-        for complete in (True, False):
-            layer_desc = self.layer_desc(complete)
-            if complete is True:
-                img = self.symbol_img("ball_green.png")
-            elif complete is False:
-                img = self.symbol_img("ball_red.png")
-
-            styles[layer_desc] = self.make_style(img)
+        for is_point, complete in (
+                (True, True), (True, False), (False, True), (False, False)):
+            if is_point:
+                layer_desc = self.layer_desc(complete)
+                img = (self.symbol_img("ball_green.png") if complete
+                       else self.symbol_img("ball_red.png"))
+                styles[layer_desc] = make_point_style(img)
+            else:
+                # Line
+                layer_desc = self.layer_desc(complete) + 'line'
+                color = '#00FF00' if complete else '#FF0000'
+                styles[layer_desc] = make_line_style(color)
 
             layer = mapnik.Layer(layer_desc, RD)
             layer.datasource = mapnik_datasource(
-                self.mapnik_query(complete))
+                self.mapnik_query_no_date(is_point, complete))
+            layer.styles.append(layer_desc)
+            layers.append(layer)
+
+        return layers, styles
+
+    def layer_date(self, layer_ids=None, request=None):
+        """Return mapnik layers and styles for all measurement types,
+        don't care about planned dates.
+
+        Four colors:
+        - complete: green
+        - not complete, planned, on time: black
+        - not complete, planned, late: yellow
+        - not complete, not planned: red
+
+        All those for both points and lines.
+        """
+
+        layers = []
+        styles = {}
+
+        for is_point, complete, planned, ontime, color, hexcolor in (
+                (True, True, None, None, "green", "#00FF00"),
+                (True, False, True, True, "black", "#000000"),
+                (True, False, True, False, "yellow", "#ffff00"),
+                (True, False, False, None, "red", "#ff0000"),
+                (False, True, None, None, "green", "#00ff00"),
+                (False, False, True, True, "black", "#000000"),
+                (False, False, True, False, "orange", "#ffff00"),
+                (False, False, False, None, "red", "#ff0000"),
+        ):
+            layer_desc = self.layer_desc_date(
+                is_point, complete, planned, ontime)
+
+            if is_point:
+                img = self.symbol_img("ball_{}.png".format(color))
+                styles[layer_desc] = make_point_style(img)
+            else:
+                # Line
+                styles[layer_desc] = make_line_style(hexcolor)
+
+            layer = mapnik.Layer(layer_desc, RD)
+            layer.datasource = mapnik_datasource(
+                self.mapnik_query_date(is_point, planned, ontime, complete))
             layer.styles.append(layer_desc)
             layers.append(layer)
 
@@ -127,21 +233,8 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         lon1, lat1 = coordinates.google_to_wgs84(x, y - radius)
         lon2, lat2 = coordinates.google_to_wgs84(x, y + radius)
 
-        # On my computer, a call to Proj() is needed
-
         pyproj.Proj(init='epsg:4326')
-
-        # before Geod
-
         geod = pyproj.Geod(ellps='WGS84')
-
-        # Django crashes with:
-
-        # Rel. 4.7.1, 23 September 2009
-        # <(null)>:
-        # ellipse setup failure
-        # program abnormally terminated
-
         _forward, _backward, distance = geod.inv(lon1, lat1, lon2, lat2)
         distance /= 2.0
 
@@ -154,21 +247,25 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                 the_geom__distance_lte=(pt, D(m=distance))).
                 distance(pt).order_by('distance')):
 
-            results = [{
-                'name': '%s %s' % (location.location_code,
-                                   location.activity_id),
-                'distance': location.distance.m,
-                'workspace_item': self.workspace_item,
-                'identifier': {
-                    'location_id': location.id,
+            # If we found multiple locations, some of them may be
+            # points and some of them may be line elements. We want to
+            # return the first point if there are points, and the
+            # first line otherwise.
+            if not results or location.is_point:
+                results = [{
+                    'name': unicode(location),
+                    'distance': location.distance.m,
+                    'workspace_item': self.workspace_item,
+                    'identifier': {
+                        'location_id': location.id,
                     },
-                'grouping_hint': 'lizard_progress %s %s' % (
-                    self.workspace_item.id,
-                    self.activity.id)
-            }]
-            # For now, only show info from one location because
-            # our templates don't really work with more yet
-            break
+                    'grouping_hint': 'lizard_progress %s %s' % (
+                        self.workspace_item.id,
+                        self.activity.id)
+                }]
+
+            if location.is_point:
+                break
 
         logger.debug("Results=" + str(results))
         return results
@@ -296,7 +393,7 @@ class HydrovakAdapter(WorkspaceItemAdapter):
         styles = {}
 
         rule = mapnik.Rule()
-        symbol = mapnik.LineSymbolizer(mapnik.Color("#0000FF"), 4.0)
+        symbol = mapnik.LineSybolizer(mapnik.Color("#0000FF"), 4.0)
         rule.symbols.append(symbol)
         style = mapnik.Style()
         style.rules.append(rule)

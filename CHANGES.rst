@@ -19,6 +19,15 @@ Changelog of lizard-progress
 - Storing Geometries instead of Points now for Locations and Measurements,
   so that they can be lines as well. Adapted the adapter.
 
+- Support RIBX and RIBXA formats for sewerage data, using ribxlib.
+
+- Support _date planning_; shapefiles can be uploaded that describe when
+  certain locations will be inspected. Map colors use this.
+
+- Add a little wrinkle to MET files checks for HHNK: they check if a
+  MET profile starts with 1 and ends with 2, except it's also allowed
+  to have 99 codes outside those.
+
 
 2.3.2 (2015-01-15)
 ------------------

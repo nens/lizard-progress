@@ -349,20 +349,20 @@ def export_as_shapefile(export_run, location_type):
 def export_locations_as_points(
         export_run, temp_dir, filename, zipfile_path, locations, fieldname,
         add_planning):
-    shape_filepath = os.path.join(temp_dir, filename)
+    shape_filepath = os.path.join(temp_dir, filename).encode('utf8')
     shp = shapefile.Writer(shapefile.POINT)
     shp.field(fieldname)
     shp.field(b'X', b'F', 11, 5)
     shp.field(b'Y', b'F', 11, 5)
     shp.field(b'Complete', b'L', 1)
     if add_planning:
-        shp.field(b'Jaar', 'C', 4)
-        shp.field(b'Weeknummer', 'C', 2)
-        shp.field(b'Dagnummer', 'C', 1)
+        shp.field(b'Jaar', b'C', 4)
+        shp.field(b'Weeknummer', b'C', 2)
+        shp.field(b'Dagnummer', b'C', 1)
 
     for location in locations:
         shp.point(location.the_geom.x, location.the_geom.y)
-        record = [location.location_code,
+        record = [location.location_code.encode('utf8'),
                   float(location.the_geom.x),
                   float(location.the_geom.y),
                   location.complete]
@@ -373,7 +373,6 @@ def export_locations_as_points(
                     [str(w) for w in location.planned_date.isocalendar()])
             else:
                 record.extend([b'    ', b'  ', b' '])
-
         shp.record(*record)
 
     shp.save(shape_filepath)
@@ -412,7 +411,7 @@ def export_locations_as_lines(
         line = [list(c) for c in location.the_geom.coords]
         shp.poly([line])
         record = [
-            location.location_code,
+            location.location_code.encode('utf8'),
             round(location.the_geom.length, 2),
             location.complete]
 

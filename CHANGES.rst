@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.4 (unreleased)
-----------------
+2.4.0 (2015-01-30)
+------------------
 
 - Declared migration bankruptcy. If you are upgrading an existing
   database, first checkout lizard-progress 2.3.2 and run its

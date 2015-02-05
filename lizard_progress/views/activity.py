@@ -48,6 +48,10 @@ class NoSuchFieldException(Exception):
     pass
 
 
+class WrongGeometryTypeException(Exception):
+    pass
+
+
 class ActivityMixin(object):
     def dispatch(self, request, *args, **kwargs):
         if 'activity_id' in kwargs:
@@ -284,6 +288,11 @@ class PlanningView(ActivityView):
                 .format(self.location_id_field))
 
             return self.get(request, *args, **kwargs)
+        except WrongGeometryTypeException:
+            messages.add_message(
+                request, messages.ERROR,
+                "Het geometrietype van de shapefile moet 'Point' zijn.")
+            return self.get(request, *args, **kwargs)
 
         if locations_from_shapefile:
             first_geom = locations_from_shapefile.values()[0]
@@ -386,6 +395,11 @@ class PlanningView(ActivityView):
 
         for layer_num in xrange(shapefile.GetLayerCount()):
             layer = shapefile.GetLayer(layer_num)
+
+            if (osgeo.ogr.GeometryTypeToName(layer.GetGeomType())
+                    != b'Point'):
+                raise WrongGeometryTypeException()
+
             for feature_num in xrange(layer.GetFeatureCount()):
                 feature = layer.GetFeature(feature_num)
 

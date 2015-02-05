@@ -5,7 +5,10 @@ Changelog of lizard-progress
 2.4.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Check if the shapefile uploaded to plan locations of an activity is
+  a Point shapefile. Previously, if another geometry type was
+  uploaded, this resulted in Internal Server Error, now it gives an
+  error message.
 
 
 2.4.0 (2015-01-30)

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.4.1 (unreleased)
+2.4.1 (2015-02-06)
 ------------------
 
 - Check if the shapefile uploaded to plan locations of an activity is

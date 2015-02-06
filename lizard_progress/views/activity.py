@@ -236,24 +236,28 @@ class PlanningView(ActivityView):
                 existing_measurement.location.location_code
                 for existing_measurement in existing_measurements)
 
-            locations_to_keep = (set(locations_from_ribx) |
-                                 locations_with_measurements)
-
             # Remove not needed scheduled measurements
             models.Location.objects.filter(
                 activity=self.activity).exclude(
-                location_code__in=locations_to_keep).delete()
+                location_code__in=locations_with_measurements).delete()
 
-            for location_code, (geom, loctype) in (
-                    locations_from_ribx.iteritems()):
-                location, created = models.Location.objects.get_or_create(
+            new_locations = [
+                models.Location(
                     location_code=location_code,
-                    activity=self.activity, defaults=dict(
-                        location_type=loctype,
-                        is_point=loctype != models.Location.LOCATION_TYPE_PIPE
-                    ))
-                location.the_geom = None
-                location.plan_location(geom)
+                    activity=self.activity,
+                    location_type=loctype,
+                    is_point=loctype != models.Location.LOCATION_TYPE_PIPE,
+                    the_geom=(models.osgeo_3d_line_to_2d_wkt(geom)
+                              if loctype == models.Location.LOCATION_TYPE_PIPE
+                              else models.osgeo_3d_point_to_2d_wkt(geom)))
+
+                for location_code, (geom, loctype) in
+                locations_from_ribx.iteritems()
+
+                if location_code not in locations_with_measurements
+            ]
+
+            models.Location.objects.bulk_create(new_locations)
 
             # Move RIBX file to project files
             newribxpath = os.path.join(directories.project_files_dir(

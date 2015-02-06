@@ -10,6 +10,11 @@ Changelog of lizard-progress
   uploaded, this resulted in Internal Server Error, now it gives an
   error message.
 
+- Optimize planning locations using RIBX; this makes it impossible to
+  move existing locations that have measurements, but makes it possible
+  to plan using a single (~19MB) RIBXA file that contains the entirety
+  of Almere's sewer system.
+
 
 2.4.0 (2015-01-30)
 ------------------

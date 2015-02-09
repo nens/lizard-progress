@@ -5,7 +5,9 @@ Changelog of lizard-progress
 2.4.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Improved the speed of the date planning view, using objects.update()
+  on only the exact list of location ids that need to be updated to a
+  date.
 
 
 2.4.1 (2015-02-06)

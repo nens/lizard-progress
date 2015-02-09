@@ -10,6 +10,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from collections import defaultdict
 import datetime
 import json
 import logging
@@ -603,6 +604,24 @@ class UploadDateShapefiles(PlanningView):
         skipped = 0
         notfound = 0
 
+        # This code tries to minimize the number of necessary queries.
+        locations = {
+            location_code: {
+                'id': id,
+                'planned_date': planned_date,
+                'complete': complete
+                }
+            for location_code, id, planned_date, complete in
+            models.Location.objects.filter(
+                activity_id=self.activity_id,
+                location_type=location_type)
+            .values_list('location_code', 'id', 'planned_date', 'complete')
+        }
+
+        # Keys are dates, values are lists of ids of locations to update
+        # to that date.
+        locations_to_change = defaultdict(list)
+
         for feature_num in xrange(layer.GetFeatureCount()):
             feature = layer.GetFeature(feature_num)
             ref = feature.GetField(0)
@@ -621,12 +640,8 @@ class UploadDateShapefiles(PlanningView):
                 skipped += 1
                 continue
 
-            try:
-                location = models.Location.objects.get(
-                    activity_id=self.activity_id,
-                    location_code=ref,
-                    location_type=location_type)
-            except models.Location.DoesNotExist:
+            location = locations.get(ref)
+            if location is None:
                 # What to do...
                 notfound += 1
                 continue
@@ -640,10 +655,16 @@ class UploadDateShapefiles(PlanningView):
 
             date = dates.weeknumber_to_date(year, week, day)
 
-            if not location.complete:
+            if not location['complete'] and location['planned_date'] != date:
+                locations_to_change[date].append(location['id'])
                 planned += 1
-                location.plan_date(date)
             else:
                 already_planned += 1
+
+        # Now, send an update query for each date that one or more locations
+        # are now planned at.
+        for date, ids in locations_to_change.iteritems():
+            models.Location.objects.filter(
+                id__in=ids).update(planned_date=date)
 
         return (planned, already_planned, skipped, notfound)

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.4.2 (unreleased)
+2.4.2 (2015-02-09)
 ------------------
 
 - Improved the speed of the date planning view, using objects.update()

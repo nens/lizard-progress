@@ -281,10 +281,13 @@ class PlanningView(ActivityView):
     def post_shapefile(self, request, *args, **kwargs):
         shapefilepath = self.__save_uploaded_files(request)
 
+        logger.debug("In post_shapefile")
+
         try:
             locations_from_shapefile = dict(
                 self.__locations_from_shapefile(shapefilepath))
         except NoSuchFieldException:
+            logger.debug("NoSuchFieldException")
             messages.add_message(
                 request, messages.ERROR,
                 'Veld "{}" niet gevonden in de shapefile. '
@@ -294,6 +297,7 @@ class PlanningView(ActivityView):
 
             return self.get(request, *args, **kwargs)
         except WrongGeometryTypeException:
+            logger.debug("WrongGeometryTypeException")
             messages.add_message(
                 request, messages.ERROR,
                 "Het geometrietype van de shapefile moet 'Point' zijn.")
@@ -305,7 +309,7 @@ class PlanningView(ActivityView):
                 messages.add_message(
                     request, messages.ERROR,
                     'Shapefile moet punten bevatten.')
-            return self.get(request, *args, **kwargs)
+                return self.get(request, *args, **kwargs)
 
         existing_measurements = list(
             self.__existing_measurements())

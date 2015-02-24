@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.4.3 (unreleased)
+2.4.3 (2015-02-24)
 ------------------
 
 - Fix bug where planning a project using a point shapefile didn't work

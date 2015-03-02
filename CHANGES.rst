@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.4.4 (unreleased)
+2.4.4 (2015-03-02)
 ------------------
 
 - Fix bug calculating the Nginx path for export downloads.

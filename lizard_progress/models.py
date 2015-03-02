@@ -1296,6 +1296,18 @@ class ExportRun(models.Model):
             exporttype=self.exporttype,
             extension=extension).encode('utf8')
 
+    @property
+    def nginx_path(self):
+        """Path to this export run's file, using '/protected/' as the
+        path to the base dir (for Nginx X-Accel-Redirect)."""
+        return '/'.join([
+            '/protected',
+            self.activity.project.organization.name,
+            self.activity.project.slug,
+            str(self.activity.id),
+            'export',
+            os.path.basename(self.file_path)])
+
     def fail(self, error_message):
         self.ready_for_download = False
         self.export_running = False

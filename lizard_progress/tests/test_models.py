@@ -393,6 +393,30 @@ class TestExportRun(TestCase):
             generates_file=True)
         self.assertFalse(run.available)
 
+    def test_nginx_path_is_correct(self):
+        measurement_type = AvailableMeasurementTypeF.create()
+        projectorg = OrganizationF.create(name="ProjectOrg")
+        contractor = OrganizationF.create(name="Contractor")
+        project = ProjectF.create(
+            organization=projectorg,
+            slug="testslug")
+
+        activity = ActivityF.create(
+            measurement_type=measurement_type,
+            contractor=contractor,
+            project=project
+        )
+
+        run = ExportRunF.create(
+            activity=activity,
+            file_path="/some/nonexisting/path",
+            generates_file=True)
+
+        self.assertEquals(
+            run.nginx_path,
+            '/protected/ProjectOrg/testslug/{}/export/path'.format(
+                activity.id))
+
     def test_exportrun_has_run_doesnt_generate_file_is_available(self):
         measurement_type = AvailableMeasurementTypeF.build()
         contractor = OrganizationF.build()

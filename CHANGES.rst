@@ -5,7 +5,7 @@ Changelog of lizard-progress
 2.4.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Reinstate the option to give names to Activities when adding them.
 
 
 2.4.4 (2015-03-02)

@@ -86,13 +86,9 @@ class NewProjectForm(forms.Form):
                 required=False
             )
 
-            # Note that this field is disabled (made hidden) on customer
-            # request. If we later find that it is preferable that activity
-            # names can be set, then it can be enabled again.
             self.fields['activity{}'.format(i)] = forms.CharField(
-                label='',
-                max_length=100, required=False,
-                widget=forms.HiddenInput())
+                label=_('Activity (name, optional)') + " " + str(i),
+                max_length=100, required=False)
 
     def clean(self):
         cleaned_data = super(NewProjectForm, self).clean()
@@ -247,10 +243,8 @@ class AddActivityForm(forms.Form):
         queryset=models.Organization.objects.all(),
         required=True)
 
-    # Disabled
     description = forms.CharField(
-        label='', required=False, max_length=100,
-        widget=forms.HiddenInput())
+        label=_('Description (optional)'), required=False, max_length=100)
 
 
 class ShapefileForm(forms.Form):

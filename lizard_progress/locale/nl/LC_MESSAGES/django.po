@@ -88,8 +88,8 @@ msgid "New password confirmation"
 msgstr "Bevestiging nieuw wachtwoord"
 
 #: forms.py:246
-msgid "Description"
-msgstr "Omschrijving"
+msgid "Description (optional)"
+msgstr "Omschrijving (niet verplicht)"
 
 #: forms.py:276
 msgid "Activity"

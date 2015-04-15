@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.4.6 (unreleased)
+2.4.6 (2015-04-15)
 ------------------
 
 - Set plupload upload limit to 10GB instead of 1GB.

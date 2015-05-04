@@ -155,17 +155,6 @@ class ProjectsMixin(object):
             self.profile and
             self.profile.has_role(models.UserRole.ROLE_ADMIN))
 
-    def change_requests_menu_string(self):
-        from lizard_progress.changerequests.models import Request
-
-        n = len(Request.open_requests_for_profile(
-                self.project, self.profile))
-
-        if n == 0:
-            return ""
-        else:
-            return " ({n})".format(n=n)
-
     def project_home_url(self):
         if not self.project_slug:
             return reverse('lizard_progress_projecten')
@@ -295,7 +284,7 @@ class MapView(View):
 
     def open_changerequests(self):
         return cmodels.Request.open_requests_for_profile(
-            self.project, self.profile)
+            None, self.profile, project=self.project)
 
     @property
     def content_actions(self):

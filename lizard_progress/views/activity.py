@@ -81,6 +81,17 @@ class ActivityMixin(object):
     def date_planning(self):
         return self.activity.specifics().allow_planning_dates
 
+    def change_requests_menu_string(self):
+        from lizard_progress.changerequests.models import Request
+
+        n = len(Request.open_requests_for_profile(
+                self.activity, self.profile))
+
+        if n == 0:
+            return ""
+        else:
+            return " ({n})".format(n=n)
+
     @property
     def show_planning_menu(self):
         return (self.user_is_manager() or (

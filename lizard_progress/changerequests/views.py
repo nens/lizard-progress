@@ -38,7 +38,7 @@ class ChangeRequestsPage(ActivityView):
 
     def open_requests(self):
         requests = models.Request.open_requests_for_profile(
-            self.project, self.profile)
+            self.activity, self.profile)
 
         for request in requests:
             request.view = self
@@ -63,7 +63,7 @@ class AllClosedChangeRequestsPage(ActivityView):
 
     def closed_requests(self):
         requests = models.Request.closed_requests_for_profile(
-            self.project, self.profile)
+            self.activity, self.profile)
 
         for request in requests:
             request.view = self

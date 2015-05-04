@@ -336,17 +336,25 @@ class Request(models.Model):
         return False
 
     @classmethod
-    def open_requests_for_profile(cls, project, profile):
+    def open_requests_for_profile(cls, activity, profile, project=None):
+        """Return open requests for a profile, per activity or optionally
+        per project (for the map page). If a project is given, activity
+        is ignored."""
+
+        if project is not None:
+            qs = cls.open_requests().filter(activity__project=project)
+        else:
+            qs = cls.open_requests().filter(activity=activity)
+
         return [
-            request for request in
-            cls.open_requests().filter(activity__project=project)
+            request for request in qs
             if request.check_validity() and request.can_see(profile)]
 
     @classmethod
-    def closed_requests_for_profile(cls, project, profile):
+    def closed_requests_for_profile(cls, activity, profile):
         return [
             request for request in
-            cls.closed_requests().filter(activity__project=project)
+            cls.closed_requests().filter(activity=activity)
             if request.can_see(profile)]
 
     def adapter_layer_json(self):

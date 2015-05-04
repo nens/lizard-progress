@@ -64,6 +64,7 @@ class ProjectF(factory.DjangoModelFactory):
 
     class Meta:
         model = models.Project
+        django_get_or_create = ('name', 'slug')
 
     name = "Test project"
     slug = "testproject"
@@ -74,6 +75,7 @@ class ProjectF(factory.DjangoModelFactory):
 class ActivityF(factory.DjangoModelFactory):
     class Meta:
         model = models.Activity
+        django_get_or_create = ('name', 'project')
 
     name = "Testactivity"
     project = factory.SubFactory(ProjectF)
@@ -93,6 +95,7 @@ class LocationF(factory.DjangoModelFactory):
 class AvailableMeasurementTypeF(factory.DjangoModelFactory):
     class Meta:
         model = models.AvailableMeasurementType
+        django_get_or_create = ('name', 'slug')
 
     name = "Metingtype"
     slug = "metingtype"
@@ -144,6 +147,19 @@ class ExportRunF(factory.DjangoModelFactory):
     file_path = None
     ready_for_download = False
     export_running = False
+
+
+class UploadLogF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.UploadLog
+        django_get_or_create = ('project', 'uploading_organization', 'mtype')
+
+    project = factory.SubFactory(ProjectF)
+    uploading_organization = factory.SubFactory(OrganizationF)
+    mtype = factory.SubFactory(AvailableMeasurementTypeF)
+    when = factory.LazyAttribute(lambda a: datetime.datetime.now())
+    filename = 'test.txt'
+    num_measurements = 1
 
 
 class TestUser(TestCase):
@@ -608,3 +624,19 @@ class TestIsLine(TestCase):
         amersfoort.AddPoint(155000, 463000)
 
         self.assertFalse(models.is_line(amersfoort))
+
+
+class TestUploadLog(TestCase):
+    def test_latest_does_return_latest(self):
+        "Was an actual bug on the front page of the site for over a year..."
+        date1 = datetime.datetime(year=2015, month=1, day=1)
+        date2 = datetime.datetime(year=2015, month=1, day=2)
+
+        project = ProjectF.create()
+
+        UploadLogF.create(project=project, when=date1)
+        UploadLogF.create(project=project, when=date2)
+
+        latest = list(models.UploadLog.latest(project))
+        self.assertTrue(latest)
+        self.assertEquals(latest[0].when, date2)

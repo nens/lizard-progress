@@ -1327,7 +1327,7 @@ class UploadLog(models.Model):
     num_measurements = models.IntegerField()
 
     class Meta:
-        ordering = ('when',)
+        ordering = ('-when',)
 
     @classmethod
     def latest(cls, project, amount=1):

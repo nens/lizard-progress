@@ -41,6 +41,8 @@ class ChangeRequestsPage(ActivityView):
             self.activity, self.profile)
 
         for request in requests:
+            # This is a hack that ensures that request.did_last_action can
+            # access some of the view's information. Dirty.
             request.view = self
         return requests
 

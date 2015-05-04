@@ -309,10 +309,16 @@ class Request(models.Model):
 
         # Laatste comment
         comments = list(self.requestcomment_set.all())
-        comment = comments[-1]
 
-        profile = pmodels.UserProfile.get_by_user(comment.user)
-        return profile.organization == organization
+        if comments:
+            comment = comments[-1]
+
+            profile = pmodels.UserProfile.get_by_user(comment.user)
+            return profile.organization == organization
+
+        # No comments, open -- last action is assumed to be by the
+        # contractor
+        return organization == self.activity.contractor
 
     @classmethod
     def open_requests(cls):

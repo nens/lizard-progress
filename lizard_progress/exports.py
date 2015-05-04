@@ -318,7 +318,7 @@ def export_as_shapefile(export_run, location_type):
 
     if location_type == 'point':
         fieldname = configuration.get(
-            export_run.activity.project, 'location_id_field'
+            export_run.activity, 'location_id_field'
         ).strip().encode('utf8')
     else:
         fieldname = b'Ref'

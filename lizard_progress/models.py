@@ -328,7 +328,7 @@ def current_files(measurements):
 class Project(models.Model):
     name = models.CharField(max_length=50, unique=False,
                             verbose_name='projectnaam')
-    slug = models.SlugField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=60, unique=True)
     organization = models.ForeignKey(Organization, null=False)
     is_archived = models.BooleanField(default=False)
 

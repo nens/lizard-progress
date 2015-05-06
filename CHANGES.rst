@@ -5,7 +5,34 @@ Changelog of lizard-progress
 2.4.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Bug fixes:
+
+  - A project's slug field must be allowed to be longer than its name
+    field, now set to 60 instead of 50.
+
+  - Configuration.get was called with project as an argument, must be
+    an activity now.
+
+  - Hydrovak adapter (to show them on the map) had a typo, so they
+    didn't show.
+
+  - Showing open and closed change requests now correctly only shows the
+    requests for the current activity.
+
+  - For showing who did the last action for a change request, we consider
+    a newly opened change request to be last acted on by the contractor.
+
+  - The upload log on the front page now correctly shows the time of the
+    latest upload, not the first...
+
+  - The "Export to Lizard" export used outdated model relations.
+
+  - The "MET_WRONG_PROFILE_POINT_TYPE" check checked the logical opposite
+    of what it should check...
+
+  - The "Export CSV" button was never implemented, but was still visible.
+    This led to complaints. Removed it.
+
 
 
 2.4.6 (2015-04-15)

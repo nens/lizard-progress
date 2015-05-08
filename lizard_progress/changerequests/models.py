@@ -309,10 +309,16 @@ class Request(models.Model):
 
         # Laatste comment
         comments = list(self.requestcomment_set.all())
-        comment = comments[-1]
 
-        profile = pmodels.UserProfile.get_by_user(comment.user)
-        return profile.organization == organization
+        if comments:
+            comment = comments[-1]
+
+            profile = pmodels.UserProfile.get_by_user(comment.user)
+            return profile.organization == organization
+
+        # No comments, open -- last action is assumed to be by the
+        # contractor
+        return organization == self.activity.contractor
 
     @classmethod
     def open_requests(cls):
@@ -336,17 +342,25 @@ class Request(models.Model):
         return False
 
     @classmethod
-    def open_requests_for_profile(cls, project, profile):
+    def open_requests_for_profile(cls, activity, profile, project=None):
+        """Return open requests for a profile, per activity or optionally
+        per project (for the map page). If a project is given, activity
+        is ignored."""
+
+        if project is not None:
+            qs = cls.open_requests().filter(activity__project=project)
+        else:
+            qs = cls.open_requests().filter(activity=activity)
+
         return [
-            request for request in
-            cls.open_requests().filter(activity__project=project)
+            request for request in qs
             if request.check_validity() and request.can_see(profile)]
 
     @classmethod
-    def closed_requests_for_profile(cls, project, profile):
+    def closed_requests_for_profile(cls, activity, profile):
         return [
             request for request in
-            cls.closed_requests().filter(activity__project=project)
+            cls.closed_requests().filter(activity=activity)
             if request.can_see(profile)]
 
     def adapter_layer_json(self):

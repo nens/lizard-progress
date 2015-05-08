@@ -38,9 +38,11 @@ class ChangeRequestsPage(ActivityView):
 
     def open_requests(self):
         requests = models.Request.open_requests_for_profile(
-            self.project, self.profile)
+            self.activity, self.profile)
 
         for request in requests:
+            # This is a hack that ensures that request.did_last_action can
+            # access some of the view's information. Dirty.
             request.view = self
         return requests
 
@@ -63,7 +65,7 @@ class AllClosedChangeRequestsPage(ActivityView):
 
     def closed_requests(self):
         requests = models.Request.closed_requests_for_profile(
-            self.project, self.profile)
+            self.activity, self.profile)
 
         for request in requests:
             request.view = self

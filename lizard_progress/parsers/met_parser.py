@@ -371,7 +371,7 @@ class MetParser(specifics.ProgressParser):
 
         def check_codes(types, codes):
             for t, line in types:
-                if t in codes:
+                if t not in codes:
                     self.record_error_code(
                         line, 'MET_WRONG_PROFILE_POINT_TYPE', code=code)
 

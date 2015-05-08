@@ -66,28 +66,31 @@ def insert(measurement, lizard_config):
     the_table = table(lizard_config)
     # If this measurement already exists in the database, we first delete it
     # (easiest way of updating...)
+    location = measurement.location
+    activity = location.activity
+
     connection.execute(the_table.delete().where(and_(
-        the_table.c.proident == measurement.location.location_code,
-        the_table.c.pro_naam == measurement.project.name,
-        the_table.c.opdr_nem == measurement.contractor.organization.name)))
+        the_table.c.proident == location.location_code,
+        the_table.c.pro_naam == activity.project.name,
+        the_table.c.opdr_nem == activity.contractor.name)))
 
     # Now insert the new one
     connection.execute(
         table(lizard_config).insert().values(
-            proident=measurement.location.location_code,
-            xcoord=measurement.location.the_geom.x,
-            ycoord=measurement.location.the_geom.y,
+            proident=location.location_code,
+            xcoord=location.the_geom.x,
+            ycoord=location.the_geom.y,
             csv=getattr(measurement, 'csv_url', None),
             graph=getattr(measurement, 'png_url', None),
             dxf=getattr(measurement, 'dxf_url', None),
-            pro_naam=measurement.project.name,
-            opdr_gev=measurement.project.organization.name,
-            opdr_nem=measurement.contractor.organization.name,
+            pro_naam=activity.project.name,
+            opdr_gev=activity.project.organization.name,
+            opdr_nem=activity.contractor.name,
             jaar=measurement.date.year,
             datum=measurement.date,
             the_geom=(
                 "SRID=28992; " +
-                unicode(measurement.location.the_geom))
+                unicode(location.the_geom))
             ))
 
 

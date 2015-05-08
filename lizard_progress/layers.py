@@ -393,7 +393,7 @@ class HydrovakAdapter(WorkspaceItemAdapter):
         styles = {}
 
         rule = mapnik.Rule()
-        symbol = mapnik.LineSybolizer(mapnik.Color("#0000FF"), 4.0)
+        symbol = mapnik.LineSymbolizer(mapnik.Color("#0000FF"), 4.0)
         rule.symbols.append(symbol)
         style = mapnik.Style()
         style.rules.append(rule)

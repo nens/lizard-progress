@@ -15,31 +15,6 @@
 {% endblock map-javascript %}
 
 {% block sidebar %}
-<div class="sidebarbox sidebarbox-stretched">
-  <h2>Kaart</h2>
-  <ul class="without-bullets">
-{% for layer in view.available_layers %}
-    <li class="workspace-acceptable"
-        data-name="{{ layer.name }}"
-        data-adapter-class="{{ layer.adapter }}"
-        data-adapter-layer-json="{{ layer.json }}">{{ layer.name }}</li>
-{% endfor %}
-  </ul>
-
-{% with view.open_changerequests as changerequests %}
-  {% if changerequests %}
-  <h2>Open aanvragen</h2>
-  <ul>
-  {% for cr in changerequests %}
-    <li class="workspace-acceptable"
-         data-name="{{ cr.adapter_layer_name }}"
-         data-adapter-class="{{ cr.adapter_class }}"
-         data-adapter-layer-json="{{ cr.adapter_layer_json }}">{{ cr.adapter_layer_name }}</li>
-  {% endfor %}
-  </ul>
-  {% endif %}
-{% endwith %}
-</div>
 
 {# Put workspace things back in the sidebar, boo Lizard 4 #}
 {% workspace_edit view.workspace_edit %}

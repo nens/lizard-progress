@@ -34,6 +34,8 @@ from django.contrib import auth
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
+from lizard_map import coordinates
+from lizard_map.views import MAP_LOCATION as EXTENT_SESSION_KEY
 from lizard_ui.layout import Action
 from lizard_ui.views import UiView
 
@@ -42,8 +44,10 @@ from lizard_progress import configuration
 from lizard_progress import models
 from lizard_progress.models import Hydrovak
 from lizard_progress.models import Project
+from lizard_progress.models import Location
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
+from lizard_progress.util import workspaces
 
 from lizard_progress import forms
 
@@ -251,6 +255,13 @@ class MapView(View):
     """View that can show a project's locations as map layers."""
     template_name = 'lizard_progress/map.html'
 
+    def get(self, request, *args, **kwargs):
+        """Besides rendering the map page, zoom to the extent of all our
+        layers, and place them in the workspace."""
+        workspaces.set_items(request, self.available_layers())
+        self.set_extent(request.session)
+        return super(MapView, self).get(request, *args, **kwargs)
+
     def available_layers(self):
         """List of layers available to draw. One layer per activity."""
 
@@ -268,19 +279,49 @@ class MapView(View):
                 'name': '%s %s' %
                 (self.project.name,
                  activity),
-                'adapter': 'adapter_progress',
-                'json': json.dumps({"activity_id": activity.id})
+                'adapter_class': 'adapter_progress',
+                'adapter_layer_json': json.dumps({"activity_id": activity.id})
             })
 
         if Hydrovak.objects.filter(project=self.project).exists():
             layers.append({
                 'name': 'Hydrovakken {projectname}'
                 .format(projectname=self.project.name),
-                'adapter': 'adapter_hydrovak',
-                'json': json.dumps({"project_slug": self.project_slug})
+                'adapter_class': 'adapter_hydrovak',
+                'adapter_layer_json': json.dumps(
+                    {"project_slug": self.project_slug})
             })
 
         return layers
+
+    def set_extent(self, session):
+        """We need min-x, max-x, min-y and max-y as Google coordinates."""
+        locations = Location.objects.filter(activity__project=self.project)
+        if not locations.exist():
+            return
+
+        extent = locations.extent()
+        topleft = extent[0:2]
+        bottomright = extent[2:4]
+
+        google_topleft = coordinates.rd_to_google(*topleft)
+        google_bottomright = coordinates.rd_to_google(*bottomright)
+
+        # To make sure we zoom in "correctly", with everything in view,
+        # we now increase this extent some arbitrary percentage...
+        dx = abs(google_topleft[0] - google_bottomright[0])
+        dy = abs(google_topleft[1] - google_bottomright[1])
+
+        FACTOR = 0.1
+
+        extent = {
+            'top': google_topleft[1] - FACTOR * dy,
+            'left': google_topleft[0] - FACTOR * dx,
+            'right': google_bottomright[0] + FACTOR * dx,
+            'bottom': google_bottomright[1] + FACTOR * dy
+        }
+        logger.error("extent: {}".format(extent))
+        session[EXTENT_SESSION_KEY] = extent
 
     def open_changerequests(self):
         return cmodels.Request.open_requests_for_profile(

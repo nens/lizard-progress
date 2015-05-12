@@ -40,4 +40,20 @@
   {% endif %}
 {% endwith %}
 </div>
+
+{# Put workspace things back in the sidebar, boo Lizard 4 #}
+{% workspace_edit view.workspace_edit %}
+{% comment %}
+  I think this is unused
+  {% collage_edit view.collage_edit %}
+{% endcomment %}
+
 {% endblock sidebar %}
+
+{# We don't want a secondary sidebar #}
+{% block secondary-sidebar %}
+{% endblock secondary-sidebar %}
+
+{# So we don't need sidebar actions either #}
+{% block sidebar-actions %}
+{% endblock sidebar-actions %}

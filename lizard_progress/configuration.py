@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 class Option(namedtuple(
         'Option',
         'option, short_description, long_description,'
-        ' type, default, only_for_error, for_project')):
+        ' type, default, only_for_error, for_project,'
+        ' applies_to_measurement_types,')):
 
     def translate(self, value):
         if self.type == 'float':
@@ -55,7 +56,9 @@ CONFIG_OPTIONS = {
         default='',
         only_for_error=None,
         for_project=False,
-        ),
+        applies_to_measurement_types=['dwarsprofielen_inpeiling',
+                                      'Vooronderzoek'],
+    ),
     'maximum_z1z2_difference': Option(
         option='maximum_z1z2_difference',
         short_description=(
@@ -65,7 +68,8 @@ CONFIG_OPTIONS = {
         default='1',
         only_for_error='MET_DIFFERENCE_Z1Z2_MAX_1M',
         for_project=False,
-        ),
+        applies_to_measurement_types=['dwarsprofielen_inpeiling', ],
+    ),
     'lowest_z_value_allowed': Option(
         option='lowest_z_value_allowed',
         short_description='Laagst toegestane Z1/Z2 waarde (m NAP)',
@@ -75,7 +79,8 @@ CONFIG_OPTIONS = {
         default='-10',
         only_for_error='MET_Z_TOO_LOW',
         for_project=False,
-        ),
+        applies_to_measurement_types=['Vooronderzoek', ],
+    ),
     'maximum_waterway_width': Option(
         option='maximum_waterway_width',
         short_description='Maximale breedte van een waterweg (m)',
@@ -84,7 +89,8 @@ CONFIG_OPTIONS = {
         default='100',
         only_for_error='MET_WATERWAY_TOO_WIDE',
         for_project=False,
-        ),
+        applies_to_measurement_types=['ribx_reiniging_kolken', ],
+    ),
     'maximum_x_coordinate': Option(
         option='maximum_x_coordinate',
         short_description='Maximum X coordinaat dwarsprofiel (RD)',
@@ -93,7 +99,8 @@ CONFIG_OPTIONS = {
         default='300000',
         only_for_error='MET_INSIDE_EXTENT',
         for_project=False,
-        ),
+        applies_to_measurement_types=[],
+    ),
     'minimum_x_coordinate': Option(
         option='minimum_x_coordinate',
         short_description='Minimum X coordinaat dwarsprofiel (RD)',
@@ -102,7 +109,8 @@ CONFIG_OPTIONS = {
         default='7000',
         only_for_error='MET_INSIDE_EXTENT',
         for_project=False,
-        ),
+        applies_to_measurement_types=[],
+    ),
     'maximum_y_coordinate': Option(
         option='maximum_y_coordinate',
         short_description='Maximum Y coordinaat dwarsprofiel (RD)',
@@ -111,7 +119,8 @@ CONFIG_OPTIONS = {
         default='629000',
         only_for_error='MET_INSIDE_EXTENT',
         for_project=False,
-        ),
+        applies_to_measurement_types=[],
+    ),
     'minimum_y_coordinate': Option(
         option='minimum_y_coordinate',
         short_description='Minimum Y coordinaat dwarsprofiel (RD)',
@@ -120,7 +129,8 @@ CONFIG_OPTIONS = {
         default='289000',
         only_for_error='MET_INSIDE_EXTENT',
         for_project=False,
-        ),
+        applies_to_measurement_types=[],
+    ),
     'maximum_location_distance': Option(
         option='maximum_location_distance',
         short_description='Maximum afstand tot geplande meetlocatie',
@@ -129,7 +139,8 @@ CONFIG_OPTIONS = {
         default='10',
         only_for_error='TOO_FAR_FROM_LOCATION',
         for_project=False,
-        ),
+        applies_to_measurement_types=[],
+    ),
     'maximum_mean_distance_between_points': Option(
         option='maximum_mean_distance_between_points',
         short_description=(
@@ -139,7 +150,8 @@ CONFIG_OPTIONS = {
         default='2',
         only_for_error='MET_MEAN_MEASUREMENT_DISTANCE',
         for_project=False,
-        ),
+        applies_to_measurement_types=[],
+    ),
     'max_measurement_distance': Option(
         option='max_measurement_distance',
         short_description=(
@@ -149,7 +161,8 @@ CONFIG_OPTIONS = {
         default='2.5',
         only_for_error='MET_DISTANCETOOLARGE',
         for_project=False,
-        ),
+        applies_to_measurement_types=[],
+    ),
     'hydrovakken_id_field': Option(
         option='hydrovakken_id_field',
         short_description=(
@@ -160,6 +173,7 @@ CONFIG_OPTIONS = {
         default='BR_IDENT',
         only_for_error=None,
         for_project=True,
+        applies_to_measurement_types=[],
     ),
     'location_id_field': Option(
         option='location_id_field',
@@ -171,6 +185,7 @@ CONFIG_OPTIONS = {
         default='ID_DWP',
         only_for_error=None,
         for_project=False,
+        applies_to_measurement_types=['test', ],
     ),
     'lowest_below_water_allowed': Option(
         option='lowest_below_water_allowed',
@@ -181,6 +196,7 @@ CONFIG_OPTIONS = {
         default='-50',
         only_for_error='MET_Z_TOO_LOW_BELOW_WATER',
         for_project=False,
+        applies_to_measurement_types=[],
     ),
     'max_distance_to_midline': Option(
         option='max_distance_to_midline',
@@ -188,11 +204,12 @@ CONFIG_OPTIONS = {
             'Maximale afstand van een punt tot aan de middellijn'),
         long_description=(
             'De middellijn is de denkbeeldige lijn die door de 22 codes loopt'
-            ),
+        ),
         type='float',
         default='1',
         only_for_error='MET_DISTANCE_TO_MIDLINE',
         for_project=False,
+        applies_to_measurement_types=[],
     ),
 }
 
@@ -200,8 +217,9 @@ CONFIG_OPTIONS = {
 class Configuration(object):
     def __init__(self, organization=None, activity=None, project=None):
         """Give ONE of organization, activity, project."""
-        if (sum(item is not None for item in (organization, activity, project))
-                != 1):
+        if sum(item is not None for item in (organization,
+                                             activity,
+                                             project)) != 1:
             raise ValueError(
                 "Give either organization, project or activity, not more.")
 
@@ -301,19 +319,25 @@ class Configuration(object):
         """Return only the options that are relevant for this project,
         or activity. Omit options for which the error message is turned off
         anyway."""
+        measurement_type = getattr(
+            self.activity,
+            'measurement_type',
+            models.AvailableMeasurementType.dwarsprofiel())
 
         error_config = errors.ErrorConfiguration(
             project=self.activity.project if self.activity else self.project,
             organization=self.organization,
-            measurement_type=self.activity.measurement_type if self.activity
-            else models.AvailableMeasurementType.dwarsprofiel())
+            measurement_type=measurement_type)
 
         want_for_project = self.project is not None
 
         for (option_key, option) in sorted(CONFIG_OPTIONS.iteritems()):
-            if (option.for_project == want_for_project and
-                (option.only_for_error is None or
-                    option.only_for_error in error_config)):
+            if option.for_project == want_for_project and \
+               (option.only_for_error is None or
+                    option.only_for_error in error_config) and \
+               (not option.applies_to_measurement_types or
+                    measurement_type.slug in
+                    option.applies_to_measurement_types):
                 yield (option, self.get(option.option))
 
 

@@ -1,29 +1,40 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
 {% block contentpage %}
-<h2>Configuratie {{ view.activity }}</h2>
+    <h2>Configuratie {{ view.activity }}</h2>
 
-<form method="post" action="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">
-<table class="table table-bordered progressbase">
-<thead>
-<th>Optie</th>
-<th>Type</th>
-<th>Waarde</th>
-</thead>
-{% for option, current_value in view.config_options %}
-<tr>
-  <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
-  <td>{% if option.type == "float" %}Decimaal getal{% elif option.type == "int" %}Geheel getal{% elif option.type == "boolean" %}Ja / Nee{% else %}Tekst{% endif %}</td>
-  <td>
-{% if option.type == "boolean" %}
-<input type="checkbox" name="{{ option.option }}" {% if current_value %}checked="checked"{% endif %}
-{% else %}
-<input type="text" name="{{ option.option }}" value="{{ current_value }}"></td>
-{% endif %}
-</li>
-{% endfor %}
-</table>
-<input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
-{% csrf_token %}
-</form>
+    <form method="post" action="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">
+        <table class="table table-bordered progressbase">
+            <thead>
+                <th>Optie</th>
+                <th>Type</th>
+                <th>Waarde</th>
+            </thead>
+            {% for option, current_value in view.config_options %}
+                <tr>
+                    <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
+                    <td>
+                        {% if option.type == "float" %}
+                            Decimaal getal
+                        {% elif option.type == "int" %}
+                            Geheel getal
+                        {% elif option.type == "boolean" %}
+                            Ja / Nee
+                        {% else %}
+                            Tekst
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if option.type == "boolean" %}
+                            <input type="checkbox" name="{{ option.option }}" {% if current_value %}checked="checked"{% endif %}>
+                        {% else %}
+                            <input type="text" name="{{ option.option }}" value="{{ current_value }}">
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
+        {% csrf_token %}
+    </form>
 {% endblock contentpage %}

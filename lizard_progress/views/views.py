@@ -297,7 +297,7 @@ class MapView(View):
     def set_extent(self, session):
         """We need min-x, max-x, min-y and max-y as Google coordinates."""
         locations = Location.objects.filter(activity__project=self.project)
-        if not locations.exist():
+        if not locations.exists():
             return
 
         extent = locations.extent()

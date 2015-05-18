@@ -33,9 +33,10 @@ def set_items(request, workspace_items):
     for index, item in enumerate(workspace_items):
         key = (item['name'], item['adapter_class'], item['adapter_layer_json'])
         if key in existing_items:
+            # Don't set visible -- this code is also called when visibility
+            # is toggled.
             old_item = existing_items[key]
             old_item.index = index
-            old_item.visible = True
             old_item.clickable = True
             old_item.save()
             del existing_items[key]

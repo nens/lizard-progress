@@ -15,14 +15,9 @@
 {% endblock map-javascript %}
 
 {% block sidebar %}
-
-{# Put workspace things back in the sidebar, boo Lizard 4 #}
-{% workspace_edit view.workspace_edit %}
-{% comment %}
-  I think this is unused
-  {% collage_edit view.collage_edit %}
-{% endcomment %}
-
+  {# Put workspace things back in the sidebar, boo Lizard 4 #}
+  {% workspace_edit view.workspace_edit %}
+  {# The Uploadserver doesn't have a collage. #}
 {% endblock sidebar %}
 
 {# We don't want a secondary sidebar #}

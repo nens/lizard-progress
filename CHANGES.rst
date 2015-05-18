@@ -12,6 +12,9 @@ New features for the Almere / HDSR project:
   project's. Items can't be removed, only their visibility can be
   toggled. No secondary sidebar, no collage.
 
+- Options can now belong to measurement types, and are only shown if
+  the current activity actually uses that type.
+
 
 2.4.7 (2015-05-08)
 ------------------

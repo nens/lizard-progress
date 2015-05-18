@@ -5,7 +5,12 @@ Changelog of lizard-progress
 2.4.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
+New features for the Almere / HDSR project:
+
+- Cleaned the map page; all layers of the current project are
+  automatically in the workspace, and the extent is set to the current
+  project's. Items can't be removed, only their visibility can be
+  toggled. No secondary sidebar, no collage.
 
 
 2.4.7 (2015-05-08)

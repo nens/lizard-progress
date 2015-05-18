@@ -56,8 +56,7 @@ CONFIG_OPTIONS = {
         default='',
         only_for_error=None,
         for_project=False,
-        applies_to_measurement_types=['dwarsprofielen_inpeiling',
-                                      'Vooronderzoek'],
+        applies_to_measurement_types=[],
     ),
     'maximum_z1z2_difference': Option(
         option='maximum_z1z2_difference',
@@ -68,7 +67,7 @@ CONFIG_OPTIONS = {
         default='1',
         only_for_error='MET_DIFFERENCE_Z1Z2_MAX_1M',
         for_project=False,
-        applies_to_measurement_types=['dwarsprofielen_inpeiling', ],
+        applies_to_measurement_types=['dwarsprofiel'],
     ),
     'lowest_z_value_allowed': Option(
         option='lowest_z_value_allowed',
@@ -79,7 +78,7 @@ CONFIG_OPTIONS = {
         default='-10',
         only_for_error='MET_Z_TOO_LOW',
         for_project=False,
-        applies_to_measurement_types=['Vooronderzoek', ],
+        applies_to_measurement_types=['dwarsprofiel'],
     ),
     'maximum_waterway_width': Option(
         option='maximum_waterway_width',
@@ -89,11 +88,11 @@ CONFIG_OPTIONS = {
         default='100',
         only_for_error='MET_WATERWAY_TOO_WIDE',
         for_project=False,
-        applies_to_measurement_types=['ribx_reiniging_kolken', ],
+        applies_to_measurement_types=['dwarsprofiel'],
     ),
     'maximum_x_coordinate': Option(
         option='maximum_x_coordinate',
-        short_description='Maximum X coordinaat dwarsprofiel (RD)',
+        short_description='Maximum X coordinaat (RD)',
         long_description='In Rijksdriehoek coordinaten',
         type='float',
         default='300000',
@@ -103,7 +102,7 @@ CONFIG_OPTIONS = {
     ),
     'minimum_x_coordinate': Option(
         option='minimum_x_coordinate',
-        short_description='Minimum X coordinaat dwarsprofiel (RD)',
+        short_description='Minimum X coordinaat (RD)',
         long_description='In Rijksdriehoek coordinaten',
         type='float',
         default='7000',
@@ -113,7 +112,7 @@ CONFIG_OPTIONS = {
     ),
     'maximum_y_coordinate': Option(
         option='maximum_y_coordinate',
-        short_description='Maximum Y coordinaat dwarsprofiel (RD)',
+        short_description='Maximum Y coordinaat (RD)',
         long_description='In Rijksdriehoek coordinaten',
         type='float',
         default='629000',
@@ -123,7 +122,7 @@ CONFIG_OPTIONS = {
     ),
     'minimum_y_coordinate': Option(
         option='minimum_y_coordinate',
-        short_description='Minimum Y coordinaat dwarsprofiel (RD)',
+        short_description='Minimum Y coordinaat (RD)',
         long_description='In Rijksdriehoek coordinaten',
         type='float',
         default='289000',
@@ -150,7 +149,7 @@ CONFIG_OPTIONS = {
         default='2',
         only_for_error='MET_MEAN_MEASUREMENT_DISTANCE',
         for_project=False,
-        applies_to_measurement_types=[],
+        applies_to_measurement_types=['dwarsprofiel'],
     ),
     'max_measurement_distance': Option(
         option='max_measurement_distance',
@@ -161,7 +160,7 @@ CONFIG_OPTIONS = {
         default='2.5',
         only_for_error='MET_DISTANCETOOLARGE',
         for_project=False,
-        applies_to_measurement_types=[],
+        applies_to_measurement_types=['dwarsprofiel'],
     ),
     'hydrovakken_id_field': Option(
         option='hydrovakken_id_field',
@@ -185,7 +184,7 @@ CONFIG_OPTIONS = {
         default='ID_DWP',
         only_for_error=None,
         for_project=False,
-        applies_to_measurement_types=['test', ],
+        applies_to_measurement_types=[],
     ),
     'lowest_below_water_allowed': Option(
         option='lowest_below_water_allowed',
@@ -196,7 +195,7 @@ CONFIG_OPTIONS = {
         default='-50',
         only_for_error='MET_Z_TOO_LOW_BELOW_WATER',
         for_project=False,
-        applies_to_measurement_types=[],
+        applies_to_measurement_types=['dwarsprofiel'],
     ),
     'max_distance_to_midline': Option(
         option='max_distance_to_midline',
@@ -209,7 +208,7 @@ CONFIG_OPTIONS = {
         default='1',
         only_for_error='MET_DISTANCE_TO_MIDLINE',
         for_project=False,
-        applies_to_measurement_types=[],
+        applies_to_measurement_types=['dwarsprofiel'],
     ),
 }
 
@@ -336,7 +335,7 @@ class Configuration(object):
                (option.only_for_error is None or
                     option.only_for_error in error_config) and \
                (not option.applies_to_measurement_types or
-                    measurement_type.slug in
+                    measurement_type.implementation_slug in
                     option.applies_to_measurement_types):
                 yield (option, self.get(option.option))
 

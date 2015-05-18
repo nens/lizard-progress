@@ -258,6 +258,10 @@ class MapView(View):
     def get(self, request, *args, **kwargs):
         """Besides rendering the map page, zoom to the extent of all our
         layers, and place them in the workspace."""
+
+        # XXX Note that this is somewhat dubious as some JS functionality
+        # (like toggling the visibility of the workspace items) also calls
+        # *this entire view* to update its view of the workspace items.
         workspaces.set_items(request, self.available_layers())
         self.set_extent(request.session)
         return super(MapView, self).get(request, *args, **kwargs)

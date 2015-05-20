@@ -247,8 +247,12 @@ CONFIG_OPTIONS = {
 
 
 class Configuration(object):
-    def __init__(self, organization=None, activity=None, project=None):
-        """Give ONE of organization, activity, project."""
+    def __init__(
+            self, organization=None, activity=None, project=None,
+            measurement_type=None
+    ):
+        """Give ONE of organization, activity, project. If organization
+        is given, measurement_type should be given too."""
         if sum(item is not None for item in (organization,
                                              activity,
                                              project)) != 1:
@@ -256,6 +260,7 @@ class Configuration(object):
                 "Give either organization, project or activity, not more.")
 
         self.organization = organization
+        self.measurement_type = measurement_type
         self.activity = activity
         self.project = project
 
@@ -270,9 +275,13 @@ class Configuration(object):
             return self.get_organization(option)
 
     def get_organization(self, option):
+        measurement_type = (
+            None if option.all_measurement_types else self.measurement_type)
+
         organization_config, created = (
             models.OrganizationConfig.objects.get_or_create(
                 organization=self.organization,
+                measurement_type=measurement_type,
                 config_option=option.option))
         if organization_config.value is None:
             organization_config.value = option.default
@@ -288,6 +297,7 @@ class Configuration(object):
             organization_config, created = (
                 models.OrganizationConfig.objects.get_or_create(
                     organization=self.project.organization,
+                    measurement_type=None,
                     config_option=option.option))
             if organization_config.value is None:
                 organization_config.value = option.default
@@ -302,9 +312,13 @@ class Configuration(object):
                 activity=self.activity,
                 config_option=option.option))
         if activity_config.value is None:
+            measurement_type = (
+                None if option.all_measurement_types else
+                self.activity.measurement_type)
             organization_config, created = (
                 models.OrganizationConfig.objects.get_or_create(
                     organization=self.activity.project.organization,
+                    measurement_type=measurement_type,
                     config_option=option.option))
             if organization_config.value is None:
                 organization_config.value = option.default
@@ -340,9 +354,13 @@ class Configuration(object):
 
     def set_organization(self, option, value):
         """Save a configuration option that was set for an organization"""
+        measurement_type = (
+            None if option.all_measurement_types else self.measurement_type)
+
         organization_config, created = (
             models.OrganizationConfig.objects.get_or_create(
                 organization=self.organization,
+                measurement_type=measurement_type,
                 config_option=option.option))
         organization_config.value = option.to_unicode(value)
         organization_config.save()
@@ -351,10 +369,12 @@ class Configuration(object):
         """Return only the options that are relevant for this project,
         or activity. Omit options for which the error message is turned off
         anyway."""
-        measurement_type = getattr(
-            self.activity,
-            'measurement_type',
-            models.AvailableMeasurementType.dwarsprofiel())
+        if self.activity:
+            measurement_type = self.activity.measurement_type
+        elif self.project:
+            measurement_type = None
+        else:
+            measurement_type = self.measurement_type
 
         error_config = errors.ErrorConfiguration(
             project=self.activity.project if self.activity else self.project,
@@ -364,12 +384,10 @@ class Configuration(object):
         want_for_project = self.project is not None
 
         for (option_key, option) in sorted(CONFIG_OPTIONS.iteritems()):
-            if option.for_project == want_for_project and \
-               (option.only_for_error is None or
-                    option.only_for_error in error_config) and \
-               (not option.applies_to_measurement_types or
-                    measurement_type.implementation_slug in
-                    option.applies_to_measurement_types):
+            if (option.for_project == want_for_project and
+                    option.applies_to_errors(error_config) and
+                    (self.organization or option.applies_to(
+                        measurement_type))):
                 yield (option, self.get(option.option))
 
 

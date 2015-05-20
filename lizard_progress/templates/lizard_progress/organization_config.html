@@ -5,36 +5,34 @@
 
 {% block contentpage %}
 
-<div id="contentpage">
-<h2>Configuratie {{ view.organization }}</h2>
+  <div id="contentpage">
+    <h2>Configuratie {{ view.organization }}</h2>
 
-<p>Dit zijn de default waarden voor het Configuratie scherm van een project. Deze
-waarden worden alleen gebruikt bij het <i>aanmaken</i> van een project, als het project
-eenmaal aangemaakt is kunnen de waarden van dat project aangepast worden op het
-Configuratie scherm van dat project.</p>
+    <p>Dit zijn de default waarden voor het Configuratie scherm van
+    een project. Deze waarden worden alleen gebruikt bij
+    het <i>aanmaken</i> van een project, als het project eenmaal
+    aangemaakt is kunnen de waarden van dat project aangepast worden
+    op het Configuratie scherm van dat project.</p>
 
-<form method="post" action="{% url "lizard_progress_admin_organization_errorconfiguration" %}">
-<table class="table table-bordered progressbase">
-<thead>
-<th>Optie</th>
-<th>Type</th>
-<th>Waarde</th>
-</thead>
-{% for option, current_value in view.config_options %}
-<tr>
-  <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
-  <td>{% if option.type == "float" %}Decimaal getal{% elif option.type == "int" %}Geheel getal{% elif option.type == "boolean" %}Ja / Nee{% else %}Tekst{% endif %}</td>
-  <td>
-{% if option.type == "boolean" %}
-<input type="checkbox" name="{{ option.option }}" {% if current_value %}checked="checked"{% endif %}
-{% else %}
-<input type="text" name="{{ option.option }}" value="{{ current_value }}"></td>
-{% endif %}
-</li>
-{% endfor %}
-</table>
-<input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
-{% csrf_token %}
-</form>
-</div>
+    {% with option_blocks=view.config_option_blocks %}
+
+      {# Repeat this twice so that the generic options come first #}
+      {% for option_block in option_blocks.items %}
+        {% if option_block.0.0 == "" %}
+          {% with mtype_slug="" mtype_name="Algemeen" options=option_block.1 %}
+            {% include "lizard_progress/organization_config_block.html" %}
+          {% endwith %}
+        {% endif %}
+      {% endfor %}
+
+      {% for option_block in option_blocks.items %}
+        {% if option_block.0.0 != "" %}
+          {% with mtype_slug=option_block.0.0 mtype_name=option_block.0.1 options=option_block.1 %}
+            {% include "lizard_progress/organization_config_block.html" %}
+          {% endwith %}
+        {% endif %}
+      {% endfor %}
+{% endwith %}
+
+  </div>
 {% endblock contentpage %}

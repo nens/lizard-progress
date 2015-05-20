@@ -22,6 +22,8 @@ from django.test import TransactionTestCase
 
 from lizard_progress import models
 
+from nose.plugins.attrib import attr
+
 
 class UserF(factory.DjangoModelFactory):
     class Meta:
@@ -197,6 +199,7 @@ class TestErrorMessage(TestCase):
         self.assertEquals(error, "Some format string")
 
 
+@attr('slow')
 class TestOrganization(TransactionTestCase):
     """Tests for the Organization model."""
 
@@ -341,6 +344,7 @@ class TestProject(TestCase):
         self.assertEquals(project.num_open_requests, 0)
 
 
+@attr('slow')
 class TestLocation(TestCase):
     """Tests for the Location model."""
     def test_unicode(self):
@@ -391,6 +395,7 @@ class TestMeasurement(TestCase):
         self.assertEquals(location.the_geom, point)
 
 
+@attr('slow')
 class TestExportRun(TestCase):
     def test_exportrun_without_file_is_not_available(self):
         measurement_type = AvailableMeasurementTypeF.build()
@@ -480,6 +485,7 @@ class TestExportRun(TestCase):
         self.assertFalse(run.available)
 
 
+@attr('slow')
 class TestActivity(TestCase):
     def test_num_locations(self):
         activity = ActivityF.create()

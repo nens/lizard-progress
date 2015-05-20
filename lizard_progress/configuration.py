@@ -171,7 +171,7 @@ CONFIG_OPTIONS = {
         default='10',
         only_for_error='TOO_FAR_FROM_LOCATION',
         for_project=False,
-        applies_to_measurement_types=[],
+        applies_to_measurement_types=['dwarsprofiel'],
     ),
     'maximum_mean_distance_between_points': Option(
         option='maximum_mean_distance_between_points',

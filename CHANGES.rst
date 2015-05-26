@@ -15,6 +15,8 @@ New features for the Almere / HDSR project:
 - Options can now belong to measurement types, and are only shown if
   the current activity actually uses that type.
 
+- Add expected attachments to popup, if present
+
 
 2.4.7 (2015-05-08)
 ------------------

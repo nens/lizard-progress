@@ -15,6 +15,13 @@ New features for the Almere / HDSR project:
 - Options can now belong to measurement types, and are only shown if
   the current activity actually uses that type.
 
+- There are measurement types that use the implementation of other
+  measurement types. They seem different to the user, but are the same
+  internally. It is now possible to configure separate organization defaults
+  for these, so that e.g. the dwarsprofiel measurement at the start of a
+  project can use different distance defaults than the measurement made at
+  the end of a project.
+
 - Add expected attachments to popup, if present
 
 

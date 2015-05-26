@@ -28,4 +28,7 @@
       </ul>
     {% endif %}
   {% endwith %}
+  {% if location.planned_date %}
+    <p>De geplande datum voor deze locatie is {{ location.planned_date|date:"DATE_FORMAT" }}.</p>
+  {% endif %}
 {% endwith %}

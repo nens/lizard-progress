@@ -1,2 +1,8 @@
 <h2>{{ activity }}</h2>
-<p>Locatie: {{ location.location_code }}: Nog geen data aanwezig in het systeem.</p>
+
+<p>Code: {{ location.location_code }}<br />Opdrachtnemer: {{ activity.contractor }}<br />Werkzaamheid: {{ activity.measurement_type }}</p>
+<p>Er is voor deze locatie nog geen data aanwezig in het systeem.</p>
+
+{% if location.planned_date %}
+  <p>De geplande datum voor deze locatie is {{ location.planned_date|date:"DATE_FORMAT" }}.</p>
+{% endif %}

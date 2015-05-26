@@ -2,22 +2,28 @@
   <h2>Rioleringinspectie {{ location.location_code }}</h2>
   {% with measurements=location.measurement_set.all %}
     {% if measurements %}
-      <p>RIBX(A) bestanden:</p>
+      <p>Bestanden:</p>
       <ul>
         {% for measurement in measurements %}
           {% if measurement.data.filetype == "ribx" %}
-            <li>{{ measurement.base_filename }} ({{ measurement.date }})</li>
+            <li><a href="{{ measurement.url }}">{{ measurement.base_filename }}</a> ({{ measurement.date }})</li>
+          {% endif %}
+        {% endfor %}
+        {% for measurement in measurements %}
+          {% if measurement.data.filetype != "ribx" %}
+            <li><a href="{{ measurement.url }}">{{ measurement.base_filename }}</a>
+              {% if measurement.date %} ({{ measurement.date }}){% endif %}</li>
           {% endif %}
         {% endfor %}
       </ul>
     {% endif %}
   {% endwith %}
-  {% with attachments=location.expected_attachments.all %}
+  {% with attachments=location.missing_attachments %}
     {% if attachments %}
-      <p>Verwachte bestanden voor deze code:</p>
+      <p>Nog te uploaden bestanden voor deze code:</p>
       <ul>
         {% for a in attachments %}
-          <li>{{ a.filename }}: {% if a.uploaded %}Aanwezig{% else %}Nog niet aanwezig{% endif %}</li>
+          <li>{{ a.filename }}</li>
         {% endfor %}
       </ul>
     {% endif %}

@@ -514,9 +514,12 @@ class Location(models.Model):
         location."""
         return self.measurement_set.count() > 0
 
+    def missing_attachments(self):
+        return self.expected_attachments.filter(uploaded=False)
+
     @property
     def all_expected_attachments_present(self):
-        return not self.expected_attachments.filter(uploaded=False).exists()
+        return not self.missing_attachments.exists()
 
 
 class AvailableMeasurementType(models.Model):

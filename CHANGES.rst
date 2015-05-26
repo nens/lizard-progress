@@ -24,6 +24,8 @@ New features for the Almere / HDSR project:
 
 - Add expected attachments to popup, if present
 
+- Fix bug where uploaded files were saved to the wrong directory.
+
 
 2.4.7 (2015-05-08)
 ------------------

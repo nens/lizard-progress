@@ -26,6 +26,8 @@ New features for the Almere / HDSR project:
 
 - Fix bug where uploaded files were saved to the wrong directory.
 
+- Improve date formatting
+
 
 2.4.7 (2015-05-08)
 ------------------

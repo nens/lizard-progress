@@ -1,3 +1,16 @@
+# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
+# -*- coding: utf-8 -*-
+
+"""Views for the organization config defaults."""
+
+# Python 3 is coming
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
+from collections import defaultdict
+
 from django import http
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
@@ -21,6 +34,37 @@ class OrganizationAdminConfiguration(ProjectsView):
             organization=self.organization)
         return list(config.options())
 
+    def config_option_blocks(self):
+        option_blocks = defaultdict(list)
+
+        options = [option[0] for option in self.config_options()]
+
+        mtypes = list(self.organization.visible_available_measurement_types())
+        logger.debug("config_option_blocks: mtypes = {}".format(mtypes))
+
+        for option in options:
+            logger.debug(">>> option: {}".format(option))
+            if option.all_measurement_types:
+                logger.debug("option {} does not apply to mtypes"
+                             .format(option[0]))
+                option_blocks[('', '')].append(
+                    (option, option.default_for(self.organization, None)))
+            else:
+                logger.debug("option {} DOES not apply to mtypes!"
+                             .format(option))
+                for mtype in mtypes:
+                    applies = option.applies_to(mtype)
+                    logger.debug("Testing mtype {}... {}".format(
+                        mtype, applies))
+                    if applies:
+                        option_blocks[(mtype.slug, unicode(mtype))].append(
+                            (option,
+                             option.default_for(self.organization, mtype)))
+
+        # Note that defaultdicts don't work well with Django's templates,
+        # convert to a normal dict before returning.
+        return dict(option_blocks.items())
+
     def post(self, request, *args, **kwargs):
         if not self.user_has_manager_role():
             raise PermissionDenied()
@@ -28,16 +72,38 @@ class OrganizationAdminConfiguration(ProjectsView):
         redirect = http.HttpResponseRedirect(reverse(
             "lizard_progress_admin_organization_errorconfiguration"))
 
-        for key, option in configuration.CONFIG_OPTIONS.iteritems():
-            value_str = request.POST.get(key, '')
+        mtype_slug = request.POST.get('mtype_slug', '')
+        mtype = None
+        if mtype_slug:
             try:
+                mtype = models.AvailableMeasurementType.objects.get(
+                    slug=mtype_slug)
+            except models.AvailableMeasurementType.DoesNotExist:
+                pass
+        logger.debug(
+            "In POST of organization admin; mtype_slug={}, mtype={}".format(
+                mtype_slug, mtype))
+
+        for key, option in configuration.CONFIG_OPTIONS.iteritems():
+            if mtype_slug and mtype:
+                if not option.applies_to(mtype):
+                    continue
+            else:
+                if not option.all_measurement_types:
+                    continue
+            try:
+                value_str = request.POST.get(key, '')
+                logger.debug("Converting '{}'...".format(value_str))
                 value = option.translate(value_str)
+            except ValueError:
+                value = None
+
+            if value is not None:
                 # No error, set it
                 config = configuration.Configuration(
-                    organization=self.organization)
+                    organization=self.organization,
+                    measurement_type=mtype)
                 config.set(option, value)
-            except ValueError:
-                pass
 
         return redirect
 

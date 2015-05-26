@@ -514,32 +514,6 @@ class Location(models.Model):
         location."""
         return self.measurement_set.count() > 0
 
-    def ribx_measurements(self):
-        """Return a dictionary with different types of measurements:
-        {
-            'ribx': [List of RIBX measurements for this location],
-            'files_missing': [Media files that we expect to be uploaded],
-            'files_uploaded': [Measurements referring to uploaded files]
-        }
-        """
-        files_expected = set()
-        files_present = set()
-
-        result = {'ribx': [], 'files_uploaded': []}
-
-        for measurement in self.measurement_set.all().order_by('-date'):
-            if measurement.data.get('filetype') == 'ribx':
-                result['ribx'].append(measurement)
-                files_expected.update(
-                    measurement.data.get('files_expected', []))
-            if measurement.data.get('filetype') == 'media':
-                files_present.add(measurement.base_filename)
-                result['files_uploaded'].append(measurement)
-
-        result['files_missing'] = list(files_expected - files_present)
-
-        return result
-
     @property
     def all_expected_attachments_present(self):
         return not self.expected_attachments.filter(uploaded=False).exists()
@@ -812,6 +786,14 @@ class ExpectedAttachment(models.Model):
     activity = models.ForeignKey(Activity)
     filename = models.CharField(max_length=100)
     uploaded = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ('uploaded', 'filename', )
+
+    def __unicode__(self):
+        return "Expected attachment {}: {} for activity {}".format(
+            "PRESENT" if self.uploaded else "MISSING",
+            self.filename, self.activity_id)
 
 
 class MeasurementTypeAllowed(models.Model):

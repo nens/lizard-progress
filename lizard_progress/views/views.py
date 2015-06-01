@@ -480,8 +480,8 @@ def dashboard_graph(
     project = get_object_or_404(Project, slug=project_slug)
     activity = get_object_or_404(models.Activity, pk=activity_id)
 
-    if (not has_access(request.user, project, activity.contractor)
-            or activity.project != project):
+    if (not has_access(request.user, project, activity.contractor) or
+            activity.project != project):
         raise PermissionDenied()
 
     fig = ScreenFigure(500, 300)  # in pixels

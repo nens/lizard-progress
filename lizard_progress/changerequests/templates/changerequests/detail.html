@@ -70,6 +70,10 @@
             </form>
         </dd>
     {% endif %}
+    <dt></dt>
+    <dd>
+        <a href="{% url "lizard_progress_mapview_change_request" project_slug=view.project_slug change_request=cr.id %}" class="btn btn-default">Toon op kaart</a>
+    </dd>
 </dl>
 
 <h3>Commentaar</h3>

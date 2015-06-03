@@ -287,6 +287,14 @@ class MapView(View):
                 'adapter_layer_json': json.dumps({"activity_id": activity.id})
             })
 
+            for request in activity.changerequest_set.all():
+                layers.append({
+                    'name': '{} {}'.format(_("Change requests"), activity),
+                    'adapter_class': 'adapter_changerequest',
+                    'adapter_layer_json': json.dumps({
+                        'changerequest_id': request.id})
+                })
+
         if Hydrovak.objects.filter(project=self.project).exists():
             layers.append({
                 'name': 'Hydrovakken {projectname}'

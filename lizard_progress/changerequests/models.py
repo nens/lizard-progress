@@ -378,6 +378,13 @@ class Request(models.Model):
         RequestComment.objects.create(
             request=self, comment=comment, user=user)
 
+    def map_layer(self):
+        return {
+            'name': unicode(self),
+            'adapter_class': 'adapter_changerequest',
+            'adapter_layer_json': self.adapter_layer_json()
+        }
+
 
 class RequestComment(models.Model):
     """Comments connected to some request."""

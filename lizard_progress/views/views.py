@@ -269,42 +269,7 @@ class MapView(View):
     def available_layers(self):
         """List of layers available to draw. One layer per activity."""
 
-        logger.debug("Available layers:")
-        layers = []
-        for activity in self.project.activity_set.all():
-            if not has_access(
-                    self.request.user, self.project, activity.contractor):
-                continue
-
-            if not activity.measurement_type.can_be_displayed:
-                continue
-
-            layers.append({
-                'name': '%s %s' %
-                (self.project.name,
-                 activity),
-                'adapter_class': 'adapter_progress',
-                'adapter_layer_json': json.dumps({"activity_id": activity.id})
-            })
-
-            for request in activity.changerequest_set.all():
-                layers.append({
-                    'name': '{} {}'.format(_("Change requests"), activity),
-                    'adapter_class': 'adapter_changerequest',
-                    'adapter_layer_json': json.dumps({
-                        'changerequest_id': request.id})
-                })
-
-        if Hydrovak.objects.filter(project=self.project).exists():
-            layers.append({
-                'name': 'Hydrovakken {projectname}'
-                .format(projectname=self.project.name),
-                'adapter_class': 'adapter_hydrovak',
-                'adapter_layer_json': json.dumps(
-                    {"project_slug": self.project_slug})
-            })
-
-        return layers
+        return list(self.project.available_layers(self.request.user))
 
     def set_extent(self, session):
         """We need min-x, max-x, min-y and max-y as Google coordinates."""

@@ -12,6 +12,7 @@ SRID = RDNEW
 
 import datetime
 import functools
+import json
 import logging
 import os
 import random
@@ -412,6 +413,22 @@ class Project(models.Model):
             request_status=Request.REQUEST_STATUS_OPEN,
             activity__project=self).count()
 
+    def available_layers(self, user):
+        """Yield available map layers for user."""
+        for activity in self.activity_set.all():
+            # Obvious use for Python 3's yield from
+            for layer in activity.available_layers(user):
+                yield layer
+
+        if Hydrovak.objects.filter(project=self).exists():
+            yield {
+                'name': 'Hydrovakken {projectname}'
+                .format(projectname=self.name),
+                'adapter_class': 'adapter_hydrovak',
+                'adapter_layer_json': json.dumps(
+                    {"project_slug": self.slug})
+            }
+
 
 class Location(models.Model):
     LOCATION_TYPE_POINT = 'point'
@@ -777,6 +794,25 @@ class Activity(models.Model):
             return files[0]
         else:
             return None
+
+    def available_layers(self, user):
+        """Yield available map layers."""
+        if not has_access(user, self.project, self.contractor):
+            return
+
+        if not self.measurement_type.can_be_displayed:
+            return
+
+        yield {
+            'name': '%s %s' % (self.project.name, self),
+            'adapter_class': 'adapter_progress',
+            'adapter_layer_json': json.dumps({"activity_id": self.id})
+        }
+
+        from lizard_progress.changerequests.models import Request
+        for request in self.request_set.filter(
+                request_status=Request.REQUEST_STATUS_OPEN):
+            yield request.map_layer()
 
 
 class ExpectedAttachment(models.Model):

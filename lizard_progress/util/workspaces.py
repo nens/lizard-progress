@@ -31,7 +31,9 @@ def set_items(request, workspace_items):
     }
 
     for index, item in enumerate(workspace_items):
-        key = (item['name'], item['adapter_class'], item['adapter_layer_json'])
+        key = (item['name'][:80],
+               item['adapter_class'],
+               item['adapter_layer_json'])
         if key in existing_items:
             # Don't set visible -- this code is also called when visibility
             # is toggled.
@@ -43,7 +45,7 @@ def set_items(request, workspace_items):
         else:
             models.WorkspaceEditItem.objects.create(
                 workspace=workspace,
-                name=item['name'],
+                name=item['name'][:80],
                 adapter_class=item['adapter_class'],
                 adapter_layer_json=item['adapter_layer_json'],
                 index=index,

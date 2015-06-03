@@ -47,7 +47,7 @@ class Request(models.Model):
         REQUEST_TYPE_REMOVE_CODE: "Locatiecode verwijderen",
         REQUEST_TYPE_MOVE_LOCATION: "Locatie verplaatsen",
         REQUEST_TYPE_NEW_LOCATION: "Nieuwe locatiecode"
-        }
+    }
 
     REQUEST_STATUS_OPEN = 1
     REQUEST_STATUS_ACCEPTED = 2

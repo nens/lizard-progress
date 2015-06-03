@@ -379,11 +379,11 @@ class Request(models.Model):
             request=self, comment=comment, user=user)
 
     def map_layer(self):
-        return {
-            'name': unicode(self),
-            'adapter_class': 'adapter_changerequest',
-            'adapter_layer_json': self.adapter_layer_json()
-        }
+        from lizard_progress.util.workspaces import MapLayer
+        return MapLayer(
+            name=unicode(self),
+            adapter_class='adapter_changerequest',
+            adapter_layer_json=self.adapter_layer_json())
 
 
 class RequestComment(models.Model):

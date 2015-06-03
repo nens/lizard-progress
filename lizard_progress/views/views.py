@@ -10,7 +10,6 @@ protected_file_download - to download some uploaded files
 """
 
 import csv
-import json
 import logging
 import os
 import platform

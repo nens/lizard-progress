@@ -34,7 +34,6 @@ from django.contrib import auth
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
-from lizard_map import coordinates
 from lizard_map.views import MAP_LOCATION as EXTENT_SESSION_KEY
 from lizard_ui.layout import Action
 from lizard_ui.views import UiView
@@ -46,35 +45,10 @@ from lizard_progress.models import Location
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
 from lizard_progress.util import workspaces
-
+from lizard_progress.util import geo
 from lizard_progress import forms
 
 logger = logging.getLogger(__name__)
-
-
-def rd_to_google_extent(rd_extent):
-    topleft = rd_extent[0:2]
-    bottomright = rd_extent[2:4]
-
-    google_topleft = coordinates.rd_to_google(*topleft)
-    google_bottomright = coordinates.rd_to_google(*bottomright)
-
-    # To make sure we zoom in "correctly", with everything in view,
-    # we now increase this extent some arbitrary percentage...
-    dx = abs(google_topleft[0] - google_bottomright[0])
-    dy = abs(google_topleft[1] - google_bottomright[1])
-
-    FACTOR = 0.1
-
-    # Format as a top/left/right/bottom dict with extra border
-    extent = {
-        'top': google_topleft[1] - FACTOR * dy,
-        'left': google_topleft[0] - FACTOR * dx,
-        'right': google_bottomright[0] + FACTOR * dx,
-        'bottom': google_bottomright[1] + FACTOR * dy
-    }
-    logger.error("extent: {}".format(extent))
-    return extent
 
 
 class ProjectsMixin(object):
@@ -304,7 +278,7 @@ class MapView(View):
         rd_extent = self.get_rd_extent()
 
         if rd_extent:
-            formatted_google_extent = rd_to_google_extent(rd_extent)
+            formatted_google_extent = geo.rd_to_google_extent(rd_extent)
             session[EXTENT_SESSION_KEY] = formatted_google_extent
 
     def get_rd_extent(self):

@@ -13,12 +13,16 @@ from collections import namedtuple
 
 from lizard_map import models
 
+# We tried to save workspace items for which the name was too
+# long... restrict them.
 MAX_NAME_LENGTH = (
     models.WorkspaceEditItem._meta.get_field_by_name('name')[0].max_length)
 
 
 class MapLayer(namedtuple(
         'MapLayer', 'name adapter_class adapter_layer_json extent')):
+    """Class that represents a map layers that can be added to a lizard-map
+    WorkspaceEdit."""
     def __init__(self, name, adapter_class, adapter_layer_json, extent=None):
         """Allow omitting the extent."""
         return super(MapLayer, self).__init__(
@@ -56,8 +60,8 @@ def set_items(request, map_layers):
     for index, map_layer in enumerate(map_layers):
         key = map_layer.key
         if key in existing_items:
-            # Don't set visible -- this code is also called when visibility
-            # is toggled.
+            # Don't set visibility here -- this code is also called
+            # when visibility is toggled.
             old_item = existing_items[key]
             old_item.index = index
             old_item.clickable = True

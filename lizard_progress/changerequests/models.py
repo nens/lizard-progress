@@ -383,7 +383,22 @@ class Request(models.Model):
         return MapLayer(
             name=unicode(self),
             adapter_class='adapter_changerequest',
-            adapter_layer_json=self.adapter_layer_json())
+            adapter_layer_json=self.adapter_layer_json(),
+            extent=self.zoom_extent())
+
+    def zoom_extent(self):
+        """Return our the_geom as a (minx, miny, maxx, maxy) tuple.
+
+        For speed reasons, we don't care about the coordinates
+        of the existing Location our location_code refers to; the extent
+        of those is usually already known anyway."""
+        if not self.the_geom:
+            return None
+
+        x = self.the_geom.x
+        y = self.the_geom.y
+
+        return (x, y, x, y)
 
 
 class RequestComment(models.Model):

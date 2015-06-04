@@ -18,7 +18,12 @@ MAX_NAME_LENGTH = (
 
 
 class MapLayer(namedtuple(
-        'MapLayer', 'name adapter_class adapter_layer_json')):
+        'MapLayer', 'name adapter_class adapter_layer_json extent')):
+    def __init__(self, name, adapter_class, adapter_layer_json, extent=None):
+        """Allow omitting the extent."""
+        return super(MapLayer, self).__init__(
+            name, adapter_class, adapter_layer_json, extent)
+
     @property
     def truncated_name(self):
         return self.name[:MAX_NAME_LENGTH]

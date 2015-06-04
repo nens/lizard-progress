@@ -27,6 +27,7 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
+from django.utils.functional import cached_property
 from django.views.static import serve
 from django import http
 from django.contrib import auth
@@ -38,10 +39,8 @@ from lizard_map.views import MAP_LOCATION as EXTENT_SESSION_KEY
 from lizard_ui.layout import Action
 from lizard_ui.views import UiView
 
-from lizard_progress.changerequests import models as cmodels
 from lizard_progress import configuration
 from lizard_progress import models
-from lizard_progress.models import Hydrovak
 from lizard_progress.models import Project
 from lizard_progress.models import Location
 from lizard_progress.models import has_access
@@ -51,6 +50,31 @@ from lizard_progress.util import workspaces
 from lizard_progress import forms
 
 logger = logging.getLogger(__name__)
+
+
+def rd_to_google_extent(rd_extent):
+    topleft = rd_extent[0:2]
+    bottomright = rd_extent[2:4]
+
+    google_topleft = coordinates.rd_to_google(*topleft)
+    google_bottomright = coordinates.rd_to_google(*bottomright)
+
+    # To make sure we zoom in "correctly", with everything in view,
+    # we now increase this extent some arbitrary percentage...
+    dx = abs(google_topleft[0] - google_bottomright[0])
+    dy = abs(google_topleft[1] - google_bottomright[1])
+
+    FACTOR = 0.1
+
+    # Format as a top/left/right/bottom dict with extra border
+    extent = {
+        'top': google_topleft[1] - FACTOR * dy,
+        'left': google_topleft[0] - FACTOR * dx,
+        'right': google_bottomright[0] + FACTOR * dx,
+        'bottom': google_bottomright[1] + FACTOR * dy
+    }
+    logger.error("extent: {}".format(extent))
+    return extent
 
 
 class ProjectsMixin(object):
@@ -261,47 +285,61 @@ class MapView(View):
         # XXX Note that this is somewhat dubious as some JS functionality
         # (like toggling the visibility of the workspace items) also calls
         # *this entire view* to update its view of the workspace items.
-        workspaces.set_items(request, self.available_layers())
+        workspaces.set_items(request, self.available_layers)
         self.set_extent(request.session)
         return super(MapView, self).get(request, *args, **kwargs)
 
+    @cached_property
     def available_layers(self):
-        """List of layers available to draw. One layer per activity."""
+        """List of layers available to draw. One layer per activity. These
+        are lizard_progress.util.workspaces.MapLayer instances."""
 
-        return list(self.project.available_layers(self.request.user))
+        # Return a tuple instead of a list because an immutable value
+        # is safer with @cached_property.
+        return tuple(self.project.available_layers(self.request.user))
 
     def set_extent(self, session):
         """We need min-x, max-x, min-y and max-y as Google coordinates."""
+
+        rd_extent = self.get_rd_extent()
+
+        if rd_extent:
+            formatted_google_extent = rd_to_google_extent(rd_extent)
+            session[EXTENT_SESSION_KEY] = formatted_google_extent
+
+    def get_rd_extent(self):
+        """Compute the extent we want to zoom to, in RD."""
+
+        # If we want to zoom to, say, a single change request, do so here.
+
         locations = Location.objects.filter(activity__project=self.project)
-        if not locations.exists():
-            return
 
-        extent = locations.extent()
-        topleft = extent[0:2]
-        bottomright = extent[2:4]
+        # Layers MAY define their own extent (used for the extents of
+        # change requests). Otherwise layer.extent will be None.
+        extra_extents = [layer.extent for layer in self.available_layers
+                         if layer.extent is not None]
 
-        google_topleft = coordinates.rd_to_google(*topleft)
-        google_bottomright = coordinates.rd_to_google(*bottomright)
+        if locations.exists():
+            # Start with this extent, add the extras to this
+            extent = locations.extent()
+        elif extra_extents:
+            # No locations, but extra extents: use the first as start extent
+            extent = extra_extents.pop()
+        else:
+            # There is nothing to zoom to...
+            return None
 
-        # To make sure we zoom in "correctly", with everything in view,
-        # we now increase this extent some arbitrary percentage...
-        dx = abs(google_topleft[0] - google_bottomright[0])
-        dy = abs(google_topleft[1] - google_bottomright[1])
+        minx, miny, maxx, maxy = extent
 
-        FACTOR = 0.1
+        # Combine extra extents
+        for extra_extent in extra_extents:
+            e_minx, e_miny, e_maxx, e_maxy = extra_extent
+            minx = min(minx, e_minx)
+            miny = min(miny, e_miny)
+            maxx = max(maxx, e_maxx)
+            maxy = max(maxy, e_maxy)
 
-        extent = {
-            'top': google_topleft[1] - FACTOR * dy,
-            'left': google_topleft[0] - FACTOR * dx,
-            'right': google_bottomright[0] + FACTOR * dx,
-            'bottom': google_bottomright[1] + FACTOR * dy
-        }
-        logger.error("extent: {}".format(extent))
-        session[EXTENT_SESSION_KEY] = extent
-
-    def open_changerequests(self):
-        return cmodels.Request.open_requests_for_profile(
-            None, self.profile, project=self.project)
+        return (minx, miny, maxx, maxy)
 
     @property
     def content_actions(self):

@@ -426,7 +426,8 @@ class Project(models.Model):
             yield MapLayer(
                 name='Hydrovakken {projectname}'.format(projectname=self.name),
                 adapter_class='adapter_hydrovak',
-                adapter_layer_json=json.dumps({"project_slug": self.slug}))
+                adapter_layer_json=json.dumps({"project_slug": self.slug}),
+                extent=None)
 
 
 class Location(models.Model):
@@ -806,7 +807,8 @@ class Activity(models.Model):
         yield MapLayer(
             name='%s %s' % (self.project.name, self),
             adapter_class='adapter_progress',
-            adapter_layer_json=json.dumps({"activity_id": self.id}))
+            adapter_layer_json=json.dumps({"activity_id": self.id}),
+            extent=None)
 
         from lizard_progress.changerequests.models import Request
         for request in self.request_set.filter(

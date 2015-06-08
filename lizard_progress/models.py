@@ -452,6 +452,14 @@ class Location(models.Model):
         max_length=10, default=LOCATION_TYPE_POINT, null=False,
         blank=False, choices=LOCATION_TYPE_CHOICES)
 
+    # Sometimes it needs to be recorded that a location exists, and it
+    # should not be impossible to upload data for it, but it's not
+    # actually part of the project officialy (think sewer drains that
+    # are not owned by the organisation having the drains
+    # cleaned). Locations with not_part_of_project True should not count
+    # towards progress counts and should be shown differently on the map.
+    not_part_of_project = models.BooleanField(default=False)
+
     # Often unused, but some types of project can plan when a
     # location will be planned.
     planned_date = models.DateField(null=True, blank=True)

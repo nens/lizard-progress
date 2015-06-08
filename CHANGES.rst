@@ -34,6 +34,8 @@ New features for the Almere / HDSR project:
 - For convenience's sake, they are configured at project level instead
   of activity level.
 
+- Added 'not_part_of_project' Boolean to Location.
+
 
 2.4.7 (2015-05-08)
 ------------------

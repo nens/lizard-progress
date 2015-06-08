@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 class RibxParser(ProgressParser):
     ERRORS = {
         'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
+        'X_NOT_IN_EXTENT': "Buiten gebied: X coördinaat niet tussen {} en {}.",
+        'Y_NOT_IN_EXTENT': "Buiten gebied: Y coördinaat niet tussen {} en {}.",
     }
 
     def parse(self, check_only=False):
@@ -41,10 +43,30 @@ class RibxParser(ProgressParser):
 
         measurements = []
 
+        # Use these to check whether locations are inside extent
+        min_x = self.activity.config_value('minimum_x_coordinate')
+        max_x = self.activity.config_value('maximum_x_coordinate')
+        min_y = self.activity.config_value('minimum_y_coordinate')
+        max_y = self.activity.config_value('maximum_y_coordinate')
+
         for item in itertools.chain(ribx.pipes, ribx.manholes, ribx.drains):
-            measurement = self.save_measurement(item)
-            if measurement is not None:
-                measurements.append(measurement)
+            error = False
+            if item.geom:
+                if not (min_x <= item.geom.GetX() <= max_x):
+                    self.record_error(
+                        item.sourceline, 'X_NOT_IN_EXTENT',
+                        self.ERRORS['X_NOT_IN_EXTENT'].format(min_x, max_x))
+                    error = True
+                if not (min_y <= item.geom.GetY() <= max_y):
+                    self.record_error(
+                        item.sourceline, 'Y_NOT_IN_EXTENT',
+                        self.ERRORS['Y_NOT_IN_EXTENT'].format(min_y, max_y))
+                    error = True
+
+            if not error:
+                measurement = self.save_measurement(item)
+                if measurement is not None:
+                    measurements.append(measurement)
 
         if not measurements:
             self.record_error(0, None, 'Bestand bevat geen gegevens.')

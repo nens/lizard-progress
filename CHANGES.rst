@@ -28,6 +28,12 @@ New features for the Almere / HDSR project:
 
 - Improve date formatting
 
+- Extent config options (min X, min Y, etc) are now not just for MET files
+  anymore, they are also used when checking RIBX files.
+
+- For convenience's sake, they are configured at project level instead
+  of activity level.
+
 
 2.4.7 (2015-05-08)
 ------------------

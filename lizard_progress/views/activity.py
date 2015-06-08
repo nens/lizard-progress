@@ -433,11 +433,20 @@ class PlanningView(ActivityView):
 
                 yield (location_code, geometry)
 
+    def config_value(self, key):
+        return self.activity.config_value(key)
+
     def __locations_from_ribx(self, ribxpath, request):
         """Get pipe, manhole, drain locations from ribxpath and generate them
         as (piperef, (geom, location_type)) tuples.
 
         """
+
+        # Use these to check whether locations are inside extent
+        min_x = self.config_value('minimum_x_coordinate')
+        max_x = self.config_value('maximum_x_coordinate')
+        min_y = self.config_value('minimum_y_coordinate')
+        max_y = self.config_value('maximum_y_coordinate')
 
         ribx, errors = parsers.parse(
             ribxpath, parsers.Mode.PREINSPECTION)
@@ -451,6 +460,23 @@ class PlanningView(ActivityView):
                         'line': item.sourceline,
                         'message': 'Geen coördinaten gevonden.'
                     })
+                    continue
+                if not (min_x <= item.geom.GetX() <= max_x):
+                    errors.append({
+                        'line': item.sourceline,
+                        'message': (
+                            'X coördinaat niet tussen {} en {}.'
+                            .format(min_x, max_x))
+                        })
+                    continue
+                if not (min_y <= item.geom.GetY() <= max_y):
+                    errors.append({
+                        'line': item.sourceline,
+                        'message': (
+                            'Y coördinaat niet tussen {} en {}.'
+                            .format(min_y, max_y))
+                        })
+                    continue
 
         if errors:
             messages.add_message(

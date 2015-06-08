@@ -129,8 +129,8 @@ CONFIG_OPTIONS = {
         long_description='In Rijksdriehoek coordinaten',
         type='float',
         default='300000',
-        only_for_error='MET_INSIDE_EXTENT',
-        for_project=False,
+        only_for_error=None,
+        for_project=True,
         applies_to_measurement_types=[],
     ),
     'minimum_x_coordinate': Option(
@@ -139,8 +139,8 @@ CONFIG_OPTIONS = {
         long_description='In Rijksdriehoek coordinaten',
         type='float',
         default='7000',
-        only_for_error='MET_INSIDE_EXTENT',
-        for_project=False,
+        only_for_error=None,
+        for_project=True,
         applies_to_measurement_types=[],
     ),
     'maximum_y_coordinate': Option(
@@ -149,8 +149,8 @@ CONFIG_OPTIONS = {
         long_description='In Rijksdriehoek coordinaten',
         type='float',
         default='629000',
-        only_for_error='MET_INSIDE_EXTENT',
-        for_project=False,
+        only_for_error=None,
+        for_project=True,
         applies_to_measurement_types=[],
     ),
     'minimum_y_coordinate': Option(
@@ -159,8 +159,8 @@ CONFIG_OPTIONS = {
         long_description='In Rijksdriehoek coordinaten',
         type='float',
         default='289000',
-        only_for_error='MET_INSIDE_EXTENT',
-        for_project=False,
+        only_for_error=None,
+        for_project=True,
         applies_to_measurement_types=[],
     ),
     'maximum_location_distance': Option(
@@ -268,7 +268,11 @@ class Configuration(object):
         option = CONFIG_OPTIONS.get(config_option)
 
         if self.activity:
-            return self.get_activity(option)
+            if option.for_project:
+                self.project = self.activity.project
+                return self.get_project(option)
+            else:
+                return self.get_activity(option)
         elif self.project:
             return self.get_project(option)
         else:

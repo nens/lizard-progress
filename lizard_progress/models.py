@@ -374,7 +374,7 @@ class Project(models.Model):
             activity__project=self, complete=True).count()
 
     def percentage_done(self):
-        if any(activity.needs_predefined_locations()
+        if any(not activity.needs_predefined_locations()
                for activity in self.activity_set.all()):
             return "N/A"
 

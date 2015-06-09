@@ -674,7 +674,8 @@ class UploadDateShapefiles(PlanningView):
             for location_code, id, planned_date, complete in
             models.Location.objects.filter(
                 activity_id=self.activity_id,
-                location_type=location_type)
+                location_type=location_type,
+                not_part_of_project=False)
             .values_list('location_code', 'id', 'planned_date', 'complete')
         }
 

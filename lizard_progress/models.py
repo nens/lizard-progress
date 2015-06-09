@@ -818,17 +818,17 @@ class Activity(models.Model):
         if not self.measurement_type.can_be_displayed:
             return
 
+        from lizard_progress.changerequests.models import Request
+        for request in self.request_set.filter(
+                request_status=Request.REQUEST_STATUS_OPEN):
+            yield request.map_layer()
+
         from lizard_progress.util.workspaces import MapLayer
         yield MapLayer(
             name='%s %s' % (self.project.name, self),
             adapter_class='adapter_progress',
             adapter_layer_json=json.dumps({"activity_id": self.id}),
             extent=None)
-
-        from lizard_progress.changerequests.models import Request
-        for request in self.request_set.filter(
-                request_status=Request.REQUEST_STATUS_OPEN):
-            yield request.map_layer()
 
 
 class ExpectedAttachment(models.Model):

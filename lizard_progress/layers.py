@@ -87,6 +87,9 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             self.activity = None
             return
 
+        self.locations_not_in_project_different = self.activity.config_value(
+            'ignore_drains_with_other_owners')
+
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
     def mapnik_query_no_date(self, is_point, complete):
@@ -98,11 +101,30 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                     loc.activity_id = %d AND
                     loc.the_geom IS NOT NULL AND
                     loc.is_point = %s AND
-                    loc.complete = %s
+                    loc.complete = %s AND
+                    loc.not_part_of_project = %s
                 ) data"""
 
-        return q % (self.activity_id, "true" if is_point else "false",
-                    "true" if complete else "false")
+        return q % (
+            self.activity_id, "true" if is_point else "false",
+            "true" if complete else "false",
+            "false" if self.locations_not_in_project_different
+            else "loc.not_part_of_project"
+        )
+
+    def mapnik_query_locations_not_in_project(self):
+        q = """(SELECT
+                   loc.the_geom
+                FROM
+                   lizard_progress_location loc
+                WHERE
+                   loc.activity_id = {} AND
+                   loc.the_geom IS NOT NULL AND
+                   loc.is_point = true AND
+                   loc.not_part_of_project = true
+               ) data"""
+
+        return q.format(self.activity_id)
 
     def mapnik_query_date(self, is_point, planned, ontime, complete):
         q = """(SELECT
@@ -114,6 +136,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                     loc.the_geom IS NOT NULL AND
                     loc.is_point = %s AND
                     loc.complete = %s AND
+                    loc.not_part_of_project = %s AND
                     %s
                 ) data"""
 
@@ -132,6 +155,8 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         query = q % (self.activity_id, "true" if is_point else "false",
                      "true" if complete else "false",
+                     "false" if self.locations_not_in_project_different
+                     else "loc.not_part_of_project",
                      date_query)
         logger.debug(query)
         return query
@@ -146,9 +171,16 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
     def layer(self, layer_ids=None, request=None):
         if self.activity.specifics().allow_planning_dates:
-            return self.layer_date(layer_ids, request)
+            layers, styles = self.layer_date(layer_ids, request)
         else:
-            return self.layer_no_date(layer_ids, request)
+            layers, styles = self.layer_no_date(layer_ids, request)
+
+        if self.locations_not_in_project_different:
+            # Show an extra layer for point locations that are not
+            # part of the project
+            self.add_layer_for_locations_not_in_project(layers, styles)
+
+        return layers, styles
 
     def layer_no_date(self, layer_ids=None, request=None):
         """Return mapnik layers and styles for all measurement types,
@@ -220,6 +252,15 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             layers.append(layer)
 
         return layers, styles
+
+    def add_layer_for_locations_not_in_project(self, layers, styles):
+        layer_desc = '{} locations of other owners'.format(self.activity_id)
+        layer = mapnik.Layer(layer_desc, RD)
+        styles[layer_desc] = make_point_style(self.symbol_img("ball_grey.png"))
+        layer.datasource = mapnik_datasource(
+            self.mapnik_query_locations_not_in_project())
+        layer.styles.append(layer_desc)
+        layers.append(layer)
 
     def search(self, x, y, radius=None):
         """

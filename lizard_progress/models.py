@@ -367,11 +367,14 @@ class Project(models.Model):
         return lizard_progress.specifics.Specifics(self, activity)
 
     def number_of_locations(self):
-        return Location.objects.filter(activity__project=self).count()
+        return Location.objects.filter(
+            activity__project=self,
+            not_part_of_project=False).count()
 
     def number_of_complete_locations(self):
         return Location.objects.filter(
-            activity__project=self, complete=True).count()
+            activity__project=self, complete=True,
+            not_part_of_project=False).count()
 
     def percentage_done(self):
         if any(activity.needs_predefined_locations()
@@ -714,14 +717,17 @@ class Activity(models.Model):
             or self.contractor == Organization.get_by_user(user))
 
     def num_locations(self):
-        return self.location_set.all().count()
+        return self.location_set.filter(
+            not_part_of_project=False).count()
 
     def num_complete_locations(self):
-        return self.location_set.filter(complete=True).count()
+        return self.location_set.filter(
+            complete=True, not_part_of_project=False).count()
 
     def num_measurements(self):
         return Measurement.objects.filter(
-            location__activity=self).count()
+            location__activity=self,
+            location__not_part_of_project=False).count()
 
     def has_measurements(self):
         return self.num_measurements() > 0
@@ -742,7 +748,8 @@ class Activity(models.Model):
 
         return Location.objects.create(
             activity=self, location_code=other_location.location_code,
-            the_geom=measurement.the_geom, complete=False)
+            the_geom=measurement.the_geom, complete=False,
+            not_part_of_project=other_location.not_part_of_project)
 
     def get_or_create_location(self, location_code, point):
         try:

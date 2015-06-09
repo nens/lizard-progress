@@ -34,7 +34,43 @@ New features for the Almere / HDSR project:
 - For convenience's sake, they are configured at project level instead
   of activity level.
 
-- Added 'not_part_of_project' Boolean to Location.
+- Ownership of locations stuff:
+
+  When Almere uploads a RIBX file to plan a project, they include
+  information on drains not owned by Almere. Contractors do not need
+  to clean / inspect these, but by putting them in the planning info,
+  it is known that they are not actually new when contractors find
+  them.
+
+  * RIBX drains have a <EAQ> field that signifies ownership. Our
+    ribxlib puts this information in the "owner" attribute of
+    drains. Almere uses "A" for owned by Almere, "B" for privately
+    owned, and "C" for unknown. The Uploadservice only cares about
+    "owned by project owner" and "other".
+
+  * There are two config options, one where it can be configured that
+    the code to look for is "A", the other to signify that a project
+    cares about ownership like this.
+
+  * Planning these locations sets the "not_part_of_project" flag of
+    locations.
+
+  * They are shown as grey balls on the map, regardless of what was
+    uploaded for them. There is also a message in the popup.
+
+  * They are not counted wherever there are statistics about numbers
+    of locations.
+
+  * Their can't be a date planned for them.
+
+  * They are not included in the shapefile export.
+
+
+- All "percentage done" items were shown as "N/A" due to an
+  accidentally deleted "not", fixed.
+
+- Map layers for change requests are now shown on top of normal map
+  layers, not under them.
 
 
 2.4.7 (2015-05-08)

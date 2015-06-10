@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.4.8 (unreleased)
+2.5.0 (2015-06-10)
 ------------------
 
 New features for the Almere / HDSR project:

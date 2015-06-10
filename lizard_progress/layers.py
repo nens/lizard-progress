@@ -87,9 +87,6 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             self.activity = None
             return
 
-        self.locations_not_in_project_different = self.activity.config_value(
-            'ignore_drains_with_other_owners')
-
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
     def mapnik_query_no_date(self, is_point, complete):
@@ -102,14 +99,12 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                     loc.the_geom IS NOT NULL AND
                     loc.is_point = %s AND
                     loc.complete = %s AND
-                    loc.not_part_of_project = %s
+                    loc.not_part_of_project = false
                 ) data"""
 
         return q % (
             self.activity_id, "true" if is_point else "false",
             "true" if complete else "false",
-            "false" if self.locations_not_in_project_different
-            else "loc.not_part_of_project"
         )
 
     def mapnik_query_locations_not_in_project(self):
@@ -136,7 +131,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
                     loc.the_geom IS NOT NULL AND
                     loc.is_point = %s AND
                     loc.complete = %s AND
-                    loc.not_part_of_project = %s AND
+                    loc.not_part_of_project = false AND
                     %s
                 ) data"""
 
@@ -155,8 +150,6 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         query = q % (self.activity_id, "true" if is_point else "false",
                      "true" if complete else "false",
-                     "false" if self.locations_not_in_project_different
-                     else "loc.not_part_of_project",
                      date_query)
         logger.debug(query)
         return query

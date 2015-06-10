@@ -243,6 +243,33 @@ CONFIG_OPTIONS = {
         for_project=False,
         applies_to_measurement_types=['dwarsprofiel'],
     ),
+    'owner_organisation_eaq_code': Option(
+        option='owner_organisation_eaq_code',
+        short_description='EAQ code organisatie',
+        long_description=(
+            'In een RIBX bestand is een kolk eigendom van de eigen '
+            'organisatie als deze waarde in het "EAQ" veld staat. Als deze '
+            'optie leeg is, zijn alle kolken in eigendom.'),
+        type='text',
+        default='',
+        only_for_error=None,
+        for_project=False,
+        applies_to_measurement_types=['ribx_reiniging_kolken'],
+    ),
+    'ignore_drains_with_other_owners': Option(
+        option='ignore_drains_with_other_owners',
+        short_description='Kolken niet in eigendom negeren',
+        long_description=(
+            'Als deze optie aan staat, worden kolken die niet in eigendom '
+            'zijn niet meegeteld in statistieken en anders getoond op '
+            'de kaart.'
+            ),
+        type='boolean',
+        default=False,
+        only_for_error=None,
+        for_project=False,
+        applies_to_measurement_types=['ribx_reiniging_kolken'],
+    ),
 }
 
 

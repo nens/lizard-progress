@@ -6,6 +6,10 @@ Hints
 
     * Please set DEFAULT_FROM_EMAIL in the settings;
 
+App specific settings
+
+    EMAIL_NOTIFICATIONS_EMAIL_ADMINS: use to send all e-mails to the admins in
+                                      addition to the intended recipient.
 """
 
 # Python 3 is coming
@@ -117,12 +121,17 @@ class Notification(models.Model):
     def send_notification(self):
         if not self.recipient.email:
             return False
+
+        recipients = [self.recipient.email, ]
+        if getattr(settings, 'EMAIL_NOTIFICATIONS_EMAIL_ADMINS', False):
+            admins = getattr(settings, 'ADMINS', [])
+            recipients.extend([email for _, email in admins])
         try:
             send_mail(
                 self.get_subject(),
                 self.get_body(),
                 getattr(settings, 'DEFAULT_FROM_EMAIL', ''),
-                [self.recipient.email, ],
+                recipients,
             )
         except Exception, e:
             self.emailed = False

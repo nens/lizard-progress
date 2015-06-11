@@ -7,6 +7,11 @@ from .models import NotificationSubscription
 
 class NotificationAdmin(admin.ModelAdmin):
     model = Notification
+    list_display = ('created_on', 'emailed', 'emailed_on', 'notification_type',
+                    'recipient', )
+    ordering = ['created_on', ]
+    list_filter = ['created_on', 'emailed_on', 'emailed', 'notification_type',
+                   'recipient']
 
 
 class NotificationTypeAdmin(admin.ModelAdmin):
@@ -15,6 +20,9 @@ class NotificationTypeAdmin(admin.ModelAdmin):
 
 class NotificationSubscriptionAdmin(admin.ModelAdmin):
     model = NotificationSubscription
+    list_display = ('notification_type', 'subscriber')
+    list_filter = ['notification_type', 'subscriber_content_type',
+                   'subscriber_object_id']
 
 
 admin.site.register(Notification, NotificationAdmin)

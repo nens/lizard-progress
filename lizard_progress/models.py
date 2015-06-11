@@ -547,7 +547,7 @@ class Location(models.Model):
 
     @property
     def all_expected_attachments_present(self):
-        return not self.missing_attachments.exists()
+        return not self.missing_attachments().exists()
 
 
 class AvailableMeasurementType(models.Model):

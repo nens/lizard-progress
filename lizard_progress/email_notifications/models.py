@@ -5,6 +5,7 @@
 Hints
 
     * Please set DEFAULT_FROM_EMAIL in the settings;
+    * Please configure Django's sites framework.
 
 App specific settings
 

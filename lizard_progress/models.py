@@ -23,6 +23,7 @@ from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import MultiLineString
 from django.contrib.gis.geos import fromstr
 from django.contrib.gis.gdal import DataSource
+from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
@@ -353,6 +354,10 @@ class Project(models.Model):
 
     def __unicode__(self):
         return unicode(self.name)
+
+    def get_absolute_url(self):
+        return reverse('lizard_progress_dashboardview',
+                       kwargs={'project_slug': self.slug, })
 
     def is_manager(self, user):
         profile = UserProfile.get_by_user(user)
@@ -1437,4 +1442,7 @@ def message_project_complete(sender, instance, **kwargs):
                 sender,
                 notification_type=notification_type,
                 recipient=r,
-                action_object=instance.activity.project)
+                action_object=instance.activity.project,
+                extra={'link':
+                       Site.objects.get_current().domain +
+                       instance.activity.project.get_absolute_url()})

@@ -16,8 +16,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 from django.contrib.gis.db import models
+from django.contrib.sites.models import Site
 from django.dispatch import receiver
-
 from lizard_map.models import WorkspaceEditItem
 
 from lizard_progress import models as pmodels
@@ -123,6 +123,9 @@ class Request(models.Model):
                        (", " + self.old_location_code
                         if self.old_location_code else "")),
                 activity=self.activity))
+
+    def get_absolute_url(self):
+        return self.detail_url()
 
     @property
     def project(self):
@@ -269,7 +272,10 @@ class Request(models.Model):
                             recipient=r,
                             actor=actor,
                             action_object=self,
-                            target=self.activity)
+                            target=self.activity,
+                            extra={'link':
+                                   Site.objects.get_current().domain +
+                                   self.get_absolute_url()})
 
         if self.possible_request:
             # If all possible requests of all a file are accepted, it may
@@ -308,7 +314,10 @@ class Request(models.Model):
                             recipient=r,
                             actor=actor,
                             action_object=self,
-                            target=self.activity)
+                            target=self.activity,
+                            extra={'link':
+                                   Site.objects.get_current().domain +
+                                   self.get_absolute_url()})
 
     def withdraw(self):
         self.change_status(Request.REQUEST_STATUS_WITHDRAWN)
@@ -596,7 +605,10 @@ def message_request_created(sender, instance, created, **kwargs):
                         recipient=r,
                         actor=actor,
                         action_object=instance,
-                        target=instance.activity)
+                        target=instance.activity,
+                        extra={'link':
+                               Site.objects.get_current().domain +
+                               instance.get_absolute_url()})
 
 
 @receiver(post_save, sender=RequestComment)
@@ -615,4 +627,7 @@ def message_request_comment_created(sender, instance, created, **kwargs):
                         recipient=r,
                         actor=instance.user,
                         action_object=instance.request,
-                        target=instance.request.activity)
+                        target=instance.request.activity,
+                        extra={'link':
+                               Site.objects.get_current().domain +
+                               instance.request.get_absolute_url()})

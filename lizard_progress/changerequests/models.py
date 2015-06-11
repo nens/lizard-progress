@@ -13,12 +13,16 @@ import json
 import logging
 
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 from django.contrib.gis.db import models
+from django.dispatch import receiver
 
 from lizard_map.models import WorkspaceEditItem
 
 from lizard_progress import models as pmodels
+from lizard_progress.email_notifications.models import NotificationType
+from lizard_progress.email_notifications import notify
 
 logger = logging.getLogger(__name__)
 
@@ -252,6 +256,21 @@ class Request(models.Model):
 
         # Save new status
         self.change_status(Request.REQUEST_STATUS_ACCEPTED)
+        # Send notification
+        notification_type = NotificationType.objects.get(
+            name='aanvraag geaccepteerd')
+        if self.activity.project.is_subscribed_to(notification_type):
+            recipients = self.activity.contractor.users
+            actor = pmodels.UserRole.objects.get(
+                code=pmodels.UserRole.ROLE_MANAGER)
+            for r in recipients:
+                notify.send(actor,
+                            notification_type=notification_type,
+                            recipient=r,
+                            actor=actor,
+                            action_object=self,
+                            target=self.activity)
+
         if self.possible_request:
             # If all possible requests of all a file are accepted, it may
             # be uploaded again
@@ -275,6 +294,21 @@ class Request(models.Model):
     def refuse(self, reason):
         self.refusal_reason = reason
         self.change_status(Request.REQUEST_STATUS_REFUSED)
+
+        # Send notification
+        notification_type = NotificationType.objects.get(
+            name="aanvraag afgekeurd")
+        if self.activity.project.is_subscribed_to(notification_type):
+            recipients = self.activity.contractor.users
+            actor = pmodels.UserRole.objects.get(
+                code=pmodels.UserRole.ROLE_MANAGER)
+            for r in recipients:
+                notify.send(actor,
+                            notification_type=notification_type,
+                            recipient=r,
+                            actor=actor,
+                            action_object=self,
+                            target=self.activity)
 
     def withdraw(self):
         self.change_status(Request.REQUEST_STATUS_WITHDRAWN)
@@ -546,3 +580,39 @@ class Points(models.Model):
             if not created:
                 point.the_geom = geom
                 point.save()
+
+
+@receiver(post_save, sender=Request)
+def message_request_created(sender, instance, created, **kwargs):
+    notification_type = NotificationType.objects.get(name="aanvraag ingediend")
+    if created and \
+       instance.activity.project.is_subscribed_to(notification_type):
+        recipients = instance.activity.project.organization.users
+        actor = pmodels.UserRole.objects.get(
+            code=pmodels.UserRole.ROLE_UPLOADER)
+        for r in recipients:
+            notify.send(sender,
+                        notification_type=notification_type,
+                        recipient=r,
+                        actor=actor,
+                        action_object=instance,
+                        target=instance.activity)
+
+
+@receiver(post_save, sender=RequestComment)
+def message_request_comment_created(sender, instance, created, **kwargs):
+    notification_type = NotificationType.objects.get(
+        name="aanvraag commentaar toegevoegd")
+    if created and \
+       instance.request.activity.project.is_subscribed_to(notification_type):
+        if instance.request.activity.project.is_manager(instance.user):
+            recipients = instance.request.activity.contractor.users
+        else:
+            recipients = instance.request.activity.project.organization.users
+        for r in recipients:
+            notify.send(sender,
+                        notification_type=notification_type,
+                        recipient=r,
+                        actor=instance.user,
+                        action_object=instance.request,
+                        target=instance.request.activity)

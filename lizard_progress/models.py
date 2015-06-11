@@ -17,14 +17,17 @@ import shutil
 import string
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import MultiLineString
 from django.contrib.gis.geos import fromstr
 from django.contrib.gis.gdal import DataSource
 from django.core.exceptions import PermissionDenied
+from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 from django.db import connection
+from django.dispatch import receiver
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _
@@ -32,6 +35,9 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
 import lizard_progress.specifics
+from lizard_progress.email_notifications import notify
+from lizard_progress.email_notifications.models import NotificationType
+from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.util import directories
 
 RDNEW = 28992
@@ -116,6 +122,12 @@ class Organization(models.Model):
         """Returns a list of user in same organization."""
         organization = UserProfile.objects.get(user=user).organization
         userprofiles = UserProfile.objects.filter(organization=organization)
+        users = [profile.user for profile in userprofiles]
+        return users
+
+    @property
+    def users(self):
+        userprofiles = UserProfile.objects.filter(organization=self)
         users = [profile.user for profile in userprofiles]
         return users
 
@@ -427,6 +439,13 @@ class Project(models.Model):
                 adapter_class='adapter_hydrovak',
                 adapter_layer_json=json.dumps({"project_slug": self.slug}),
                 extent=None)
+
+    def is_subscribed_to(self, notification_type):
+        project_content_type = ContentType.objects.get_for_model(self)
+        return NotificationSubscription.objects.filter(
+            notification_type=notification_type,
+            subscriber_content_type=project_content_type,
+            subscriber_object_id=self.id).exists()
 
 
 class Location(models.Model):
@@ -1404,3 +1423,18 @@ class LizardConfiguration(models.Model):
 
     def __unicode__(self):
         return self.name or self.geoserver_database_engine
+
+
+@receiver(post_save, sender=Location)
+def message_project_complete(sender, instance, **kwargs):
+    notification_type = NotificationType.objects.get(name="project voltooid")
+    if instance.complete and \
+       instance.activity.project.percentage_done() == 100 and \
+       instance.activity.project.is_subscribed_to(notification_type):
+        recipients = instance.activity.project.organization.users
+        for r in recipients:
+            notify.send(
+                sender,
+                notification_type=notification_type,
+                recipient=r,
+                action_object=instance.activity.project)

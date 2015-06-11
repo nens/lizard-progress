@@ -68,6 +68,7 @@ class Notification(models.Model):
     target = models.CharField(blank=True, max_length=255)
     extra = jsonfield.JSONField(blank=True, null=True)
 
+    created_on = models.DateTimeField(auto_now_add=True)
     emailed = models.BooleanField(default=False)
     emailed_on = models.DateTimeField(blank=True, null=True)
 

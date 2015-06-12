@@ -44,7 +44,7 @@
   <td>{{ activity.num_locations }}</td>
   <td>{{ activity.num_measurements }}</td>
   <td>
-    {% with activity.latest_upload as latest %}
+    {% with activity.latest_log as latest %}
       {% if latest %}
         {{ latest.when }}
       {% endif %}

@@ -30,6 +30,7 @@ from django.core.urlresolvers import reverse
 from django.db import connection
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from jsonfield import JSONField
@@ -386,12 +387,10 @@ class Project(models.Model):
             self.number_of_locations())
         return "{percentage:2.0f}%".format(percentage=percentage)
 
+    @cached_property
     def latest_log(self):
-        if not hasattr(self, '_latest_log'):
-            latest_log = UploadLog.latest_for_project(self)
-            self._latest_log = latest_log[0] if latest_log else None
-
-        return self._latest_log
+        latest_log = UploadLog.latest_for_project(self)
+        return latest_log[0] if latest_log else None
 
     def refresh_hydrovakken(self):
         """Find Hydrovakken shapefiles belonging to this project.
@@ -799,15 +798,13 @@ class Activity(models.Model):
 
         return activity
 
-    def latest_upload(self):
+    @cached_property
+    def latest_log(self):
         """Return the UploadedLog belonging to this activity with the
         most recent 'when' date, or None if there are no such
         UploadedLogs."""
-        if not hasattr(self, '_latest_log'):
-            latest_log = UploadLog.latest_for_activity(self)
-            self._latest_log = latest_log[0] if latest_log else None
-
-        return self._latest_log
+        latest_log = UploadLog.latest_for_activity(self)
+        return latest_log[0] if latest_log else None
 
     def available_layers(self, user):
         """Yield available map layers."""

@@ -5,13 +5,18 @@ Changelog of lizard-progress
 2.5.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- A variable that should have been removed had one instance left, which
+  caused the map page to crash.
+
+- Added four __unicode__ methods in models to help with debugging on
+  the command line.
 
 
 2.5.1 (2015-06-11)
 ------------------
 
-- Nothing changed yet.
+- Missed () after a function name, which caused a bug with checking if
+  a measurement is complete after uploading an expected attachment.
 
 
 2.5.0 (2015-06-10)

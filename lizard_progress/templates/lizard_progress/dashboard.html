@@ -46,7 +46,7 @@
   <td>
     {% with activity.latest_upload as latest %}
       {% if latest %}
-        {{ latest.uploaded_at }}
+        {{ latest.when }}
       {% endif %}
     {% endwith %}
   </td>

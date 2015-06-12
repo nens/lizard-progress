@@ -640,7 +640,14 @@ class TestUploadLog(TestCase):
         UploadLogF.create(activity=activity, when=date1)
         UploadLogF.create(activity=activity, when=date2)
 
-        latest = list(models.UploadLog.latest(activity.project))
+        # For project
+        latest = list(models.UploadLog.latest_for_project(activity.project))
+
+        self.assertTrue(latest)
+        self.assertEquals(latest[0].when, date2)
+
+        # For activity
+        latest = list(models.UploadLog.latest_for_activity(activity))
 
         self.assertTrue(latest)
         self.assertEquals(latest[0].when, date2)

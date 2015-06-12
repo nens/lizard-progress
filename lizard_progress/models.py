@@ -388,7 +388,7 @@ class Project(models.Model):
 
     def latest_log(self):
         if not hasattr(self, '_latest_log'):
-            latest_log = UploadLog.latest(self)
+            latest_log = UploadLog.latest_for_project(self)
             self._latest_log = latest_log[0] if latest_log else None
 
         return self._latest_log
@@ -800,15 +800,14 @@ class Activity(models.Model):
         return activity
 
     def latest_upload(self):
-        """Return the UploadedFile belonging to this activity with the
-        most recent 'uploaded_at' date, or None if there are no such
-        UploadedFiles."""
-        files = list(self.uploadedfile_set.order_by('-uploaded_at')[:1])
+        """Return the UploadedLog belonging to this activity with the
+        most recent 'when' date, or None if there are no such
+        UploadedLogs."""
+        if not hasattr(self, '_latest_log'):
+            latest_log = UploadLog.latest_for_activity(self)
+            self._latest_log = latest_log[0] if latest_log else None
 
-        if files:
-            return files[0]
-        else:
-            return None
+        return self._latest_log
 
     def available_layers(self, user):
         """Yield available map layers."""
@@ -1362,9 +1361,13 @@ class UploadLog(models.Model):
         ordering = ('-when',)
 
     @classmethod
-    def latest(cls, project, amount=1):
-        queryset = cls.objects.filter(
-            activity__project=project).select_related()
+    def latest_for_project(cls, project, amount=1):
+        queryset = cls.objects.filter(activity__project=project)
+        return queryset[:amount]
+
+    @classmethod
+    def latest_for_activity(cls, activity, amount=1):
+        queryset = cls.objects.filter(activity=activity)
         return queryset[:amount]
 
     def __unicode__(self):

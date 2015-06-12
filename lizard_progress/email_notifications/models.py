@@ -64,6 +64,18 @@ class NotificationType(models.Model):
     def get_body(self, context):
         return self._render_template(self.body_template, context)
 
+    def subscribe(self, subscriber):
+        return NotificationSubscription.create_subscription(
+            self,
+            ContentType.objects.get_for_model(subscriber),
+            subscriber.id)
+
+    def unsubscribe(self, subscriber):
+        return NotificationSubscription.delete_subscription(
+            self,
+            ContentType.objects.get_for_model(subscriber),
+            subscriber.id)
+
 
 class Notification(models.Model):
     notification_type = models.ForeignKey(NotificationType)
@@ -156,6 +168,30 @@ class NotificationSubscription(models.Model):
 
     def __unicode__(self):
         return "{}, {}".format(self.notification_type, self.subscriber)
+
+    @classmethod
+    def create_subscription(cls,
+                            notification_type,
+                            subscriber_content_type,
+                            subscriber_object_id):
+        subscription = cls(
+            notification_type=notification_type,
+            subscriber_content_type=subscriber_content_type,
+            subscriber_object_id=subscriber_object_id)
+        subscription.save()
+        return subscription
+
+    @classmethod
+    def delete_subscription(cls,
+                            notification_type,
+                            subscriber_content_type,
+                            subscriber_object_id):
+        subscription = cls.objects.get(
+            notification_type=notification_type,
+            subscriber_content_type=subscriber_content_type,
+            subscriber_object_id=subscriber_object_id)
+        subscription.delete()
+        return True
 
 
 def send_notification(notification_type, recipient, **kwargs):

@@ -21,6 +21,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -47,6 +48,8 @@ from lizard_progress.util import directories
 from lizard_progress.util import workspaces
 from lizard_progress.util import geo
 from lizard_progress import forms
+from lizard_progress.email_notifications.models import NotificationType
+from lizard_progress.email_notifications.models import NotificationSubscription
 
 logger = logging.getLogger(__name__)
 
@@ -838,5 +841,39 @@ class ConfigurationView(ProjectsView):
                 config.set(option, value)
             except ValueError:
                 pass
+
+        return redirect
+
+
+class EmailNotificationConfigurationView(ProjectsView):
+    template_name = 'lizard_progress/project_email_config_page.html'
+    active_menu = 'project_email_config'
+
+    def config_options(self):
+        project_content_type = ContentType.objects.get_for_model(self.project)
+        current_subscriptions = NotificationSubscription.objects.filter(
+            subscriber_content_type=project_content_type,
+            subscriber_object_id=self.project.id)
+        all_notification_types = NotificationType.objects.all()
+        return [
+            (notification_type, current_subscriptions.filter(
+                notification_type=notification_type).exists())
+            for notification_type in all_notification_types
+        ]
+
+    def post(self, request, *args, **kwargs):
+        redirect = HttpResponseRedirect(reverse(
+            "lizard_progress_project_email_config_view",
+            kwargs={'project_slug': self.project_slug}))
+
+        if not self.project.is_manager(self.user):
+            return redirect
+
+        for option, old_value in self.config_options():
+            new_value = request.POST.get(option.name, '')
+            if not old_value and new_value:
+                option.subscribe(self.project)
+            elif old_value and not new_value:
+                option.unsubscribe(self.project)
 
         return redirect

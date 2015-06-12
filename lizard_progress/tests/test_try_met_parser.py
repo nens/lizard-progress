@@ -185,6 +185,7 @@ class TestWaternet(TestOrganization):
             'Testuploader', 'test', False)
 
         self.project = test_models.ProjectF.create(
+            organization=self.project_org,
             name="testprojectwaternet",
             slug="testprojectwaternet")
 

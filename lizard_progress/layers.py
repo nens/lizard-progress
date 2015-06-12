@@ -168,10 +168,9 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         else:
             layers, styles = self.layer_no_date(layer_ids, request)
 
-        if self.locations_not_in_project_different:
-            # Show an extra layer for point locations that are not
-            # part of the project
-            self.add_layer_for_locations_not_in_project(layers, styles)
+        # Show an extra layer for point locations that are not
+        # part of the project
+        self.add_layer_for_locations_not_in_project(layers, styles)
 
         return layers, styles
 

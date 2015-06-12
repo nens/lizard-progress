@@ -221,7 +221,7 @@ class KickOutMixin(object):
                 icon='icon-briefcase',
                 name=self.organization,
                 description=(_("Your current organization")))
-            ]
+        ]
 
         # Prepend documentation icon
         actions[0:0] = [
@@ -231,7 +231,7 @@ class KickOutMixin(object):
                 description=(_("Download the manual")),
                 url=settings.STATIC_URL +
                 "lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf")
-            ]
+        ]
 
         return actions
 
@@ -737,7 +737,7 @@ class NewProjectView(ProjectsView):
         fields = [[listed_fields[0]], [listed_fields[1]]]
 
         for i in range(2, len(listed_fields), 3):
-            fields.append(listed_fields[i:i+3])
+            fields.append(listed_fields[i:i + 3])
 
         return fields
 

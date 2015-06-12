@@ -1107,11 +1107,9 @@ class UploadedFile(models.Model):
             # What can we log... project, contractor, the time, the
             # filename, measurement type, number of measurements
             UploadLog.objects.create(
-                project=self.activity.project,
-                uploading_organization=self.activity.contractor,
+                activity=self.activity,
                 when=datetime.datetime.now(),
                 filename=self.filename,
-                mtype=self.activity.measurement_type,
                 num_measurements=num_measurements)
 
     def delete_self(self):
@@ -1355,10 +1353,7 @@ class ExportRun(models.Model):
 class UploadLog(models.Model):
     """Log that a file was correctly uploaded, to show on the front page"""
 
-    project = models.ForeignKey(Project)
-    uploading_organization = models.ForeignKey(Organization)
-    mtype = models.ForeignKey(AvailableMeasurementType)
-
+    activity = models.ForeignKey(Activity)
     when = models.DateTimeField()
     filename = models.CharField(max_length=250)
     num_measurements = models.IntegerField()
@@ -1368,8 +1363,8 @@ class UploadLog(models.Model):
 
     @classmethod
     def latest(cls, project, amount=1):
-        queryset = cls.objects.filter(project=project).select_related(
-            'uploading_organization')
+        queryset = cls.objects.filter(
+            activity__project=project).select_related()
         return queryset[:amount]
 
     def __unicode__(self):

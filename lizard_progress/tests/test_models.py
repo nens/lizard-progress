@@ -154,11 +154,8 @@ class ExportRunF(factory.DjangoModelFactory):
 class UploadLogF(factory.DjangoModelFactory):
     class Meta:
         model = models.UploadLog
-        django_get_or_create = ('project', 'uploading_organization', 'mtype')
 
-    project = factory.SubFactory(ProjectF)
-    uploading_organization = factory.SubFactory(OrganizationF)
-    mtype = factory.SubFactory(AvailableMeasurementTypeF)
+    activity = factory.SubFactory(ActivityF)
     when = factory.LazyAttribute(lambda a: datetime.datetime.now())
     filename = 'test.txt'
     num_measurements = 1
@@ -638,11 +635,12 @@ class TestUploadLog(TestCase):
         date1 = datetime.datetime(year=2015, month=1, day=1)
         date2 = datetime.datetime(year=2015, month=1, day=2)
 
-        project = ProjectF.create()
+        activity = ActivityF.create()
 
-        UploadLogF.create(project=project, when=date1)
-        UploadLogF.create(project=project, when=date2)
+        UploadLogF.create(activity=activity, when=date1)
+        UploadLogF.create(activity=activity, when=date2)
 
-        latest = list(models.UploadLog.latest(project))
+        latest = list(models.UploadLog.latest(activity.project))
+
         self.assertTrue(latest)
         self.assertEquals(latest[0].when, date2)

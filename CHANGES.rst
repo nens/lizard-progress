@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.5.2 (unreleased)
+2.5.2 (2015-06-12)
 ------------------
 
 - A variable that should have been removed had one instance left, which

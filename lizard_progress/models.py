@@ -1372,6 +1372,10 @@ class UploadLog(models.Model):
             'uploading_organization')
         return queryset[:amount]
 
+    def __unicode__(self):
+        return "{} uploaded at {} with {} measurements".format(
+            self.filename, self.when, self.num_measurements)
+
 
 ### Models for configuration
 
@@ -1388,17 +1392,29 @@ class OrganizationConfig(models.Model):
         'Bij ja/nee opties, voer 1 in voor ja, en niets voor nee.',
         max_length=50, null=True, blank=True)
 
+    def __unicode__(self):
+        return "{} for {}: {}".format(
+            self.config_option,
+            self.measurement_type or "<algemeen>",
+            self.value)
+
 
 class ProjectConfig(models.Model):
     project = models.ForeignKey(Project)
     config_option = models.CharField(max_length=50)
     value = models.CharField(max_length=50, null=True)
 
+    def __unicode__(self):
+        return "{}: {}".format(self.config_option, self.value)
+
 
 class ActivityConfig(models.Model):
     activity = models.ForeignKey(Activity)
     config_option = models.CharField(max_length=50)
     value = models.CharField(max_length=50, null=True)
+
+    def __unicode__(self):
+        return "{}: {}".format(self.config_option, self.value)
 
 
 # Export to Lizard

@@ -5,7 +5,13 @@ Changelog of lizard-progress
 2.5.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- The project dashboard page still looked at UploadedFiles to determine
+  when the last upload was, but these can be deleted by users after uploading.
+
+  It is better to use UploadLog instead, but those in turn still referred
+  to a project/mtype/contractor combination instead of an Activity.
+
+  Fixed both issues.
 
 
 2.5.2 (2015-06-12)

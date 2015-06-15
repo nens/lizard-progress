@@ -37,6 +37,12 @@ User = get_user_model()
 
 class NotificationType(models.Model):
     name = models.CharField(unique=True, max_length=255)
+    description = models.TextField(
+        blank=True,
+        help_text=_("""The description is used on the subscription pages to
+                    provide a more elaborate explanation of the notification
+                    type and to aid the user in their subscription choices.""")
+    )
     subject_template = models.CharField(
         max_length=255,
         help_text=_("""Use Django's templating language.

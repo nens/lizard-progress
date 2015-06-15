@@ -395,6 +395,10 @@ class Project(models.Model):
             self.number_of_locations())
         return "{percentage:2.0f}%".format(percentage=percentage)
 
+    def is_complete(self):
+        return all(
+            activity.is_complete() for activity in self.activity_set.all())
+
     def latest_log(self):
         if not hasattr(self, '_latest_log'):
             latest_log = UploadLog.latest(self)
@@ -675,6 +679,11 @@ class Activity(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse(
+            'lizard_progress_activity_dashboard',
+            kwargs={'activity_id': self.id, 'project_slug': self.project.slug})
+
     def config_value(self, key):
         from lizard_progress import configuration
         config = configuration.Configuration(activity=self)
@@ -842,6 +851,12 @@ class Activity(models.Model):
             adapter_layer_json=json.dumps({"activity_id": self.id}),
             extent=None)
 
+    def is_complete(self):
+        return self.needs_predefined_locations() and \
+            not Location.objects.filter(
+                activity=self,
+                complete=False,
+                not_part_of_project=False).exists()
 
 class ExpectedAttachment(models.Model):
     """A filename of a file that has to be uploaded for some
@@ -1429,9 +1444,9 @@ class LizardConfiguration(models.Model):
 @receiver(post_save, sender=Location)
 def message_project_complete(sender, instance, **kwargs):
     notification_type = NotificationType.objects.get(name="project voltooid")
-    if instance.complete and \
-       instance.activity.project.percentage_done() == 100 and \
-       instance.activity.project.is_subscribed_to(notification_type):
+    if instance.activity.project.is_subscribed_to(notification_type) and \
+       instance.complete and \
+       instance.activity.project.is_complete():
         recipients = instance.activity.project.organization.users
         for r in recipients:
             notify.send(
@@ -1442,3 +1457,23 @@ def message_project_complete(sender, instance, **kwargs):
                 extra={'link':
                        Site.objects.get_current().domain +
                        instance.activity.project.get_absolute_url()})
+
+
+@receiver(post_save, sender=Location)
+def message_activity_complete(sender, instance, **kwargs):
+    notification_type = NotificationType.objects.get(
+        name="werkzaamheid voltooid")
+    if instance.activity.project.is_subscribed_to(notification_type) and \
+       instance.complete and \
+       instance.activity.is_complete():
+        recipients = instance.activity.project.organization.users
+        for r in recipients:
+            notify.send(
+                sender,
+                notification_type=notification_type,
+                recipient=r,
+                action_object=instance.activity,
+                target=instance.activity.project,
+                extra={'link':
+                       Site.objects.get_current().domain +
+                       instance.activity.get_absolute_url()})

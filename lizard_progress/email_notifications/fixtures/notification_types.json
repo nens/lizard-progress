@@ -43,5 +43,14 @@
         "subject_template": "Project {{ action_object }} is voltooid.", 
         "name": "project voltooid"
     }
+},
+{
+    "pk": 6, 
+    "model": "email_notifications.notificationtype", 
+    "fields": {
+        "body_template": "De werkzaamheid {{ action_object }} in project {{ target }} is voltooid.\r\n\r\n{{ link }}", 
+        "subject_template": "Werkzaamheid {{ action_object }} is voltooid.", 
+        "name": "werkzaamheid voltooid"
+    }
 }
 ]

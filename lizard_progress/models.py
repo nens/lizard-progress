@@ -122,15 +122,11 @@ class Organization(models.Model):
     def users_in_same_organization(cls, user):
         """Returns a list of user in same organization."""
         organization = UserProfile.objects.get(user=user).organization
-        userprofiles = UserProfile.objects.filter(organization=organization)
-        users = [profile.user for profile in userprofiles]
-        return users
+        return User.objects.filter(userprofile__organization=organization)
 
     @property
     def users(self):
-        userprofiles = UserProfile.objects.filter(organization=self)
-        users = [profile.user for profile in userprofiles]
-        return users
+        return User.objects.filter(userprofile__organization=self)
 
     @property
     def slug(self):

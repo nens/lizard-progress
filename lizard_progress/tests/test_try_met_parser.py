@@ -108,6 +108,43 @@ class TestOrganization(TransactionTestCase):
 
 @attr('slow')  # Exclude these with bin/test '-a!slow'
 @mock.patch('shutil.move')  # So that the file isn't moved for real in the end
+class TestHDSR(TestOrganization):
+    def setUp(self):
+        super(TestHDSR, self).setUp()
+
+        self.project_org, self.project_user = create_org_and_user(
+            'HDSR', 'hdsr', True)
+
+        self.project_org.set_error_codes((
+            'MET_XY_OCCURS_ONCE_IN_PROFILE',
+        ))
+
+        self.upload_org, self.upload_user = create_org_and_user(
+            'Testuploader', 'test', False)
+
+        self.project = test_models.ProjectF.create(
+            organization=self.project_org,
+            name="testprojecthdsr",
+            slug="testprojecthdsr")
+
+        self.organization = test_models.OrganizationF.create(
+            name="contractorhdsr")
+
+        self.mtype = dwarsprofiel_available_mtype()
+
+        self.activity = test_models.ActivityF.create(
+            project=self.project, name="activityhdsr",
+            contractor=self.organization,
+            measurement_type=self.mtype)
+
+    def test_xy_occurs_only_once(self, *args):
+        self.try_file(
+            'hdsr/1 XY komt meerdere keren voor.met',
+            set([(20, 'MET_XY_OCCURS_ONCE_IN_PROFILE')]))
+
+
+@attr('slow')  # Exclude these with bin/test '-a!slow'
+@mock.patch('shutil.move')  # So that the file isn't moved for real in the end
 class TestWaternet(TestOrganization):
     def setUp(self):
         super(TestWaternet, self).setUp()
@@ -148,6 +185,7 @@ class TestWaternet(TestOrganization):
             'Testuploader', 'test', False)
 
         self.project = test_models.ProjectF.create(
+            organization=self.project_org,
             name="testprojectwaternet",
             slug="testprojectwaternet")
 

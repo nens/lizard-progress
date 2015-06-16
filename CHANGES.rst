@@ -5,7 +5,9 @@ Changelog of lizard-progress
 2.5.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add check to see if two <METING> lines inside the same <PROFILE> do
+  not have the same X and Y coordinates. This is the
+  'MET_XY_OCCURS_ONCE_IN_PROFILE' error code.
 
 
 2.5.2 (2015-06-12)

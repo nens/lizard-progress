@@ -32,6 +32,71 @@ def mapnik_datasource(query):
         )
 
 
+def build_location_query(
+        activity_id, is_point=None, complete=None, not_part_of_project=None,
+        dates_matter=False, planned=None, ontime=None):
+    q = """(SELECT
+                loc.the_geom AS the_geom,
+                CASE WHEN COUNT(measurement) > 1
+                    THEN to_char(COUNT(MEASUREMENT), '999')
+                    ELSE ''
+                END AS count
+            FROM
+                lizard_progress_location loc
+            INNER JOIN
+                lizard_progress_measurement measurement
+            ON
+                measurement.location_id = loc.id
+            GROUP BY
+                loc.id
+            HAVING
+                loc.activity_id = {activity_id} AND
+                {is_point_clause}
+                {complete_clause}
+                {not_part_of_project_clause}
+                {date_clause}
+                loc.the_geom IS NOT NULL
+           ) data"""
+
+    if is_point is None:
+        is_point_clause = ""
+    else:
+        is_point_clause = "loc.is_point = {} AND".format(
+            'true' if is_point else 'false')
+
+    if complete is None:
+        complete_clause = ""
+    else:
+        complete_clause = "loc.complete = {} AND".format(
+            'true' if complete else 'false')
+
+    if not_part_of_project is None:
+        not_part_of_project_clause = ""
+    else:
+        not_part_of_project_clause = "loc.not_part_of_project = {} AND".format(
+            'true' if not_part_of_project else 'false')
+
+    if not dates_matter or complete:
+        date_clause = ''
+    else:
+        if planned:
+            if ontime:
+                date_clause = ("loc.planned_date IS NOT NULL AND "
+                               "loc.planned_date >= now()::date AND")
+            else:
+                date_clause = ("loc.planned_date IS NOT NULL AND "
+                               "loc.planned_date < now()::date AND")
+        else:
+            date_clause = "loc.planned_date IS NULL AND "
+
+    return q.format(
+        activity_id=activity_id,
+        is_point_clause=is_point_clause,
+        complete_clause=complete_clause,
+        not_part_of_project_clause=not_part_of_project_clause,
+        date_clause=date_clause)
+
+
 def make_point_style(img):
     def make_rule(min, max, img, overlap):
         rule = mapnik.Rule()
@@ -39,8 +104,12 @@ def make_point_style(img):
         rule.max_scale = max
 
         filename, extension, x, y = img
-        symbol = mapnik.PointSymbolizer()
-        symbol.filename = filename
+        symbol = mapnik.ShieldSymbolizer(
+            mapnik.Expression('[count]'), 'DejaVu Sans Bold', 16,
+            mapnik.Color("#000000"),
+            mapnik.PathExpression(filename))
+        symbol.displacement = (-6, 12)
+        #symbol.filename = filename
         symbol.allow_overlap = overlap
         rule.symbols.append(symbol)
         return rule
@@ -90,69 +159,18 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
     def mapnik_query_no_date(self, is_point, complete):
-        q = """(SELECT
-                    loc.the_geom
-                 FROM
-                    lizard_progress_location loc
-                WHERE
-                    loc.activity_id = %d AND
-                    loc.the_geom IS NOT NULL AND
-                    loc.is_point = %s AND
-                    loc.complete = %s AND
-                    loc.not_part_of_project = false
-                ) data"""
-
-        return q % (
-            self.activity_id, "true" if is_point else "false",
-            "true" if complete else "false",
-        )
+        return build_location_query(
+            self.activity_id, is_point=is_point, complete=complete,
+            not_part_of_project=False)
 
     def mapnik_query_locations_not_in_project(self):
-        q = """(SELECT
-                   loc.the_geom
-                FROM
-                   lizard_progress_location loc
-                WHERE
-                   loc.activity_id = {} AND
-                   loc.the_geom IS NOT NULL AND
-                   loc.is_point = true AND
-                   loc.not_part_of_project = true
-               ) data"""
-
-        return q.format(self.activity_id)
+        return build_location_query(
+            self.activity_id, is_point=True, not_part_of_project=True)
 
     def mapnik_query_date(self, is_point, planned, ontime, complete):
-        q = """(SELECT
-                    loc.the_geom
-                 FROM
-                    lizard_progress_location loc
-                WHERE
-                    loc.activity_id = %d AND
-                    loc.the_geom IS NOT NULL AND
-                    loc.is_point = %s AND
-                    loc.complete = %s AND
-                    loc.not_part_of_project = false AND
-                    %s
-                ) data"""
-
-        if complete:
-            date_query = "1 = 1"
-        else:
-            if planned:
-                if ontime:
-                    date_query = ("loc.planned_date IS NOT NULL AND "
-                                  "loc.planned_date >= now()::date")
-                else:
-                    date_query = ("loc.planned_date IS NOT NULL AND "
-                                  "loc.planned_date < now()::date")
-            else:
-                date_query = "loc.planned_date IS NULL"
-
-        query = q % (self.activity_id, "true" if is_point else "false",
-                     "true" if complete else "false",
-                     date_query)
-        logger.debug(query)
-        return query
+        return build_location_query(
+            self.activity_id, is_point=is_point, complete=complete,
+            dates_matter=True, planned=planned, ontime=ontime)
 
     def layer_desc(self, complete):
         return "{} {} {}".format(

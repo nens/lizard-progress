@@ -31,6 +31,7 @@ from django.core.mail import send_mail
 import jsonfield
 
 from .signals import notify
+from .tasks import send_notification as send_notification_task
 
 User = get_user_model()
 
@@ -214,7 +215,7 @@ def send_notification(notification_type, recipient, **kwargs):
         target=target,
         extra=extra)
 
-    n.send_notification()
+    send_notification_task(n)
 
 notify.connect(
     send_notification,

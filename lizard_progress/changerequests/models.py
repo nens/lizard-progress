@@ -22,7 +22,6 @@ from lizard_map.models import WorkspaceEditItem
 
 from lizard_progress import models as pmodels
 from lizard_progress.email_notifications.models import NotificationType
-from lizard_progress.email_notifications import notify
 
 logger = logging.getLogger(__name__)
 
@@ -262,20 +261,16 @@ class Request(models.Model):
         # Send notification
         notification_type = NotificationType.objects.get(
             name='aanvraag geaccepteerd')
-        if self.activity.project.is_subscribed_to(notification_type):
-            recipients = self.activity.contractor.users
-            actor = pmodels.UserRole.objects.get(
-                code=pmodels.UserRole.ROLE_MANAGER)
-            for r in recipients:
-                notify.send(actor,
-                            notification_type=notification_type,
-                            recipient=r,
-                            actor=actor,
-                            action_object=self,
-                            target=self.activity,
-                            extra={'link':
-                                   Site.objects.get_current().domain +
-                                   self.get_absolute_url()})
+        kwargs = {
+            'actor': pmodels.UserRole.objects.get(
+                code=pmodels.UserRole.ROLE_MANAGER),
+            'action_object': self,
+            'target': self.activity,
+            'extra': {'link':
+                      Site.objects.get_current().domain +
+                      self.get_absolute_url()}
+        }
+        self.activity.notify_contractors(notification_type, **kwargs)
 
         if self.possible_request:
             # If all possible requests of all a file are accepted, it may
@@ -304,20 +299,15 @@ class Request(models.Model):
         # Send notification
         notification_type = NotificationType.objects.get(
             name="aanvraag afgekeurd")
-        if self.activity.project.is_subscribed_to(notification_type):
-            recipients = self.activity.contractor.users
-            actor = pmodels.UserRole.objects.get(
-                code=pmodels.UserRole.ROLE_MANAGER)
-            for r in recipients:
-                notify.send(actor,
-                            notification_type=notification_type,
-                            recipient=r,
-                            actor=actor,
-                            action_object=self,
-                            target=self.activity,
-                            extra={'link':
-                                   Site.objects.get_current().domain +
-                                   self.get_absolute_url()})
+        kwargs = {
+            'actor': pmodels.UserRole.objects.get(
+                code=pmodels.UserRole.ROLE_MANAGER),
+            'action_object': self,
+            'target': self.activity,
+            'extra': {'link':
+                      Site.objects.get_current().domain +
+                      self.get_absolute_url()}}
+        self.activity.notify_contractors(notification_type, **kwargs)
 
     def withdraw(self):
         self.change_status(Request.REQUEST_STATUS_WITHDRAWN)
@@ -594,40 +584,36 @@ class Points(models.Model):
 @receiver(post_save, sender=Request)
 def message_request_created(sender, instance, created, **kwargs):
     notification_type = NotificationType.objects.get(name="aanvraag ingediend")
-    if created and \
-       instance.activity.project.is_subscribed_to(notification_type):
-        recipients = instance.activity.project.organization.users
-        actor = pmodels.UserRole.objects.get(
-            code=pmodels.UserRole.ROLE_UPLOADER)
-        for r in recipients:
-            notify.send(sender,
-                        notification_type=notification_type,
-                        recipient=r,
-                        actor=actor,
-                        action_object=instance,
-                        target=instance.activity,
-                        extra={'link':
-                               Site.objects.get_current().domain +
-                               instance.get_absolute_url()})
+    actor = pmodels.UserRole.objects.get(
+        code=pmodels.UserRole.ROLE_UPLOADER)
+    kwargs = {
+        'actor': actor,
+        'action_object': instance,
+        'target': instance.activity,
+        'extra': {'link':
+                  Site.objects.get_current().domain +
+                  instance.get_absolute_url()},
+    }
+    if created:
+        instance.activity.notify_managers(notification_type, **kwargs)
 
 
 @receiver(post_save, sender=RequestComment)
 def message_request_comment_created(sender, instance, created, **kwargs):
     notification_type = NotificationType.objects.get(
         name="aanvraag commentaar toegevoegd")
-    if created and \
-       instance.request.activity.project.is_subscribed_to(notification_type):
+    kwargs = {
+        'actor': instance.user,
+        'action_object': instance.request,
+        'target': instance.request.activity,
+        'extra': {'link':
+                  Site.objects.get_current().domain +
+                  instance.request.get_absolute_url()}
+    }
+    if created:
         if instance.request.activity.project.is_manager(instance.user):
-            recipients = instance.request.activity.contractor.users
+            instance.request.activity.notify_contractors(
+                notification_type, **kwargs)
         else:
-            recipients = instance.request.activity.project.organization.users
-        for r in recipients:
-            notify.send(sender,
-                        notification_type=notification_type,
-                        recipient=r,
-                        actor=instance.user,
-                        action_object=instance.request,
-                        target=instance.request.activity,
-                        extra={'link':
-                               Site.objects.get_current().domain +
-                               instance.request.get_absolute_url()})
+            instance.request.activity.notify_managers(
+                notification_type, **kwargs)

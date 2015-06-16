@@ -858,6 +858,27 @@ class Activity(models.Model):
                 complete=False,
                 not_part_of_project=False).exists()
 
+    def notify(self, notification_type, recipients, **kwargs):
+        if self.project.is_subscribed_to(notification_type):
+            for r in recipients:
+                notify.send(
+                    self,
+                    notification_type=notification_type,
+                    recipient=r,
+                    actor=kwargs.get('actor', None),
+                    action_object=kwargs.get('action_object', None),
+                    target=kwargs.get('target', None),
+                    extra=kwargs.get('extra', None))
+
+    def notify_managers(self, notification_type, **kwargs):
+        recipients = self.project.organization.users
+        return self.notify(notification_type, recipients, **kwargs)
+
+    def notify_contractors(self, notification_type, **kwargs):
+        recipients = self.contractor.users
+        return self.notify(notification_type, recipients, **kwargs)
+
+
 class ExpectedAttachment(models.Model):
     """A filename of a file that has to be uploaded for some
     activity. Locations have a many to many field to this. Used for
@@ -1444,36 +1465,25 @@ class LizardConfiguration(models.Model):
 @receiver(post_save, sender=Location)
 def message_project_complete(sender, instance, **kwargs):
     notification_type = NotificationType.objects.get(name="project voltooid")
-    if instance.activity.project.is_subscribed_to(notification_type) and \
-       instance.complete and \
-       instance.activity.project.is_complete():
-        recipients = instance.activity.project.organization.users
-        for r in recipients:
-            notify.send(
-                sender,
-                notification_type=notification_type,
-                recipient=r,
-                action_object=instance.activity.project,
-                extra={'link':
-                       Site.objects.get_current().domain +
-                       instance.activity.project.get_absolute_url()})
+    kwargs = {
+        'action_object': instance.activity.project,
+        'extra': {'link': Site.objects.get_current().domain +
+                  instance.activity.project.get_absolute_url(), }
+    }
+    if instance.complete and instance.activity.project.is_complete():
+        return instance.activity.notify_managers(notification_type, **kwargs)
 
 
 @receiver(post_save, sender=Location)
 def message_activity_complete(sender, instance, **kwargs):
     notification_type = NotificationType.objects.get(
         name="werkzaamheid voltooid")
-    if instance.activity.project.is_subscribed_to(notification_type) and \
-       instance.complete and \
-       instance.activity.is_complete():
-        recipients = instance.activity.project.organization.users
-        for r in recipients:
-            notify.send(
-                sender,
-                notification_type=notification_type,
-                recipient=r,
-                action_object=instance.activity,
-                target=instance.activity.project,
-                extra={'link':
-                       Site.objects.get_current().domain +
-                       instance.activity.get_absolute_url()})
+    kwargs = {
+        'action_object': instance.activity,
+        'target': instance.activity.project,
+        'extra': {'link': Site.objects.get_current().domain +
+                  instance.activity.get_absolute_url(), }
+    }
+
+    if instance.complete and instance.activity.is_complete():
+        return instance.activity.notify_managers(notification_type, **kwargs)

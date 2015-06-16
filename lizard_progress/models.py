@@ -30,6 +30,7 @@ from django.core.urlresolvers import reverse
 from django.db import connection
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from jsonfield import JSONField
@@ -386,12 +387,10 @@ class Project(models.Model):
             self.number_of_locations())
         return "{percentage:2.0f}%".format(percentage=percentage)
 
+    @cached_property
     def latest_log(self):
-        if not hasattr(self, '_latest_log'):
-            latest_log = UploadLog.latest(self)
-            self._latest_log = latest_log[0] if latest_log else None
-
-        return self._latest_log
+        latest_log = UploadLog.latest_for_project(self)
+        return latest_log[0] if latest_log else None
 
     def refresh_hydrovakken(self):
         """Find Hydrovakken shapefiles belonging to this project.
@@ -799,16 +798,13 @@ class Activity(models.Model):
 
         return activity
 
-    def latest_upload(self):
-        """Return the UploadedFile belonging to this activity with the
-        most recent 'uploaded_at' date, or None if there are no such
-        UploadedFiles."""
-        files = list(self.uploadedfile_set.order_by('-uploaded_at')[:1])
-
-        if files:
-            return files[0]
-        else:
-            return None
+    @cached_property
+    def latest_log(self):
+        """Return the UploadedLog belonging to this activity with the
+        most recent 'when' date, or None if there are no such
+        UploadedLogs."""
+        latest_log = UploadLog.latest_for_activity(self)
+        return latest_log[0] if latest_log else None
 
     def available_layers(self, user):
         """Yield available map layers."""
@@ -1107,11 +1103,9 @@ class UploadedFile(models.Model):
             # What can we log... project, contractor, the time, the
             # filename, measurement type, number of measurements
             UploadLog.objects.create(
-                project=self.activity.project,
-                uploading_organization=self.activity.contractor,
+                activity=self.activity,
                 when=datetime.datetime.now(),
                 filename=self.filename,
-                mtype=self.activity.measurement_type,
                 num_measurements=num_measurements)
 
     def delete_self(self):
@@ -1355,10 +1349,7 @@ class ExportRun(models.Model):
 class UploadLog(models.Model):
     """Log that a file was correctly uploaded, to show on the front page"""
 
-    project = models.ForeignKey(Project)
-    uploading_organization = models.ForeignKey(Organization)
-    mtype = models.ForeignKey(AvailableMeasurementType)
-
+    activity = models.ForeignKey(Activity)
     when = models.DateTimeField()
     filename = models.CharField(max_length=250)
     num_measurements = models.IntegerField()
@@ -1367,9 +1358,13 @@ class UploadLog(models.Model):
         ordering = ('-when',)
 
     @classmethod
-    def latest(cls, project, amount=1):
-        queryset = cls.objects.filter(project=project).select_related(
-            'uploading_organization')
+    def latest_for_project(cls, project, amount=1):
+        queryset = cls.objects.filter(activity__project=project)
+        return queryset[:amount]
+
+    @classmethod
+    def latest_for_activity(cls, activity, amount=1):
+        queryset = cls.objects.filter(activity=activity)
         return queryset[:amount]
 
     def __unicode__(self):

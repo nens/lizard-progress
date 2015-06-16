@@ -5,6 +5,12 @@ Changelog of lizard-progress
 2.5.3 (unreleased)
 ------------------
 
+- The project dashboard page still looked at UploadedFiles to determine
+  when the last upload was, but these can be deleted by users after uploading.
+
+  It is better to use UploadLog instead, but those in turn still referred
+  to a project/mtype/contractor combination instead of an Activity.
+
 - Add check to see if two <METING> lines inside the same <PROFILE> do
   not have the same X and Y coordinates. This is the
   'MET_XY_OCCURS_ONCE_IN_PROFILE' error code.

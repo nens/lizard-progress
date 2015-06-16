@@ -11,7 +11,9 @@ Changelog of lizard-progress
   It is better to use UploadLog instead, but those in turn still referred
   to a project/mtype/contractor combination instead of an Activity.
 
-  Fixed both issues.
+- Add check to see if two <METING> lines inside the same <PROFILE> do
+  not have the same X and Y coordinates. This is the
+  'MET_XY_OCCURS_ONCE_IN_PROFILE' error code.
 
 
 2.5.2 (2015-06-12)

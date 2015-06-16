@@ -74,9 +74,18 @@ def results_dir(activity):
     return mk(os.path.join(activity_dir(activity), 'final_results'))
 
 
-def exports_dir(activity):
-    """Directory where scripts put result files for this activity."""
-    return mk(os.path.join(activity_dir(activity), 'export'))
+def exports_dir(activity, base_dir=BASE_DIR):
+    """Directory where scripts put result files for this activity. Also
+    accessible by the FTP server, therefore in a slightly different
+    structure from the other files:
+
+    BASE_DIR/<Organization>/ftp_readonly/<Project>/<Activity>/
+
+    """
+    return mk(os.path.join(
+        base_dir, activity.project.organization.name,
+        'ftp_readonly', activity.project.slug,
+        '{} - {}'.format(activity.id, activity.name)))
 
 
 def reports_dir(activity):

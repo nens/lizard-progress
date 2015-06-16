@@ -1189,8 +1189,7 @@ class UploadedFileError(models.Model):
 
 
 class ExportRun(models.Model):
-    """There can be one export run per combination of project,
-    contractor, measurement type, exporttype.
+    """There can be one export run per combination of activity and exporttype.
 
     exporttype is usually 'allfiles', but may sometimes be something else
     like 'met' or 'autocad' to make it possilbe to have different ways to
@@ -1271,6 +1270,12 @@ class ExportRun(models.Model):
         return bool(self.file_path and self.ready_for_download
                     and os.path.exists(self.file_path))
 
+    def delete(self):
+        """Also delete the file."""
+        if self.present:
+            os.remove(self.file_path)
+        return super(ExportRun, self).delete()
+
     def clear(self):
         """Make current data unavailable."""
         self.ready_for_download = False
@@ -1331,13 +1336,9 @@ class ExportRun(models.Model):
     def nginx_path(self):
         """Path to this export run's file, using '/protected/' as the
         path to the base dir (for Nginx X-Accel-Redirect)."""
-        return '/'.join([
-            '/protected',
-            self.activity.project.organization.name,
-            self.activity.project.slug,
-            str(self.activity.id),
-            'export',
-            os.path.basename(self.file_path)])
+        return '{}/{}'.format(
+            directories.exports_dir(self.activity, base_dir='/protected'),
+            self.filename)
 
     def fail(self, error_message):
         self.ready_for_download = False

@@ -15,6 +15,9 @@ Changelog of lizard-progress
   not have the same X and Y coordinates. This is the
   'MET_XY_OCCURS_ONCE_IN_PROFILE' error code.
 
+- Exports are now saved to the <Organization>/ftp_readonly/ directory, where
+  they can be served over FTP.
+
 
 2.5.2 (2015-06-12)
 ------------------

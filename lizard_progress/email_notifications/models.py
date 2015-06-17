@@ -148,21 +148,15 @@ class Notification(models.Model):
             return False
 
         recipients = [self.recipient.email, ]
-        try:
-            send_mail(
-                self.get_subject(),
-                self.get_body(),
-                getattr(settings, 'DEFAULT_FROM_EMAIL', ''),
-                recipients,
-            )
-        except Exception, e:
-            self.emailed = False
-            self.save()
-            raise e
-        else:
-            self.emailed = True
-            self.emailed_on = timezone.now()
-            self.save()
+        send_mail(
+            self.get_subject(),
+            self.get_body(),
+            getattr(settings, 'DEFAULT_FROM_EMAIL', ''),
+            recipients,
+        )
+        self.emailed = True
+        self.emailed_on = timezone.now()
+        self.save()
         return True
 
 

@@ -215,7 +215,7 @@ def send_notification(notification_type, recipient, **kwargs):
         target=target,
         extra=extra)
 
-    send_notification_task(n)
+    send_notification_task.delay(n)
 
 notify.connect(
     send_notification,

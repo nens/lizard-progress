@@ -82,10 +82,15 @@ def exports_dir(activity, base_dir=BASE_DIR):
     BASE_DIR/<Organization>/ftp_readonly/<Project>/<Activity>/
 
     """
-    return mk(os.path.join(
+    export_dir = os.path.join(
         base_dir, activity.project.organization.name,
         'ftp_readonly', activity.project.slug,
-        '{} - {}'.format(activity.id, activity.name)))
+        '{} - {}'.format(activity.id, activity.name))
+
+    if base_dir.startswith(settings.BUILDOUT_DIR):
+        export_dir = mk(export_dir)
+
+    return export_dir
 
 
 def reports_dir(activity):

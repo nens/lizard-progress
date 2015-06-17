@@ -432,8 +432,8 @@ class TestExportRun(TestCase):
 
         self.assertEquals(
             run.nginx_path,
-            '/protected/ProjectOrg/testslug/{}/export/path'.format(
-                activity.id))
+            '/protected/ProjectOrg/ftp_readonly/testslug/{} - {}/path'.format(
+                activity.id, activity.name))
 
     def test_exportrun_has_run_doesnt_generate_file_is_available(self):
         measurement_type = AvailableMeasurementTypeF.build()

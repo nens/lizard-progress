@@ -13,6 +13,8 @@ from __future__ import division
 import logging
 import os
 import shutil
+import tempfile
+import time
 import traceback
 
 from django.db import transaction
@@ -20,7 +22,6 @@ from django.db import transaction
 from lizard_progress import models
 from lizard_progress.changerequests.models import PossibleRequest
 from lizard_progress import specifics
-from lizard_progress.tools import unique_filename
 
 logger = logging.getLogger(__name__)
 
@@ -206,14 +207,10 @@ def path_for_uploaded_file(uploaded_file):
     activity = uploaded_file.activity
     dirname = activity.upload_directory()
 
-    # Figure out a filename that doesn't exist yet
-    orig_filename = os.path.basename(uploaded_file.filename)
-    seq = 0
-    while True:
-        new_filename = unique_filename(orig_filename, seq)
-        if not os.path.exists(os.path.join(dirname, new_filename)):
-            break
-        # Increase sequence number if filename exists
-        seq += 1
+    filename = os.path.basename(uploaded_file.filename)
 
-    return os.path.join(dirname, new_filename)
+    # Create a directory using mkdtemp, with current date and time as
+    # prefix so that they sort chronologically.
+    return os.path.join(
+        tempfile.mkdtemp(prefix=time.strftime('%Y%m%d%H%M%S'), dir=dirname),
+        filename)

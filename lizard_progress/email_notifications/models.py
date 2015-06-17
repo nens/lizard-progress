@@ -116,7 +116,10 @@ class Notification(models.Model):
         return self.notification_type.get_body(self.get_context())
 
     def get_subject(self):
-        return self.notification_type.get_subject(self.get_context())
+        return "{} {}".format(
+            _("[Uploadservice]"),
+            self.notification_type.get_subject(self.get_context())
+        )
 
     @classmethod
     def create(cls,

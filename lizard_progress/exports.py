@@ -44,6 +44,10 @@ from lizard_progress.util.send_exception_mail import send_email_on_exception
 
 
 def open_zipfile(zipfile_path):
+    """Function to open a Zip file, so that we do it the same way each time."""
+
+    # allowZip64=True is needed so that we can create files larger
+    # than 2GB.
     return zipfile.ZipFile(
         zipfile_path, 'w', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
 

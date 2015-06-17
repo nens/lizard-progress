@@ -309,7 +309,8 @@ def export_as_shapefile(export_run, location_type):
     locations = list(models.Location.objects.filter(
         activity=export_run.activity,
         the_geom__isnull=False,
-        location_type=location_type))
+        location_type=location_type,
+        not_part_of_project=False))
 
     if not locations:
         # Can't generate an empty shapefile.

@@ -32,6 +32,7 @@ from django.db import connection
 from django.dispatch import receiver
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from jsonfield import JSONField
@@ -380,11 +381,14 @@ class Project(models.Model):
         return lizard_progress.specifics.Specifics(self, activity)
 
     def number_of_locations(self):
-        return Location.objects.filter(activity__project=self).count()
+        return Location.objects.filter(
+            activity__project=self,
+            not_part_of_project=False).count()
 
     def number_of_complete_locations(self):
         return Location.objects.filter(
-            activity__project=self, complete=True).count()
+            activity__project=self, complete=True,
+            not_part_of_project=False).count()
 
     def percentage_done(self):
         if any(not activity.needs_predefined_locations()
@@ -400,12 +404,10 @@ class Project(models.Model):
         return all(
             activity.is_complete() for activity in self.activity_set.all())
 
+    @cached_property
     def latest_log(self):
-        if not hasattr(self, '_latest_log'):
-            latest_log = UploadLog.latest(self)
-            self._latest_log = latest_log[0] if latest_log else None
-
-        return self._latest_log
+        latest_log = UploadLog.latest_for_project(self)
+        return latest_log[0] if latest_log else None
 
     def refresh_hydrovakken(self):
         """Find Hydrovakken shapefiles belonging to this project.
@@ -568,7 +570,7 @@ class Location(models.Model):
 
     @property
     def all_expected_attachments_present(self):
-        return not self.missing_attachments.exists()
+        return not self.missing_attachments().exists()
 
 
 class AvailableMeasurementType(models.Model):
@@ -743,14 +745,17 @@ class Activity(models.Model):
             self.contractor == Organization.get_by_user(user))
 
     def num_locations(self):
-        return self.location_set.all().count()
+        return self.location_set.filter(
+            not_part_of_project=False).count()
 
     def num_complete_locations(self):
-        return self.location_set.filter(complete=True).count()
+        return self.location_set.filter(
+            complete=True, not_part_of_project=False).count()
 
     def num_measurements(self):
         return Measurement.objects.filter(
-            location__activity=self).count()
+            location__activity=self,
+            location__not_part_of_project=False).count()
 
     def has_measurements(self):
         return self.num_measurements() > 0
@@ -771,7 +776,8 @@ class Activity(models.Model):
 
         return Location.objects.create(
             activity=self, location_code=other_location.location_code,
-            the_geom=measurement.the_geom, complete=False)
+            the_geom=measurement.the_geom, complete=False,
+            not_part_of_project=other_location.not_part_of_project)
 
     def get_or_create_location(self, location_code, point):
         try:
@@ -821,16 +827,13 @@ class Activity(models.Model):
 
         return activity
 
-    def latest_upload(self):
-        """Return the UploadedFile belonging to this activity with the
-        most recent 'uploaded_at' date, or None if there are no such
-        UploadedFiles."""
-        files = list(self.uploadedfile_set.order_by('-uploaded_at')[:1])
-
-        if files:
-            return files[0]
-        else:
-            return None
+    @cached_property
+    def latest_log(self):
+        """Return the UploadedLog belonging to this activity with the
+        most recent 'when' date, or None if there are no such
+        UploadedLogs."""
+        latest_log = UploadLog.latest_for_activity(self)
+        return latest_log[0] if latest_log else None
 
     def available_layers(self, user):
         """Yield available map layers."""
@@ -1163,11 +1166,9 @@ class UploadedFile(models.Model):
             # What can we log... project, contractor, the time, the
             # filename, measurement type, number of measurements
             UploadLog.objects.create(
-                project=self.activity.project,
-                uploading_organization=self.activity.contractor,
+                activity=self.activity,
                 when=datetime.datetime.now(),
                 filename=self.filename,
-                mtype=self.activity.measurement_type,
                 num_measurements=num_measurements)
 
     def delete_self(self):
@@ -1251,8 +1252,7 @@ class UploadedFileError(models.Model):
 
 
 class ExportRun(models.Model):
-    """There can be one export run per combination of project,
-    contractor, measurement type, exporttype.
+    """There can be one export run per combination of activity and exporttype.
 
     exporttype is usually 'allfiles', but may sometimes be something else
     like 'met' or 'autocad' to make it possilbe to have different ways to
@@ -1333,6 +1333,12 @@ class ExportRun(models.Model):
         return bool(self.file_path and self.ready_for_download and
                     os.path.exists(self.file_path))
 
+    def delete(self):
+        """Also delete the file."""
+        if self.present:
+            os.remove(self.file_path)
+        return super(ExportRun, self).delete()
+
     def clear(self):
         """Make current data unavailable."""
         self.ready_for_download = False
@@ -1393,13 +1399,9 @@ class ExportRun(models.Model):
     def nginx_path(self):
         """Path to this export run's file, using '/protected/' as the
         path to the base dir (for Nginx X-Accel-Redirect)."""
-        return '/'.join([
-            '/protected',
-            self.activity.project.organization.name,
-            self.activity.project.slug,
-            str(self.activity.id),
-            'export',
-            os.path.basename(self.file_path)])
+        return '{}/{}'.format(
+            directories.exports_dir(self.activity, base_dir='/protected'),
+            self.filename)
 
     def fail(self, error_message):
         self.ready_for_download = False
@@ -1411,10 +1413,7 @@ class ExportRun(models.Model):
 class UploadLog(models.Model):
     """Log that a file was correctly uploaded, to show on the front page"""
 
-    project = models.ForeignKey(Project)
-    uploading_organization = models.ForeignKey(Organization)
-    mtype = models.ForeignKey(AvailableMeasurementType)
-
+    activity = models.ForeignKey(Activity)
     when = models.DateTimeField()
     filename = models.CharField(max_length=250)
     num_measurements = models.IntegerField()
@@ -1423,10 +1422,18 @@ class UploadLog(models.Model):
         ordering = ('-when',)
 
     @classmethod
-    def latest(cls, project, amount=1):
-        queryset = cls.objects.filter(project=project).select_related(
-            'uploading_organization')
+    def latest_for_project(cls, project, amount=1):
+        queryset = cls.objects.filter(activity__project=project)
         return queryset[:amount]
+
+    @classmethod
+    def latest_for_activity(cls, activity, amount=1):
+        queryset = cls.objects.filter(activity=activity)
+        return queryset[:amount]
+
+    def __unicode__(self):
+        return "{} uploaded at {} with {} measurements".format(
+            self.filename, self.when, self.num_measurements)
 
 
 # Models for configuration
@@ -1444,17 +1451,29 @@ class OrganizationConfig(models.Model):
         'Bij ja/nee opties, voer 1 in voor ja, en niets voor nee.',
         max_length=50, null=True, blank=True)
 
+    def __unicode__(self):
+        return "{} for {}: {}".format(
+            self.config_option,
+            self.measurement_type or "<algemeen>",
+            self.value)
+
 
 class ProjectConfig(models.Model):
     project = models.ForeignKey(Project)
     config_option = models.CharField(max_length=50)
     value = models.CharField(max_length=50, null=True)
 
+    def __unicode__(self):
+        return "{}: {}".format(self.config_option, self.value)
+
 
 class ActivityConfig(models.Model):
     activity = models.ForeignKey(Activity)
     config_option = models.CharField(max_length=50)
     value = models.CharField(max_length=50, null=True)
+
+    def __unicode__(self):
+        return "{}: {}".format(self.config_option, self.value)
 
 
 # Export to Lizard

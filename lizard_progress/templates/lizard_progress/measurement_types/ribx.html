@@ -1,5 +1,12 @@
 {% with location=locations.0 %}
-  <h2>Rioleringinspectie {{ location.location_code }}</h2>
+  <h2>Rioleringinspectie / reiniging{{ location.location_code }}</h2>
+
+  {% if location.not_part_of_project %}
+    <strong>Dit object is geen eigendom van {{
+    location.activity.project.organization }} en hoort niet bj de
+    werkzaamheden.</strong>
+  {% endif %}
+
   {% with measurements=location.measurement_set.all %}
     {% if measurements %}
       <p>Bestanden:</p>

@@ -154,11 +154,8 @@ class ExportRunF(factory.DjangoModelFactory):
 class UploadLogF(factory.DjangoModelFactory):
     class Meta:
         model = models.UploadLog
-        django_get_or_create = ('project', 'uploading_organization', 'mtype')
 
-    project = factory.SubFactory(ProjectF)
-    uploading_organization = factory.SubFactory(OrganizationF)
-    mtype = factory.SubFactory(AvailableMeasurementTypeF)
+    activity = factory.SubFactory(ActivityF)
     when = factory.LazyAttribute(lambda a: datetime.datetime.now())
     filename = 'test.txt'
     num_measurements = 1
@@ -435,8 +432,8 @@ class TestExportRun(TestCase):
 
         self.assertEquals(
             run.nginx_path,
-            '/protected/ProjectOrg/testslug/{}/export/path'.format(
-                activity.id))
+            '/protected/ProjectOrg/ftp_readonly/testslug/{} - {}/path'.format(
+                activity.id, activity.name))
 
     def test_exportrun_has_run_doesnt_generate_file_is_available(self):
         measurement_type = AvailableMeasurementTypeF.build()
@@ -485,7 +482,6 @@ class TestExportRun(TestCase):
         self.assertFalse(run.available)
 
 
-@attr('slow')
 class TestActivity(TestCase):
     def test_num_locations(self):
         activity = ActivityF.create()
@@ -590,38 +586,22 @@ class TestActivity(TestCase):
             models.Activity.NoLocationException,
             lambda: activity2.get_or_create_location('testcode', None))
 
-    def test_latest_upload_without_upload(self):
-        project = ProjectF.create()
-        contractor = OrganizationF.create()
-        mtype = AvailableMeasurementTypeF.create(
-            needs_predefined_locations=True)
+    def test_latest_log_without_upload(self):
+        activity = ActivityF.create()
+        self.assertEquals(activity.latest_log, None)
 
-        activity = ActivityF.create(
-            name='activity1', project=project, measurement_type=mtype,
-            contractor=contractor)
-
-        self.assertEquals(activity.latest_upload(), None)
-
-    def test_latest_upload_two_uploads(self):
-        project = ProjectF.create()
-        contractor = OrganizationF.create()
-        mtype = AvailableMeasurementTypeF.create(
-            needs_predefined_locations=True)
-
-        activity = ActivityF.create(
-            name='activity1', project=project, measurement_type=mtype,
-            contractor=contractor)
+    def test_latest_log_two_uploads(self):
+        activity = ActivityF.create()
 
         today = datetime.datetime.now()
         yesterday = today - datetime.timedelta(days=1)
 
-        UploadedFileF.create(
-            activity=activity, uploaded_at=yesterday)
-        UploadedFileF.create(
-            activity=activity, uploaded_at=today)
+        UploadLogF.create(
+            activity=activity, when=yesterday)
+        UploadLogF.create(
+            activity=activity, when=today)
 
-        self.assertEquals(
-            activity.latest_upload().uploaded_at, today)
+        self.assertEquals(activity.latest_log.when, today)
 
 
 class TestIsLine(TestCase):
@@ -638,11 +618,19 @@ class TestUploadLog(TestCase):
         date1 = datetime.datetime(year=2015, month=1, day=1)
         date2 = datetime.datetime(year=2015, month=1, day=2)
 
-        project = ProjectF.create()
+        activity = ActivityF.create()
 
-        UploadLogF.create(project=project, when=date1)
-        UploadLogF.create(project=project, when=date2)
+        UploadLogF.create(activity=activity, when=date1)
+        UploadLogF.create(activity=activity, when=date2)
 
-        latest = list(models.UploadLog.latest(project))
+        # For project
+        latest = list(models.UploadLog.latest_for_project(activity.project))
+
+        self.assertTrue(latest)
+        self.assertEquals(latest[0].when, date2)
+
+        # For activity
+        latest = list(models.UploadLog.latest_for_activity(activity))
+
         self.assertTrue(latest)
         self.assertEquals(latest[0].when, date2)

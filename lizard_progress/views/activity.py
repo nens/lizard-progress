@@ -241,6 +241,10 @@ class PlanningView(ActivityView):
         locations_from_ribx = dict(
             self.__locations_from_ribx(ribxpath, request))
         if locations_from_ribx:
+            # For drains
+            care_about_ownership = self.config_value(
+                'ignore_drains_with_other_owners')
+
             existing_measurements = list(
                 self.__existing_measurements())
 
@@ -259,11 +263,15 @@ class PlanningView(ActivityView):
                     activity=self.activity,
                     location_type=loctype,
                     is_point=loctype != models.Location.LOCATION_TYPE_PIPE,
+                    not_part_of_project=(
+                        not_owned_by_organisation if care_about_ownership
+                        else False),
                     the_geom=(models.osgeo_3d_line_to_2d_wkt(geom)
                               if loctype == models.Location.LOCATION_TYPE_PIPE
                               else models.osgeo_3d_point_to_2d_wkt(geom)))
 
-                for location_code, (geom, loctype) in
+                for (location_code,
+                     (geom, loctype, not_owned_by_organisation)) in
                 locations_from_ribx.iteritems()
 
                 if location_code not in locations_with_measurements
@@ -451,6 +459,9 @@ class PlanningView(ActivityView):
         ribx, errors = parsers.parse(
             ribxpath, parsers.Mode.PREINSPECTION)
 
+        # For drains
+        eaq_code = self.config_value('owner_organisation_eaq_code')
+
         # First, if there are no errors, do our own error checking
         if not errors:
             errors = []
@@ -498,15 +509,23 @@ class PlanningView(ActivityView):
 
         for pipe in ribx.pipes:
             logger.debug("PIPE: {} {}".format(pipe.ref, pipe.geom))
-            yield (pipe.ref, (pipe.geom, models.Location.LOCATION_TYPE_PIPE))
+            yield (pipe.ref, (pipe.geom, models.Location.LOCATION_TYPE_PIPE,
+                   False))
 
         for manhole in ribx.manholes:
             yield (manhole.ref,
-                   (manhole.geom, models.Location.LOCATION_TYPE_MANHOLE))
+                   (manhole.geom, models.Location.LOCATION_TYPE_MANHOLE,
+                    False))
 
         for drain in ribx.drains:
+            if eaq_code:
+                owned_by_organisation = (drain.owner == eaq_code)
+            else:
+                owned_by_organisation = True
+
             yield (drain.ref,
-                   (drain.geom, models.Location.LOCATION_TYPE_DRAIN))
+                   (drain.geom, models.Location.LOCATION_TYPE_DRAIN,
+                    not owned_by_organisation))
 
         messages.add_message(
             request, messages.INFO,
@@ -655,7 +674,8 @@ class UploadDateShapefiles(PlanningView):
             for location_code, id, planned_date, complete in
             models.Location.objects.filter(
                 activity_id=self.activity_id,
-                location_type=location_type)
+                location_type=location_type,
+                not_part_of_project=False)
             .values_list('location_code', 'id', 'planned_date', 'complete')
         }
 

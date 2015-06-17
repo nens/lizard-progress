@@ -1,8 +1,12 @@
 <h2>{{ activity }}</h2>
 
-<p>Code: {{ location.location_code }}<br />Opdrachtnemer: {{ activity.contractor }}<br />Werkzaamheid: {{ activity.measurement_type }}</p>
+<p>Code: {{ location.location_code }}<br />
+{% if location.not_part_of_project %}
+<strong>Dit object is geen eigendom van {{ location.activity.project.organization }} en hoort niet bj de werkzaamheden.</strong>
+{% else %}Opdrachtnemer: {{ activity.contractor }}<br />Werkzaamheid: {{ activity.measurement_type }}
+{% endif %}</p>
 <p>Er is voor deze locatie nog geen data aanwezig in het systeem.</p>
 
-{% if location.planned_date %}
+{% if location.planned_date and not location.not_part_of_project %}
   <p>De geplande datum voor deze locatie is {{ location.planned_date|date:"DATE_FORMAT" }}.</p>
 {% endif %}

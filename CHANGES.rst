@@ -2,10 +2,40 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.5.1 (unreleased)
+2.5.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- The project dashboard page still looked at UploadedFiles to determine
+  when the last upload was, but these can be deleted by users after uploading.
+
+  It is better to use UploadLog instead, but those in turn still referred
+  to a project/mtype/contractor combination instead of an Activity.
+
+- Add check to see if two <METING> lines inside the same <PROFILE> do
+  not have the same X and Y coordinates. This is the
+  'MET_XY_OCCURS_ONCE_IN_PROFILE' error code.
+
+- Exports are now saved to the <Organization>/ftp_readonly/ directory, where
+  they can be served over FTP.
+
+- Add support for e-mail notifications.
+
+
+2.5.2 (2015-06-12)
+------------------
+
+- A variable that should have been removed had one instance left, which
+  caused the map page to crash.
+
+- Added four __unicode__ methods in models to help with debugging on
+  the command line.
+
+
+2.5.1 (2015-06-11)
+------------------
+
+- Missed () after a function name, which caused a bug with checking if
+  a measurement is complete after uploading an expected attachment.
 
 
 2.5.0 (2015-06-10)
@@ -40,7 +70,43 @@ New features for the Almere / HDSR project:
 - For convenience's sake, they are configured at project level instead
   of activity level.
 
-- Added 'not_part_of_project' Boolean to Location.
+- Ownership of locations stuff:
+
+  When Almere uploads a RIBX file to plan a project, they include
+  information on drains not owned by Almere. Contractors do not need
+  to clean / inspect these, but by putting them in the planning info,
+  it is known that they are not actually new when contractors find
+  them.
+
+  * RIBX drains have a <EAQ> field that signifies ownership. Our
+    ribxlib puts this information in the "owner" attribute of
+    drains. Almere uses "A" for owned by Almere, "B" for privately
+    owned, and "C" for unknown. The Uploadservice only cares about
+    "owned by project owner" and "other".
+
+  * There are two config options, one where it can be configured that
+    the code to look for is "A", the other to signify that a project
+    cares about ownership like this.
+
+  * Planning these locations sets the "not_part_of_project" flag of
+    locations.
+
+  * They are shown as grey balls on the map, regardless of what was
+    uploaded for them. There is also a message in the popup.
+
+  * They are not counted wherever there are statistics about numbers
+    of locations.
+
+  * Their can't be a date planned for them.
+
+  * They are not included in the shapefile export.
+
+
+- All "percentage done" items were shown as "N/A" due to an
+  accidentally deleted "not", fixed.
+
+- Map layers for change requests are now shown on top of normal map
+  layers, not under them.
 
 
 2.4.7 (2015-05-08)

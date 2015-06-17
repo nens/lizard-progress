@@ -150,6 +150,7 @@ class MetParser(specifics.ProgressParser):
                 profile.line_number,
                 'MET_PROF_COORDS_IN_MEASRMNTS')
 
+        self.check_same_xy_occurs_once_in_profile(profile)
         self.check_waternet_profile_point_types(profile)
         self.check_two_22_codes_with_z1z2_equal(profile)
 
@@ -291,6 +292,18 @@ class MetParser(specifics.ProgressParser):
             for measurement in profile.measurements:
                 self.check_measurement(
                     measurement, max_z1, max_z2, profile)
+
+    def check_same_xy_occurs_once_in_profile(self, profile):
+        # The exact same X and Y cannot occur more than once inside the
+        # same profile
+        measurement_xys = set()
+        for measurement in profile.measurements:
+            measurement_xy = (measurement.x, measurement.y)
+            if measurement_xy in measurement_xys:
+                self.record_error_code(
+                    measurement.line_number,
+                    'MET_XY_OCCURS_ONCE_IN_PROFILE')
+            measurement_xys.add(measurement_xy)
 
     def check_waternet_profile_point_types(self, profile):
         ## For Waternet, code checks are pretty involved:

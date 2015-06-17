@@ -1,0 +1,27 @@
+{% extends "lizard_progress/progressbase.html" %}
+
+{% block contentpage %}
+<h2>E-mail configuratie {{ view.project }}</h2>
+
+<form method="post" action="{% url "lizard_progress_project_email_config_view" project_slug=view.project_slug %}">
+    <table class="table table-bordered progressbase">
+        <thead>
+            <th>Notificatie</th>
+            <th>Ontvangen?</th>
+        </thead>
+        <tbody>
+        {% for option, current_value in view.config_options %}
+            <tr>
+                <td>
+                    {{ option.name }}<br />
+                    <span class="small">{{ option.description }}</span>
+                </td>
+                <td><input type="checkbox" name="{{ option.name }}" {% if current_value %}checked="checked"{% endif %}></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
+    {% csrf_token %}
+</form>
+{% endblock contentpage %}

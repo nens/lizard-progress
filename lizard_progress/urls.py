@@ -152,6 +152,10 @@ project_urls = [
         login_required(views.ConfigurationView.as_view()),
         name="lizard_progress_project_configuration_view"),
 
+    url('^email_config/$',
+        login_required(views.EmailNotificationConfigurationView.as_view()),
+        name="lizard_progress_project_email_config_view"),
+
     # Everything relating to a specific activity in this project
     url(r'^(?P<activity_id>\d+)/', include(activity_urls))
 ]

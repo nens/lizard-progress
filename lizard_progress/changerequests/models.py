@@ -13,12 +13,15 @@ import json
 import logging
 
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 from django.contrib.gis.db import models
-
+from django.contrib.sites.models import Site
+from django.dispatch import receiver
 from lizard_map.models import WorkspaceEditItem
 
 from lizard_progress import models as pmodels
+from lizard_progress.email_notifications.models import NotificationType
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +50,7 @@ class Request(models.Model):
         REQUEST_TYPE_REMOVE_CODE: "Locatiecode verwijderen",
         REQUEST_TYPE_MOVE_LOCATION: "Locatie verplaatsen",
         REQUEST_TYPE_NEW_LOCATION: "Nieuwe locatiecode"
-        }
+    }
 
     REQUEST_STATUS_OPEN = 1
     REQUEST_STATUS_ACCEPTED = 2
@@ -119,6 +122,9 @@ class Request(models.Model):
                        (", " + self.old_location_code
                         if self.old_location_code else "")),
                 activity=self.activity))
+
+    def get_absolute_url(self):
+        return self.detail_url()
 
     @property
     def project(self):
@@ -252,6 +258,20 @@ class Request(models.Model):
 
         # Save new status
         self.change_status(Request.REQUEST_STATUS_ACCEPTED)
+        # Send notification
+        notification_type = NotificationType.objects.get(
+            name='aanvraag geaccepteerd')
+        kwargs = {
+            'actor': pmodels.UserRole.objects.get(
+                code=pmodels.UserRole.ROLE_MANAGER),
+            'action_object': self,
+            'target': self.activity,
+            'extra': {'link':
+                      Site.objects.get_current().domain +
+                      self.get_absolute_url()}
+        }
+        self.activity.notify_contractors(notification_type, **kwargs)
+
         if self.possible_request:
             # If all possible requests of all a file are accepted, it may
             # be uploaded again
@@ -275,6 +295,19 @@ class Request(models.Model):
     def refuse(self, reason):
         self.refusal_reason = reason
         self.change_status(Request.REQUEST_STATUS_REFUSED)
+
+        # Send notification
+        notification_type = NotificationType.objects.get(
+            name="aanvraag afgekeurd")
+        kwargs = {
+            'actor': pmodels.UserRole.objects.get(
+                code=pmodels.UserRole.ROLE_MANAGER),
+            'action_object': self,
+            'target': self.activity,
+            'extra': {'link':
+                      Site.objects.get_current().domain +
+                      self.get_absolute_url()}}
+        self.activity.notify_contractors(notification_type, **kwargs)
 
     def withdraw(self):
         self.change_status(Request.REQUEST_STATUS_WITHDRAWN)
@@ -546,3 +579,41 @@ class Points(models.Model):
             if not created:
                 point.the_geom = geom
                 point.save()
+
+
+@receiver(post_save, sender=Request)
+def message_request_created(sender, instance, created, **kwargs):
+    notification_type = NotificationType.objects.get(name="aanvraag ingediend")
+    actor = pmodels.UserRole.objects.get(
+        code=pmodels.UserRole.ROLE_UPLOADER)
+    kwargs = {
+        'actor': actor,
+        'action_object': instance,
+        'target': instance.activity,
+        'extra': {'link':
+                  Site.objects.get_current().domain +
+                  instance.get_absolute_url()},
+    }
+    if created:
+        instance.activity.notify_managers(notification_type, **kwargs)
+
+
+@receiver(post_save, sender=RequestComment)
+def message_request_comment_created(sender, instance, created, **kwargs):
+    notification_type = NotificationType.objects.get(
+        name="aanvraag commentaar toegevoegd")
+    kwargs = {
+        'actor': instance.user,
+        'action_object': instance.request,
+        'target': instance.request.activity,
+        'extra': {'link':
+                  Site.objects.get_current().domain +
+                  instance.request.get_absolute_url()}
+    }
+    if created:
+        if instance.request.activity.project.is_manager(instance.user):
+            instance.request.activity.notify_contractors(
+                notification_type, **kwargs)
+        else:
+            instance.request.activity.notify_managers(
+                notification_type, **kwargs)

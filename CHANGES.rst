@@ -18,6 +18,8 @@ Changelog of lizard-progress
 - Exports are now saved to the <Organization>/ftp_readonly/ directory, where
   they can be served over FTP.
 
+- Add support for e-mail notifications.
+
 
 2.5.2 (2015-06-12)
 ------------------

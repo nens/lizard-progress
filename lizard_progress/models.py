@@ -7,9 +7,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-RDNEW = 28992
-SRID = RDNEW
-
 import datetime
 import functools
 import json
@@ -19,15 +16,20 @@ import random
 import shutil
 import string
 
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import MultiLineString
 from django.contrib.gis.geos import fromstr
 from django.contrib.gis.gdal import DataSource
+from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
+from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 from django.db import connection
+from django.dispatch import receiver
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
 from django.utils.functional import cached_property
@@ -36,7 +38,13 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 
 import lizard_progress.specifics
+from lizard_progress.email_notifications import notify
+from lizard_progress.email_notifications.models import NotificationType
+from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.util import directories
+
+RDNEW = 28992
+SRID = RDNEW
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +96,7 @@ class ErrorMessage(models.Model):
             return (
                 "UNKNOWNCODE",
                 "Could not get error code {0} from database".format(error_code)
-                )
+            )
 
         return error_code, error_message.format(*args, **kwargs)
 
@@ -116,9 +124,11 @@ class Organization(models.Model):
     def users_in_same_organization(cls, user):
         """Returns a list of user in same organization."""
         organization = UserProfile.objects.get(user=user).organization
-        userprofiles = UserProfile.objects.filter(organization=organization)
-        users = [profile.user for profile in userprofiles]
-        return users
+        return User.objects.filter(userprofile__organization=organization)
+
+    @property
+    def users(self):
+        return User.objects.filter(userprofile__organization=self)
 
     @property
     def slug(self):
@@ -178,18 +188,17 @@ class ProjectType(models.Model):
 
 
 class UserRole(models.Model):
-    ROLE_MANAGER = "manager"  # Can make new projects, configure
-                              # running projects
-    # ROLE_VIEWER = "viewer"  # This role is commented out because right
-                            # now I *think* we can keep this implicit
-                            # -- all members of an organization are
-                            # viewers.
-    ROLE_UPLOADER = "uploader"  # Can upload measurements and reports
-                                # if user's organization is a
-                                # contractor in the project
-    ROLE_ADMIN = "admin"  # Can assign roles to people in the
-                          # organization, create and delete user
-                          # accounts belonging to this organization.
+    # Can make new projects, configure running projects
+    ROLE_MANAGER = "manager"
+    # This role is commented out because right now I *think* we can keep this
+    # implicit -- all members of an organization are viewers.
+    # ROLE_VIEWER = "viewer"
+    # Can upload measurements and reports if user's organization is a
+    # contractor in the project
+    ROLE_UPLOADER = "uploader"
+    # Can assign roles to people in the organization, create and delete user
+    # accounts belonging to this organization.
+    ROLE_ADMIN = "admin"
 
     # Rows according to those roles are entered into the database by
     # means of a fixture.
@@ -344,6 +353,10 @@ class Project(models.Model):
     def __unicode__(self):
         return unicode(self.name)
 
+    def get_absolute_url(self):
+        return reverse('lizard_progress_dashboardview',
+                       kwargs={'project_slug': self.slug, })
+
     def is_manager(self, user):
         profile = UserProfile.get_by_user(user)
         return (self.organization == profile.organization and
@@ -386,6 +399,10 @@ class Project(models.Model):
             (100 * self.number_of_complete_locations()) /
             self.number_of_locations())
         return "{percentage:2.0f}%".format(percentage=percentage)
+
+    def is_complete(self):
+        return all(
+            activity.is_complete() for activity in self.activity_set.all())
 
     @cached_property
     def latest_log(self):
@@ -430,6 +447,13 @@ class Project(models.Model):
                 adapter_class='adapter_hydrovak',
                 adapter_layer_json=json.dumps({"project_slug": self.slug}),
                 extent=None)
+
+    def is_subscribed_to(self, notification_type):
+        project_content_type = ContentType.objects.get_for_model(self)
+        return NotificationSubscription.objects.filter(
+            notification_type=notification_type,
+            subscriber_content_type=project_content_type,
+            subscriber_object_id=self.id).exists()
 
 
 class Location(models.Model):
@@ -658,6 +682,11 @@ class Activity(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse(
+            'lizard_progress_activity_dashboard',
+            kwargs={'activity_id': self.id, 'project_slug': self.project.slug})
+
     def config_value(self, key):
         from lizard_progress import configuration
         config = configuration.Configuration(activity=self)
@@ -712,8 +741,8 @@ class Activity(models.Model):
         manager in this project.  """
 
         return (
-            self.project.is_manager(user)
-            or self.contractor == Organization.get_by_user(user))
+            self.project.is_manager(user) or
+            self.contractor == Organization.get_by_user(user))
 
     def num_locations(self):
         return self.location_set.filter(
@@ -825,6 +854,40 @@ class Activity(models.Model):
             adapter_class='adapter_progress',
             adapter_layer_json=json.dumps({"activity_id": self.id}),
             extent=None)
+
+    def is_complete(self):
+        return self.needs_predefined_locations() and \
+            not Location.objects.filter(
+                activity=self,
+                complete=False,
+                not_part_of_project=False).exists()
+
+    def notify(self, notification_type, recipients, **kwargs):
+        if not self.project.is_subscribed_to(notification_type):
+            return False
+
+        if getattr(settings, 'EMAIL_NOTIFICATIONS_EMAIL_ADMINS', False):
+            admins = User.objects.filter(
+                username__in=getattr(settings, 'USER_ADMINS', []))
+            recipients = recipients | admins
+
+        for r in recipients:
+            notify.send(
+                self,
+                notification_type=notification_type,
+                recipient=r,
+                actor=kwargs.get('actor', None),
+                action_object=kwargs.get('action_object', None),
+                target=kwargs.get('target', None),
+                extra=kwargs.get('extra', None))
+
+    def notify_managers(self, notification_type, **kwargs):
+        recipients = self.project.organization.users
+        return self.notify(notification_type, recipients, **kwargs)
+
+    def notify_contractors(self, notification_type, **kwargs):
+        recipients = self.contractor.users
+        return self.notify(notification_type, recipients, **kwargs)
 
 
 class ExpectedAttachment(models.Model):
@@ -1141,15 +1204,15 @@ class UploadedFile(models.Model):
                 'lizard_progress_remove_uploaded_file', kwargs={
                     'project_slug': self.activity.project.slug,
                     'uploaded_file_id': self.id
-                    }),
+                }),
             'requests_url': reverse(
                 'changerequests_possiblerequests', kwargs={
                     'project_slug': self.activity.project.slug,
                     'activity_id': self.activity.id,
                     'uploaded_file_id': self.id
-                    }),
+                }),
             'has_possible_requests': self.has_possible_requests()
-            }
+        }
 
     def has_possible_requests(self):
         return self.possiblerequest_set.exists()
@@ -1267,8 +1330,8 @@ class ExportRun(models.Model):
     def present(self):
         """Check if a file generated by the export run is present. Always false
         if this export run doesn't generate files."""
-        return bool(self.file_path and self.ready_for_download
-                    and os.path.exists(self.file_path))
+        return bool(self.file_path and self.ready_for_download and
+                    os.path.exists(self.file_path))
 
     def delete(self):
         """Also delete the file."""
@@ -1305,11 +1368,11 @@ class ExportRun(models.Model):
         measurement_dates = [
             measurement.timestamp
             for measurement in self.measurements_to_export()
-            ]
+        ]
 
         return (self.available and
-                (not measurement_dates
-                 or self.created_at > max(measurement_dates)))
+                (not measurement_dates or
+                 self.created_at > max(measurement_dates)))
 
     def measurements_to_export(self):
         return Measurement.objects.filter(
@@ -1373,7 +1436,7 @@ class UploadLog(models.Model):
             self.filename, self.when, self.num_measurements)
 
 
-### Models for configuration
+# Models for configuration
 
 class OrganizationConfig(models.Model):
     organization = models.ForeignKey(Organization)
@@ -1424,3 +1487,30 @@ class LizardConfiguration(models.Model):
 
     def __unicode__(self):
         return self.name or self.geoserver_database_engine
+
+
+@receiver(post_save, sender=Location)
+def message_project_complete(sender, instance, **kwargs):
+    notification_type = NotificationType.objects.get(name="project voltooid")
+    kwargs = {
+        'action_object': instance.activity.project,
+        'extra': {'link': Site.objects.get_current().domain +
+                  instance.activity.project.get_absolute_url(), }
+    }
+    if instance.complete and instance.activity.project.is_complete():
+        return instance.activity.notify_managers(notification_type, **kwargs)
+
+
+@receiver(post_save, sender=Location)
+def message_activity_complete(sender, instance, **kwargs):
+    notification_type = NotificationType.objects.get(
+        name="werkzaamheid voltooid")
+    kwargs = {
+        'action_object': instance.activity,
+        'target': instance.activity.project,
+        'extra': {'link': Site.objects.get_current().domain +
+                  instance.activity.get_absolute_url(), }
+    }
+
+    if instance.complete and instance.activity.is_complete():
+        return instance.activity.notify_managers(notification_type, **kwargs)

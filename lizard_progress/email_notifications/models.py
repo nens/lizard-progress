@@ -11,6 +11,8 @@ App specific settings
 
     EMAIL_NOTIFICATIONS_EMAIL_ADMINS: use to send all e-mails to the admins in
                                       addition to the intended recipient.
+    USER_ADMINS: list of usernames of admins that should receive the admin
+                 e-mail notifications.
 """
 
 # Python 3 is coming
@@ -143,9 +145,6 @@ class Notification(models.Model):
             return False
 
         recipients = [self.recipient.email, ]
-        if getattr(settings, 'EMAIL_NOTIFICATIONS_EMAIL_ADMINS', False):
-            admins = getattr(settings, 'ADMINS', [])
-            recipients.extend([email for _, email in admins])
         try:
             send_mail(
                 self.get_subject(),

@@ -16,6 +16,7 @@ import random
 import shutil
 import string
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db import models
@@ -859,16 +860,23 @@ class Activity(models.Model):
                 not_part_of_project=False).exists()
 
     def notify(self, notification_type, recipients, **kwargs):
-        if self.project.is_subscribed_to(notification_type):
-            for r in recipients:
-                notify.send(
-                    self,
-                    notification_type=notification_type,
-                    recipient=r,
-                    actor=kwargs.get('actor', None),
-                    action_object=kwargs.get('action_object', None),
-                    target=kwargs.get('target', None),
-                    extra=kwargs.get('extra', None))
+        if not self.project.is_subscribed_to(notification_type):
+            return False
+
+        if getattr(settings, 'EMAIL_NOTIFICATIONS_EMAIL_ADMINS', False):
+            admins = User.objects.filter(
+                username__in=getattr(settings, 'USER_ADMINS', []))
+            recipients = recipients | admins
+
+        for r in recipients:
+            notify.send(
+                self,
+                notification_type=notification_type,
+                recipient=r,
+                actor=kwargs.get('actor', None),
+                action_object=kwargs.get('action_object', None),
+                target=kwargs.get('target', None),
+                extra=kwargs.get('extra', None))
 
     def notify_managers(self, notification_type, **kwargs):
         recipients = self.project.organization.users

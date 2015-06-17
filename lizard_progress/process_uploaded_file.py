@@ -142,7 +142,10 @@ def try_parser(uploaded_file, parser):
             if (parseresult.success and hasattr(parseresult, 'measurements')
                     and parseresult.measurements):
                 # Move the file.
-                target_path = path_for_uploaded_file(uploaded_file)
+                target_path = path_for_uploaded_file(
+                    uploaded_file.activity,
+                    os.path.basename(uploaded_file.filename))
+
                 shutil.move(uploaded_file.path, target_path)
 
                 # Update measurements.
@@ -200,14 +203,11 @@ def call_parser(uploaded_file, parser):
     return parseresult
 
 
-def path_for_uploaded_file(uploaded_file):
+def path_for_uploaded_file(activity, filename):
     """Create dirname based on project etc. Guaranteed not to
     exist yet at the time of checking."""
 
-    activity = uploaded_file.activity
     dirname = activity.upload_directory()
-
-    filename = os.path.basename(uploaded_file.filename)
 
     # Create a directory using mkdtemp, with current date and time as
     # prefix so that they sort chronologically.

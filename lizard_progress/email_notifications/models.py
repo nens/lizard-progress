@@ -119,13 +119,13 @@ class Notification(models.Model):
         return self.notification_type.get_subject(self.get_context())
 
     @classmethod
-    def create_notification(cls,
-                            notification_type,
-                            recipient,
-                            actor=None,
-                            action_object=None,
-                            target=None,
-                            extra=None):
+    def create(cls,
+               notification_type,
+               recipient,
+               actor=None,
+               action_object=None,
+               target=None,
+               extra=None):
         notification = cls(
             notification_type=notification_type,
             recipient=recipient)
@@ -140,7 +140,7 @@ class Notification(models.Model):
         notification.save()
         return notification
 
-    def send_notification(self):
+    def send(self):
         if not self.recipient.email:
             return False
 
@@ -206,7 +206,7 @@ def send_notification(notification_type, recipient, **kwargs):
     target = kwargs.pop('target', None)
     extra = kwargs.pop('extra', None)
 
-    n = Notification.create_notification(
+    n = Notification.create(
         notification_type,
         recipient,
         actor=actor,

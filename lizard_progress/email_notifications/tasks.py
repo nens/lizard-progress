@@ -11,4 +11,4 @@ from celery.task import task
 
 @task
 def send_notification(notification):
-    notification.send_notification()
+    notification.send()

@@ -840,9 +840,9 @@ class ExpectedAttachment(models.Model):
         ordering = ('uploaded', 'filename', )
 
     def __unicode__(self):
-        return "Expected attachment {}: {} for activity {}".format(
-            "PRESENT" if self.uploaded else "MISSING",
-            self.filename, self.activity_id)
+        return "Expected attachment {} ({}).".format(
+            self.filename,
+            "uploaded" if self.uploaded else "expected")
 
 
 class MeasurementTypeAllowed(models.Model):

@@ -105,9 +105,8 @@ class RibxParser(ProgressParser):
         for filename in getattr(item, 'media', ()):
             expected_attachment, created = (
                 models.ExpectedAttachment.objects.get_or_create(
-                    activity=self.activity,
                     filename=filename))
-            location.expected_attachments.add(expected_attachment)
+            measurement.expected_attachments.add(expected_attachment)
             if created or not expected_attachment.uploaded:
                 complete = False
 

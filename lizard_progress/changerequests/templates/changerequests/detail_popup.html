@@ -1,6 +1,6 @@
 <h3>Aanvraag ({{ cr.status_description }})</h3>
 
-<a href="{{ cr.detail_url }}">Klik hier voor meer details (aanvragenpagina)</a>
+<a href="{{ cr.get_absolute_url }}">Klik hier voor meer details (aanvragenpagina)</a>
 
 <dl class="dl-horizontal">
   <dt>Type aanvraag</dt>
@@ -35,7 +35,7 @@
   {% if cr.is_open %}
   <dt>Goedkeuring</dt>
   <dd>
-    <form action="{{ cr.detail_url }}acceptance/" method="post">
+    <form action="{{ cr.get_absolute_url }}acceptance/" method="post">
     {% csrf_token %}
     <input type="hidden" name="wantoutputas" value="json">
     <input type="hidden" name="accept" id="hidden-accept" value="">

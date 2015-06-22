@@ -20,7 +20,7 @@
             </thead>
             <tbody>
                 {% for request in openrequests %}
-                <tr class="clickable" data-url="{{ request.detail_url }}">
+                <tr class="clickable" data-url="{{ request.get_absolute_url }}">
                     <td>{% if not request.did_last_action %}<i class="icon icon-warning-sign"></i>{% endif %}</td>
                     <td>{{ request.creation_date|date:"d/m" }}</td>
                     <td>{{ request.activity }}</td>
@@ -32,7 +32,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{ request.detail_url }}">bekijk details</a>
+                        <a href="{{ request.get_absolute_url }}">bekijk details</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -56,7 +56,7 @@
             </thead>
             <tbody>
             {% for request in closedrequests %}
-                <tr class="{% if request.is_accepted %}success{% endif %}{% if request.is_refused %}danger{% endif %}{% if request.is_invalid %}warning{% endif %}" data-url="{{ request.detail_url }}">
+                <tr class="{% if request.is_accepted %}success{% endif %}{% if request.is_refused %}danger{% endif %}{% if request.is_invalid %}warning{% endif %}" data-url="{{ request.get_absolute_url }}">
                     {% comment %}
                         The tds are clickable here, and not the trs, because the last td should not be clickable. Otherwise clicking the 'X' button does both things.
                     {% endcomment %}
@@ -71,7 +71,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <button class="close" type="button" title="Markeer als gezien" data-post-url="{{ request.detail_url }}set_seen/" aria-hidden="true">&times;</button>
+                        <button class="close" type="button" title="Markeer als gezien" data-post-url="{{ request.get_absolute_url }}set_seen/" aria-hidden="true">&times;</button>
                     </td>
                 </tr>
             {% endfor %}

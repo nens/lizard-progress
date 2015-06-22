@@ -33,7 +33,7 @@
     <dt>Motivatie</dt>
     <dd>
         {% if view.user_is_contractor and cr.is_open %}
-            <form action="{{ cr.detail_url }}change_motivation/" method="post">
+            <form action="{{ cr.get_absolute_url }}change_motivation/" method="post">
                 {% csrf_token %}
                 <textarea cols="50" rows="4" name="motivation">{{ cr.motivation }}</textarea><br />
                 <input class="btn" type="submit" value="Motivatie opslaan">
@@ -53,7 +53,7 @@
     {% if cr.is_open %}
         <dt>Goedkeuring</dt>
         <dd>
-            <form action="{{ cr.detail_url }}acceptance/" method="post">
+            <form action="{{ cr.get_absolute_url }}acceptance/" method="post">
                 {% csrf_token %}
                 {% if view.user_is_manager %}
                     <input type="submit" name="accept" class="btn btn-success" value="Goedkeuren">
@@ -87,7 +87,7 @@
     {% endfor %}
     <dt></dt>
     <dd>
-        <form action="{{ cr.detail_url }}add_comment/" method="post">
+        <form action="{{ cr.get_absolute_url }}add_comment/" method="post">
             {% csrf_token %}
             <textarea name="comment" cols="50" rows="4"></textarea><br />
             <input class="btn" type="submit" value="Commentaar toevoegen">

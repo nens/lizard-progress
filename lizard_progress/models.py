@@ -478,8 +478,6 @@ class Location(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
     complete = models.BooleanField(default=False)
 
-    expected_attachments = models.ManyToManyField('ExpectedAttachment')
-
     objects = models.GeoManager()
 
     @property
@@ -542,7 +540,8 @@ class Location(models.Model):
         return self.measurement_set.count() > 0
 
     def missing_attachments(self):
-        return self.expected_attachments.filter(uploaded=False)
+        return ExpectedAttachment.objects.filter(
+            measurement__location=self, uploaded=False)
 
     @property
     def all_expected_attachments_present(self):
@@ -834,7 +833,6 @@ class ExpectedAttachment(models.Model):
 
     """
 
-    activity = models.ForeignKey(Activity)
     filename = models.CharField(max_length=100)
     uploaded = models.BooleanField(default=False)
 
@@ -896,6 +894,12 @@ class Measurement(models.Model):
     # This is the filename of the uploaded file after it was moved
     # into lizard-progress' archive. Set by process_uploaded_file.
     filename = models.CharField(max_length=1000)
+
+    # Expected Attachments that belong to this Measurement. When they
+    # are uploaded, they will get their own Measurement instance, that
+    # will have a 'parent' foreignkey to this one.
+    expected_attachments = models.ManyToManyField('ExpectedAttachment')
+    parent = models.ForeignKey('Measurement', null=True)
 
     # Auto-changes, most likely set in stone the time the file is
     # uploaded.

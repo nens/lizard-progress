@@ -21,7 +21,7 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
 
         try:
             expected_attachment = models.ExpectedAttachment.objects.get(
-                activity=self.activity,
+                measurement__location__activity=self.activity,
                 filename=filename)
         except models.ExpectedAttachment.DoesNotExist:
             return self.error('UNEXPECTED', filename)
@@ -30,7 +30,9 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
         expected_attachment.save()
 
         measurements = []
-        for location in expected_attachment.location_set.all():
+        for measurement in expected_attachment.measurement_set.all(
+                ).select_related():
+            location = measurement.location
             measurement = models.Measurement.objects.create(
                 location=location,
                 date=None,

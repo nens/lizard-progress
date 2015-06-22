@@ -33,12 +33,13 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
         for measurement in expected_attachment.measurement_set.all(
                 ).select_related():
             location = measurement.location
-            measurement = models.Measurement.objects.create(
+            new_measurement = models.Measurement.objects.create(
                 location=location,
                 date=None,
+                parent=measurement,
                 data={'filetype': 'media'},
                 the_geom=None)
-            measurements.append(measurement)
+            measurements.append(new_measurement)
             if location.all_expected_attachments_present:
                 location.complete = True
                 location.save()

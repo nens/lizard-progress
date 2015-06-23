@@ -20,12 +20,16 @@
             </thead>
             <tbody>
                 {% for request in openrequests %}
-                <tr class="clickable" data-url="{{ request.get_absolute_url }}">
-                    <td>{% if not request.did_last_action %}<i class="icon icon-warning-sign"></i>{% endif %}</td>
-                    <td>{{ request.creation_date|date:"d/m" }}</td>
-                    <td>{{ request.activity }}</td>
-                    <td>{{ request.type_description }}</td>
-                    <td>
+                <tr data-url="{{ request.get_absolute_url }}">
+                    <td class="clickable">
+                        {% if not request.did_last_action %}
+                            <i class="icon icon-warning-sign"></i>
+                        {% endif %}
+                    </td>
+                    <td class="clickable">{{ request.creation_date|date:"d/m" }}</td>
+                    <td class="clickable">{{ request.activity }}</td>
+                    <td class="clickable">{{ request.type_description }}</td>
+                    <td class="clickable">
                         {{ request.location_code }}
                         {% if request.old_location_code %}
                             (vervangt {{ request.old_location_code }})
@@ -33,6 +37,8 @@
                     </td>
                     <td>
                         <a href="{{ request.get_absolute_url }}">bekijk details</a>
+                        |
+                        <a href="{% url "lizard_progress_mapview_change_request" project_slug=view.project_slug change_request=request.id %}">bekijk op kaart</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -69,6 +75,7 @@
                         {% if request.old_location_code %}
                             (vervangt {{ request.old_location_code }}
                         {% endif %}
+
                     </td>
                     <td>
                         <button class="close" type="button" title="Markeer als gezien" data-post-url="{{ request.get_absolute_url }}set_seen/" aria-hidden="true">&times;</button>

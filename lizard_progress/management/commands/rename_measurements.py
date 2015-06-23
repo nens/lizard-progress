@@ -30,18 +30,32 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Run the command."""
 
-        for measurement in models.Measurement.objects.all():
-            activity = measurement.location.activity
+        all_filenames = models.Measurement.objects.order_by(
+            'filename').distinct('filename').values_list('filename', flat=True)
 
-            dirname, filename = os.path.split(measurement.filename)
+        for path in all_filenames:
+            dirname, filename = os.path.split(path)
+            if filename.count('-') < 3:
+                # Skip
+                continue
 
-            if (dirname == directories.upload_dir(activity) and
-                    filename.count('-') >= 3):
+            measurements = list(models.Measurement.objects.filter(
+                filename=path).select_related())
+
+            activity = measurements[0].location.activity
+
+            if (dirname == directories.upload_dir(activity)):
                 # This is the kind of filename we want to fix.
-                new_filename = filename.split('-')[3:]
-                new_path = process_uploaded_file(activity, new_filename)
+                new_filename = filename.split('-', 3)[-1]
+                new_path = process_uploaded_file.path_for_uploaded_file(
+                    activity, new_filename)
+
+                print("{} -> {}".format(path, new_path))
 
                 # Move and record new path
-                shutil.move(measurement.filename, new_path)
-                measurement.filename = new_path
-                measurement.save()
+                if os.path.exists(path):
+                    shutil.move(path, new_path)
+
+                for measurement in measurements:
+                    measurement.filename = new_path
+                    measurement.save()

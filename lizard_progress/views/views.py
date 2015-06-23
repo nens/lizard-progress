@@ -41,6 +41,7 @@ from lizard_ui.views import UiView
 
 from lizard_progress import configuration
 from lizard_progress import models
+from lizard_progress.models import Location
 from lizard_progress.models import Project
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
@@ -287,9 +288,7 @@ class MapView(View):
     def get_rd_extent(self, change_request=None):
         """Compute the extent we want to zoom to, in RD."""
 
-        # If we want to zoom to, say, a single change request, do so here.
-        if change_request:  # Zoom in on locations in a specific change request
-            change_request = Request.objects.get(id=change_request)
+        locations = Location.objects.filter(activity__project=self.project)
 
         # Layers MAY define their own extent (used for the extents of
         # change requests). Otherwise layer.extent will be None.
@@ -297,7 +296,10 @@ class MapView(View):
                          if layer.extent is not None]
 
         if change_request:
-            extent = change_request.map_layer().extent
+            extent = Request.objects.get(id=change_request).map_layer().extent
+        elif locations.exists():
+            # Start with this extent, add the extras to this
+            extent = locations.extent()
         elif extra_extents:
             # No locations, but extra extents: use the first as start extent
             extent = extra_extents.pop()

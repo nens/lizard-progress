@@ -20,6 +20,8 @@ Changelog of lizard-progress
 
 - Add support for e-mail notifications.
 
+- Add 'show change request on map' functionality.
+
 
 2.5.2 (2015-06-12)
 ------------------

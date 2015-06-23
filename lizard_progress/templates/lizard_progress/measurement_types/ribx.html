@@ -1,10 +1,23 @@
 {% with location=locations.0 %}
-  <h2>Rioleringinspectie / reiniging{{ location.location_code }}</h2>
-
+  {% if location.location_type == "pipe" %}
+     <h3>Streng {{ location.location_code }}</h3>
+  {% elif location.location_type == "manhole" %}
+     <h3>Put {{ location.location_code }}</h3>
+  {% elif location.location_type == "drain" %}
+     <h3>Kolk {{ location.location_code }}</h3>
+  {% else %}
+     <h3>Onbekend rioleringselement {{ location.location_code }}</h3>
+  {% endif %}
+  {% if location.complete %}
+     <h3>Compleet</h3>
+  {% endif %}
   {% if location.not_part_of_project %}
     <strong>Dit object is geen eigendom van {{
     location.activity.project.organization }} en hoort niet bj de
     werkzaamheden.</strong>
+  {% else %}
+    <p>Opdrachtnemer: {{ location.activity.contractor }}<br />
+    Werkzaamheid: {{ location.activity.measurement_type }}</p>
   {% endif %}
 
   {% with measurements=location.measurement_set.all %}

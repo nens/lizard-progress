@@ -32,6 +32,12 @@ Changelog of lizard-progress
 - Added four __unicode__ methods in models to help with debugging on
   the command line.
 
+- Use allowZip64=True in export zipfiles, so that they can become
+  larger than 2GB.
+
+- The popup should already show if a location has at least a single
+  measurement, not just when it is complete.
+
 
 2.5.1 (2015-06-11)
 ------------------

@@ -32,7 +32,7 @@ bestand aangepast worden en handmatig opnieuw aangeboden worden.</p>
            <dt>Aanvraag gedaan</dt>
      {% with pr.request as request %}
           {% if request %}
-           <dd><a href="{{ pr.request.detail_url }}">Status: {{ pr.request.status_description }}</a></dd>
+           <dd><a href="{{ pr.request.get_absolute_url }}">Status: {{ pr.request.status_description }}</a></dd>
           {% else %}
            <dd>Aanvraag niet meer beschikbaar</dd>
           {% endif %}

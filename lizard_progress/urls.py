@@ -107,6 +107,8 @@ project_urls = [
     # Kaartlagen view
     url('^map/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
+    url('^map/change_request/(?P<change_request>[^/]+)/$', login_required(MapView.as_view()),
+        name='lizard_progress_mapview_change_request'),
     # Dashboard page
     url('^dashboard/$', login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),

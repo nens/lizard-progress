@@ -19,7 +19,7 @@
     </thead>
     <tbody>
     {% for request in closedrequests %}
-    <tr class="clickable{% if request.is_accepted %} success{% endif %}{% if request.is_refused %} danger{% endif %}{% if request.is_invalid %} warning{% endif %}" data-url="{{ request.detail_url }}">
+    <tr class="clickable{% if request.is_accepted %} success{% endif %}{% if request.is_refused %} danger{% endif %}{% if request.is_invalid %} warning{% endif %}" data-url="{{ request.get_absolute_url }}">
       <td>{{ request.status_description }}</td>
       <td>{{ request.creation_date|date:"d/m" }}</td>
       <td>{{ request.contractor.organization }}</td>
@@ -27,7 +27,7 @@
       <td>{{ request.type_description }}</td>
       <td>{{ request.location_code }}
         {% if request.old_location_code %} (vervangt {{ request.old_location_code }}{% endif %}</td>
-      <td><a href="{{ request.detail_url }}">bekijk</a></td>
+      <td><a href="{{ request.get_absolute_url }}">bekijk</a></td>
     </tr>
     {% endfor %}
     </tbody>

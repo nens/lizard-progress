@@ -124,7 +124,10 @@ class Request(models.Model):
                 activity=self.activity))
 
     def get_absolute_url(self):
-        return self.detail_url()
+        return reverse('changerequests_detail', kwargs={
+            'project_slug': self.activity.project.slug,
+            'activity_id': self.activity.id,
+            'request_id': str(self.id)})
 
     @property
     def project(self):
@@ -399,13 +402,6 @@ class Request(models.Model):
     def adapter_layer_json(self):
         return json.dumps({
             'changerequest_id': self.id})
-
-    def detail_url(self):
-        url = reverse('changerequests_detail', kwargs={
-            'project_slug': self.activity.project.slug,
-            'activity_id': self.activity.id,
-            'request_id': str(self.id)})
-        return url
 
     def record_comment(self, user, comment):
         RequestComment.objects.create(

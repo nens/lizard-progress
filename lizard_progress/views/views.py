@@ -41,8 +41,8 @@ from lizard_ui.views import UiView
 
 from lizard_progress import configuration
 from lizard_progress import models
-from lizard_progress.models import Project
 from lizard_progress.models import Location
+from lizard_progress.models import Project
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
 from lizard_progress.util import workspaces
@@ -50,6 +50,7 @@ from lizard_progress.util import geo
 from lizard_progress import forms
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.email_notifications.models import NotificationSubscription
+from lizard_progress.changerequests.models import Request
 
 logger = logging.getLogger(__name__)
 
@@ -263,7 +264,8 @@ class MapView(View):
         # (like toggling the visibility of the workspace items) also calls
         # *this entire view* to update its view of the workspace items.
         workspaces.set_items(request, self.available_layers)
-        self.set_extent(request.session)
+        self.set_extent(request.session,
+                        change_request=kwargs.get('change_request', None))
         return super(MapView, self).get(request, *args, **kwargs)
 
     @cached_property
@@ -275,19 +277,16 @@ class MapView(View):
         # is safer with @cached_property.
         return tuple(self.project.available_layers(self.request.user))
 
-    def set_extent(self, session):
+    def set_extent(self, session, change_request=None):
         """We need min-x, max-x, min-y and max-y as Google coordinates."""
-
-        rd_extent = self.get_rd_extent()
+        rd_extent = self.get_rd_extent(change_request)
 
         if rd_extent:
             formatted_google_extent = geo.rd_to_google_extent(rd_extent)
             session[EXTENT_SESSION_KEY] = formatted_google_extent
 
-    def get_rd_extent(self):
+    def get_rd_extent(self, change_request=None):
         """Compute the extent we want to zoom to, in RD."""
-
-        # If we want to zoom to, say, a single change request, do so here.
 
         locations = Location.objects.filter(activity__project=self.project)
 
@@ -296,7 +295,9 @@ class MapView(View):
         extra_extents = [layer.extent for layer in self.available_layers
                          if layer.extent is not None]
 
-        if locations.exists():
+        if change_request:
+            extent = Request.objects.get(id=change_request).map_layer().extent
+        elif locations.exists():
             # Start with this extent, add the extras to this
             extent = locations.extent()
         elif extra_extents:
@@ -480,8 +481,8 @@ def dashboard_graph(
     project = get_object_or_404(Project, slug=project_slug)
     activity = get_object_or_404(models.Activity, pk=activity_id)
 
-    if (not has_access(request.user, project, activity.contractor)
-            or activity.project != project):
+    if (not has_access(request.user, project, activity.contractor) or
+            activity.project != project):
         raise PermissionDenied()
 
     fig = ScreenFigure(500, 300)  # in pixels

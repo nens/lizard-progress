@@ -87,6 +87,7 @@ class LocationF(factory.DjangoModelFactory):
     """Factory for Location models."""
     class Meta:
         model = models.Location
+        django_get_or_create = ('location_code', 'activity')
 
     location_code = "SOME_ID"
     activity = factory.SubFactory(ActivityF)
@@ -159,6 +160,14 @@ class UploadLogF(factory.DjangoModelFactory):
     when = factory.LazyAttribute(lambda a: datetime.datetime.now())
     filename = 'test.txt'
     num_measurements = 1
+
+
+class ExpectedAttachmentF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.ExpectedAttachment
+
+    filename = '1.jpg'
+    uploaded = False
 
 
 class TestUser(TestCase):
@@ -390,6 +399,69 @@ class TestMeasurement(TestCase):
         point = Point(0, 0)
         measurement.record_location(point)
         self.assertEquals(location.the_geom, point)
+
+    def test_setup_expected_attachments_deletes_missing(self):
+        measurement = MeasurementF.create()
+        expected_attachment = ExpectedAttachmentF.create(filename='1.jpg')
+        expected_attachment.measurements.add(measurement)
+
+        # Sanity check
+        self.assertEquals(len(measurement.expected_attachments.all()), 1)
+
+        measurement.setup_expected_attachments([])
+
+        # Expected attachment was deleted
+        self.assertEquals(len(measurement.expected_attachments.all()), 0)
+        self.assertRaises(
+            models.ExpectedAttachment.DoesNotExist,
+            lambda: models.ExpectedAttachment.objects.get(
+                pk=expected_attachment.id))
+
+    def test_setup_expected_attachments_adds_new(self):
+        measurement = MeasurementF.create()
+        measurement.setup_expected_attachments(['1.jpg', '2.jpg'])
+
+        self.assertEquals(len(measurement.expected_attachments.all()), 2)
+
+    def test_setup_expected_attachments_connects_to_existing(self):
+        # We have two measurements in the same activity
+        activity = ActivityF()
+        location1 = LocationF(activity=activity, location_code='CODE1')
+        location2 = LocationF(activity=activity, location_code='CODE2')
+        measurement1 = MeasurementF.create(location=location1)
+        measurement2 = MeasurementF.create(location=location2)
+
+        # Measurement 1 expects 1.jpg
+        measurement1.setup_expected_attachments(['1.jpg'])
+        # Measurement 2 also expects 1.jpg
+        measurement2.setup_expected_attachments(['1.jpg'])
+
+        # They are attached to the same expected attachment
+        self.assertEquals(measurement1.expected_attachments.all().count(), 1)
+        self.assertEquals(measurement2.expected_attachments.all().count(), 1)
+        self.assertEquals(
+            measurement1.expected_attachments.all()[0].id,
+            measurement2.expected_attachments.all()[0].id)
+
+    def test_setup_expected_attachments_raises_if_attachment_uploaded(self):
+        # We have two measurements in the same activity
+        activity = ActivityF()
+        location1 = LocationF(activity=activity, location_code='CODE1')
+        location2 = LocationF(activity=activity, location_code='CODE2')
+        measurement1 = MeasurementF.create(location=location1)
+        measurement2 = MeasurementF.create(location=location2)
+
+        # Measurement 1 expects 1.jpg
+        measurement1.setup_expected_attachments(['1.jpg'])
+
+        # It is uploaded
+        attachment = measurement1.expected_attachments.all()[0]
+        attachment.register_uploading()
+
+        # And now measurement 2 also expects 1.jpg -- that is an error.
+        self.assertRaises(
+            models.AlreadyUploadedError,
+            lambda: measurement2.setup_expected_attachments(['1.jpg']))
 
 
 @attr('slow')
@@ -634,3 +706,32 @@ class TestUploadLog(TestCase):
 
         self.assertTrue(latest)
         self.assertEquals(latest[0].when, date2)
+
+
+class TestExpectedAttachment(TestCase):
+    def test_detach(self):
+        """Test that expected attachments can be detached from a measurement,
+        and that if no measurements are left, the measurement is
+        deleted.
+
+        """
+        # Setup with two measurements
+        attachment = ExpectedAttachmentF.create()
+        measurement1 = MeasurementF.create()
+        measurement2 = MeasurementF.create()
+        attachment.measurements.add(measurement1)
+        attachment.measurements.add(measurement2)
+
+        self.assertEquals(len(attachment.measurements.all()), 2)
+        attachment.detach(measurement1)
+        self.assertEquals(len(attachment.measurements.all()), 1)
+
+        # Check that this still works
+        models.ExpectedAttachment.objects.get(pk=attachment.id)
+
+        attachment.detach(measurement2)
+
+        # Check that attachment has been deleted
+        self.assertRaises(
+            models.ExpectedAttachment.DoesNotExist,
+            lambda: models.ExpectedAttachment.objects.get(pk=attachment.id))

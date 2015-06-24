@@ -556,9 +556,9 @@ class Location(models.Model):
         return not self.missing_attachments().exists()
 
     def set_completeness(self):
-        if self.has_measurements() and self.all_expected_attachments_present:
-            self.complete = True
-            self.save()
+        self.complete = (
+            self.has_measurements() and self.all_expected_attachments_present)
+        self.save()
 
 
 class AvailableMeasurementType(models.Model):

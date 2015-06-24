@@ -117,8 +117,7 @@ class RibxParser(ProgressParser):
             return None
 
         # Update completeness of location
-        location.complete = location.all_expected_attachments_present
-        location.save()
+        location.set_completeness()
 
         return measurement
 

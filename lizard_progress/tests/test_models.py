@@ -735,3 +735,32 @@ class TestExpectedAttachment(TestCase):
         self.assertRaises(
             models.ExpectedAttachment.DoesNotExist,
             lambda: models.ExpectedAttachment.objects.get(pk=attachment.id))
+
+    def test_register_uploading_creates_measurements(self):
+        # We have two measurements in the same activity
+        activity = ActivityF.create()
+        location1 = LocationF.create(activity=activity, location_code='CODE1')
+        location2 = LocationF.create(activity=activity, location_code='CODE2')
+        measurement1 = MeasurementF.create(location=location1)
+        measurement2 = MeasurementF.create(location=location2)
+
+        # They both expect an attachment named '1.mpg'
+        measurement1.setup_expected_attachments(['1.mpg'])
+        measurement2.setup_expected_attachments(['1.mpg'])
+
+        # The attachment
+        attachment = measurement1.expected_attachments.all()[0]
+
+        # Now it is uploaded
+        new_measurements = attachment.register_uploading()
+
+        # Both locations have a measurement added with the right parent
+        new_measurement1 = models.Measurement.objects.get(
+            location=location1, parent=measurement1)
+        new_measurement2 = models.Measurement.objects.get(
+            location=location2, parent=measurement2)
+
+        # And those were returned by register_uploading
+        self.assertEquals(
+            sorted([m.id for m in new_measurements]),
+            sorted([new_measurement1.id, new_measurement2.id]))

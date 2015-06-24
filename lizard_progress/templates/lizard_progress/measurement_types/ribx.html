@@ -26,12 +26,12 @@
       <ul>
         {% for measurement in measurements %}
           {% if measurement.data.filetype == "ribx" %}
-            <li><a href="{{ measurement.url }}">{{ measurement.base_filename }}</a> ({{ measurement.date|date:"DATE_FORMAT" }})</li>
+            <li><a href="{{ measurement.get_absolute_url }}">{{ measurement.base_filename }}</a> ({{ measurement.date|date:"DATE_FORMAT" }})</li>
           {% endif %}
         {% endfor %}
         {% for measurement in measurements %}
           {% if measurement.data.filetype != "ribx" %}
-            <li><a href="{{ measurement.url }}">{{ measurement.base_filename }}</a>
+            <li><a href="{{ measurement.get_absolute_url }}">{{ measurement.base_filename }}</a>
               {% if measurement.date %} ({{ measurement.date|date:"DATE_FORMAT" }}){% endif %}</li>
           {% endif %}
         {% endfor %}

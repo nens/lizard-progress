@@ -42,31 +42,11 @@ def upload_dir(activity):
     return mk(os.path.join(activity_dir(activity), 'uploads'))
 
 
-def make_uploaded_file_path(root, activity, filename):
-    """Gives the path to some uploaded file, which depends on the
-    project it is for, the contractor that uploaded it and the
-    measurement type that got its data from this file.
+def make_nginx_file_path(activity, full_path):
+    """Gives an Nginx internal path to an uploaded file."""
 
-    Can be used both for absolute file paths (pass in
-    directories.BASE_DIR as root) or for URLs that will be passed to
-    Nginx for X-Sendfile (uses /protected/ as the root).
-
-    External URLs should use a reverse() call to the
-    lizard_progress_filedownload view instead of this function
-
-    NOTE: Due to a bug, many files are saved directly in the activity dir,
-    instead of in the upload dir. If the wrong one exists and the new
-    one doesn't, return the old one."""
-
-    old_path = os.path.join(activity_dir(activity), filename)
-    new_path = os.path.join(upload_dir(activity), filename)
-
-    if not os.path.exists(new_path) and os.path.exists(old_path):
-        path = old_path
-    else:
-        path = new_path
-
-    return path.replace(BASE_DIR, root)
+    if full_path and full_path.startswith(upload_dir(activity)):
+        return full_path.replace(BASE_DIR, '/protected')
 
 
 def results_dir(activity):

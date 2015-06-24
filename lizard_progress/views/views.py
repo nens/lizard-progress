@@ -538,7 +538,7 @@ def dashboard_graph(
 
 @login_required
 def protected_file_download(request, project_slug, activity_id,
-                            filename):
+                            measurement_id, filename):
     """
     We need our own file_download view because contractors can only see their
     own files, and the URLs of other contractor's files are easy to guess.
@@ -556,29 +556,26 @@ def protected_file_download(request, project_slug, activity_id,
     # XXXX
     project = get_object_or_404(models.Project, slug=project_slug)
     activity = get_object_or_404(models.Activity, pk=activity_id)
+    measurement = get_object_or_404(
+        models.Measurement, pk=measurement_id, location__activity=activity)
 
     if activity.project != project:
         return http.HttpResponseForbidden()
+    if filename != measurement.base_filename:
+        raise Http404()
 
     logger.debug("Incoming programfile request for %s", filename)
-
-    if '/' in filename or '\\' in filename:
-        # Trickery?
-        logger.warn("Returned Forbidden on suspect path %s" % (filename,))
-        return http.HttpResponseForbidden()
 
     if not has_access(request.user, project, activity.contractor):
         logger.warn("Not allowed to access %s", filename)
         return http.HttpResponseForbidden()
 
-    file_path = directories.make_uploaded_file_path(
-        directories.BASE_DIR, activity, filename)
-    nginx_path = directories.make_uploaded_file_path(
-        '/protected', activity, filename)
+    nginx_path = directories.make_nginx_file_path(
+        activity, measurement.filename)
 
     # This is where the magic takes place.
     response = http.HttpResponse()
-    response['X-Sendfile'] = file_path  # Apache
+    response['X-Sendfile'] = measurement.filename  # Apache
     response['X-Accel-Redirect'] = nginx_path  # Nginx
 
     # Unset the Content-Type as to allow for the webserver
@@ -591,8 +588,8 @@ def protected_file_download(request, project_slug, activity_id,
             "With DEBUG off, we'd serve the programfile via webserver: \n%s",
             response)
         logger.debug(
-            "Instead, we let Django serve {}.\n".format(file_path))
-        return serve(request, file_path, '/')
+            "Instead, we let Django serve {}.\n".format(measurement.filename))
+        return serve(request, measurement.filename, '/')
     return response
 
 

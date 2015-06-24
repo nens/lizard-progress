@@ -402,16 +402,16 @@ class TestMeasurement(TestCase):
 
     def test_setup_expected_attachments_deletes_missing(self):
         measurement = MeasurementF.create()
-        expected_attachment = ExpectedAttachmentF.create(filename='1.jpg')
+        expected_attachment = ExpectedAttachmentF.create()
         expected_attachment.measurements.add(measurement)
 
         # Sanity check
-        self.assertEquals(len(measurement.expected_attachments.all()), 1)
+        self.assertEquals(measurement.expected_attachments.count(), 1)
 
         measurement.setup_expected_attachments([])
 
         # Expected attachment was deleted
-        self.assertEquals(len(measurement.expected_attachments.all()), 0)
+        self.assertFalse(measurement.expected_attachments.exists())
         self.assertRaises(
             models.ExpectedAttachment.DoesNotExist,
             lambda: models.ExpectedAttachment.objects.get(
@@ -421,7 +421,7 @@ class TestMeasurement(TestCase):
         measurement = MeasurementF.create()
         measurement.setup_expected_attachments(['1.jpg', '2.jpg'])
 
-        self.assertEquals(len(measurement.expected_attachments.all()), 2)
+        self.assertEquals(measurement.expected_attachments.count(), 2)
 
     def test_setup_expected_attachments_connects_to_existing(self):
         # We have two measurements in the same activity
@@ -437,11 +437,11 @@ class TestMeasurement(TestCase):
         measurement2.setup_expected_attachments(['1.jpg'])
 
         # They are attached to the same expected attachment
-        self.assertEquals(measurement1.expected_attachments.all().count(), 1)
-        self.assertEquals(measurement2.expected_attachments.all().count(), 1)
+        self.assertEquals(measurement1.expected_attachments.count(), 1)
+        self.assertEquals(measurement2.expected_attachments.count(), 1)
         self.assertEquals(
-            measurement1.expected_attachments.all()[0].id,
-            measurement2.expected_attachments.all()[0].id)
+            measurement1.expected_attachments.get().id,
+            measurement2.expected_attachments.get().id)
 
     def test_setup_expected_attachments_raises_if_attachment_uploaded(self):
         # We have two measurements in the same activity
@@ -722,9 +722,9 @@ class TestExpectedAttachment(TestCase):
         attachment.measurements.add(measurement1)
         attachment.measurements.add(measurement2)
 
-        self.assertEquals(len(attachment.measurements.all()), 2)
+        self.assertEquals(attachment.measurements.count(), 2)
         attachment.detach(measurement1)
-        self.assertEquals(len(attachment.measurements.all()), 1)
+        self.assertEquals(attachment.measurements.count(), 1)
 
         # Check that this still works
         models.ExpectedAttachment.objects.get(pk=attachment.id)
@@ -760,7 +760,7 @@ class TestExpectedAttachment(TestCase):
         new_measurement2 = models.Measurement.objects.get(
             location=location2, parent=measurement2)
 
-        # And those were returned by register_uploading
+        # And those were the sames ones as returned by register_uploading
         self.assertEquals(
             sorted([m.id for m in new_measurements]),
             sorted([new_measurement1.id, new_measurement2.id]))

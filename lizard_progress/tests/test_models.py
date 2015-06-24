@@ -311,6 +311,8 @@ class TestSecurity(TestCase):
 
 
 class TestProject(TestCase):
+    fixtures = ['notification_types.json', 'userroles.json']
+
     def test_set_slug_and_save(self):
         organization = OrganizationF.create()
 
@@ -373,6 +375,8 @@ class TestLocation(TestCase):
 
 class TestMeasurement(TestCase):
     """Tests for the Measurement model."""
+    fixtures = ['notification_types.json', ]
+
     def test_url_works(self):
         """Just check whether we get some URL."""
         measurement_type = AvailableMeasurementTypeF.create(slug="test")
@@ -483,6 +487,8 @@ class TestExportRun(TestCase):
 
 
 class TestActivity(TestCase):
+    fixtures = ['notification_types.json', ]
+
     def test_num_locations(self):
         activity = ActivityF.create()
         LocationF.create(activity=activity, location_code='a')

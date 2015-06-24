@@ -17,6 +17,8 @@ from lizard_progress import layers
 
 
 class TestProgressAdapter(TestCase):
+    fixtures = ['notification_types.json', ]
+
     def test_extent_no_locations(self):
         activity = test_models.ActivityF.create()
 

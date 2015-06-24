@@ -703,10 +703,10 @@ class Activity(models.Model):
 
     def needs_predefined_locations(self):
         """Is uploading to an unknown location an error in this activity?"""
-        if self.measurement_type.needs_predefined_locations:
+        if getattr(self.measurement_type, 'needs_predefined_locations', False):
             return True
 
-        if self.measurement_type.likes_predefined_locations:
+        if getattr(self.measurement_type, 'likes_predefined_locations', False):
             # This means that for this measurement type, it is
             # configurable.
             return self.config_value('use_predefined_locations')

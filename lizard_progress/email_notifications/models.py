@@ -28,14 +28,12 @@ from django.contrib.contenttypes import generic
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.template import Context, Template
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.core.mail import send_mail
 import jsonfield
 
 from .signals import notify
 from .tasks import send_notification as send_notification_task
-
-User = get_user_model()
 
 
 class NotificationType(models.Model):

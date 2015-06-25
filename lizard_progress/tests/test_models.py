@@ -344,6 +344,14 @@ class TestProject(TestCase):
 
         self.assertEquals(project.num_open_requests, 0)
 
+    def test_a_project_without_activities_is_not_complete(self):
+        project = ProjectF()
+        self.assertFalse(project.is_complete())
+
+    def test_a_project_with_a_complete_activity_is_complete(self):
+        location = LocationF(complete=True)
+        self.assertTrue(location.activity.project.is_complete())
+
 
 @attr('slow')
 class TestLocation(TestCase):
@@ -490,6 +498,18 @@ class TestExportRun(TestCase):
 
 class TestActivity(TestCase):
     fixtures = ['notification_types.json', ]
+
+    def test_an_activity_without_locations_isnt_complete(self):
+        activity = ActivityF.create()
+        self.assertFalse(activity.is_complete())
+
+    def test_an_activity_with_an_incomplete_location_isnt_complete(self):
+        location = LocationF(complete=False)
+        self.assertFalse(location.activity.is_complete())
+
+    def test_an_activity_with_a_complete_location_isnt_complete(self):
+        location = LocationF(complete=True)
+        self.assertTrue(location.activity.is_complete())
 
     def test_num_locations(self):
         activity = ActivityF.create()

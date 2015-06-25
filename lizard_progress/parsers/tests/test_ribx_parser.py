@@ -28,6 +28,8 @@ class MockItem(object):
 
 
 class TestSaveMeasurement(TestCase):
+    fixtures = ['notification_types.json', ]
+
     def setUp(self):
         self.mtype = test_models.AvailableMeasurementTypeF.create(
             slug='ribx_reiniging_inspectie_riool')

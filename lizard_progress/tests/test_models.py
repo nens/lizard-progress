@@ -74,6 +74,15 @@ class ProjectF(factory.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationF)
 
 
+class AvailableMeasurementTypeF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.AvailableMeasurementType
+        django_get_or_create = ('name', 'slug')
+
+    name = "Metingtype"
+    slug = "metingtype"
+
+
 class ActivityF(factory.DjangoModelFactory):
     class Meta:
         model = models.Activity
@@ -81,6 +90,8 @@ class ActivityF(factory.DjangoModelFactory):
 
     name = "Testactivity"
     project = factory.SubFactory(ProjectF)
+    measurement_type = factory.SubFactory(AvailableMeasurementTypeF)
+    contractor = factory.SubFactory(OrganizationF)
 
 
 class LocationF(factory.DjangoModelFactory):
@@ -92,15 +103,6 @@ class LocationF(factory.DjangoModelFactory):
     activity = factory.SubFactory(ActivityF)
 
     information = {"key": "value"}
-
-
-class AvailableMeasurementTypeF(factory.DjangoModelFactory):
-    class Meta:
-        model = models.AvailableMeasurementType
-        django_get_or_create = ('name', 'slug')
-
-    name = "Metingtype"
-    slug = "metingtype"
 
 
 class MeasurementF(factory.DjangoModelFactory):
@@ -311,6 +313,8 @@ class TestSecurity(TestCase):
 
 
 class TestProject(TestCase):
+    fixtures = ['notification_types.json', 'userroles.json']
+
     def test_set_slug_and_save(self):
         organization = OrganizationF.create()
 
@@ -339,6 +343,14 @@ class TestProject(TestCase):
         project = ProjectF.create(organization=organization)
 
         self.assertEquals(project.num_open_requests, 0)
+
+    def test_a_project_without_activities_is_not_complete(self):
+        project = ProjectF()
+        self.assertFalse(project.is_complete())
+
+    def test_a_project_with_a_complete_activity_is_complete(self):
+        location = LocationF(complete=True)
+        self.assertTrue(location.activity.project.is_complete())
 
 
 @attr('slow')
@@ -373,6 +385,8 @@ class TestLocation(TestCase):
 
 class TestMeasurement(TestCase):
     """Tests for the Measurement model."""
+    fixtures = ['notification_types.json', ]
+
     def test_url_works(self):
         """Just check whether we get some URL."""
         measurement_type = AvailableMeasurementTypeF.create(slug="test")
@@ -483,6 +497,20 @@ class TestExportRun(TestCase):
 
 
 class TestActivity(TestCase):
+    fixtures = ['notification_types.json', ]
+
+    def test_an_activity_without_locations_isnt_complete(self):
+        activity = ActivityF.create()
+        self.assertFalse(activity.is_complete())
+
+    def test_an_activity_with_an_incomplete_location_isnt_complete(self):
+        location = LocationF(complete=False)
+        self.assertFalse(location.activity.is_complete())
+
+    def test_an_activity_with_only_a_single_complete_location_is_complete(self):  # NoQA
+        location = LocationF(complete=True)
+        self.assertTrue(location.activity.is_complete())
+
     def test_num_locations(self):
         activity = ActivityF.create()
         LocationF.create(activity=activity, location_code='a')

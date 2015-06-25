@@ -401,7 +401,12 @@ class Project(models.Model):
         return "{percentage:2.0f}%".format(percentage=percentage)
 
     def is_complete(self):
-        return all(
+        """Project is complete if there are any activities, and they are
+        complete. A project without any activities is probably being
+        setup.
+
+        """
+        return self.activity_set.exists() and all(
             activity.is_complete() for activity in self.activity_set.all())
 
     @cached_property
@@ -856,11 +861,21 @@ class Activity(models.Model):
             extent=None)
 
     def is_complete(self):
-        return self.needs_predefined_locations() and \
-            not Location.objects.filter(
-                activity=self,
-                complete=False,
-                not_part_of_project=False).exists()
+        """An activity is complete if it has more than 0 locations that
+        are part of the project, and all of those are complete."""
+        if not self.needs_predefined_locations():
+            # We can't know whether we are finished.
+            return False
+
+        if not self.location_set.filter(not_part_of_project=False).exists():
+            # We don't have any locations yet, probably setting up.
+            return False
+
+        # Check if any non-complete locations exist
+        return not Location.objects.filter(
+            activity=self,
+            complete=False,
+            not_part_of_project=False).exists()
 
     def notify(self, notification_type, recipients, **kwargs):
         if not self.project.is_subscribed_to(notification_type):

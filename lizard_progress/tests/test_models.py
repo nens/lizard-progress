@@ -74,6 +74,15 @@ class ProjectF(factory.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationF)
 
 
+class AvailableMeasurementTypeF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.AvailableMeasurementType
+        django_get_or_create = ('name', 'slug')
+
+    name = "Metingtype"
+    slug = "metingtype"
+
+
 class ActivityF(factory.DjangoModelFactory):
     class Meta:
         model = models.Activity
@@ -81,6 +90,8 @@ class ActivityF(factory.DjangoModelFactory):
 
     name = "Testactivity"
     project = factory.SubFactory(ProjectF)
+    measurement_type = factory.SubFactory(AvailableMeasurementTypeF)
+    contractor = factory.SubFactory(OrganizationF)
 
 
 class LocationF(factory.DjangoModelFactory):
@@ -92,15 +103,6 @@ class LocationF(factory.DjangoModelFactory):
     activity = factory.SubFactory(ActivityF)
 
     information = {"key": "value"}
-
-
-class AvailableMeasurementTypeF(factory.DjangoModelFactory):
-    class Meta:
-        model = models.AvailableMeasurementType
-        django_get_or_create = ('name', 'slug')
-
-    name = "Metingtype"
-    slug = "metingtype"
 
 
 class MeasurementF(factory.DjangoModelFactory):

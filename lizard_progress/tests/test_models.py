@@ -507,7 +507,7 @@ class TestActivity(TestCase):
         location = LocationF(complete=False)
         self.assertFalse(location.activity.is_complete())
 
-    def test_an_activity_with_a_complete_location_is_complete(self):
+    def test_an_activity_with_only_a_single_complete_location_is_complete(self):  # NoQA
         location = LocationF(complete=True)
         self.assertTrue(location.activity.is_complete())
 

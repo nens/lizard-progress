@@ -998,8 +998,7 @@ class Measurement(models.Model):
         self.save()
         self.location.plan_location(location)
 
-    @property
-    def url(self):
+    def get_absolute_url(self):
         """Return the URL to the uploaded file that contained this
         measurement."""
 
@@ -1007,6 +1006,7 @@ class Measurement(models.Model):
         return reverse('lizard_progress_filedownload', kwargs={
             'project_slug': activity.project.slug,
             'activity_id': activity.id,
+            'measurement_id': self.id,
             'filename': os.path.basename(self.filename)})
 
     @property

@@ -393,7 +393,7 @@ class TestMeasurement(TestCase):
         activity = ActivityF.create(measurement_type=measurement_type)
         location = LocationF.create(activity=activity)
         measurement = MeasurementF.create(location=location)
-        url = measurement.url
+        url = measurement.get_absolute_url()
         self.assertTrue(url)
 
     def test_record_location(self):

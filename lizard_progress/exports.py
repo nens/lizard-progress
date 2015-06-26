@@ -104,9 +104,7 @@ def export_all_files(export_run):
 
     with open_zipfile(zipfile_path) as z:
         for file_path in sorted(export_run.files_to_export()):
-            z.write(
-                file_path,
-                tools.orig_from_unique_filename(os.path.basename(file_path)))
+            z.write(file_path, os.path.basename(file_path))
 
     export_run.file_path = zipfile_path
     export_run.save()

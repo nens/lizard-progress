@@ -22,6 +22,20 @@ Changelog of lizard-progress
 
 - Add 'show change request on map' functionality.
 
+- Filenames of uploaded files need to be unique, as different versions
+  of the same file can be uploaded. We used to store them with a
+  YYYYMMDD-HHMMSS-0- prefix, but that led to problems in the export,
+  popup etc. Now we store each file in its own temporary directory
+  with a similar prefix.
+
+- Include a new management command (rename_measurements) that goes
+  through all uploaded files and if they are in the old format, moves
+  them to the new way. Incidentally also fixes an old bug where files
+  were stored in the wrong directory.
+
+- Remove a number of ancient management commands that aren't used anymore,
+  and tools.py which was only used by those commands.
+
 
 2.5.2 (2015-06-12)
 ------------------

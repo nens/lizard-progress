@@ -1,17 +1,17 @@
 """Test functions from util/image.py"""
 
-from django.test import TestCase
 from PIL import Image
 from pkg_resources import resource_filename  # pylint: disable=E0611
 
 from lizard_progress.util.image import get_exif_data
 from lizard_progress.util.image import get_lat_lon
+from lizard_progress.tests.base import FixturesTestCase
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class TestExif(TestCase):
+class TestExif(FixturesTestCase):
     """Test functions for EXIF data from images"""
 
     def test_exif(self):

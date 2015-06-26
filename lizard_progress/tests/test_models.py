@@ -17,10 +17,9 @@ import osgeo.ogr
 
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
-from django.test import TestCase
-from django.test import TransactionTestCase
 
 from lizard_progress import models
+from lizard_progress.tests.base import FixturesTestCase
 
 from nose.plugins.attrib import attr
 
@@ -163,14 +162,14 @@ class UploadLogF(factory.DjangoModelFactory):
     num_measurements = 1
 
 
-class TestUser(TestCase):
+class TestUser(FixturesTestCase):
     """Tests for the User model."""
     def test_username(self):
         user = UserF(username="admin")
         self.assertEquals(user.username, "admin")
 
 
-class TestErrorMessage(TestCase):
+class TestErrorMessage(FixturesTestCase):
     def test_has_unicode(self):
         em = ErrorMessageF.build()
         self.assertTrue(unicode(em))
@@ -199,7 +198,7 @@ class TestErrorMessage(TestCase):
 
 
 @attr('slow')
-class TestOrganization(TransactionTestCase):
+class TestOrganization(FixturesTestCase):
     """Tests for the Organization model."""
 
     def setUp(self):
@@ -256,10 +255,8 @@ class TestOrganization(TransactionTestCase):
             len(organization.visible_available_measurement_types()), 1)
 
 
-class TestUserProfile(TestCase):
+class TestUserProfile(FixturesTestCase):
     """Tests for the UserProfile model."""
-
-    fixtures = ['userroles.json']
 
     def test_unicode(self):
         """Test unicode method."""
@@ -283,10 +280,8 @@ class TestUserProfile(TestCase):
         self.assertTrue(userprofile.has_role(models.UserRole.ROLE_ADMIN))
 
 
-class TestSecurity(TestCase):
+class TestSecurity(FixturesTestCase):
     """Test for security."""
-
-    fixtures = ['userroles.json']
 
     def test_has_access_contractor(self):
         """Test access for contractor to a project."""
@@ -312,9 +307,7 @@ class TestSecurity(TestCase):
         self.assertTrue(has_access)
 
 
-class TestProject(TestCase):
-    fixtures = ['notification_types.json', 'userroles.json']
-
+class TestProject(FixturesTestCase):
     def test_set_slug_and_save(self):
         organization = OrganizationF.create()
 
@@ -354,7 +347,7 @@ class TestProject(TestCase):
 
 
 @attr('slow')
-class TestLocation(TestCase):
+class TestLocation(FixturesTestCase):
     """Tests for the Location model."""
     def test_unicode(self):
         """Tests unicode method."""
@@ -383,9 +376,8 @@ class TestLocation(TestCase):
         self.assertTrue(location.has_measurements())
 
 
-class TestMeasurement(TestCase):
+class TestMeasurement(FixturesTestCase):
     """Tests for the Measurement model."""
-    fixtures = ['notification_types.json', ]
 
     def test_url_works(self):
         """Just check whether we get some URL."""
@@ -407,7 +399,7 @@ class TestMeasurement(TestCase):
 
 
 @attr('slow')
-class TestExportRun(TestCase):
+class TestExportRun(FixturesTestCase):
     def test_exportrun_without_file_is_not_available(self):
         measurement_type = AvailableMeasurementTypeF.build()
         contractor = OrganizationF.build()
@@ -496,9 +488,7 @@ class TestExportRun(TestCase):
         self.assertFalse(run.available)
 
 
-class TestActivity(TestCase):
-    fixtures = ['notification_types.json', ]
-
+class TestActivity(FixturesTestCase):
     def test_an_activity_without_locations_isnt_complete(self):
         activity = ActivityF.create()
         self.assertFalse(activity.is_complete())
@@ -632,7 +622,7 @@ class TestActivity(TestCase):
         self.assertEquals(activity.latest_log.when, today)
 
 
-class TestIsLine(TestCase):
+class TestIsLine(FixturesTestCase):
     def test_with_point(self):
         amersfoort = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
         amersfoort.AddPoint(155000, 463000)
@@ -640,7 +630,7 @@ class TestIsLine(TestCase):
         self.assertFalse(models.is_line(amersfoort))
 
 
-class TestUploadLog(TestCase):
+class TestUploadLog(FixturesTestCase):
     def test_latest_does_return_latest(self):
         "Was an actual bug on the front page of the site for over a year..."
         date1 = datetime.datetime(year=2015, month=1, day=1)

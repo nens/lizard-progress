@@ -1,14 +1,12 @@
-from django.test import TestCase
-
 from lizard_progress.views.upload import UploadedFileErrorsView
-
+from lizard_progress.tests.base import FixturesTestCase
 from lizard_progress.tests.test_models import ActivityF
 from lizard_progress.tests.test_models import UploadedFileErrorF
 from lizard_progress.tests.test_models import UploadedFileF
 from lizard_progress.tests.test_models import UserF
 
 
-class TestUploadedFileErrorsView(TestCase):
+class TestUploadedFileErrorsView(FixturesTestCase):
     def test_errors_returns_right_error_lines(self):
         activity = ActivityF.create()
 

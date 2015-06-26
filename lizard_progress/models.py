@@ -1094,13 +1094,13 @@ class Measurement(models.Model):
             raise ValueError(
                 "Cannot delete measurements of archived projects.")
 
-        # Also delete attachments
-        for measurement in Measurement.objects.filter(parent=self):
-            measurement.delete()
-
         # Detach expected attachments
         for expected_attachment in self.expected_attachments.all():
             expected_attachment.detach(self)
+
+        # Also delete measurements of uploaded attachments related to this
+        for measurement in Measurement.objects.filter(parent=self):
+            measurement.delete()
 
         # Delete this
         super(Measurement, self).delete()
@@ -1110,7 +1110,7 @@ class Measurement(models.Model):
                 and os.path.exists(self.filename)):
             os.remove(self.filename)
 
-        # Let our location set its completeness
+        # Let our location determine its completeness
         self.location.set_completeness()
 
     def setup_expected_attachments(self, filenames):

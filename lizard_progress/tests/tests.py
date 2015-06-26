@@ -1,8 +1,6 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
 """Tests that don't belong elsewhere"""
 
-from django.test import TestCase
-
 from lizard_progress.models import Activity
 from lizard_progress.layers import ProgressAdapter
 from lizard_progress.models import Project
@@ -12,9 +10,10 @@ from lizard_map.models import WorkspaceEdit, WorkspaceEditItem
 from lizard_progress.specifics import ProgressParser, UnSuccessfulParserResult
 
 from lizard_progress.tests.test_models import ActivityF
+from lizard_progress.tests.base import FixturesTestCase
 
 
-class AdapterTest(TestCase):
+class AdapterTest(FixturesTestCase):
     def setUp(self):
         self.workspace = WorkspaceEdit()
         self.workspace.save()
@@ -55,7 +54,7 @@ class AdapterTest(TestCase):
         }, activity)
 
 
-class TestParsers(TestCase):
+class TestParsers(FixturesTestCase):
     class MockParser(ProgressParser):
         ERRORS = {'key': 'value %s'}
 

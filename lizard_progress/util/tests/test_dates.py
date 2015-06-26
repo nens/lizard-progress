@@ -3,12 +3,11 @@ from __future__ import print_function, absolute_import
 
 import datetime
 
-from django.test import TestCase
-
 from lizard_progress.util import dates
+from lizard_progress.tests.base import FixturesTestCase
 
 
-class TestWeeknumberToDate(TestCase):
+class TestWeeknumberToDate(FixturesTestCase):
     def test_2015_01_21(self):
         # Today at the time of writing this
         self.assertEquals(

@@ -69,7 +69,7 @@ activity_urls = [
         name='lizard_progress_uploaded_file_error_view'),
 
     # Download an uploaded file
-    url('file/(?P<measurement_id>[\d+])/(?P<filename>[^/]+)$',
+    url('file/(?P<measurement_id>\d+)/(?P<filename>[^/]+)$',
         protected_file_download,
         name='lizard_progress_filedownload'),
 

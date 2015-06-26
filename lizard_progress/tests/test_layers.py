@@ -9,14 +9,14 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from django.test import TestCase
+from lizard_progress.tests.base import FixturesTestCase
 
 from lizard_progress.tests import test_models
 
 from lizard_progress import layers
 
 
-class TestProgressAdapter(TestCase):
+class TestProgressAdapter(FixturesTestCase):
     def test_extent_no_locations(self):
         activity = test_models.ActivityF.create()
 

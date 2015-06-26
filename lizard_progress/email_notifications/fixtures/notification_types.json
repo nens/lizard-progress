@@ -1,0 +1,56 @@
+[
+{
+    "pk": 1, 
+    "model": "email_notifications.notificationtype", 
+    "fields": {
+        "body_template": "{{ actor }} heeft uw aanvraag {{ action_object }} in {{ target }} geaccepteerd.\r\n\r\n{{ link }}", 
+        "subject_template": "Aanvraag {{ action_object }} in {{ target }} geaccepteerd.", 
+        "name": "aanvraag geaccepteerd"
+    }
+},
+{
+    "pk": 2, 
+    "model": "email_notifications.notificationtype", 
+    "fields": {
+        "body_template": "{{ actor }} heeft uw aanvraag {{ action_object }} in {{ target }} afgekeurd.\r\n\r\n{{ link }}", 
+        "subject_template": "Aanvraag {{ action_object }} in {{ target }} afgekeurd.", 
+        "name": "aanvraag afgekeurd"
+    }
+},
+{
+    "pk": 3, 
+    "model": "email_notifications.notificationtype", 
+    "fields": {
+        "body_template": "{{ actor }} heeft een aanvraag {{ action_object }} ingediend voor {{ target }}.\r\n\r\n{{ link }}", 
+        "subject_template": "Er is een aanvraag ingediend voor {{ target }}.", 
+        "name": "aanvraag ingediend"
+    }
+},
+{
+    "pk": 4, 
+    "model": "email_notifications.notificationtype", 
+    "fields": {
+        "body_template": "{{ actor }} heeft commentaar toegevoegd op aanvraag {{ action_object }} in {{ target }}.\r\n\r\n{{ link }}", 
+        "subject_template": "Commentaar toegevoegd op aanvraag {{ action_object }} in {{ target }}.", 
+        "name": "aanvraag commentaar toegevoegd"
+    }
+},
+{
+    "pk": 5, 
+    "model": "email_notifications.notificationtype", 
+    "fields": {
+        "body_template": "Het project {{ action_object }} is 100% voltooid.\r\n\r\n{{ link }}", 
+        "subject_template": "Project {{ action_object }} is voltooid.", 
+        "name": "project voltooid"
+    }
+},
+{
+    "pk": 6, 
+    "model": "email_notifications.notificationtype", 
+    "fields": {
+        "body_template": "De werkzaamheid {{ action_object }} in project {{ target }} is voltooid.\r\n\r\n{{ link }}", 
+        "subject_template": "Werkzaamheid {{ action_object }} is voltooid.", 
+        "name": "werkzaamheid voltooid"
+    }
+}
+]

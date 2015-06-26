@@ -17,10 +17,9 @@ import osgeo.ogr
 
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
-from django.test import TestCase
-from django.test import TransactionTestCase
 
 from lizard_progress import models
+from lizard_progress.tests.base import FixturesTestCase
 
 from nose.plugins.attrib import attr
 
@@ -74,6 +73,15 @@ class ProjectF(factory.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationF)
 
 
+class AvailableMeasurementTypeF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.AvailableMeasurementType
+        django_get_or_create = ('name', 'slug')
+
+    name = "Metingtype"
+    slug = "metingtype"
+
+
 class ActivityF(factory.DjangoModelFactory):
     class Meta:
         model = models.Activity
@@ -81,6 +89,8 @@ class ActivityF(factory.DjangoModelFactory):
 
     name = "Testactivity"
     project = factory.SubFactory(ProjectF)
+    measurement_type = factory.SubFactory(AvailableMeasurementTypeF)
+    contractor = factory.SubFactory(OrganizationF)
 
 
 class LocationF(factory.DjangoModelFactory):
@@ -93,15 +103,6 @@ class LocationF(factory.DjangoModelFactory):
     activity = factory.SubFactory(ActivityF)
 
     information = {"key": "value"}
-
-
-class AvailableMeasurementTypeF(factory.DjangoModelFactory):
-    class Meta:
-        model = models.AvailableMeasurementType
-        django_get_or_create = ('name', 'slug')
-
-    name = "Metingtype"
-    slug = "metingtype"
 
 
 class MeasurementF(factory.DjangoModelFactory):
@@ -170,14 +171,14 @@ class ExpectedAttachmentF(factory.DjangoModelFactory):
     uploaded = False
 
 
-class TestUser(TestCase):
+class TestUser(FixturesTestCase):
     """Tests for the User model."""
     def test_username(self):
         user = UserF(username="admin")
         self.assertEquals(user.username, "admin")
 
 
-class TestErrorMessage(TestCase):
+class TestErrorMessage(FixturesTestCase):
     def test_has_unicode(self):
         em = ErrorMessageF.build()
         self.assertTrue(unicode(em))
@@ -206,7 +207,7 @@ class TestErrorMessage(TestCase):
 
 
 @attr('slow')
-class TestOrganization(TransactionTestCase):
+class TestOrganization(FixturesTestCase):
     """Tests for the Organization model."""
 
     def setUp(self):
@@ -263,10 +264,8 @@ class TestOrganization(TransactionTestCase):
             len(organization.visible_available_measurement_types()), 1)
 
 
-class TestUserProfile(TestCase):
+class TestUserProfile(FixturesTestCase):
     """Tests for the UserProfile model."""
-
-    fixtures = ['userroles.json']
 
     def test_unicode(self):
         """Test unicode method."""
@@ -290,10 +289,8 @@ class TestUserProfile(TestCase):
         self.assertTrue(userprofile.has_role(models.UserRole.ROLE_ADMIN))
 
 
-class TestSecurity(TestCase):
+class TestSecurity(FixturesTestCase):
     """Test for security."""
-
-    fixtures = ['userroles.json']
 
     def test_has_access_contractor(self):
         """Test access for contractor to a project."""
@@ -319,7 +316,7 @@ class TestSecurity(TestCase):
         self.assertTrue(has_access)
 
 
-class TestProject(TestCase):
+class TestProject(FixturesTestCase):
     def test_set_slug_and_save(self):
         organization = OrganizationF.create()
 
@@ -349,9 +346,17 @@ class TestProject(TestCase):
 
         self.assertEquals(project.num_open_requests, 0)
 
+    def test_a_project_without_activities_is_not_complete(self):
+        project = ProjectF()
+        self.assertFalse(project.is_complete())
+
+    def test_a_project_with_a_complete_activity_is_complete(self):
+        location = LocationF(complete=True)
+        self.assertTrue(location.activity.project.is_complete())
+
 
 @attr('slow')
-class TestLocation(TestCase):
+class TestLocation(FixturesTestCase):
     """Tests for the Location model."""
     def test_unicode(self):
         """Tests unicode method."""
@@ -380,15 +385,16 @@ class TestLocation(TestCase):
         self.assertTrue(location.has_measurements())
 
 
-class TestMeasurement(TestCase):
+class TestMeasurement(FixturesTestCase):
     """Tests for the Measurement model."""
+
     def test_url_works(self):
         """Just check whether we get some URL."""
         measurement_type = AvailableMeasurementTypeF.create(slug="test")
         activity = ActivityF.create(measurement_type=measurement_type)
         location = LocationF.create(activity=activity)
         measurement = MeasurementF.create(location=location)
-        url = measurement.url
+        url = measurement.get_absolute_url()
         self.assertTrue(url)
 
     def test_record_location(self):
@@ -465,7 +471,7 @@ class TestMeasurement(TestCase):
 
 
 @attr('slow')
-class TestExportRun(TestCase):
+class TestExportRun(FixturesTestCase):
     def test_exportrun_without_file_is_not_available(self):
         measurement_type = AvailableMeasurementTypeF.build()
         contractor = OrganizationF.build()
@@ -554,7 +560,19 @@ class TestExportRun(TestCase):
         self.assertFalse(run.available)
 
 
-class TestActivity(TestCase):
+class TestActivity(FixturesTestCase):
+    def test_an_activity_without_locations_isnt_complete(self):
+        activity = ActivityF.create()
+        self.assertFalse(activity.is_complete())
+
+    def test_an_activity_with_an_incomplete_location_isnt_complete(self):
+        location = LocationF(complete=False)
+        self.assertFalse(location.activity.is_complete())
+
+    def test_an_activity_with_only_a_single_complete_location_is_complete(self):  # NoQA
+        location = LocationF(complete=True)
+        self.assertTrue(location.activity.is_complete())
+
     def test_num_locations(self):
         activity = ActivityF.create()
         LocationF.create(activity=activity, location_code='a')
@@ -676,7 +694,7 @@ class TestActivity(TestCase):
         self.assertEquals(activity.latest_log.when, today)
 
 
-class TestIsLine(TestCase):
+class TestIsLine(FixturesTestCase):
     def test_with_point(self):
         amersfoort = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
         amersfoort.AddPoint(155000, 463000)
@@ -684,7 +702,7 @@ class TestIsLine(TestCase):
         self.assertFalse(models.is_line(amersfoort))
 
 
-class TestUploadLog(TestCase):
+class TestUploadLog(FixturesTestCase):
     def test_latest_does_return_latest(self):
         "Was an actual bug on the front page of the site for over a year..."
         date1 = datetime.datetime(year=2015, month=1, day=1)
@@ -708,7 +726,7 @@ class TestUploadLog(TestCase):
         self.assertEquals(latest[0].when, date2)
 
 
-class TestExpectedAttachment(TestCase):
+class TestExpectedAttachment(FixturesTestCase):
     def test_detach(self):
         """Test that expected attachments can be detached from a measurement,
         and that if no measurements are left, the measurement is

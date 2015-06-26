@@ -2,12 +2,11 @@ import datetime
 
 import osgeo.ogr
 
-from django.test import TestCase
-
-from lizard_progress import models
 from lizard_progress.tests import test_models
 
 from lizard_progress.parsers import ribx_parser
+
+from lizard_progress.tests.base import FixturesTestCase
 
 # Some helper variables for when the actual value doesn't matter.
 today = datetime.date.today()
@@ -27,7 +26,7 @@ class MockItem(object):
             self.media = media
 
 
-class TestSaveMeasurement(TestCase):
+class TestSaveMeasurement(FixturesTestCase):
     def setUp(self):
         self.mtype = test_models.AvailableMeasurementTypeF.create(
             slug='ribx_reiniging_inspectie_riool')

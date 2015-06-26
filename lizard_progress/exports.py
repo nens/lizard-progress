@@ -43,6 +43,15 @@ from lizard_progress import configuration
 from lizard_progress.util.send_exception_mail import send_email_on_exception
 
 
+def open_zipfile(zipfile_path):
+    """Function to open a Zip file, so that we do it the same way each time."""
+
+    # allowZip64=True is needed so that we can create files larger
+    # than 2GB.
+    return zipfile.ZipFile(
+        zipfile_path, 'w', compression=zipfile.ZIP_DEFLATED, allowZip64=True)
+
+
 def start_run(export_run_id, user):
     """Start the given export run."""
     try:
@@ -93,11 +102,9 @@ def export_all_files(export_run):
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
 
-    with zipfile.ZipFile(zipfile_path, 'w') as z:
+    with open_zipfile(zipfile_path) as z:
         for file_path in sorted(export_run.files_to_export()):
-            z.write(
-                file_path,
-                tools.orig_from_unique_filename(os.path.basename(file_path)))
+            z.write(file_path, os.path.basename(file_path))
 
     export_run.file_path = zipfile_path
     export_run.save()
@@ -158,7 +165,7 @@ def export_as_dxf(export_run):
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
 
-    with zipfile.ZipFile(zipfile_path, 'w') as z:
+    with open_zipfile(zipfile_path) as z:
         for file_path in sorted(files):
             z.write(
                 file_path,
@@ -208,7 +215,7 @@ def export_as_csv(export_run):
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
 
-    with zipfile.ZipFile(zipfile_path, 'w') as z:
+    with open_zipfile(zipfile_path) as z:
         for file_path in sorted(files):
             z.write(
                 file_path,
@@ -382,7 +389,7 @@ def export_locations_as_points(
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
 
-    with zipfile.ZipFile(zipfile_path, 'w') as z:
+    with open_zipfile(zipfile_path) as z:
         for file_path in os.listdir(temp_dir):
             z.write(os.path.join(temp_dir, file_path), file_path)
         # Add a .prj too, if we can find it
@@ -430,7 +437,7 @@ def export_locations_as_lines(
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
 
-    with zipfile.ZipFile(zipfile_path, 'w') as z:
+    with open_zipfile(zipfile_path) as z:
         for file_path in os.listdir(temp_dir):
             z.write(os.path.join(temp_dir, file_path), file_path)
         # Add a .prj too, if we can find it

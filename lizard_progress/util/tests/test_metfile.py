@@ -5,12 +5,11 @@ from cStringIO import StringIO
 
 from mock import MagicMock
 
-from django.test import TestCase
-
 from lizard_progress.util import metfile
+from lizard_progress.tests.base import FixturesTestCase
 
 
-class TestTrivialReeks(TestCase):
+class TestTrivialReeks(FixturesTestCase):
     def test_trivial(self):
         mockfile = StringIO()
         measurement = MagicMock()

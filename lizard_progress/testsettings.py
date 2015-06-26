@@ -42,6 +42,7 @@ SITE_ID = 1
 INSTALLED_APPS = [
     'lizard_progress',
     'lizard_progress.changerequests',
+    'lizard_progress.email_notifications',
     'lizard_ui',
     'lizard_map',
     'lizard_security',
@@ -56,7 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.gis',
     'django.contrib.sites',
-    ]
+]
 ROOT_URLCONF = 'lizard_progress.urls'
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -69,7 +70,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.media",
     "django.core.context_processors.static",
     "django.contrib.messages.context_processors.messages"
-    )
+)
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 

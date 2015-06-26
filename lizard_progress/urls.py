@@ -69,7 +69,7 @@ activity_urls = [
         name='lizard_progress_uploaded_file_error_view'),
 
     # Download an uploaded file
-    url('file/(?P<filename>[^/]+)$',
+    url('file/(?P<measurement_id>\d+)/(?P<filename>[^/]+)$',
         protected_file_download,
         name='lizard_progress_filedownload'),
 
@@ -107,6 +107,8 @@ project_urls = [
     # Kaartlagen view
     url('^map/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
+    url('^map/change_request/(?P<change_request>[^/]+)/$', login_required(MapView.as_view()),
+        name='lizard_progress_mapview_change_request'),
     # Dashboard page
     url('^dashboard/$', login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),
@@ -151,6 +153,10 @@ project_urls = [
     url('^config/$',
         login_required(views.ConfigurationView.as_view()),
         name="lizard_progress_project_configuration_view"),
+
+    url('^email_config/$',
+        login_required(views.EmailNotificationConfigurationView.as_view()),
+        name="lizard_progress_project_email_config_view"),
 
     # Everything relating to a specific activity in this project
     url(r'^(?P<activity_id>\d+)/', include(activity_urls))

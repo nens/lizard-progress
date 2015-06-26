@@ -21,6 +21,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -40,13 +41,16 @@ from lizard_ui.views import UiView
 
 from lizard_progress import configuration
 from lizard_progress import models
-from lizard_progress.models import Project
 from lizard_progress.models import Location
+from lizard_progress.models import Project
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
 from lizard_progress.util import workspaces
 from lizard_progress.util import geo
 from lizard_progress import forms
+from lizard_progress.email_notifications.models import NotificationType
+from lizard_progress.email_notifications.models import NotificationSubscription
+from lizard_progress.changerequests.models import Request
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +225,7 @@ class KickOutMixin(object):
                 icon='icon-briefcase',
                 name=self.organization,
                 description=(_("Your current organization")))
-            ]
+        ]
 
         # Prepend documentation icon
         actions[0:0] = [
@@ -231,7 +235,7 @@ class KickOutMixin(object):
                 description=(_("Download the manual")),
                 url=settings.STATIC_URL +
                 "lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf")
-            ]
+        ]
 
         return actions
 
@@ -260,7 +264,8 @@ class MapView(View):
         # (like toggling the visibility of the workspace items) also calls
         # *this entire view* to update its view of the workspace items.
         workspaces.set_items(request, self.available_layers)
-        self.set_extent(request.session)
+        self.set_extent(request.session,
+                        change_request=kwargs.get('change_request', None))
         return super(MapView, self).get(request, *args, **kwargs)
 
     @cached_property
@@ -272,19 +277,16 @@ class MapView(View):
         # is safer with @cached_property.
         return tuple(self.project.available_layers(self.request.user))
 
-    def set_extent(self, session):
+    def set_extent(self, session, change_request=None):
         """We need min-x, max-x, min-y and max-y as Google coordinates."""
-
-        rd_extent = self.get_rd_extent()
+        rd_extent = self.get_rd_extent(change_request)
 
         if rd_extent:
             formatted_google_extent = geo.rd_to_google_extent(rd_extent)
             session[EXTENT_SESSION_KEY] = formatted_google_extent
 
-    def get_rd_extent(self):
+    def get_rd_extent(self, change_request=None):
         """Compute the extent we want to zoom to, in RD."""
-
-        # If we want to zoom to, say, a single change request, do so here.
 
         locations = Location.objects.filter(activity__project=self.project)
 
@@ -293,7 +295,9 @@ class MapView(View):
         extra_extents = [layer.extent for layer in self.available_layers
                          if layer.extent is not None]
 
-        if locations.exists():
+        if change_request:
+            extent = Request.objects.get(id=change_request).map_layer().extent
+        elif locations.exists():
             # Start with this extent, add the extras to this
             extent = locations.extent()
         elif extra_extents:
@@ -477,8 +481,8 @@ def dashboard_graph(
     project = get_object_or_404(Project, slug=project_slug)
     activity = get_object_or_404(models.Activity, pk=activity_id)
 
-    if (not has_access(request.user, project, activity.contractor)
-            or activity.project != project):
+    if (not has_access(request.user, project, activity.contractor) or
+            activity.project != project):
         raise PermissionDenied()
 
     fig = ScreenFigure(500, 300)  # in pixels
@@ -534,7 +538,7 @@ def dashboard_graph(
 
 @login_required
 def protected_file_download(request, project_slug, activity_id,
-                            filename):
+                            measurement_id, filename):
     """
     We need our own file_download view because contractors can only see their
     own files, and the URLs of other contractor's files are easy to guess.
@@ -552,29 +556,26 @@ def protected_file_download(request, project_slug, activity_id,
     # XXXX
     project = get_object_or_404(models.Project, slug=project_slug)
     activity = get_object_or_404(models.Activity, pk=activity_id)
+    measurement = get_object_or_404(
+        models.Measurement, pk=measurement_id, location__activity=activity)
 
     if activity.project != project:
         return http.HttpResponseForbidden()
+    if filename != measurement.base_filename:
+        raise Http404()
 
     logger.debug("Incoming programfile request for %s", filename)
-
-    if '/' in filename or '\\' in filename:
-        # Trickery?
-        logger.warn("Returned Forbidden on suspect path %s" % (filename,))
-        return http.HttpResponseForbidden()
 
     if not has_access(request.user, project, activity.contractor):
         logger.warn("Not allowed to access %s", filename)
         return http.HttpResponseForbidden()
 
-    file_path = directories.make_uploaded_file_path(
-        directories.BASE_DIR, activity, filename)
-    nginx_path = directories.make_uploaded_file_path(
-        '/protected', activity, filename)
+    nginx_path = directories.make_nginx_file_path(
+        activity, measurement.filename)
 
     # This is where the magic takes place.
     response = http.HttpResponse()
-    response['X-Sendfile'] = file_path  # Apache
+    response['X-Sendfile'] = measurement.filename  # Apache
     response['X-Accel-Redirect'] = nginx_path  # Nginx
 
     # Unset the Content-Type as to allow for the webserver
@@ -587,8 +588,8 @@ def protected_file_download(request, project_slug, activity_id,
             "With DEBUG off, we'd serve the programfile via webserver: \n%s",
             response)
         logger.debug(
-            "Instead, we let Django serve {}.\n".format(file_path))
-        return serve(request, file_path, '/')
+            "Instead, we let Django serve {}.\n".format(measurement.filename))
+        return serve(request, measurement.filename, '/')
     return response
 
 
@@ -737,7 +738,7 @@ class NewProjectView(ProjectsView):
         fields = [[listed_fields[0]], [listed_fields[1]]]
 
         for i in range(2, len(listed_fields), 3):
-            fields.append(listed_fields[i:i+3])
+            fields.append(listed_fields[i:i + 3])
 
         return fields
 
@@ -838,5 +839,39 @@ class ConfigurationView(ProjectsView):
                 config.set(option, value)
             except ValueError:
                 pass
+
+        return redirect
+
+
+class EmailNotificationConfigurationView(ProjectsView):
+    template_name = 'lizard_progress/project_email_config_page.html'
+    active_menu = 'project_email_config'
+
+    def config_options(self):
+        project_content_type = ContentType.objects.get_for_model(self.project)
+        current_subscriptions = NotificationSubscription.objects.filter(
+            subscriber_content_type=project_content_type,
+            subscriber_object_id=self.project.id)
+        all_notification_types = NotificationType.objects.all()
+        return [
+            (notification_type, current_subscriptions.filter(
+                notification_type=notification_type).exists())
+            for notification_type in all_notification_types
+        ]
+
+    def post(self, request, *args, **kwargs):
+        redirect = HttpResponseRedirect(reverse(
+            "lizard_progress_project_email_config_view",
+            kwargs={'project_slug': self.project_slug}))
+
+        if not self.project.is_manager(self.user):
+            return redirect
+
+        for option, old_value in self.config_options():
+            new_value = request.POST.get(option.name, '')
+            if not old_value and new_value:
+                option.subscribe(self.project)
+            elif old_value and not new_value:
+                option.unsubscribe(self.project)
 
         return redirect

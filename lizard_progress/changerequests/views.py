@@ -122,7 +122,7 @@ class PostRequestDetailComment(RequestDetailPage):
                 user=self.request.user)
 
         return HttpResponseRedirect(
-            self.changerequest.detail_url())
+            self.changerequest.get_absolute_url())
 
 
 class ChangeRequestMotivation(RequestDetailPage):
@@ -136,7 +136,7 @@ class ChangeRequestMotivation(RequestDetailPage):
             self.changerequest.save()
 
         return HttpResponseRedirect(
-            self.changerequest.detail_url())
+            self.changerequest.get_absolute_url())
 
 
 class AcceptOrRefuseRequest(RequestDetailPage):
@@ -174,7 +174,7 @@ class AcceptOrRefuseRequest(RequestDetailPage):
             return JSONResponse({'success': True})
         else:
             return HttpResponseRedirect(
-                self.changerequest.detail_url())
+                self.changerequest.get_absolute_url())
 
 
 class NewRequestView(ActivityView):

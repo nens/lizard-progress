@@ -18,6 +18,23 @@ Changelog of lizard-progress
 - Exports are now saved to the <Organization>/ftp_readonly/ directory, where
   they can be served over FTP.
 
+- Reworked expected attachments. The data model was changed: expected
+  attachments now have a many two many field to the _measurements_
+  that said that those attachments were going to be sent, and they
+  don't have a foreign key to Activity anymore (normalization).
+
+- Made a method on Measurement that sets up the expected measurements
+  for that measurement. This fixes a bug (uploading a new version of
+  the same measurement with a corrected filename made the
+  Uploadservice wait for both the old and the new file).
+
+- A curious situation can occur if some RIBX file says it is going to
+  upload some filename, then the file is uploaded, and later another
+  RIBX file says it is going to upload the same filename. Is the same
+  file meant or another? Supporting it being the same file leads to
+  really complex code (as if it's not complex enough already) so we
+  give an error message in this case.
+
 - Add support for e-mail notifications.
 
 - Add 'show change request on map' functionality.

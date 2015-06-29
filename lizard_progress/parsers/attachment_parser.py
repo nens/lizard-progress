@@ -21,24 +21,10 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
 
         try:
             expected_attachment = models.ExpectedAttachment.objects.get(
-                activity=self.activity,
+                measurements__location__activity=self.activity,
                 filename=filename)
         except models.ExpectedAttachment.DoesNotExist:
             return self.error('UNEXPECTED', filename)
 
-        expected_attachment.uploaded = True
-        expected_attachment.save()
-
-        measurements = []
-        for location in expected_attachment.location_set.all():
-            measurement = models.Measurement.objects.create(
-                location=location,
-                date=None,
-                data={'filetype': 'media'},
-                the_geom=None)
-            measurements.append(measurement)
-            if location.all_expected_attachments_present:
-                location.complete = True
-                location.save()
-
+        measurements = expected_attachment.register_uploading()
         return self._parser_result(measurements)

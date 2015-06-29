@@ -49,6 +49,13 @@ SRID = RDNEW
 logger = logging.getLogger(__name__)
 
 
+class AlreadyUploadedError(ValueError):
+    def __init__(self, filename):
+        self.filename = filename
+        super(AlreadyUploadedError, self).__init__(
+            "{} was already uploaded.".format(filename))
+
+
 def is_line(geom):
     """Decide whether geom is a line geometry (of several possible types)."""
     if isinstance(geom, LineString):
@@ -507,8 +514,6 @@ class Location(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
     complete = models.BooleanField(default=False)
 
-    expected_attachments = models.ManyToManyField('ExpectedAttachment')
-
     objects = models.GeoManager()
 
     @property
@@ -566,16 +571,23 @@ class Location(models.Model):
             self.save()
 
     def has_measurements(self):
+
         """Return True if there are any uploaded measurements at this
         location."""
         return self.measurement_set.count() > 0
 
     def missing_attachments(self):
-        return self.expected_attachments.filter(uploaded=False)
+        return ExpectedAttachment.objects.filter(
+            measurements__location=self, uploaded=False)
 
     @property
     def all_expected_attachments_present(self):
         return not self.missing_attachments().exists()
+
+    def set_completeness(self):
+        self.complete = (
+            self.has_measurements() and self.all_expected_attachments_present)
+        self.save()
 
 
 class AvailableMeasurementType(models.Model):
@@ -907,22 +919,61 @@ class Activity(models.Model):
 
 class ExpectedAttachment(models.Model):
     """A filename of a file that has to be uploaded for some
-    activity. Locations have a many to many field to this. Used for
+    activity. Measurements have a many to many field to this. Used for
     RIBX, which specifies which media files belong to measurements.
+
+    As this model has no other relations, instances should always be
+    connected to at least one Measurement through the many to many
+    field. If such a connection is later removed (maybe the
+    Measurement was cancelled, or changed), then the
+    ExpectedAttachment instance should also be deleted.
 
     """
 
-    activity = models.ForeignKey(Activity)
     filename = models.CharField(max_length=100)
     uploaded = models.BooleanField(default=False)
+
+    def detach(self, measurement):
+        """This attachment is not expected for that measurement anymore. If
+        there are no connections to measurements left, delete this
+        expected attachment.
+
+        """
+        self.measurements.remove(measurement)
+        if not self.measurements.all().exists():
+            self.delete()
+
+    def register_uploading(self):
+        """Called after this file was uploaded. Set uploaded to True, then for
+        each measurement that this is attached to, create a new
+        measurement object with the original as parent.
+
+        If that completes the measurement's location, set it to complete.
+        """
+        self.uploaded = True
+        self.save()
+
+        measurements = []
+        for measurement in self.measurements.all().select_related():
+            location = measurement.location
+            new_measurement = Measurement.objects.create(
+                location=location,
+                parent=measurement,
+                date=None,
+                data={'filetype': 'media'},
+                the_geom=None)
+            measurements.append(new_measurement)
+            location.set_completeness()
+
+        return measurements
 
     class Meta:
         ordering = ('uploaded', 'filename', )
 
     def __unicode__(self):
-        return "Expected attachment {}: {} for activity {}".format(
-            "PRESENT" if self.uploaded else "MISSING",
-            self.filename, self.activity_id)
+        return "Expected attachment {} ({}).".format(
+            self.filename,
+            "uploaded" if self.uploaded else "expected")
 
 
 class MeasurementTypeAllowed(models.Model):
@@ -975,6 +1026,13 @@ class Measurement(models.Model):
     # into lizard-progress' archive. Set by process_uploaded_file.
     filename = models.CharField(max_length=1000)
 
+    # Expected Attachments that belong to this Measurement. When they
+    # are uploaded, they will get their own Measurement instance, that
+    # will have a 'parent' foreignkey to this one.
+    expected_attachments = models.ManyToManyField(
+        'ExpectedAttachment', related_name='measurements')
+    parent = models.ForeignKey('Measurement', null=True)
+
     # Auto-changes, most likely set in stone the time the file is
     # uploaded.
     timestamp = models.DateTimeField(auto_now=True)
@@ -1012,6 +1070,78 @@ class Measurement(models.Model):
     @property
     def base_filename(self):
         return self.filename and os.path.basename(self.filename)
+
+    def setup_expected_attachments(self, filenames):
+        """This measurement was uploaded, and it included information that
+        said that the files in filenames (an iterable of strings)
+        will be uploaded for it.
+
+        This function:
+
+        - Makes sure that ExpectedAttachments for these filenames exist,
+          and are connected to this Measurement.
+
+        - Disconnects any ExpectedAttachments still attached to this
+          Measurement that are not in 'filenames' anymore.
+
+        - Deletes ExpectedAttachments that aren't connected to any
+          Measurements anymore due to the previous item.
+
+        Return a boolean that is True if all expected attachments for
+        this measurement have been uploaded, or False if there are
+        still expected attachments that weren't.
+
+        """
+        filenames = set(filenames)
+
+        self.__drop_irrelevant_expected_attachments(filenames)
+        self.__attach_relevant_expected_attachments(filenames)
+
+    def __drop_irrelevant_expected_attachments(self, filenames):
+        attachments_to_drop = self.expected_attachments.exclude(
+            filename__in=filenames)
+
+        for attachment in attachments_to_drop:
+            attachment.detach(self)
+
+    def __attach_relevant_expected_attachments(self, filenames):
+        activity = self.location.activity
+
+        for filename in filenames:
+            try:
+                # If the attachment already exists and is attached to this,
+                # then that is OK.
+                expected_attachment = ExpectedAttachment.objects.get(
+                    filename=filename, measurements=self)
+            except ExpectedAttachment.DoesNotExist:
+                try:
+                    # If an attachment with the same filename is
+                    # attached to another measurement in the same
+                    # activity, then we re-use that; we can't tell
+                    # uploaded files with the same filename in the
+                    # same activity apart.
+
+                    # *BUT* If that file was already uploaded, then this
+                    # leads to a conceptual mess (we would need to create
+                    # a Measurement for it too, with this one as parent,
+                    # except if this measurement already existed and is
+                    # being corrected, because then it may or may not
+                    # already exist; but how can we tell? Besides all that,
+                    # this is probably unintended by the user anyway,
+                    # he just gave two files on two different dates the
+                    # same name). So then we raise an exception.
+                    expected_attachment = ExpectedAttachment.objects.get(
+                        filename=filename,
+                        measurements__location__activity=activity)
+                    if expected_attachment.uploaded:
+                        raise AlreadyUploadedError(filename)
+
+                except ExpectedAttachment.DoesNotExist:
+                    # Create a new one.
+                    expected_attachment = ExpectedAttachment.objects.create(
+                        filename=filename, uploaded=False)
+                # Attach it
+                self.expected_attachments.add(expected_attachment)
 
 
 class Hydrovak(models.Model):

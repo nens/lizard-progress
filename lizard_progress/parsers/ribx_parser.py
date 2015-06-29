@@ -27,6 +27,9 @@ class RibxParser(ProgressParser):
         'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
         'X_NOT_IN_EXTENT': "Buiten gebied: X coördinaat niet tussen {} en {}.",
         'Y_NOT_IN_EXTENT': "Buiten gebied: Y coördinaat niet tussen {} en {}.",
+        'ATTACHMENT_ALREADY_EXISTS':
+        "Er is al eerder een bestand met de naam '{}' geupload. "
+        "Kies een nieuwe naam.",
     }
 
     def parse(self, check_only=False):
@@ -85,10 +88,12 @@ class RibxParser(ProgressParser):
                 self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
             return None
 
-        # If measurement already exists with the same date, this upload
-        # isn't new and we don't have to save it. If it doesn't exist
-        # with this date, add a new measurement, don't overwrite the
-        # old one.
+        # If measurement already exists with the same date, this
+        # upload isn't new and we don't have to add a new Measurement
+        # instance for it. Details (like the associated files) may still have
+        # changed.
+        # If it doesn't exist with this date, add a
+        # new measurement, don't overwrite the old one.
         measurement = self.find_existing_ribx_measurement(
             location, item.inspection_date)
 
@@ -97,22 +102,22 @@ class RibxParser(ProgressParser):
                 location=location,
                 date=item.inspection_date,
                 data={'filetype': 'ribx'})
-            measurement.record_location(item.geom)  # Saves
 
-        # Check which files are expected to be uploaded along with this
-        # measurement.
-        complete = True
-        for filename in getattr(item, 'media', ()):
-            expected_attachment, created = (
-                models.ExpectedAttachment.objects.get_or_create(
-                    activity=self.activity,
-                    filename=filename))
-            location.expected_attachments.add(expected_attachment)
-            if created or not expected_attachment.uploaded:
-                complete = False
+        # Record the location regardless of whether it was uploaded before --
+        # maybe someone corrected the previous upload.
+        measurement.record_location(item.geom)  # Saves
+        associated_files = getattr(item, 'media', ())
 
-        location.complete = complete
-        location.save()
+        try:
+            measurement.setup_expected_attachments(associated_files)
+        except models.AlreadyUploadedError as e:
+            self.record_error(
+                item.sourceline, 'ATTACHMENT_ALREADY_EXISTS',
+                self.ERRORS['ATTACHMENT_ALREADY_EXISTS'].format(e.filename))
+            return None
+
+        # Update completeness of location
+        location.set_completeness()
 
         return measurement
 

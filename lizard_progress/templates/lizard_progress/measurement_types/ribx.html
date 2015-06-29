@@ -26,24 +26,37 @@
       <ul>
         {% for measurement in measurements %}
           {% if measurement.data.filetype == "ribx" %}
-            <li><a href="{{ measurement.get_absolute_url }}">{{ measurement.base_filename }}</a> ({{ measurement.date|date:"DATE_FORMAT" }})</li>
+            <li>
+              <a href="{{ measurement.get_absolute_url }}">{{ measurement.base_filename }}</a>
+              {% if measurement.date %}
+                ({{ measurement.date|date:"DATE_FORMAT" }})
+              {% endif %}
+            {% with attachments=measurement.attached_measurements %}
+              {% if attachments %}
+                <ul>
+                  {% for attachment in attachments %}
+                    <li>
+                      <a href="{{ attachment.get_absolute_url }}">{{ attachment.base_filename }}</a>
+                      {% if attachment.date %}
+                        ({{ attachment.date|date:"DATE_FORMAT" }})
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+            {% with attachments=measurement.missing_attachments %}
+              {% if attachments %}
+                <p>Nog te uploaden bestanden bij dit bestand:</p>
+                <ul>
+                  {% for a in attachments %}
+                    <li>{{ a.filename }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+            </li>
           {% endif %}
-        {% endfor %}
-        {% for measurement in measurements %}
-          {% if measurement.data.filetype != "ribx" %}
-            <li><a href="{{ measurement.get_absolute_url }}">{{ measurement.base_filename }}</a>
-              {% if measurement.date %} ({{ measurement.date|date:"DATE_FORMAT" }}){% endif %}</li>
-          {% endif %}
-        {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
-  {% with attachments=location.missing_attachments %}
-    {% if attachments %}
-      <p>Nog te uploaden bestanden voor deze code:</p>
-      <ul>
-        {% for a in attachments %}
-          <li>{{ a.filename }}</li>
         {% endfor %}
       </ul>
     {% endif %}

@@ -1186,6 +1186,15 @@ class Measurement(models.Model):
                 # Attach it
                 self.expected_attachments.add(expected_attachment)
 
+    def missing_attachments(self):
+        """Return a queryset of ExpectedAttachments connected to this
+        measurement that haven't been uploaded yet."""
+        return self.expected_attachments.filter(uploaded=False)
+
+    def attached_measurements(self):
+        """Return a queryset of Measurements that have this one as parent."""
+        return Measurement.objects.filter(parent=self)
+
     def __unicode__(self):
         return 'Measurement {} from {}, expects {} attachments'.format(
             self.id, self.filename, self.expected_attachments.count())

@@ -995,6 +995,23 @@ class ExpectedAttachment(models.Model):
 
         return measurements
 
+    @classmethod
+    def register_deletion(cls, activity, path):
+        """An uploaded file in some activity was deleted. If that file
+        was uploaded as an expected attachment at some point, then we should
+        set it to uploaded=False again."""
+        filename = os.path.basename(path)
+
+        try:
+            expected_attachment = cls.objects.get(
+                measurements__location__activity=activity,
+                filename__iexact=filename)
+        except cls.DoesNotExist:
+            return
+
+        expected_attachment.uploaded = False
+        expected_attachment.save()
+
     class Meta:
         ordering = ('uploaded', 'filename', )
 

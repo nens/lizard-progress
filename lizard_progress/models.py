@@ -324,6 +324,34 @@ def has_access(user=None, project=None, contractor=None, userprofile=None):
     return False
 
 
+def has_write_access(
+        user=None, project=None, contractor=None, userprofile=None):
+    """Test whether user has write access to this project (editing data of
+    this contractor organization)."""
+
+    if userprofile is None:
+        userprofile = UserProfile.get_by_user(user)
+
+    if userprofile is None:
+        return False
+
+    # Either be a manager in this project's organization, or
+    # an uploader in the other (if it isn't archived).
+    if (userprofile.organization == project.organization) and (
+            userprofile.has_role(UserRole.ROLE_MANAGER)):
+        return True
+
+    if project.is_archived:
+        return False
+
+    # Otherwise the data is only editable if contractor is not None (the
+    # data is from some uploading organization) and the user is Uploader
+    # in it.
+    return (
+        contractor and userprofile.has_role(UserRole.ROLE_UPLOADER) and
+        contractor == userprofile.organization)
+
+
 def all_measurements(project, organization):
     """Return an iterable of all measurements taken for this
     project and contractor."""

@@ -1151,9 +1151,14 @@ class Measurement(models.Model):
         super(Measurement, self).delete()
 
         # If no other measurements relate to our filename, delete it
-        if (not Measurement.objects.filter(filename=self.filename).exists()
-                and os.path.exists(self.filename)):
-            os.remove(self.filename)
+        if (not Measurement.objects.filter(filename=self.filename).exists()):
+            if os.path.exists(self.filename):
+                os.remove(self.filename)
+
+            # If that happens, and the filename was uploaded as an expected
+            # attachment, that attachment should be set uploaded=False again.
+            ExpectedAttachment.register_deletion(
+                self.location.activity, self.filename)
 
         # Let our location determine its completeness
         self.location.set_completeness()

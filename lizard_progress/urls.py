@@ -67,9 +67,9 @@ activity_urls = [
         login_required(UploadedFileErrorsView.as_view()),
         name='lizard_progress_uploaded_file_error_view'),
 
-    # Download an uploaded file
+    # Download OR DELETE an uploaded file
     url('file/(?P<measurement_id>\d+)/(?P<filename>[^/]+)$',
-        protected_file_download,
+        views.measurement_download_or_delete,
         name='lizard_progress_filedownload'),
 
     # Planning page
@@ -106,7 +106,8 @@ project_urls = [
     # Kaartlagen view
     url('^map/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
-    url('^map/change_request/(?P<change_request>[^/]+)/$', login_required(MapView.as_view()),
+    url('^map/change_request/(?P<change_request>[^/]+)/$',
+        login_required(MapView.as_view()),
         name='lizard_progress_mapview_change_request'),
     # Dashboard page
     url('^dashboard/$', login_required(DashboardView.as_view()),

@@ -537,23 +537,8 @@ def dashboard_graph(
 
 
 @login_required
-def protected_file_download(request, project_slug, activity_id,
-                            measurement_id, filename):
-    """
-    We need our own file_download view because contractors can only see their
-    own files, and the URLs of other contractor's files are easy to guess.
-
-    Copied and adapted from deltaportaal, which has a more generic
-    example, in case you're looking for one. It is for Apache.
-
-    The one below works for both Apache (untested) and Nginx.  I used
-    the docs at http://wiki.nginx.org/XSendfile for the Nginx
-    configuration.  Basically, Nginx serves /protected/ from the
-    document root at BUILDOUT_DIR+'var', and we x-accel-redirect
-    there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
-    """
-
-    # XXXX
+def measurement_download_or_delete(
+        request, project_slug, activity_id, measurement_id, filename):
     project = get_object_or_404(models.Project, slug=project_slug)
     activity = get_object_or_404(models.Activity, pk=activity_id)
     measurement = get_object_or_404(
@@ -569,6 +554,28 @@ def protected_file_download(request, project_slug, activity_id,
     if not has_access(request.user, project, activity.contractor):
         logger.warn("Not allowed to access %s", filename)
         return http.HttpResponseForbidden()
+
+    if request.method == 'GET':
+        return protected_file_download(request, activity, measurement)
+
+    if request.method == 'DELETE':
+        return delete_measurement(request, activity, measurement)
+
+
+def protected_file_download(request, activity, measurement):
+    """
+    We need our own file_download view because contractors can only see their
+    own files, and the URLs of other contractor's files are easy to guess.
+
+    Copied and adapted from deltaportaal, which has a more generic
+    example, in case you're looking for one. It is for Apache.
+
+    The one below works for both Apache (untested) and Nginx.  I used
+    the docs at http://wiki.nginx.org/XSendfile for the Nginx
+    configuration.  Basically, Nginx serves /protected/ from the
+    document root at BUILDOUT_DIR+'var', and we x-accel-redirect
+    there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
+    """
 
     nginx_path = directories.make_nginx_file_path(
         activity, measurement.filename)
@@ -875,3 +882,15 @@ class EmailNotificationConfigurationView(ProjectsView):
                 option.unsubscribe(self.project)
 
         return redirect
+
+
+def delete_measurement(request, activity, measurement):
+    if not models.has_write_access(
+            request.user,
+            project=activity.project,
+            contractor=activity.contractor):
+        raise PermissionDenied()
+
+    measurement.delete()
+
+    return http.HttpResponse()

@@ -561,6 +561,9 @@ def measurement_download_or_delete(
     if request.method == 'DELETE':
         return delete_measurement(request, activity, measurement)
 
+    # This gives a somewhat documented 405 error
+    return http.HttpResponseNotAllowed(('GET', 'DELETE'))
+
 
 def protected_file_download(request, activity, measurement):
     """

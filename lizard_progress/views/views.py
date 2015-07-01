@@ -603,6 +603,26 @@ def protected_file_download(request, activity, measurement):
     return response
 
 
+def delete_measurement(request, activity, measurement):
+    """Delete the measurement. This undos everything releted to this
+    particular measurement. If the uploaded file contained several
+    measurements, the others are unaffected and the uploaded file is
+    still there.
+    """
+    # We need write access in this project.
+    if not models.has_write_access(
+            request.user,
+            project=activity.project,
+            contractor=activity.contractor):
+        http.HttpResponseForbidden()
+
+    # Actually delete it.
+    measurement.delete()
+
+    # Just return success -- this view is called from Javascript.
+    return http.HttpResponse()
+
+
 class ArchiveProjectsOverview(ProjectsView):
     template_name = 'lizard_progress/archive.html'
 
@@ -885,15 +905,3 @@ class EmailNotificationConfigurationView(ProjectsView):
                 option.unsubscribe(self.project)
 
         return redirect
-
-
-def delete_measurement(request, activity, measurement):
-    if not models.has_write_access(
-            request.user,
-            project=activity.project,
-            contractor=activity.contractor):
-        raise PermissionDenied()
-
-    measurement.delete()
-
-    return http.HttpResponse()

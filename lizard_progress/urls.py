@@ -26,7 +26,6 @@ from lizard_progress.views import UploadReportsView
 from lizard_progress.views import UploadShapefilesView
 from lizard_progress.views import UploadedFileErrorsView
 from lizard_progress.views import dashboard_graph
-from lizard_progress.views import protected_file_download
 
 from lizard_progress import views
 from lizard_progress.views import organization_admin

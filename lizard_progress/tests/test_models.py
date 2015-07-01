@@ -538,6 +538,29 @@ class TestMeasurement(FixturesTestCase):
         # Now it has 0
         self.assertEquals(measurement.location.measurement_set.count(), 0)
 
+    def test_uploaded_attachment_that_is_deleted_is_not_uploaded(self):
+        measurement = MeasurementF()
+        measurement.setup_expected_attachments(['1.mpg'])
+        expected_attachment = models.ExpectedAttachment.objects.get(
+            filename='1.mpg')
+        new_measurement = expected_attachment.register_uploading()[0]
+        new_measurement.filename = '/some/path/ending/in/1.mpg'
+        new_measurement.save()
+
+        # Everything is uploaded
+        self.assertTrue(
+            measurement.location.all_expected_attachments_present)
+
+        # Cancel the upload
+        new_measurement.delete()
+
+        # Now we are waiting for the upload again
+        expected_attachments = list(
+            models.ExpectedAttachment.objects.filter(
+                measurements__location=measurement.location))
+        self.assertEquals(len(expected_attachments), 1)
+        self.assertFalse(expected_attachments[0].uploaded)
+
     def test_cannot_delete_measurements_in_archived_project(self):
         measurement = MeasurementF(
             location__activity__project__is_archived=True)

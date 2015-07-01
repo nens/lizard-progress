@@ -548,18 +548,13 @@ class TestMeasurement(FixturesTestCase):
         new_measurement.save()
 
         # Everything is uploaded
-        self.assertTrue(
-            measurement.location.all_expected_attachments_present)
+        self.assertFalse(measurement.missing_attachments().exists())
 
         # Cancel the upload
         new_measurement.delete()
 
         # Now we are waiting for the upload again
-        expected_attachments = list(
-            models.ExpectedAttachment.objects.filter(
-                measurements__location=measurement.location))
-        self.assertEquals(len(expected_attachments), 1)
-        self.assertFalse(expected_attachments[0].uploaded)
+        self.assertTrue(measurement.missing_attachments().exists())
 
     def test_cannot_delete_measurements_in_archived_project(self):
         measurement = MeasurementF(

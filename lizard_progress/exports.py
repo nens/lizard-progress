@@ -38,7 +38,6 @@ from metfilelib import exporters
 from lizard_progress import errors
 from lizard_progress import models
 from lizard_progress import lizard_export
-from lizard_progress import tools
 from lizard_progress import configuration
 from lizard_progress.util.send_exception_mail import send_email_on_exception
 
@@ -133,7 +132,7 @@ def export_as_metfile(export_run):
         project=export_run.activity.project,
         organization=None,  # Give either project or organization
         measurement_type=models.AvailableMeasurementType.dwarsprofiel()
-        ).wants_sorted_measurements()
+    ).wants_sorted_measurements()
 
     metfile = retrieve_profile.recreate_metfile([
         (measurement.filename,

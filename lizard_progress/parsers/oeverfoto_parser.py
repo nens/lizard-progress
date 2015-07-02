@@ -32,7 +32,7 @@ class OeverfotoParser(ProgressParser):
         'toofar': ("De afstand tussen de locatie en "
                    "de foto-data is te groot (%.1fm)."),
         'notscheduled': "Meting met id %s en type %s was niet gepland.",
-        }
+    }
 
     def parse(self, check_only=False):
         if not isinstance(self.file_object, ImageFile):

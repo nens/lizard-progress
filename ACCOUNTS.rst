@@ -2,7 +2,7 @@ Documentation on creation of user accounts
 ==========================================
 
 All actions are done in the admin interface (
-http://uploadserver.lizard.net/admin/ ) by user admin.
+http://uploadservice.lizard.net/admin/ ) by user admin.
 
 Creating an organization
 ------------------------
@@ -15,7 +15,7 @@ both.
 Creating a project owner organization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Go to http://uploadserver.lizard.net/admin/lizard_progress/organization/add/
+1. Go to http://uploadservice.lizard.net/admin/lizard_progress/organization/add/
 
 2. Enter the organization's name and description (for now, equal to its name)
 
@@ -34,7 +34,7 @@ Creating a project owner organization
 Creating an uploading organization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Go to http://uploadserver.lizard.net/admin/lizard_progress/organization/add/
+1. Go to http://uploadservice.lizard.net/admin/lizard_progress/organization/add/
 
 2. Enter the organization's name and description (for now, equal to its name)
 
@@ -59,7 +59,7 @@ are different concepts.
 
 Only step 4 is different for project managers:
 
-1. Go to http://uploadserver.lizard.net/admin/auth/user/add/
+1. Go to http://uploadservice.lizard.net/admin/auth/user/add/
 
 2. Enter username and password, save
 
@@ -73,7 +73,7 @@ Only step 4 is different for project managers:
 
 6. Now we need to connect the new user to the organization. We do that
    by adding a User Profile, at
-   http://uploadserver.lizard.net/admin/lizard_progress/userprofile/add/
+   http://uploadservice.lizard.net/admin/lizard_progress/userprofile/add/
    .  Select the newly created user and the right organization, and
    save.
 

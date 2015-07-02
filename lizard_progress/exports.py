@@ -1,7 +1,7 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 # -*- coding: utf-8 -*-
 
-"""We have an upload server, maybe we should be able to download too?
+"""We have an upload service, maybe we should be able to download too?
 
 Uploaded files can be exported, to one export file per
 project/contractor/measurement type combination. These files can be

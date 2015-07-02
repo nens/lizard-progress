@@ -189,7 +189,7 @@ class ProjectsMixin(object):
 class KickOutMixin(object):
     """Checks that the current user is logged in and has an
     organization. Sets self.organization if this is true, otherwise
-    kicks out the user. Most normal views in the Upload Server require
+    kicks out the user. Most normal views in the Upload Service require
     an organization."""
     def dispatch(self, request, *args, **kwargs):
         """You can only get here if you are part of some organization.

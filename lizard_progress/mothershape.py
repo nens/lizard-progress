@@ -37,7 +37,7 @@ def check_mothershape(project, contractor, shape_path, report_file):
         errordict = {
             'code': location_code,
             'errors': []
-            }
+        }
 
         try:
             location = models.Location.objects.get(

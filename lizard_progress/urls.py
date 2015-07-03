@@ -129,7 +129,7 @@ project_urls = [
     url('^project_file_upload/$',
         login_required(views.UploadProjectFileView.as_view()),
         name='lizard_progress_upload_projectfile'),
-    url('^hydrovakken_upload/$',
+    url('^monstervakken_upload/$',
         login_required(views.UploadHydrovakkenView.as_view()),
         name='lizard_progress_upload_hydrovakken'),
 

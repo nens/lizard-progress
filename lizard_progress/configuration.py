@@ -198,7 +198,7 @@ CONFIG_OPTIONS = {
     'hydrovakken_id_field': Option(
         option='hydrovakken_id_field',
         short_description=(
-            'Veld dat ID bevat in hydrovakken shapefile'),
+            'Veld dat ID bevat in monstervakken shapefile'),
         long_description=(
             'Daarnaast moeten de shapes bestaan uit lijnen'),
         type='text',

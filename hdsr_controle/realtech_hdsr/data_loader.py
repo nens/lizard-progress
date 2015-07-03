@@ -15,7 +15,7 @@ from metfileparser import metfileparser
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 
-HYDROVAKKEN_TAG = "Hydrovakken_"
+HYDROVAKKEN_TAG = "Monstervakken_"
 PROFIELEN_TAG = "DWP_"
 METFILE_TAG = ".met"
 SHAPEFILE_TAG =".shp"
@@ -160,7 +160,7 @@ def loadmetfiles(gebruikersdata):
 def controleren(hydrovakkenshapefile,dwpshapefile,metfile,projectnaam="dummyProject",aannemer="dummyAannemer",verwijderOudeData=True):
     """
       Input:
-          hydrovakkenshapefile = hydrovakken shape bestand zoals ./Hydrovakken_TestProject.shp
+          hydrovakkenshapefile = hydrovakken shape bestand zoals ./Monstervakken_TestProject.shp
           dwpshapefile = dwp profielen shape bestand zoals ./DWP_TestProject.shp
           metfile = metfile bestand  zoals ./Metfile_TestProject.met
           projectnaam = naam van het project
@@ -178,7 +178,7 @@ def controleren(hydrovakkenshapefile,dwpshapefile,metfile,projectnaam="dummyProj
     load_log = logging.getLogger('controleren')
     dataOntbreekt=""
     if not os.path.exists(hydrovakkenshapefile):
-        dataOntbreekt = 'Hydrovakken shape %s bestaat niet!\n' % hydrovakkenshapefile
+        dataOntbreekt = 'Monstervakken shape %s bestaat niet!\n' % hydrovakkenshapefile
     elif not os.path.exists(dwpshapefile):
         dataOntbreekt = dataOntbreekt +  'DWP profielen shape %s bestaat niet!\n' % dwpshapefile
     elif  not os.path.exists(metfile):
@@ -234,7 +234,7 @@ def datafolder_controleren(verwijderOudeData=True,datafolder= DATA_PATH):
             ...
 
         De databestaden moeten beginnen met volgende prefixen
-        HYDROVAKKEN_TAG = "Hydrovakken_"
+        HYDROVAKKEN_TAG = "Monstervakken_"
         PROFIELEN_TAG = "DWP_"
         METFILE_TAG = ".met"
         SHAPEFILE_TAG =".shp"

@@ -12,6 +12,8 @@ from __future__ import division
 
 import datetime
 import factory
+import os
+import tempfile
 
 import osgeo.ogr
 
@@ -468,6 +470,96 @@ class TestMeasurement(FixturesTestCase):
         self.assertRaises(
             models.AlreadyUploadedError,
             lambda: measurement2.setup_expected_attachments(['1.jpg']))
+
+    # From here, test Measurement.delete
+
+    def test_simple_delete_works(self):
+        measurement = MeasurementF.create()
+        pk = measurement.id
+        measurement.delete()
+        self.assertRaises(
+            models.Measurement.DoesNotExist,
+            lambda: models.Measurement.objects.get(pk=pk))
+
+    def test_file_is_deleted(self):
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+
+        measurement = MeasurementF.create(filename=filename)
+        self.assertTrue(os.path.exists(filename))
+        measurement.delete()
+        self.assertFalse(os.path.exists(filename))
+
+    def test_file_is_not_deleted_if_it_has_two_measurements(self):
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+
+        measurement1 = MeasurementF.create(filename=filename)
+        MeasurementF.create(filename=filename)
+
+        measurement1.delete()
+        self.assertTrue(os.path.exists(filename))
+
+        os.remove(filename)
+
+    def test_location_is_not_complete_anymore_after_deleting_measurement(self):
+        location = LocationF()
+        self.assertFalse(location.complete)
+        measurement = MeasurementF(location=location)
+        location.set_completeness()
+        self.assertTrue(location.complete)
+        measurement.delete()
+        self.assertFalse(location.complete)
+
+    def test_expected_attachments_are_detached(self):
+        measurement = MeasurementF()
+        measurement.setup_expected_attachments(['1.mpg'])
+
+        self.assertTrue(
+            models.ExpectedAttachment.objects.filter(
+                filename='1.mpg').exists())
+        measurement.delete()
+        self.assertFalse(
+            models.ExpectedAttachment.objects.filter(
+                filename='1.mpg').exists())
+
+    def test_attachments_are_removed(self):
+        measurement = MeasurementF()
+        measurement.setup_expected_attachments(['1.mpg'])
+        expected_attachment = models.ExpectedAttachment.objects.get(
+            filename='1.mpg')
+        expected_attachment.register_uploading()
+
+        # Location now has 2 measurements
+        self.assertEquals(measurement.location.measurement_set.count(), 2)
+
+        measurement.delete()
+
+        # Now it has 0
+        self.assertEquals(measurement.location.measurement_set.count(), 0)
+
+    def test_uploaded_attachment_that_is_deleted_is_not_uploaded(self):
+        measurement = MeasurementF()
+        measurement.setup_expected_attachments(['1.mpg'])
+        expected_attachment = models.ExpectedAttachment.objects.get(
+            filename='1.mpg')
+        new_measurement = expected_attachment.register_uploading()[0]
+        new_measurement.filename = '/some/path/ending/in/1.mpg'
+        new_measurement.save()
+
+        # Everything is uploaded
+        self.assertFalse(measurement.missing_attachments().exists())
+
+        # Cancel the upload
+        new_measurement.delete()
+
+        # Now we are waiting for the upload again
+        self.assertTrue(measurement.missing_attachments().exists())
+
+    def test_cannot_delete_measurements_in_archived_project(self):
+        measurement = MeasurementF(
+            location__activity__project__is_archived=True)
+        self.assertRaises(ValueError, lambda: measurement.delete())
 
 
 @attr('slow')

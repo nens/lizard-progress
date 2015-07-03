@@ -537,23 +537,8 @@ def dashboard_graph(
 
 
 @login_required
-def protected_file_download(request, project_slug, activity_id,
-                            measurement_id, filename):
-    """
-    We need our own file_download view because contractors can only see their
-    own files, and the URLs of other contractor's files are easy to guess.
-
-    Copied and adapted from deltaportaal, which has a more generic
-    example, in case you're looking for one. It is for Apache.
-
-    The one below works for both Apache (untested) and Nginx.  I used
-    the docs at http://wiki.nginx.org/XSendfile for the Nginx
-    configuration.  Basically, Nginx serves /protected/ from the
-    document root at BUILDOUT_DIR+'var', and we x-accel-redirect
-    there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
-    """
-
-    # XXXX
+def measurement_download_or_delete(
+        request, project_slug, activity_id, measurement_id, filename):
     project = get_object_or_404(models.Project, slug=project_slug)
     activity = get_object_or_404(models.Activity, pk=activity_id)
     measurement = get_object_or_404(
@@ -569,6 +554,31 @@ def protected_file_download(request, project_slug, activity_id,
     if not has_access(request.user, project, activity.contractor):
         logger.warn("Not allowed to access %s", filename)
         return http.HttpResponseForbidden()
+
+    if request.method == 'GET':
+        return protected_file_download(request, activity, measurement)
+
+    if request.method == 'DELETE':
+        return delete_measurement(request, activity, measurement)
+
+    # This gives a somewhat documented 405 error
+    return http.HttpResponseNotAllowed(('GET', 'DELETE'))
+
+
+def protected_file_download(request, activity, measurement):
+    """
+    We need our own file_download view because contractors can only see their
+    own files, and the URLs of other contractor's files are easy to guess.
+
+    Copied and adapted from deltaportaal, which has a more generic
+    example, in case you're looking for one. It is for Apache.
+
+    The one below works for both Apache (untested) and Nginx.  I used
+    the docs at http://wiki.nginx.org/XSendfile for the Nginx
+    configuration.  Basically, Nginx serves /protected/ from the
+    document root at BUILDOUT_DIR+'var', and we x-accel-redirect
+    there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
+    """
 
     nginx_path = directories.make_nginx_file_path(
         activity, measurement.filename)
@@ -591,6 +601,26 @@ def protected_file_download(request, project_slug, activity_id,
             "Instead, we let Django serve {}.\n".format(measurement.filename))
         return serve(request, measurement.filename, '/')
     return response
+
+
+def delete_measurement(request, activity, measurement):
+    """Delete the measurement. This undos everything releted to this
+    particular measurement. If the uploaded file contained several
+    measurements, the others are unaffected and the uploaded file is
+    still there.
+    """
+    # We need write access in this project.
+    if not models.has_write_access(
+            request.user,
+            project=activity.project,
+            contractor=activity.contractor):
+        http.HttpResponseForbidden()
+
+    # Actually delete it.
+    measurement.delete()
+
+    # Just return success -- this view is called from Javascript.
+    return http.HttpResponse()
 
 
 class ArchiveProjectsOverview(ProjectsView):

@@ -53,6 +53,11 @@ Changelog of lizard-progress
 - Remove a number of ancient management commands that aren't used anymore,
   and tools.py which was only used by those commands.
 
+- Allow cancelling (deleting) a Measurement, from the popup. This will
+  actually delete uploaded files (if there were no other measurements
+  relating to it), which is a first. Only RIBX, for now. Handles
+  attachments correctly.
+
 
 2.5.2 (2015-06-12)
 ------------------

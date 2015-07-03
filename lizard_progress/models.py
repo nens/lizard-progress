@@ -324,6 +324,34 @@ def has_access(user=None, project=None, contractor=None, userprofile=None):
     return False
 
 
+def has_write_access(
+        user=None, project=None, contractor=None, userprofile=None):
+    """Test whether user has write access to this project (editing data of
+    this contractor organization)."""
+
+    if userprofile is None:
+        userprofile = UserProfile.get_by_user(user)
+
+    if userprofile is None:
+        return False
+
+    # Either be a manager in this project's organization, or
+    # an uploader in the other (if it isn't archived).
+    if (userprofile.organization == project.organization) and (
+            userprofile.has_role(UserRole.ROLE_MANAGER)):
+        return True
+
+    if project.is_archived:
+        return False
+
+    # Otherwise the data is only editable if contractor is not None (the
+    # data is from some uploading organization) and the user is Uploader
+    # in it.
+    return (
+        contractor and userprofile.has_role(UserRole.ROLE_UPLOADER) and
+        contractor == userprofile.organization)
+
+
 def all_measurements(project, organization):
     """Return an iterable of all measurements taken for this
     project and contractor."""
@@ -967,6 +995,23 @@ class ExpectedAttachment(models.Model):
 
         return measurements
 
+    @classmethod
+    def register_deletion(cls, activity, path):
+        """An uploaded file in some activity was deleted. If that file
+        was uploaded as an expected attachment at some point, then we should
+        set it to uploaded=False again."""
+        filename = os.path.basename(path)
+
+        try:
+            expected_attachment = cls.objects.get(
+                measurements__location__activity=activity,
+                filename__iexact=filename)
+        except cls.DoesNotExist:
+            return
+
+        expected_attachment.uploaded = False
+        expected_attachment.save()
+
     class Meta:
         ordering = ('uploaded', 'filename', )
 
@@ -1071,7 +1116,55 @@ class Measurement(models.Model):
     def base_filename(self):
         return self.filename and os.path.basename(self.filename)
 
+    def delete(self):
+        """Delete this measurement. If this is done by a user of the
+        contractor organization, this is cancellation (for instance to
+        fix errors), if this is done by a user of the project owning
+        organisation it means the measurement is not
+        approved. Functionally there is no difference -- we undo the
+        results of uploading this particular measurement.
+
+        Cancelling a measurement means that any attachments are also
+        cancelled, that expected attachments are detached from this
+        measurement (and may be removed from the list of expected
+        attachments, if they were only attached to this), that the
+        location may be marked incomplete once more, and that the
+        uploaded file itself may be removed if this was the last
+        measurement relating to it. Finally, this measurement will be
+        deleted.
+
+        """
+        # Once a project is archived, it can't be changed anymore.
+        if self.location.activity.project.is_archived:
+            raise ValueError(
+                "Cannot delete measurements of archived projects.")
+
+        # Detach expected attachments
+        for expected_attachment in self.expected_attachments.all():
+            expected_attachment.detach(self)
+
+        # Also delete measurements of uploaded attachments related to this
+        for measurement in Measurement.objects.filter(parent=self):
+            measurement.delete()
+
+        # Delete this
+        super(Measurement, self).delete()
+
+        # If no other measurements relate to our filename, delete it
+        if (not Measurement.objects.filter(filename=self.filename).exists()):
+            if os.path.exists(self.filename):
+                os.remove(self.filename)
+
+            # If that happens, and the filename was uploaded as an expected
+            # attachment, that attachment should be set uploaded=False again.
+            ExpectedAttachment.register_deletion(
+                self.location.activity, self.filename)
+
+        # Let our location determine its completeness
+        self.location.set_completeness()
+
     def setup_expected_attachments(self, filenames):
+
         """This measurement was uploaded, and it included information that
         said that the files in filenames (an iterable of strings)
         will be uploaded for it.
@@ -1142,6 +1235,19 @@ class Measurement(models.Model):
                         filename=filename, uploaded=False)
                 # Attach it
                 self.expected_attachments.add(expected_attachment)
+
+    def missing_attachments(self):
+        """Return a queryset of ExpectedAttachments connected to this
+        measurement that haven't been uploaded yet."""
+        return self.expected_attachments.filter(uploaded=False)
+
+    def attached_measurements(self):
+        """Return a queryset of Measurements that have this one as parent."""
+        return Measurement.objects.filter(parent=self)
+
+    def __unicode__(self):
+        return 'Measurement {} from {}, expects {} attachments'.format(
+            self.id, self.filename, self.expected_attachments.count())
 
 
 class Hydrovak(models.Model):

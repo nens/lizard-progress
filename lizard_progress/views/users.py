@@ -61,11 +61,11 @@ class SingleUserManagementView(ProjectsView):
             self.form = forms.SingleUserForm(self.edited_user, request.POST)
         else:
             self.form = forms.SingleUserForm(self.edited_user, initial={
-                    'username': self.edited_user.username,
-                    'first_name': self.edited_user.first_name,
-                    'last_name': self.edited_user.last_name,
-                    'email': self.edited_user.email
-                    })
+                'username': self.edited_user.username,
+                'first_name': self.edited_user.first_name,
+                'last_name': self.edited_user.last_name,
+                'email': self.edited_user.email
+            })
 
         if editing_user_is_admin:
             self.form.add_role_fields(
@@ -83,8 +83,8 @@ class SingleUserManagementView(ProjectsView):
         self.form.update_user()
 
         return HttpResponseRedirect(reverse(
-                "lizard_progress_single_user_management", kwargs={
-                    'user_id': self.edited_user.id}))
+            "lizard_progress_single_user_management", kwargs={
+                'user_id': self.edited_user.id}))
 
     def delete(self, request, *args, **kwargs):
         """Delete this user."""

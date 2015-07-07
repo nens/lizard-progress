@@ -22,7 +22,7 @@ def send_exception_mail(where, exc_info):
     message = StringIO.StringIO()
 
     message.write("""\
-Er is een Exception opgetreden op de Upload Service, op een plek waar dat
+Er is een Exception opgetreden op de Uploadservice, op een plek waar dat
 niet hoort en waar een gebruiker er direct last van had. Dit is een
 programmeerfout.
 
@@ -34,7 +34,7 @@ Traceback:
     traceback.print_exception(*exc_info, limit=None, file=message)
 
     mail.send_mail(
-        "Foutmelding van de Upload Service",
+        "Foutmelding van de Uploadservice",
         message.getvalue(),
         "servicedesk@nelen-schuurmans.nl",
         ["remco.gerlich@nelen-schuurmans.nl"])

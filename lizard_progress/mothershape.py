@@ -37,7 +37,7 @@ def check_mothershape(project, contractor, shape_path, report_file):
         errordict = {
             'code': location_code,
             'errors': []
-            }
+        }
 
         try:
             location = models.Location.objects.get(
@@ -53,29 +53,29 @@ def check_mothershape(project, contractor, shape_path, report_file):
                         filled_in = feature.GetField(what.encode('utf8'))
                         if unicode(filled_in) != data['amount']:
                             errordict['errors'].append(
-                                ("Hydrovak {hydrovak}, meetwaarde voor"
+                                ("Monstervak {monstervak}, meetwaarde voor"
                                  " {what}: {shape} in shape is ongelijk"
                                  " aan {csv} in CSV\n").
                                 format(
-                                    hydrovak=location_code,
+                                    monstervak=location_code,
                                     what=what,
                                     shape=filled_in,
                                     csv=data['amount']))
                     except ValueError:
                         errordict['errors'].append(
                             ("Veld niet gevonden: meetwaarde voor "
-                             "{what} bij hydrovak {hydrovak}.\n").
+                             "{what} bij monstervak {monstervak}.\n").
                             format(
                                 what=what,
-                                hydrovak=location_code))
+                                monstervak=location_code))
             except models.Measurement.DoesNotExist:
                 errordict['errors'].append(
-                    ("Laboratoriumdata voor hydrovak {0} niet gevonden "
+                    ("Laboratoriumdata voor monstervak {0} niet gevonden "
                      "in de database. Geen CSV file aanwezig?")
                     .format(location_code))
         except models.Location.DoesNotExist:
             errordict['errors'].append(
-                ("Hydrovak {0} niet gevonden "
+                ("Monstervak {0} niet gevonden "
                  "in de database. Geen CSV file aanwezig?")
                 .format(location_code))
 

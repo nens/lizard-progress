@@ -483,7 +483,7 @@ class Project(models.Model):
 
         if Hydrovak.objects.filter(project=self).exists():
             yield MapLayer(
-                name='Hydrovakken {projectname}'.format(projectname=self.name),
+                name='Monstervakken {projectname}'.format(projectname=self.name),
                 adapter_class='adapter_hydrovak',
                 adapter_layer_json=json.dumps({"project_slug": self.slug}),
                 extent=None)
@@ -1262,7 +1262,8 @@ class Hydrovak(models.Model):
 
     class Meta:
         unique_together = ("project", "br_ident")
-        verbose_name_plural = "Hydrovakken"
+        verbose_name_plural = "Monstervakken"
+        verbose_name = "Monstervak"
 
     @classmethod
     def remove_hydrovakken_files(cls, project):

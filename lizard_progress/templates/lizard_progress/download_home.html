@@ -25,7 +25,7 @@
               ><i class="icon-upload"></i> Projectdocumenten uploaden</button>
       <button type="button" class="redirect btn btn-primary"
               data-redirect-url="{% url "lizard_progress_upload_hydrovakken" project_slug=view.project.slug %}"
-              ><i class="icon-upload"></i> Hydrovakken uploaden</button>
+              ><i class="icon-upload"></i> Monstervakken uploaden</button>
     </div>
   {% endif %}
 
@@ -54,7 +54,7 @@
   </table>
 
   {% if view.files.hydrovakken %}
-    <h3>Hydrovakken shapefile</h3>
+    <h3>Monstervakken shapefile</h3>
 
     <table class="table table-bordered fixed">
       <thead>

@@ -1,4 +1,4 @@
-"""Parsers for files uploaded to the upload server. The parsers()
+"""Parsers for files uploaded to the upload service. The parsers()
 functions in hdsr.progress.py return the function in this file to
 lizard-progress, which then calls them."""
 

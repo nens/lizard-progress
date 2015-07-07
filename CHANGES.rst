@@ -58,6 +58,8 @@ Changelog of lizard-progress
   relating to it), which is a first. Only RIBX, for now. Handles
   attachments correctly.
 
+- Change name 'Uploadserver' to 'Uploadservice'.
+
 
 2.5.2 (2015-06-12)
 ------------------

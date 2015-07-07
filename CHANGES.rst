@@ -58,7 +58,11 @@ Changelog of lizard-progress
   relating to it), which is a first. Only RIBX, for now. Handles
   attachments correctly.
 
-- Change name 'Uploadserver' to 'Uploadservice'.
+- Change name 'Uploadserver' to 'Uploadservice' (note that this is purely
+  a cosmetic change for the front-end).
+
+- Change name 'Hydrovak' to 'Monstervak' (note that this is purely a
+  cosmetic change for the front-end).
 
 
 2.5.2 (2015-06-12)

@@ -64,6 +64,16 @@ Changelog of lizard-progress
 - Change name 'Hydrovak' to 'Monstervak' (note that this is purely a
   cosmetic change for the front-end).
 
+- Make it also possible to zoom to a specific Location, make that the
+  location's get_absolute_url()
+
+- Create a Remove change request when the RIBX file claims it was
+  impossible to do part of the work.
+
+- Allow RIBX files to note that some pipe, manhole or drain was new
+  (not part of the assigned work), automatically add it to the
+  activity and send an email.
+
 
 2.5.2 (2015-06-12)
 ------------------

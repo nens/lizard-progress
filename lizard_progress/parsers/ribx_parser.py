@@ -77,6 +77,8 @@ class RibxParser(ProgressParser):
                     # This is not a measurement, but a claim that the
                     # assigned work couldn't be done. Open a deletion
                     # request instead of recording a measurement.
+                    # Creating the request also automatically
+                    # sends an email notification.
                     Request.objects.create(
                         activity=self.activity,
                         request_type=Request.REQUEST_TYPE_REMOVE_CODE,

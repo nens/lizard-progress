@@ -12,9 +12,12 @@ import itertools
 from PIL.ImageFile import ImageFile
 import logging
 
+from ribxlib import models as ribxmodels
 from ribxlib import parsers
 
 from lizard_progress import models
+from lizard_progress.changerequests.models import Request
+from lizard_progress.email_notifications.models import NotificationType
 
 from lizard_progress.specifics import ProgressParser
 from lizard_progress.specifics import UnSuccessfulParserResult
@@ -52,7 +55,10 @@ class RibxParser(ProgressParser):
         min_y = self.activity.config_value('minimum_y_coordinate')
         max_y = self.activity.config_value('maximum_y_coordinate')
 
-        for item in itertools.chain(ribx.pipes, ribx.manholes, ribx.drains):
+        for item in itertools.chain(
+                ribx.inspection_pipes, ribx.cleaning_pipes,
+                ribx.inspection_manholes, ribx.cleaning_manholes,
+                ribx.drains):
             error = False
             if item.geom:
                 if not (min_x <= item.geom.GetX() <= max_x):

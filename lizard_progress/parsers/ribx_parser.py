@@ -184,11 +184,11 @@ class RibxParser(ProgressParser):
             name='new location from ribx')
         location_link = (
             Site.objects.get_current().domain +
-            self.location.get_absolute_url())
+            location.get_absolute_url())
 
         self.activity.notify_managers(
             notification_type, actor=self.activity.contractor,
-            action_object=self.file_object.name, target=self.location,
+            action_object=self.file_object.name, target=location,
             extra={'link': location_link})
 
         return location

@@ -584,8 +584,7 @@ class Location(models.Model):
         """
         return reverse(
             'lizard_progress_mapview_location_code',
-            kwargs={'activity_id': self.id,
-                    'project_slug': self.project.slug,
+            kwargs={'project_slug': self.activity.project.slug,
                     'location_code': self.location_code})
 
     def plan_location(self, location):

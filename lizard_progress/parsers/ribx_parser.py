@@ -73,9 +73,20 @@ class RibxParser(ProgressParser):
                     error = True
 
             if not error:
-                measurement = self.save_measurement(item)
-                if measurement is not None:
-                    measurements.append(measurement)
+                if item.work_impossible:
+                    # This is not a measurement, but a claim that the
+                    # assigned work couldn't be done. Open a deletion
+                    # request instead of recording a measurement.
+                    Request.objects.create(
+                        activity=self.activity,
+                        request_type=Request.REQUEST_TYPE_REMOVE_CODE,
+                        location_code=item.ref,
+                        motivation=item.work_impossible,
+                        the_geom=item.geom)
+                else:
+                    measurement = self.save_measurement(item)
+                    if measurement is not None:
+                        measurements.append(measurement)
 
         if not measurements:
             self.record_error(0, None, 'Bestand bevat geen gegevens.')

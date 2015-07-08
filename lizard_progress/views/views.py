@@ -265,7 +265,8 @@ class MapView(View):
         # *this entire view* to update its view of the workspace items.
         workspaces.set_items(request, self.available_layers)
         self.set_extent(request.session,
-                        change_request=kwargs.get('change_request', None))
+                        change_request=kwargs.get('change_request', None),
+                        location_code=kwargs.get('location_code', None))
         return super(MapView, self).get(request, *args, **kwargs)
 
     @cached_property
@@ -277,18 +278,20 @@ class MapView(View):
         # is safer with @cached_property.
         return tuple(self.project.available_layers(self.request.user))
 
-    def set_extent(self, session, change_request=None):
+    def set_extent(self, session, change_request, location_code):
         """We need min-x, max-x, min-y and max-y as Google coordinates."""
-        rd_extent = self.get_rd_extent(change_request)
+        rd_extent = self.get_rd_extent(change_request, location_code)
 
         if rd_extent:
             formatted_google_extent = geo.rd_to_google_extent(rd_extent)
             session[EXTENT_SESSION_KEY] = formatted_google_extent
 
-    def get_rd_extent(self, change_request=None):
+    def get_rd_extent(self, change_request, location_code):
         """Compute the extent we want to zoom to, in RD."""
 
         locations = Location.objects.filter(activity__project=self.project)
+        if location_code:
+            locations = locations.filter(location_code=location_code)
 
         # Layers MAY define their own extent (used for the extents of
         # change requests). Otherwise layer.extent will be None.

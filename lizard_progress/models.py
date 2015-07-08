@@ -577,6 +577,17 @@ class Location(models.Model):
 
         return u
 
+    def get_absolute_url(self):
+        """Return an URL that goes to the Map page, zooming to this
+        location.
+
+        """
+        return reverse(
+            'lizard_progress_mapview_location_code',
+            kwargs={'activity_id': self.id,
+                    'project_slug': self.project.slug,
+                    'location_code': self.location_code})
+
     def plan_location(self, location):
         """Set our geometrical location, IF it wasn't set yet.
         location can be either a Point or a LineString."""

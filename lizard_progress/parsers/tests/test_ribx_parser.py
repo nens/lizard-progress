@@ -1,4 +1,5 @@
 import datetime
+import mock
 
 import osgeo.ogr
 
@@ -11,7 +12,7 @@ from lizard_progress.tests.base import FixturesTestCase
 # Some helper variables for when the actual value doesn't matter.
 today = datetime.date.today()
 amersfoort = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
-amersfoort.AddPoint(155000, 463000)
+amersfoort.AddPoint_2D(155000, 463000)
 
 
 class MockItem(object):
@@ -43,6 +44,16 @@ class TestSaveMeasurement(FixturesTestCase):
     def test_unknown_location_returns_none(self):
         item = MockItem('wrongref', today, amersfoort)
         self.assertEquals(self.parser.save_measurement(item), None)
+
+    def test_unknown_location_with_new_true_is_created(self):
+        # Parser needs a file_object, its name is used in the notification
+        file_object = mock.MagicMock()
+        file_object.name = 'testfile.ribx'
+        self.parser.file_object = file_object
+
+        item = MockItem('wrongref', today, amersfoort)
+        item.new = True
+        self.assertTrue(self.parser.save_measurement(item))
 
     def test_create_measurement_without_files(self):
         item = MockItem('testref', today, amersfoort, [])

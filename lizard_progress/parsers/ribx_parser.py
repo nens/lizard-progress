@@ -8,9 +8,12 @@ from __future__ import absolute_import
 from __future__ import division
 
 import itertools
+import json
 
 from PIL.ImageFile import ImageFile
 import logging
+
+from django.contrib.sites.models import Site
 
 from ribxlib import models as ribxmodels
 from ribxlib import parsers
@@ -169,17 +172,23 @@ class RibxParser(ProgressParser):
 
         location = models.Location.objects.create(
             activity=self.activity,
-            location=item.ref,
+            location_code=item.ref,
             location_type=location_type,
-            the_geom=item.geom,
+            the_geom=item.geom.ExportToWkt(),
             is_point=is_point,
-            information="Added automatically by {}".format(
-                self.file_object.name))
+            information=json.dumps({
+                "remark": "Added automatically by {}".format(
+                    self.file_object.name)}))
 
         notification_type = NotificationType.objects.get(
             name='new location from ribx')
+        location_link = (
+            Site.objects.get_current().domain +
+            self.location.get_absolute_url())
+
         self.activity.notify_managers(
             notification_type, actor=self.activity.contractor,
-            action_object=self.file_object.name, target=self.location)
+            action_object=self.file_object.name, target=self.location,
+            extra={'link': location_link})
 
         return location

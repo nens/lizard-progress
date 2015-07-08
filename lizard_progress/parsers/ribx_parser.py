@@ -100,10 +100,13 @@ class RibxParser(ProgressParser):
             location = self.activity.location_set.get(
                 location_code=item.ref)
         except models.Location.DoesNotExist:
-            self.record_error(
-                item.sourceline, 'LOCATION_NOT_FOUND',
-                self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
-            return None
+            if not item.new:
+                self.record_error(
+                    item.sourceline, 'LOCATION_NOT_FOUND',
+                    self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
+                return None
+            else:
+                location = self.create_new(item)
 
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement
@@ -146,3 +149,35 @@ class RibxParser(ProgressParser):
                 return measurement
 
         return None
+
+    def create_new(self, item):
+        """This item is marked as new. Create it and send mail."""
+
+        is_point = True
+        if isinstance(item, ribxmodels.Pipe):
+            location_type = models.Location.LOCATION_TYPE_PIPE
+            is_point = False
+        elif isinstance(item, ribxmodels.Manhole):
+            location_type = models.Location.LOCATION_TYPE_MANHOLE
+        elif isinstance(item, ribxmodels.Drain):
+            location_type = models.Location.LOCATION_TYPE_DRAIN
+        else:
+            # Huh?
+            location_type = models.Location.LOCATION_TYPE_POINT
+
+        location = models.Location.objects.create(
+            activity=self.activity,
+            location=item.ref,
+            location_type=location_type,
+            the_geom=item.geom,
+            is_point=is_point,
+            information="Added automatically by {}".format(
+                self.file_object.name))
+
+        notification_type = NotificationType.objects.get(
+            name='new location from ribx')
+        self.activity.notify_managers(
+            notification_type, actor=self.activity.contractor,
+            action_object=self.file_object.name, target=self.location)
+
+        return location

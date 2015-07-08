@@ -56,7 +56,7 @@ Changelog of lizard-progress
 - Allow cancelling (deleting) a Measurement, from the popup. This will
   actually delete uploaded files (if there were no other measurements
   relating to it), which is a first. Only RIBX, for now. Handles
-  attachments correctly.
+  attachments correctly. Send a notification.
 
 - Change name 'Uploadserver' to 'Uploadservice' (note that this is purely
   a cosmetic change for the front-end).

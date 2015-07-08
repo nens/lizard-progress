@@ -22,8 +22,12 @@ class MockItem(object):
         self.inspection_date = inspection_date
         self.geom = geom
         self.sourceline = sourceline
+        self.new = False
+        self.work_impossible = None
         if media is not None:
             self.media = media
+        else:
+            self.media = set()
 
 
 class TestSaveMeasurement(FixturesTestCase):

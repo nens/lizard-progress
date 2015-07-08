@@ -620,7 +620,9 @@ def delete_measurement(request, activity, measurement):
         http.HttpResponseForbidden()
 
     # Actually delete it.
-    measurement.delete()
+    measurement.delete(
+        notify=True,
+        deleted_by_contractor=activity.contractor.contains_user(request.user))
 
     # Just return success -- this view is called from Javascript.
     return http.HttpResponse()

@@ -577,6 +577,16 @@ class Location(models.Model):
 
         return u
 
+    def get_absolute_url(self):
+        """Return an URL that goes to the Map page, zooming to this
+        location.
+
+        """
+        return reverse(
+            'lizard_progress_mapview_location_code',
+            kwargs={'project_slug': self.activity.project.slug,
+                    'location_code': self.location_code})
+
     def plan_location(self, location):
         """Set our geometrical location, IF it wasn't set yet.
         location can be either a Point or a LineString."""
@@ -1116,7 +1126,7 @@ class Measurement(models.Model):
     def base_filename(self):
         return self.filename and os.path.basename(self.filename)
 
-    def delete(self):
+    def delete(self, notify=True, deleted_by_contractor=True):
         """Delete this measurement. If this is done by a user of the
         contractor organization, this is cancellation (for instance to
         fix errors), if this is done by a user of the project owning
@@ -1145,7 +1155,12 @@ class Measurement(models.Model):
 
         # Also delete measurements of uploaded attachments related to this
         for measurement in Measurement.objects.filter(parent=self):
-            measurement.delete()
+            # Prevent sending too many emails
+            measurement.delete(notify=False)
+
+        # Send notification
+        if notify:
+            self.send_deletion_notification(deleted_by_contractor)
 
         # Delete this
         super(Measurement, self).delete()
@@ -1162,6 +1177,26 @@ class Measurement(models.Model):
 
         # Let our location determine its completeness
         self.location.set_completeness()
+
+    def send_deletion_notification(self, deleted_by_contractor):
+        notification_type = NotificationType.objects.get(
+            name='measurement cancelled')
+        actor = (
+            self.location.activity.contractor if deleted_by_contractor else
+            self.location.activity.project.organization)
+        location_link = (
+            Site.objects.get_current().domain +
+            self.location.get_absolute_url())
+        notify_args = dict(
+            notification_type=notification_type,
+            actor=actor,
+            action_object=self.location,
+            extra=dict(link=location_link))
+
+        if deleted_by_contractor:
+            self.location.activity.notify_managers(**notify_args)
+        else:
+            self.location.activity.notify_contractors(**notify_args)
 
     def setup_expected_attachments(self, filenames):
 

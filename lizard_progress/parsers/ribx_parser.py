@@ -8,13 +8,19 @@ from __future__ import absolute_import
 from __future__ import division
 
 import itertools
+import json
 
 from PIL.ImageFile import ImageFile
 import logging
 
+from django.contrib.sites.models import Site
+
+from ribxlib import models as ribxmodels
 from ribxlib import parsers
 
 from lizard_progress import models
+from lizard_progress.changerequests.models import Request
+from lizard_progress.email_notifications.models import NotificationType
 
 from lizard_progress.specifics import ProgressParser
 from lizard_progress.specifics import UnSuccessfulParserResult
@@ -52,7 +58,10 @@ class RibxParser(ProgressParser):
         min_y = self.activity.config_value('minimum_y_coordinate')
         max_y = self.activity.config_value('maximum_y_coordinate')
 
-        for item in itertools.chain(ribx.pipes, ribx.manholes, ribx.drains):
+        for item in itertools.chain(
+                ribx.inspection_pipes, ribx.cleaning_pipes,
+                ribx.inspection_manholes, ribx.cleaning_manholes,
+                ribx.drains):
             error = False
             if item.geom:
                 if not (min_x <= item.geom.GetX() <= max_x):
@@ -67,9 +76,22 @@ class RibxParser(ProgressParser):
                     error = True
 
             if not error:
-                measurement = self.save_measurement(item)
-                if measurement is not None:
-                    measurements.append(measurement)
+                if item.work_impossible:
+                    # This is not a measurement, but a claim that the
+                    # assigned work couldn't be done. Open a deletion
+                    # request instead of recording a measurement.
+                    # Creating the request also automatically
+                    # sends an email notification.
+                    Request.objects.create(
+                        activity=self.activity,
+                        request_type=Request.REQUEST_TYPE_REMOVE_CODE,
+                        location_code=item.ref,
+                        motivation=item.work_impossible,
+                        the_geom=item.geom.ExportToWkt())
+                else:
+                    measurement = self.save_measurement(item)
+                    if measurement is not None:
+                        measurements.append(measurement)
 
         if not measurements:
             self.record_error(0, None, 'Bestand bevat geen gegevens.')
@@ -83,10 +105,13 @@ class RibxParser(ProgressParser):
             location = self.activity.location_set.get(
                 location_code=item.ref)
         except models.Location.DoesNotExist:
-            self.record_error(
-                item.sourceline, 'LOCATION_NOT_FOUND',
-                self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
-            return None
+            if not item.new:
+                self.record_error(
+                    item.sourceline, 'LOCATION_NOT_FOUND',
+                    self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
+                return None
+            else:
+                location = self.create_new(item)
 
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement
@@ -129,3 +154,41 @@ class RibxParser(ProgressParser):
                 return measurement
 
         return None
+
+    def create_new(self, item):
+        """This item is marked as new. Create it and send mail."""
+
+        is_point = True
+        if isinstance(item, ribxmodels.Pipe):
+            location_type = models.Location.LOCATION_TYPE_PIPE
+            is_point = False
+        elif isinstance(item, ribxmodels.Manhole):
+            location_type = models.Location.LOCATION_TYPE_MANHOLE
+        elif isinstance(item, ribxmodels.Drain):
+            location_type = models.Location.LOCATION_TYPE_DRAIN
+        else:
+            # Huh?
+            location_type = models.Location.LOCATION_TYPE_POINT
+
+        location = models.Location.objects.create(
+            activity=self.activity,
+            location_code=item.ref,
+            location_type=location_type,
+            the_geom=item.geom.ExportToWkt(),
+            is_point=is_point,
+            information=json.dumps({
+                "remark": "Added automatically by {}".format(
+                    self.file_object.name)}))
+
+        notification_type = NotificationType.objects.get(
+            name='new location from ribx')
+        location_link = (
+            Site.objects.get_current().domain +
+            location.get_absolute_url())
+
+        self.activity.notify_managers(
+            notification_type, actor=self.activity.contractor,
+            action_object=self.file_object.name, target=location,
+            extra={'link': location_link})
+
+        return location

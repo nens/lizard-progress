@@ -56,13 +56,23 @@ Changelog of lizard-progress
 - Allow cancelling (deleting) a Measurement, from the popup. This will
   actually delete uploaded files (if there were no other measurements
   relating to it), which is a first. Only RIBX, for now. Handles
-  attachments correctly.
+  attachments correctly. Send a notification.
 
 - Change name 'Uploadserver' to 'Uploadservice' (note that this is purely
   a cosmetic change for the front-end).
 
 - Change name 'Hydrovak' to 'Monstervak' (note that this is purely a
   cosmetic change for the front-end).
+
+- Make it also possible to zoom to a specific Location, make that the
+  location's get_absolute_url()
+
+- Create a Remove change request when the RIBX file claims it was
+  impossible to do part of the work.
+
+- Allow RIBX files to note that some pipe, manhole or drain was new
+  (not part of the assigned work), automatically add it to the
+  activity and send an email.
 
 
 2.5.2 (2015-06-12)

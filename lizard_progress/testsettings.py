@@ -82,6 +82,9 @@ STATIC_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'static')
 MEDIA_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'media')
 STATICFILES_FINDERS = STATICFILES_FINDERS
 
+# Let tasks (called with .delay()) run as if they were called normally.
+CELERY_ALWAYS_EAGER = True
+
 try:
     # Import local settings that aren't stored in svn/git.
     from lizard_progress.local_testsettings import *

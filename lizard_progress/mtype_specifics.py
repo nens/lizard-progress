@@ -81,91 +81,53 @@ class GenericSpecifics(object):
         pass
 
 
-class MetfileSpecifics(GenericSpecifics):
-    extensions = ['.met']
-    parser = lizard_progress.parsers.met_parser.MetParser
-    linelike = True
+class PlottingData:
+    """
+    Class attributes:
 
-    # Note that the response_object argument is used from exports.py, to
-    # save images to a file instead of an HTTP response.
-    def image_handler(self, locations, response_object=None):
-        if not locations:
-            # Should not happen
-            logger.critical(
-                "dwarsprofiel_image_handler called without measurements!")
-            return
+        - data
+        - baseline
+        - left
+        - right
+        - waterlevel
+        - distances
+        - tops
+        - bottoms
+        - location
+        - date
+    """
 
-        # Currently only works for the first
-        location = locations[0]
+    def __init__(self, data, location, date):
+        self.location = location
+        self.date = date
 
-        if not location.complete:
-            # Should not happen, incomplete dwarsprofiel measurements
-            # don't have a graph in their popup.
-            logger.critical(
-                "dwarsprofiel_image_handler called for a graph " +
-                "of noncomplete measurement!")
-            return
+        self.baseline, self.left, self.right, self.waterlevel = self.find_base_line(data)
 
-        try:
-            m = models.Measurement.objects.get(location=location)
-        except models.Measurement.DoesNotExist:
-            # Again, should not happen.
-            logger.critical(
-                "Location id=%d is complete, but there " +
-                "is no Measurement for it!" % location.id)
-            return
+        self.data = self.sort_data(data, self.baseline)
 
-        data = m.data
-        baseline, left, right, waterlevel = self.find_base_line(data)
-        data = self.sort_data(data, baseline)
-
-        distances, tops, bottoms = [], [], []
-        for measurement in data:
+        self.distances, self.tops, self.bottoms = [], [], []
+        for measurement in self.data:
             x = float(measurement['x'])
             y = float(measurement['y'])
 
-            distances.append(baseline.distance_to_midpoint(Point(x=x, y=y)))
-            tops.append(float(measurement['top']))
-            bottoms.append(float(measurement['bottom']))
+            self.distances.append(
+                self.baseline.distance_to_midpoint(Point(x=x, y=y)))
+            self.tops.append(float(measurement['top']))
+            self.bottoms.append(float(measurement['bottom']))
 
-        fig = ScreenFigure(525, 300)
-        ax = fig.add_subplot(111)
-        ax.set_title(
-            'Dwarsprofiel {code}, project {project}, {contractor} {date}'
-            .format(code=location.location_code,
-                    project=self.project,
-                    contractor=self.organization,
-                    date=m.date.strftime("%d/%m/%y")))
+    @property
+    def project(self):
+        return self.location.activity.project
 
-        ax.set_xlabel('Afstand tot middelpunt watergang (m)')
-        ax.set_ylabel('Hoogte (m NAP)')
-        ax.plot(distances, bottoms, '.-',
-                label='Zachte bodem (z2)', linewidth=1.0, color='#663300')
-        ax.plot(distances, tops, '.-',
-                label='Harde bodem (z1)', linewidth=1.5, color='k')
-        ax.plot([baseline.distance_to_midpoint(left),
-                 baseline.distance_to_midpoint(right)],
-                [waterlevel, waterlevel],
-                label='Waterlijn',
-                linewidth=2,
-                color='b')
-
-        ax.legend(bbox_to_anchor=(0.5, 0.9), loc="center")
-        ax.set_xlim([distances[0] - 1, distances[-1] + 1])
-        ax.grid(True)
-
-        response = response_object or HttpResponse(content_type='image/png')
-        canvas = FigureCanvas(fig)
-        canvas.print_png(response)
-        return response
-
-    def sort_data(self, data, baseline):
+    @staticmethod
+    def sort_data(data, baseline):
         data = list(data)
         data.sort(
             key=lambda d: baseline.distance_to_midpoint(Point(d['x'], d['y'])))
         return data
 
-    def find_base_line(self, data):
+    @staticmethod
+    def find_base_line(data):
         codes_22 = [d for d in data
                     if d['type'] == '22']
 
@@ -183,6 +145,90 @@ class MetfileSpecifics(GenericSpecifics):
             start=left,
             end=right)
         return line, left, right, p1['bottom']
+
+
+class MetfileSpecifics(GenericSpecifics):
+    extensions = ['.met']
+    parser = lizard_progress.parsers.met_parser.MetParser
+    linelike = True
+
+    # Note that the response_object argument is used from exports.py, to
+    # save images to a file instead of an HTTP response.
+    def image_handler(self, locations, response_object=None):
+        if not locations:
+            # Should not happen
+            logger.critical(
+                "dwarsprofiel_image_handler called without measurements!")
+            return
+
+        if any(filter(lambda x: not x.complete, locations)):
+            # Should not happen, incomplete dwarsprofiel measurements
+            # don't have a graph in their popup.
+            logger.critical(
+                "dwarsprofiel_image_handler called for a graph " +
+                "of noncomplete measurement!")
+            return
+
+        measurements = models.Measurement.objects.filter(
+            location__in=locations)
+
+        data = [PlottingData(m.data, m.location, m.date) for m in measurements]
+
+        fig = ScreenFigure(525, 300)
+        ax = fig.add_subplot(111)
+        if len(data) == 1:
+            d = data[0]
+            ax.set_title(
+                'Dwarsprofiel {code}, project {project}, {contractor} {date}'
+                .format(code=d.location.location_code,
+                        project=self.project,
+                        contractor=self.organization,
+                        date=d.date.strftime("%d/%m/%y")))
+            ax.plot(d.distances, d.bottoms, '.-',
+                    label='Zachte bodem (z2)', linewidth=1.0, color='#663300')
+            ax.plot(d.distances, d.tops, '.-',
+                    label='Harde bodem (z1)', linewidth=1.5, color='k')
+            ax.plot([d.baseline.distance_to_midpoint(d.left),
+                     d.baseline.distance_to_midpoint(d.right)],
+                    [d.waterlevel, d.waterlevel],
+                    label='Waterlijn',
+                    linewidth=2,
+                    color='b')
+            ax.set_xlim([d.distances[0] - 1, d.distances[-1] + 1])
+        else:
+            ax.set_title(
+                'Dwarsprofielen van alle projecten op locatie {code}'.format(
+                    code=data[0].location.location_code))
+
+            for i, d in enumerate(data):
+                color = i / (2.0 * len(data))
+                # ^^^ Multiply data len by 2 to prevent the colours from
+                # becoming too light.
+                ax.plot(
+                    d.distances, d.bottoms, '.-', linewidth=1.0,
+                    color=str(color))
+                ax.plot(
+                    d.distances, d.tops, '.-', linewidth=1.5,
+                    color=str(color))
+                ax.plot([d.baseline.distance_to_midpoint(d.left),
+                         d.baseline.distance_to_midpoint(d.right)],
+                        [d.waterlevel, d.waterlevel],
+                        label='{project} - {date}'.format(
+                            project=d.project,
+                            date=d.date),
+                        linewidth=2,
+                        color=str(color))
+                ax.set_xlim([d.distances[0] - 1, d.distances[-1] + 1])
+
+        ax.set_xlabel('Afstand tot middelpunt watergang (m)')
+        ax.set_ylabel('Hoogte (m NAP)')
+        ax.legend(bbox_to_anchor=(0.5, 0.9), loc="center")
+        ax.grid(True)
+
+        response = response_object or HttpResponse(content_type='image/png')
+        canvas = FigureCanvas(fig)
+        canvas.print_png(response)
+        return response
 
 
 class OeverfotoSpecifics(GenericSpecifics):

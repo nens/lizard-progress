@@ -52,10 +52,10 @@ class GenericSpecifics(object):
         self.measurement_type = activity.measurement_type
         self.organization = activity.contractor
 
-    ## The below are named "sample_" so that the adapter can see that
-    ## the real html_handler and image_handler aren't implemented.  In
-    ## your own Specifics objects, they need to be named
-    ## 'html_handler' and 'image_handler'.
+    # The below are named "sample_" so that the adapter can see that
+    # the real html_handler and image_handler aren't implemented.  In
+    # your own Specifics objects, they need to be named
+    # 'html_handler' and 'image_handler'.
 
     def sample_html_handler(self, html_default, locations,
                             identifiers, layout_options):
@@ -212,7 +212,7 @@ class OeverfotoSpecifics(GenericSpecifics):
 
         oevers = []
         for oever in ('left', 'right'):
-            if not oever in photos:
+            if oever not in photos:
                 logger.warn(("Complete measurement, but oever %s not"
                              " in photos set.") % oever)
                 continue  # Should not happen
@@ -232,7 +232,7 @@ class OeverfotoSpecifics(GenericSpecifics):
             layout_options=layout_options,
             template="lizard_progress/measurement_types/photo.html",
             extra_render_kwargs={'oevers': oevers}
-            )
+        )
 
 
 class OeverkenmerkSpecifics(GenericSpecifics):
@@ -348,4 +348,4 @@ AVAILABLE_SPECIFICS = {
         RibxReinigingKolkenSpecifics, ExpectedAttachmentSpecifics],
     'ribx_reiniging_inspectie_riool': [
         RibxReinigingInspectieRioolSpecifics, ExpectedAttachmentSpecifics],
-    }
+}

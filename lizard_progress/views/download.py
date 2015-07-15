@@ -175,31 +175,31 @@ class DownloadHomeView(ProjectsView):
                 for path in directories.all_files_in(
                         directories.shapefile_dir(activity)):
                     yield {
-                        'type': 'Ingevulde hydrovakken shapefile {}'
+                        'type': 'Ingevulde monstervakken shapefile {}'
                         .format(activity.contractor.name),
                         'filename': os.path.basename(path),
                         'size': directories.human_size(path),
                         'url': self._make_url(
-                            'contractor_hydrovakken', self.project,
+                            'contractor_monstervakken', self.project,
                             activity, path)
                     }
 
-    def _hydrovakken_files(self):
+    def _monstervakken_files(self):
         if has_access(self.user, self.project):
             for path in directories.all_files_in(
                 directories.hydrovakken_dir(self.project),
                     extension=".shp"):
                 yield {
                     'description':
-                    "Hydrovakken {project}".format(project=self.project),
+                    "Monstervakken {project}".format(project=self.project),
                     'urls': {
                         'shp': self._make_url(
-                            'hydrovakken', self.project, None, path),
+                            'monstervakken', self.project, None, path),
                         'dbf': self._make_url(
-                            'hydrovakken', self.project, None,
+                            'monstervakken', self.project, None,
                             path.replace('.shp', '.dbf')),
                         'shx': self._make_url(
-                            'hydrovakken', self.project, None,
+                            'monstervakken', self.project, None,
                             path.replace('.shp', '.shx'))
                     }}
 
@@ -216,10 +216,10 @@ class DownloadHomeView(ProjectsView):
                         self._project_files()),
                     'reports': sorted_on_filename(self._reports_files()),
                     'results': sorted_on_filename(self._results_files()),
-                    'contractor_hydrovakken': sorted_on_filename(
+                    'contractor_monstervakken': sorted_on_filename(
                         self._shapefile_files()),
-                    'hydrovakken': sorted_on_filename(
-                        self._hydrovakken_files()),
+                    'monstervakken': sorted_on_filename(
+                        self._monstervakken_files()),
                     }
             except Exception as e:
                 logger.debug(e)
@@ -300,7 +300,7 @@ class DownloadView(View):
             directory = directories.reports_dir(activity)
         elif filetype == 'organization':
             directory = directories.project_files_dir(project)
-        elif filetype == 'hydrovakken':
+        elif filetype == 'monstervakken':
             directory = directories.hydrovakken_dir(project)
             for path in directories.all_files_in(directory):
                 if os.path.basename(path) == filename:
@@ -308,7 +308,7 @@ class DownloadView(View):
                     break
             else:
                 raise http.Http404()
-        elif filetype == 'contractor_hydrovakken':
+        elif filetype == 'contractor_monstervakken':
             directory = directories.shapefile_dir(activity)
             for path in directories.all_files_in(directory):
                 if os.path.basename(path) == filename:

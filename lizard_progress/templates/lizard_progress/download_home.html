@@ -53,7 +53,7 @@
     {% endfor %}
   </table>
 
-  {% if view.files.hydrovakken %}
+  {% if view.files.monstervakken %}
     <h3>Monstervakken shapefile</h3>
 
     <table class="table table-bordered fixed">
@@ -61,7 +61,7 @@
         <th>Omschrijving</th>
         <th>Downloads (3 files zijn samen een shape)</th>
       </thead>
-      {% for file in view.files.hydrovakken %}
+      {% for file in view.files.monstervakken %}
         <tr>
           <td class="filename">{{ file.description }}</td>
           <td class="download">
@@ -159,7 +159,7 @@
     {% endif %}
   {% endif %}
 
-  {% if view.files.reports or view.files.contractor_hydrovakken %}
+  {% if view.files.reports or view.files.contractor_monstervakken %}
     <h3>Rapportages</h3>
 
     <table class="table table-bordered fixed">
@@ -174,7 +174,7 @@
             <td class="download"><a href="{{ file.url }}">download</a></td>
           </tr>
         {% endfor %}
-        {% for file in view.files.contractor_hydrovakken %}
+        {% for file in view.files.contractor_monstervakken %}
           <tr>
             <td class="filename">{{ file.filename }} ({{ file.size }})</td>
             <td class="download"><a href="{{ file.url }}">download</a></td>

@@ -273,33 +273,59 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         # Find all profiles within the search distance. Order them by distance.
 
-        results = []
-
-        for location in (Location.objects.filter(
+        locations = list(
+            Location.objects.filter(
                 activity=self.activity,
                 the_geom__distance_lte=(pt, D(m=distance))).
-                distance(pt).order_by('distance')):
+            distance(pt).order_by('distance'))
 
-            # If we found multiple locations, some of them may be
-            # points and some of them may be line elements. We want to
-            # return the first point if there are points, and the
-            # first line otherwise.
-            if not results or location.is_point:
-                results = [{
-                    'name': unicode(location),
-                    'distance': location.distance.m,
-                    'workspace_item': self.workspace_item,
-                    'identifier': {
-                        'location_id': location.id,
-                    },
-                    'grouping_hint': 'lizard_progress %s %s' % (
-                        self.workspace_item.id,
-                        self.activity.id)
-                }]
+        logger.debug(">>>>>> maxdistance: {}".format(distance))
+        for location in locations:
+            logger.debug("{} {}".format(location, location.distance.m))
+        location = None
 
+        closest_point = (None, None)
+        for location in locations:
             if location.is_point:
+                closest_point = (location.distance.m, location)
                 break
 
+        closest_line = (None, None)
+        for location in locations:
+            if not location.is_point:
+                closest_line = (location.distance.m, location)
+                break
+
+        if closest_point[1] is None:
+            logger.debug("Closest point is None, pick closest line")
+            location = closest_line[1]
+        elif closest_line[1] is None:
+            logger.debug("Closest line is None, pick closest point")
+            location = closest_point[1]
+        else:
+            logger.debug("Both not None, pick the closest")
+            # BUT give the put a 10%+50cm bonus to make it possible to click it
+            both = [closest_line,
+                    (closest_point[0] * 0.9 - 0.5, closest_point[1])]
+            logger.debug(unicode(both))
+            both.sort()
+            location = both[0][1]
+            logger.debug("Picked {}".format(location))
+
+        if location is not None:
+            results = [{
+                'name': unicode(location),
+                'distance': location.distance.m,
+                'workspace_item': self.workspace_item,
+                'identifier': {
+                    'location_id': location.id,
+                },
+                'grouping_hint': 'lizard_progress %s %s' % (
+                    self.workspace_item.id,
+                    self.activity.id)
+            }]
+        else:
+            results = []
         logger.debug("Results=" + str(results))
         return results
 

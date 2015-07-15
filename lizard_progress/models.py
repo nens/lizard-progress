@@ -1733,7 +1733,8 @@ class OrganizationConfig(models.Model):
     # measurement_type must be None. Otherwise, for each slug in that list,
     # all measurement types that have that implementation slug can have
     # an instance in this model.
-    measurement_type = models.ForeignKey(AvailableMeasurementType, null=True)
+    measurement_type = models.ForeignKey(
+        AvailableMeasurementType, null=True, blank=True)
     value = models.CharField(
         'Bij ja/nee opties, voer 1 in voor ja, en niets voor nee.',
         max_length=50, null=True, blank=True)

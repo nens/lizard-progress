@@ -186,6 +186,10 @@ class ProjectType(models.Model):
     default = models.BooleanField(
         help_text="The type wil be applied to projects by default",
         default=False)
+    show_numbers_on_map = models.BooleanField(
+        help_text=_("If this is True, multiple recent uploads to one location "
+                    "will be marked by numbers on the map page. Used to find "
+                    "frequently recurring problems."), default=False)
 
     class Meta:
         unique_together = (('name', 'organization'),)
@@ -483,7 +487,8 @@ class Project(models.Model):
 
         if Hydrovak.objects.filter(project=self).exists():
             yield MapLayer(
-                name='Monstervakken {projectname}'.format(projectname=self.name),
+                name='Monstervakken {projectname}'.format(
+                    projectname=self.name),
                 adapter_class='adapter_hydrovak',
                 adapter_layer_json=json.dumps({"project_slug": self.slug}),
                 extent=None)
@@ -494,6 +499,12 @@ class Project(models.Model):
             notification_type=notification_type,
             subscriber_content_type=project_content_type,
             subscriber_object_id=self.id).exists()
+
+    @property
+    def show_numbers_on_map(self):
+        """Should map layers show numbers for multiple recent uploads."""
+        # Note that self.project_type is nullable.
+        return self.project_type and self.project_type.show_numbers_on_map
 
 
 class Location(models.Model):
@@ -953,6 +964,11 @@ class Activity(models.Model):
     def notify_contractors(self, notification_type, **kwargs):
         recipients = self.contractor.users
         return self.notify(notification_type, recipients, **kwargs)
+
+    @property
+    def show_numbers_on_map(self):
+        """Should map layers show numbers for multiple recent uploads."""
+        return self.project.show_numbers_on_map
 
 
 class ExpectedAttachment(models.Model):

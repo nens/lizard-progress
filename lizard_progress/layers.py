@@ -19,6 +19,10 @@ from lizard_progress.models import Location
 
 logger = logging.getLogger(__name__)
 
+# Number of days to look back for computing the number of times
+# a location has been inspected recently, to show on the map
+RECENTLY_INSPECTED_DAYS = 14
+
 
 def mapnik_datasource(query):
     default_database = settings.DATABASES['default']
@@ -34,29 +38,48 @@ def mapnik_datasource(query):
 
 def build_location_query(
         activity_id, is_point=None, complete=None, not_part_of_project=None,
-        dates_matter=False, planned=None, ontime=None):
-    q = """(SELECT
-                loc.the_geom AS the_geom,
-                CASE WHEN COUNT(measurement) > 1
-                    THEN to_char(COUNT(MEASUREMENT), '999')
-                    ELSE ''
-                END AS count
-            FROM
-                lizard_progress_location loc
-            INNER JOIN
-                lizard_progress_measurement measurement
-            ON
-                measurement.location_id = loc.id
-            GROUP BY
-                loc.id
-            HAVING
-                loc.activity_id = {activity_id} AND
-                {is_point_clause}
-                {complete_clause}
-                {not_part_of_project_clause}
-                {date_clause}
-                loc.the_geom IS NOT NULL
-           ) data"""
+        dates_matter=False, planned=None, ontime=None, numbers=False):
+    if is_point and numbers:
+        q = """(SELECT
+                    loc.the_geom AS the_geom,
+                    CASE WHEN COUNT(measurement) > 1
+                        THEN to_char(COUNT(measurement), '999')
+                        ELSE ''
+                    END AS count
+                FROM
+                    lizard_progress_location loc
+                LEFT OUTER JOIN
+                    lizard_progress_measurement measurement
+                ON
+                    measurement.location_id = loc.id AND
+                    measurement.parent_id IS NULL AND
+                    measurement.date >= current_date - interval '{recent} days'
+                WHERE
+                    loc.activity_id = {activity_id} AND
+                    {is_point_clause}
+                    {complete_clause}
+                    {not_part_of_project_clause}
+                    {date_clause}
+                    loc.the_geom IS NOT NULL
+                GROUP BY
+                    loc.the_geom
+               ) data"""
+    else:
+        q = """(SELECT
+                    loc.the_geom AS the_geom,
+                    '' AS count
+                FROM
+                    lizard_progress_location loc
+                WHERE
+                    loc.activity_id = {activity_id} AND
+                    {is_point_clause}
+                    {complete_clause}
+                    {not_part_of_project_clause}
+                    {date_clause}
+                    loc.the_geom IS NOT NULL
+                GROUP BY
+                    loc.the_geom
+               ) data"""
 
     if is_point is None:
         is_point_clause = ""
@@ -90,6 +113,7 @@ def build_location_query(
             date_clause = "loc.planned_date IS NULL AND "
 
     return q.format(
+        recent=RECENTLY_INSPECTED_DAYS,
         activity_id=activity_id,
         is_point_clause=is_point_clause,
         complete_clause=complete_clause,
@@ -105,11 +129,8 @@ def make_point_style(img):
 
         filename, extension, x, y = img
         symbol = mapnik.ShieldSymbolizer(
-            mapnik.Expression('[count]'), 'DejaVu Sans Bold', 16,
-            mapnik.Color("#000000"),
-            mapnik.PathExpression(filename))
-        symbol.displacement = (-6, 12)
-        #symbol.filename = filename
+            mapnik.Expression('[count]'), 'DejaVu Sans Book', 14,
+            mapnik.Color("#000000"), mapnik.PathExpression(filename))
         symbol.allow_overlap = overlap
         rule.symbols.append(symbol)
         return rule
@@ -149,8 +170,11 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         self.activity_id = kwargs['layer_arguments'].get('activity_id', None)
 
         try:
-            self.activity = models.Activity.objects.get(
-                pk=self.activity_id)
+            self.activity = (
+                models.Activity.objects.select_related().
+                select_related('project__project_type').get(
+                    pk=self.activity_id))
+
         except models.Activity.DoesNotExist:
             logger.debug("ACTIVITY {} DOES NOT EXIST".format(self.activity_id))
             self.activity = None
@@ -158,19 +182,25 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
 
         super(ProgressAdapter, self).__init__(*args, **kwargs)
 
+    @property
+    def show_numbers_on_map(self):
+        return self.activity.show_numbers_on_map
+
     def mapnik_query_no_date(self, is_point, complete):
         return build_location_query(
             self.activity_id, is_point=is_point, complete=complete,
-            not_part_of_project=False)
+            not_part_of_project=False, numbers=self.show_numbers_on_map)
 
     def mapnik_query_locations_not_in_project(self):
         return build_location_query(
-            self.activity_id, is_point=True, not_part_of_project=True)
+            self.activity_id, is_point=True, not_part_of_project=True,
+            numbers=self.show_numbers_on_map)
 
     def mapnik_query_date(self, is_point, planned, ontime, complete):
         return build_location_query(
             self.activity_id, is_point=is_point, complete=complete,
-            dates_matter=True, planned=planned, ontime=ontime)
+            dates_matter=True, planned=planned, ontime=ontime,
+            numbers=self.show_numbers_on_map)
 
     def layer_desc(self, complete):
         return "{} {} {}".format(
@@ -185,6 +215,12 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             layers, styles = self.layer_date(layer_ids, request)
         else:
             layers, styles = self.layer_no_date(layer_ids, request)
+
+        if self.show_numbers_on_map:
+            # Show an extra layer with numbers for line locations that
+            # have been uploaded frequently in the last weeks. The
+            # same information for points is shown using shieldsymbolizers.
+            self.add_layer_for_frequently_uploaded_locations(layers, styles)
 
         # Show an extra layer for point locations that are not
         # part of the project
@@ -271,6 +307,51 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             self.mapnik_query_locations_not_in_project())
         layer.styles.append(layer_desc)
         layers.append(layer)
+
+    def add_layer_for_frequently_uploaded_locations(self, layers, styles):
+        """In some activities, if several separate (non-attachment)
+        measurements for the same location were uploaded recently,
+        show a number on the map indicating the number of
+        measurements. This way locations that have to fixed /
+        inspected often can be found.
+
+        """
+        layer_desc = 'Frequently uploaded locations for {}'.format(
+            self.activity.id)
+        layer = mapnik.Layer(layer_desc, RD)
+        style = mapnik.Style()
+        rule = mapnik.Rule()
+        rule.symbols.append(mapnik.TextSymbolizer(
+            mapnik.Expression("[count]"),
+            'DejaVu Sans Book', 14, mapnik.Color('black')))
+        style.rules.append(rule)
+        styles[layer_desc] = style
+
+        layer.datasource = mapnik_datasource("""
+           (SELECT
+                loc.the_geom AS the_geom,
+                COUNT(m) AS count
+            FROM
+                lizard_progress_location loc
+            LEFT OUTER JOIN
+                lizard_progress_measurement m
+            ON
+                m.location_id = loc.id AND
+                m.parent_id IS NULL AND
+                m.date >= current_date - interval '{recent} days'
+            WHERE
+                loc.activity_id = {activity_id} AND
+                loc.the_geom IS NOT NULL AND
+                NOT loc.is_point
+            GROUP BY
+                loc.the_geom
+            HAVING
+                COUNT(m) > 1
+            ) data""".format(activity_id=self.activity.id,
+                             recent=RECENTLY_INSPECTED_DAYS))
+        layer.styles.append(layer_desc)
+        # Insert in front
+        layers[0:0] = [layer]
 
     def search(self, x, y, radius=None):
         """

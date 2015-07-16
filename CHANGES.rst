@@ -74,6 +74,10 @@ Changelog of lizard-progress
   (not part of the assigned work), automatically add it to the
   activity and send an email.
 
+- For some project types ("Calamiteiten"), show numbers on the map with
+  the amount of non-attachment measurements for that location, if the
+  number is more than 1 in the last 14 days.
+
 
 2.5.2 (2015-06-12)
 ------------------

@@ -465,7 +465,9 @@ class PlanningView(ActivityView):
         # First, if there are no errors, do our own error checking
         if not errors:
             errors = []
-            for item in (ribx.pipes + ribx.drains + ribx.manholes):
+            for item in (ribx.inspection_pipes + ribx.cleaning_pipes +
+                         ribx.drains +
+                         ribx.inspection_manholes + ribx.cleaning_manholes):
                 if item.geom is None:
                     errors.append({
                         'line': item.sourceline,

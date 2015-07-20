@@ -78,6 +78,8 @@ Changelog of lizard-progress
   the amount of non-attachment measurements for that location, if the
   number is more than 1 in the last 14 days.
 
+- Added a legend.
+
 
 2.5.2 (2015-06-12)
 ------------------

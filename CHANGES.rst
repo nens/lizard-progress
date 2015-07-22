@@ -64,6 +64,13 @@ Changelog of lizard-progress
 - Change name 'Hydrovak' to 'Monstervak' (note that this is purely a
   cosmetic change for the front-end).
 
+- If a Dwarsprofielen location code is present in more than one
+  project / activity of the same organization (all complete), there is
+  now a link in the popup to a graph that shows all of them. This is
+  to make it possible to compare multiple measurements over a number
+  of years (it is not possible to view multiple projects at the same
+  time on the map page anymore).
+
 
 2.5.2 (2015-06-12)
 ------------------

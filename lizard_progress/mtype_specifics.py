@@ -7,11 +7,8 @@ This module defines a Specifics object for each measurement type.
 
 import logging
 
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-
-from metfilelib.util.linear_algebra import Line, Point
 
 import lizard_progress.parsers.attachment_parser
 import lizard_progress.parsers.lab_csv_parser
@@ -23,7 +20,7 @@ import lizard_progress.parsers.peilschaal_jpg_parser
 import lizard_progress.parsers.ribx_parser
 
 from lizard_progress import models
-from lizard_progress.views import ScreenFigure
+from lizard_progress import crosssection_graph
 
 logger = logging.getLogger(__name__)
 
@@ -81,72 +78,6 @@ class GenericSpecifics(object):
         pass
 
 
-class PlottingData:
-    """
-    Class attributes:
-
-        - data
-        - baseline
-        - left
-        - right
-        - waterlevel
-        - distances
-        - tops
-        - bottoms
-        - location
-        - date
-    """
-
-    def __init__(self, data, location, date):
-        self.location = location
-        self.date = date
-
-        self.baseline, self.left, self.right, self.waterlevel = self.find_base_line(data)
-
-        self.data = self.sort_data(data, self.baseline)
-
-        self.distances, self.tops, self.bottoms = [], [], []
-        for measurement in self.data:
-            x = float(measurement['x'])
-            y = float(measurement['y'])
-
-            self.distances.append(
-                self.baseline.distance_to_midpoint(Point(x=x, y=y)))
-            self.tops.append(float(measurement['top']))
-            self.bottoms.append(float(measurement['bottom']))
-
-    @property
-    def project(self):
-        return self.location.activity.project
-
-    @staticmethod
-    def sort_data(data, baseline):
-        data = list(data)
-        data.sort(
-            key=lambda d: baseline.distance_to_midpoint(Point(d['x'], d['y'])))
-        return data
-
-    @staticmethod
-    def find_base_line(data):
-        codes_22 = [d for d in data
-                    if d['type'] == '22']
-
-        if len(codes_22) == 2:
-            p1 = codes_22[0]
-            p2 = codes_22[1]
-        else:
-            # It's hopeless if they aren't there, do something
-            p1 = data[0]
-            p2 = data[-1]
-
-        left = Point(x=p1['x'], y=p1['y'])
-        right = Point(x=p2['x'], y=p2['y'])
-        line = Line(
-            start=left,
-            end=right)
-        return line, left, right, p1['bottom']
-
-
 class MetfileSpecifics(GenericSpecifics):
     extensions = ['.met']
     parser = lizard_progress.parsers.met_parser.MetParser
@@ -161,7 +92,7 @@ class MetfileSpecifics(GenericSpecifics):
                 "dwarsprofiel_image_handler called without measurements!")
             return
 
-        if any(filter(lambda x: not x.complete, locations)):
+        if any(not location.complete for location in locations):
             # Should not happen, incomplete dwarsprofiel measurements
             # don't have a graph in their popup.
             logger.critical(
@@ -172,63 +103,33 @@ class MetfileSpecifics(GenericSpecifics):
         measurements = models.Measurement.objects.filter(
             location__in=locations)
 
-        data = [PlottingData(m.data, m.location, m.date) for m in measurements]
-
-        fig = ScreenFigure(525, 300)
-        ax = fig.add_subplot(111)
-        if len(data) == 1:
-            d = data[0]
-            ax.set_title(
-                'Dwarsprofiel {code}, project {project}, {contractor} {date}'
-                .format(code=d.location.location_code,
-                        project=self.project,
-                        contractor=self.organization,
-                        date=d.date.strftime("%d/%m/%y")))
-            ax.plot(d.distances, d.bottoms, '.-',
-                    label='Zachte bodem (z2)', linewidth=1.0, color='#663300')
-            ax.plot(d.distances, d.tops, '.-',
-                    label='Harde bodem (z1)', linewidth=1.5, color='k')
-            ax.plot([d.baseline.distance_to_midpoint(d.left),
-                     d.baseline.distance_to_midpoint(d.right)],
-                    [d.waterlevel, d.waterlevel],
-                    label='Waterlijn',
-                    linewidth=2,
-                    color='b')
-            ax.set_xlim([d.distances[0] - 1, d.distances[-1] + 1])
-        else:
-            ax.set_title(
-                'Dwarsprofielen van alle projecten op locatie {code}'.format(
-                    code=data[0].location.location_code))
-
-            for i, d in enumerate(data):
-                color = i / (2.0 * len(data))
-                # ^^^ Multiply data len by 2 to prevent the colours from
-                # becoming too light.
-                ax.plot(
-                    d.distances, d.bottoms, '.-', linewidth=1.0,
-                    color=str(color))
-                ax.plot(
-                    d.distances, d.tops, '.-', linewidth=1.5,
-                    color=str(color))
-                ax.plot([d.baseline.distance_to_midpoint(d.left),
-                         d.baseline.distance_to_midpoint(d.right)],
-                        [d.waterlevel, d.waterlevel],
-                        label='{project} - {date}'.format(
-                            project=d.project,
-                            date=d.date),
-                        linewidth=2,
-                        color=str(color))
-                ax.set_xlim([d.distances[0] - 1, d.distances[-1] + 1])
-
-        ax.set_xlabel('Afstand tot middelpunt watergang (m)')
-        ax.set_ylabel('Hoogte (m NAP)')
-        ax.legend(bbox_to_anchor=(0.5, 0.9), loc="center")
-        ax.grid(True)
+        canvas = crosssection_graph.graph(measurements)
 
         response = response_object or HttpResponse(content_type='image/png')
-        canvas = FigureCanvas(fig)
         canvas.print_png(response)
         return response
+
+    def html_handler(self, html_default, locations,
+                     identifiers, layout_options):
+        location_code = locations[0].location_code
+        organization = locations[0].activity.project.organization
+
+        multiple_projects_graph_url = None
+        if models.Location.objects.filter(
+                activity__project__organization=organization,
+                location_code=location_code,
+                complete=True).count() > 1:
+            multiple_projects_graph_url = reverse(
+                'crosssection_graph', kwargs=dict(
+                    organization_id=organization.id,
+                    location_code=location_code))
+
+        return html_default(
+            identifiers=identifiers,
+            layout_options=layout_options,
+            template="lizard_progress/measurement_types/metfile.html",
+            extra_render_kwargs=dict(
+                multiple_projects_graph_url=multiple_projects_graph_url))
 
 
 class OeverfotoSpecifics(GenericSpecifics):
@@ -320,7 +221,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
             layout_options=layout_options,
             template="lizard_progress/measurement_types/peilschaal_foto.html",
             extra_render_kwargs={'location': location.location_code,
-                                 'url': m.url})
+                                 'url': m.get_absolute_url()})
 
 
 class PeilschaalMetingSpecifics(GenericSpecifics):

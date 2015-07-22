@@ -26,6 +26,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
 from django.utils.functional import cached_property
@@ -47,6 +48,7 @@ from lizard_progress.models import has_access
 from lizard_progress.util import directories
 from lizard_progress.util import workspaces
 from lizard_progress.util import geo
+from lizard_progress import crosssection_graph
 from lizard_progress import forms
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.email_notifications.models import NotificationSubscription
@@ -905,3 +907,20 @@ class EmailNotificationConfigurationView(ProjectsView):
                 option.unsubscribe(self.project)
 
         return redirect
+
+
+def multiproject_crosssection_graph(request, organization_id, location_code):
+    """Show a graph with all Dwarsprofielen of this code that have been
+    uploaded in this organization.
+
+    """
+    organization = get_object_or_404(models.Organization, id=organization_id)
+    if models.Organization.get_by_user(request.user) != organization:
+        raise PermissionDenied()
+
+    canvas = crosssection_graph.location_code_graph(
+        organization, location_code)
+
+    response = HttpResponse(content_type='image/png')
+    canvas.print_png(response)
+    return response

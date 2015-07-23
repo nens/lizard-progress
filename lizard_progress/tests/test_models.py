@@ -386,6 +386,10 @@ class TestLocation(FixturesTestCase):
 
         self.assertTrue(location.has_measurements())
 
+    def test_has_absolute_url(self):
+        location = LocationF()
+        self.assertTrue(location.get_absolute_url())
+
 
 class TestMeasurement(FixturesTestCase):
     """Tests for the Measurement model."""

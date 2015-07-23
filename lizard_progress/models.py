@@ -186,6 +186,10 @@ class ProjectType(models.Model):
     default = models.BooleanField(
         help_text="The type wil be applied to projects by default",
         default=False)
+    show_numbers_on_map = models.BooleanField(
+        help_text=_("If this is True, multiple recent uploads to one location "
+                    "will be marked by numbers on the map page. Used to find "
+                    "frequently recurring problems."), default=False)
 
     class Meta:
         unique_together = (('name', 'organization'),)
@@ -483,7 +487,8 @@ class Project(models.Model):
 
         if Hydrovak.objects.filter(project=self).exists():
             yield MapLayer(
-                name='Monstervakken {projectname}'.format(projectname=self.name),
+                name='Monstervakken {projectname}'.format(
+                    projectname=self.name),
                 adapter_class='adapter_hydrovak',
                 adapter_layer_json=json.dumps({"project_slug": self.slug}),
                 extent=None)
@@ -494,6 +499,12 @@ class Project(models.Model):
             notification_type=notification_type,
             subscriber_content_type=project_content_type,
             subscriber_object_id=self.id).exists()
+
+    @property
+    def show_numbers_on_map(self):
+        """Should map layers show numbers for multiple recent uploads."""
+        # Note that self.project_type is nullable.
+        return self.project_type and self.project_type.show_numbers_on_map
 
 
 class Location(models.Model):
@@ -576,6 +587,16 @@ class Location(models.Model):
             u += ", {} {}".format(_(u"planned on"), self.planned_date)
 
         return u
+
+    def get_absolute_url(self):
+        """Return an URL that goes to the Map page, zooming to this
+        location.
+
+        """
+        return reverse(
+            'lizard_progress_mapview_location_code',
+            kwargs={'project_slug': self.activity.project.slug,
+                    'location_code': self.location_code})
 
     def plan_location(self, location):
         """Set our geometrical location, IF it wasn't set yet.
@@ -944,6 +965,11 @@ class Activity(models.Model):
         recipients = self.contractor.users
         return self.notify(notification_type, recipients, **kwargs)
 
+    @property
+    def show_numbers_on_map(self):
+        """Should map layers show numbers for multiple recent uploads."""
+        return self.project.show_numbers_on_map
+
 
 class ExpectedAttachment(models.Model):
     """A filename of a file that has to be uploaded for some
@@ -1116,7 +1142,7 @@ class Measurement(models.Model):
     def base_filename(self):
         return self.filename and os.path.basename(self.filename)
 
-    def delete(self):
+    def delete(self, notify=True, deleted_by_contractor=True):
         """Delete this measurement. If this is done by a user of the
         contractor organization, this is cancellation (for instance to
         fix errors), if this is done by a user of the project owning
@@ -1145,7 +1171,12 @@ class Measurement(models.Model):
 
         # Also delete measurements of uploaded attachments related to this
         for measurement in Measurement.objects.filter(parent=self):
-            measurement.delete()
+            # Prevent sending too many emails
+            measurement.delete(notify=False)
+
+        # Send notification
+        if notify:
+            self.send_deletion_notification(deleted_by_contractor)
 
         # Delete this
         super(Measurement, self).delete()
@@ -1162,6 +1193,26 @@ class Measurement(models.Model):
 
         # Let our location determine its completeness
         self.location.set_completeness()
+
+    def send_deletion_notification(self, deleted_by_contractor):
+        notification_type = NotificationType.objects.get(
+            name='measurement cancelled')
+        actor = (
+            self.location.activity.contractor if deleted_by_contractor else
+            self.location.activity.project.organization)
+        location_link = (
+            Site.objects.get_current().domain +
+            self.location.get_absolute_url())
+        notify_args = dict(
+            notification_type=notification_type,
+            actor=actor,
+            action_object=self.location,
+            extra=dict(link=location_link))
+
+        if deleted_by_contractor:
+            self.location.activity.notify_managers(**notify_args)
+        else:
+            self.location.activity.notify_contractors(**notify_args)
 
     def setup_expected_attachments(self, filenames):
 
@@ -1698,7 +1749,8 @@ class OrganizationConfig(models.Model):
     # measurement_type must be None. Otherwise, for each slug in that list,
     # all measurement types that have that implementation slug can have
     # an instance in this model.
-    measurement_type = models.ForeignKey(AvailableMeasurementType, null=True)
+    measurement_type = models.ForeignKey(
+        AvailableMeasurementType, null=True, blank=True)
     value = models.CharField(
         'Bij ja/nee opties, voer 1 in voor ja, en niets voor nee.',
         max_length=50, null=True, blank=True)

@@ -22,7 +22,7 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
         try:
             expected_attachment = models.ExpectedAttachment.objects.get(
                 measurements__location__activity=self.activity,
-                filename=filename)
+                filename__iexact=filename)
         except models.ExpectedAttachment.DoesNotExist:
             return self.error('UNEXPECTED', filename)
 

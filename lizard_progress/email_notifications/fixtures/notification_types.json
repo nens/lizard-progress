@@ -1,82 +1,82 @@
 [
    {
-      "model" : "email_notifications.notificationtype",
       "fields" : {
-         "description" : "",
          "subject_template" : "Aanvraag {{ action_object }} in {{ target }} geaccepteerd.",
          "body_template" : "{{ actor }} heeft uw aanvraag {{ action_object }} in {{ target }} geaccepteerd.\r\n\r\n{{ link }}",
+         "description" : "",
          "name" : "aanvraag geaccepteerd"
       },
+      "model" : "email_notifications.notificationtype",
       "pk" : 1
    },
    {
       "pk" : 2,
+      "model" : "email_notifications.notificationtype",
       "fields" : {
+         "description" : "",
          "name" : "aanvraag afgekeurd",
-         "body_template" : "{{ actor }} heeft uw aanvraag {{ action_object }} in {{ target }} afgekeurd.\r\n\r\n{{ link }}",
          "subject_template" : "Aanvraag {{ action_object }} in {{ target }} afgekeurd.",
-         "description" : ""
-      },
-      "model" : "email_notifications.notificationtype"
+         "body_template" : "{{ actor }} heeft uw aanvraag {{ action_object }} in {{ target }} afgekeurd.\r\n\r\n{{ link }}"
+      }
    },
    {
+      "model" : "email_notifications.notificationtype",
+      "pk" : 3,
       "fields" : {
          "name" : "aanvraag ingediend",
+         "description" : "",
          "body_template" : "{{ actor }} heeft een aanvraag {{ action_object }} ingediend voor {{ target }}.\r\n\r\n{{ link }}",
-         "subject_template" : "Er is een aanvraag ingediend voor {{ target }}.",
-         "description" : ""
-      },
-      "model" : "email_notifications.notificationtype",
-      "pk" : 3
+         "subject_template" : "Er is een aanvraag ingediend voor {{ target }}."
+      }
    },
    {
+      "model" : "email_notifications.notificationtype",
+      "pk" : 4,
       "fields" : {
          "name" : "aanvraag commentaar toegevoegd",
+         "description" : "",
          "body_template" : "{{ actor }} heeft commentaar toegevoegd op aanvraag {{ action_object }} in {{ target }}.\r\n\r\n{{ link }}",
-         "subject_template" : "Commentaar toegevoegd op aanvraag {{ action_object }} in {{ target }}.",
-         "description" : ""
-      },
-      "model" : "email_notifications.notificationtype",
-      "pk" : 4
+         "subject_template" : "Commentaar toegevoegd op aanvraag {{ action_object }} in {{ target }}."
+      }
    },
    {
-      "model" : "email_notifications.notificationtype",
       "fields" : {
-         "name" : "project voltooid",
-         "body_template" : "Het project {{ action_object }} is 100% voltooid.\r\n\r\n{{ link }}",
          "subject_template" : "Project {{ action_object }} is voltooid.",
+         "body_template" : "Het project {{ action_object }} is 100% voltooid.\r\n\r\n{{ link }}",
+         "name" : "project voltooid",
          "description" : ""
       },
+      "model" : "email_notifications.notificationtype",
       "pk" : 5
    },
    {
-      "pk" : 6,
       "fields" : {
          "body_template" : "De werkzaamheid {{ action_object }} in project {{ target }} is voltooid.\r\n\r\n{{ link }}",
          "subject_template" : "Werkzaamheid {{ action_object }} is voltooid.",
          "name" : "werkzaamheid voltooid",
          "description" : ""
       },
-      "model" : "email_notifications.notificationtype"
+      "model" : "email_notifications.notificationtype",
+      "pk" : 6
    },
    {
-      "pk" : 7,
       "fields" : {
          "description" : "RIBX file gaf met een ?XC code aan dat iets nieuw was.",
+         "name" : "new location from ribx",
          "subject_template" : "Nieuwe put/streng/kolk toegevoegd vanuit RIBX",
-         "body_template" : "{{ actor }} heeft in {{ action_object }} aangegeven dat {{ target }} ontbreekt in de opdracht, deze is automatisch toegevoegd.\r\n\r\n{{ link }}\r\n",
-         "name" : "new location from ribx"
+         "body_template" : "{{ actor }} heeft in {{ action_object }} aangegeven dat {{ target }} ontbreekt in de opdracht, deze is automatisch toegevoegd.\r\n\r\n{{ link }}\r\n"
       },
+      "pk" : 7,
       "model" : "email_notifications.notificationtype"
    },
    {
-      "model" : "email_notifications.notificationtype",
       "fields" : {
-         "description" : "",
-         "name" : "measurement cancelled",
          "subject_template" : "Upload geannuleerd door {{ actor }}",
-         "body_template" : "{{ actor }} heeft een of meer uploads bij {{ action_object }} geannuleerd.\r\n\r\n{{ link }}"
+         "body_template" : "{{ actor }} heeft een of meer uploads bij {{ action_object }} geannuleerd.\r\n\r\n{{ link }}",
+         "name" : "measurement cancelled",
+         "description" : ""
       },
+      "model" : "email_notifications.notificationtype",
       "pk" : 8
    }
 ]

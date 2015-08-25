@@ -462,12 +462,13 @@ class PlanningView(ActivityView):
         # For drains
         eaq_code = self.config_value('owner_organisation_eaq_code')
 
+        pipes = ribx.inspection_pipes + ribx.cleaning_pipes
+        manholes = ribx.inspection_manholes + ribx.cleaning_manholes
+
         # First, if there are no errors, do our own error checking
         if not errors:
             errors = []
-            for item in (ribx.inspection_pipes + ribx.cleaning_pipes +
-                         ribx.drains +
-                         ribx.inspection_manholes + ribx.cleaning_manholes):
+            for item in (pipes + ribx.drains + manholes):
                 if item.geom is None:
                     errors.append({
                         'line': item.sourceline,
@@ -509,12 +510,12 @@ class PlanningView(ActivityView):
 
             return
 
-        for pipe in ribx.pipes:
+        for pipe in pipes:
             logger.debug("PIPE: {} {}".format(pipe.ref, pipe.geom))
             yield (pipe.ref, (pipe.geom, models.Location.LOCATION_TYPE_PIPE,
                    False))
 
-        for manhole in ribx.manholes:
+        for manhole in manholes:
             yield (manhole.ref,
                    (manhole.geom, models.Location.LOCATION_TYPE_MANHOLE,
                     False))
@@ -532,7 +533,7 @@ class PlanningView(ActivityView):
         messages.add_message(
             request, messages.INFO,
             'Bestand OK, {} pipes {} manholes {} drains'
-            .format(len(ribx.pipes), len(ribx.manholes), len(ribx.drains)))
+            .format(len(pipes), len(manholes), len(ribx.drains)))
 
     def __existing_measurements(self):
         return models.Measurement.objects.filter(

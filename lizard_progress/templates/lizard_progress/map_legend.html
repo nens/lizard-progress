@@ -1,0 +1,17 @@
+{# Legend, in the right sidebar #}
+{% load i18n %}
+
+<h2>{% trans "Legend" %}</h2>
+
+<dl>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_green.png"> of groene lijn</dt>
+  <dd>Compleet aanwezig</dd>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_black.png"> of zwarte lijn</dt>
+  <dd>Gepland, nog niet compleet (alleen bij datumplanning)</dd>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_yellow.png"> of gele lijn</dt>
+  <dd>Gepland, nog niet compleet en planningsdatum verstreken (alleen bij datumplanning)</dd>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_red.png"> of rode lijn</dt>
+  <dd>Nog niet geheel aanwezig, en (bij datumplanning) nog niet gepland</dd>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_grey.png"> of grijze lijn</dt>
+  <dd>Geen onderdeel van de werkzaamheden</dd>
+</dl>

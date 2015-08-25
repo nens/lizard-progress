@@ -222,8 +222,14 @@ urlpatterns = patterns(
         login_required(views.UploadOrganizationFileView.as_view()),
         name='lizard_progress_upload_orgfile'),
 
+    # Graph with all cross sections of a certain location_code
+    url('^crosssections/(?P<organization_id>\d+)/(?P<location_code>[^/]+)$',
+        login_required(views.views.multiproject_crosssection_graph),
+        name='crosssection_graph'),
+
     # All URLs related to some specific project
     url(r'^projects/(?P<project_slug>[^/]+)/', include(project_urls))
+
 )
 
 

@@ -78,6 +78,15 @@ Changelog of lizard-progress
   the amount of non-attachment measurements for that location, if the
   number is more than 1 in the last 14 days.
 
+- Added a legend.
+
+- If a Dwarsprofielen location code is present in more than one
+  project / activity of the same organization (all complete), there is
+  now a link in the popup to a graph that shows all of them. This is
+  to make it possible to compare multiple measurements over a number
+  of years (it is not possible to view multiple projects at the same
+  time on the map page anymore).
+
 
 2.5.2 (2015-06-12)
 ------------------

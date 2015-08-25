@@ -7,11 +7,8 @@ This module defines a Specifics object for each measurement type.
 
 import logging
 
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-
-from metfilelib.util.linear_algebra import Line, Point
 
 import lizard_progress.parsers.attachment_parser
 import lizard_progress.parsers.lab_csv_parser
@@ -23,7 +20,7 @@ import lizard_progress.parsers.peilschaal_jpg_parser
 import lizard_progress.parsers.ribx_parser
 
 from lizard_progress import models
-from lizard_progress.views import ScreenFigure
+from lizard_progress import crosssection_graph
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +49,10 @@ class GenericSpecifics(object):
         self.measurement_type = activity.measurement_type
         self.organization = activity.contractor
 
-    ## The below are named "sample_" so that the adapter can see that
-    ## the real html_handler and image_handler aren't implemented.  In
-    ## your own Specifics objects, they need to be named
-    ## 'html_handler' and 'image_handler'.
+    # The below are named "sample_" so that the adapter can see that
+    # the real html_handler and image_handler aren't implemented.  In
+    # your own Specifics objects, they need to be named
+    # 'html_handler' and 'image_handler'.
 
     def sample_html_handler(self, html_default, locations,
                             identifiers, layout_options):
@@ -95,10 +92,7 @@ class MetfileSpecifics(GenericSpecifics):
                 "dwarsprofiel_image_handler called without measurements!")
             return
 
-        # Currently only works for the first
-        location = locations[0]
-
-        if not location.complete:
+        if any(not location.complete for location in locations):
             # Should not happen, incomplete dwarsprofiel measurements
             # don't have a graph in their popup.
             logger.critical(
@@ -106,83 +100,36 @@ class MetfileSpecifics(GenericSpecifics):
                 "of noncomplete measurement!")
             return
 
-        try:
-            m = models.Measurement.objects.get(location=location)
-        except models.Measurement.DoesNotExist:
-            # Again, should not happen.
-            logger.critical(
-                "Location id=%d is complete, but there " +
-                "is no Measurement for it!" % location.id)
-            return
+        measurements = models.Measurement.objects.filter(
+            location__in=locations)
 
-        data = m.data
-        baseline, left, right, waterlevel = self.find_base_line(data)
-        data = self.sort_data(data, baseline)
-
-        distances, tops, bottoms = [], [], []
-        for measurement in data:
-            x = float(measurement['x'])
-            y = float(measurement['y'])
-
-            distances.append(baseline.distance_to_midpoint(Point(x=x, y=y)))
-            tops.append(float(measurement['top']))
-            bottoms.append(float(measurement['bottom']))
-
-        fig = ScreenFigure(525, 300)
-        ax = fig.add_subplot(111)
-        ax.set_title(
-            'Dwarsprofiel {code}, project {project}, {contractor} {date}'
-            .format(code=location.location_code,
-                    project=self.project,
-                    contractor=self.organization,
-                    date=m.date.strftime("%d/%m/%y")))
-
-        ax.set_xlabel('Afstand tot middelpunt watergang (m)')
-        ax.set_ylabel('Hoogte (m NAP)')
-        ax.plot(distances, bottoms, '.-',
-                label='Zachte bodem (z2)', linewidth=1.0, color='#663300')
-        ax.plot(distances, tops, '.-',
-                label='Harde bodem (z1)', linewidth=1.5, color='k')
-        ax.plot([baseline.distance_to_midpoint(left),
-                 baseline.distance_to_midpoint(right)],
-                [waterlevel, waterlevel],
-                label='Waterlijn',
-                linewidth=2,
-                color='b')
-
-        ax.legend(bbox_to_anchor=(0.5, 0.9), loc="center")
-        ax.set_xlim([distances[0] - 1, distances[-1] + 1])
-        ax.grid(True)
+        canvas = crosssection_graph.graph(measurements)
 
         response = response_object or HttpResponse(content_type='image/png')
-        canvas = FigureCanvas(fig)
         canvas.print_png(response)
         return response
 
-    def sort_data(self, data, baseline):
-        data = list(data)
-        data.sort(
-            key=lambda d: baseline.distance_to_midpoint(Point(d['x'], d['y'])))
-        return data
+    def html_handler(self, html_default, locations,
+                     identifiers, layout_options):
+        location_code = locations[0].location_code
+        organization = locations[0].activity.project.organization
 
-    def find_base_line(self, data):
-        codes_22 = [d for d in data
-                    if d['type'] == '22']
+        multiple_projects_graph_url = None
+        if models.Location.objects.filter(
+                activity__project__organization=organization,
+                location_code=location_code,
+                complete=True).count() > 1:
+            multiple_projects_graph_url = reverse(
+                'crosssection_graph', kwargs=dict(
+                    organization_id=organization.id,
+                    location_code=location_code))
 
-        if len(codes_22) == 2:
-            p1 = codes_22[0]
-            p2 = codes_22[1]
-        else:
-            # It's hopeless if they aren't there, do something
-            p1 = data[0]
-            p2 = data[-1]
-
-        left = Point(x=p1['x'], y=p1['y'])
-        right = Point(x=p2['x'], y=p2['y'])
-        line = Line(
-            start=left,
-            end=right)
-        return line, left, right, p1['bottom']
+        return html_default(
+            identifiers=identifiers,
+            layout_options=layout_options,
+            template="lizard_progress/measurement_types/metfile.html",
+            extra_render_kwargs=dict(
+                multiple_projects_graph_url=multiple_projects_graph_url))
 
 
 class OeverfotoSpecifics(GenericSpecifics):
@@ -212,7 +159,7 @@ class OeverfotoSpecifics(GenericSpecifics):
 
         oevers = []
         for oever in ('left', 'right'):
-            if not oever in photos:
+            if oever not in photos:
                 logger.warn(("Complete measurement, but oever %s not"
                              " in photos set.") % oever)
                 continue  # Should not happen
@@ -232,7 +179,7 @@ class OeverfotoSpecifics(GenericSpecifics):
             layout_options=layout_options,
             template="lizard_progress/measurement_types/photo.html",
             extra_render_kwargs={'oevers': oevers}
-            )
+        )
 
 
 class OeverkenmerkSpecifics(GenericSpecifics):
@@ -274,7 +221,7 @@ class PeilschaalFotoSpecifics(GenericSpecifics):
             layout_options=layout_options,
             template="lizard_progress/measurement_types/peilschaal_foto.html",
             extra_render_kwargs={'location': location.location_code,
-                                 'url': m.url})
+                                 'url': m.get_absolute_url()})
 
 
 class PeilschaalMetingSpecifics(GenericSpecifics):
@@ -348,4 +295,4 @@ AVAILABLE_SPECIFICS = {
         RibxReinigingKolkenSpecifics, ExpectedAttachmentSpecifics],
     'ribx_reiniging_inspectie_riool': [
         RibxReinigingInspectieRioolSpecifics, ExpectedAttachmentSpecifics],
-    }
+}

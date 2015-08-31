@@ -72,6 +72,8 @@ class Request(models.Model):
     request_status = models.IntegerField(
         choices=sorted(STATUSES.items()), default=REQUEST_STATUS_OPEN)
 
+    created_by_manager = models.BooleanField(default=False, null=False)
+
     refusal_reason = models.TextField(null=True, blank=True)
     invalid_reason = models.TextField(null=True, blank=True)
 
@@ -580,8 +582,13 @@ class Points(models.Model):
 @receiver(post_save, sender=Request)
 def message_request_created(sender, instance, created, **kwargs):
     notification_type = NotificationType.objects.get(name="aanvraag ingediend")
-    actor = pmodels.UserRole.objects.get(
-        code=pmodels.UserRole.ROLE_UPLOADER)
+
+    if instance.created_by_manager:
+        role_code = pmodels.UserRole.ROLE_MANAGER
+    else:
+        role_code = pmodels.UserRole.ROLE_UPLOADER
+
+    actor = pmodels.UserRole.objects.get(code=role_code)
     kwargs = {
         'actor': actor,
         'action_object': instance,

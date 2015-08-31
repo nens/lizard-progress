@@ -87,6 +87,9 @@ Changelog of lizard-progress
   of years (it is not possible to view multiple projects at the same
   time on the map page anymore).
 
+- Emails for new change requests now correctly say whether the request
+  was made by a manager or an uploader.
+
 
 2.5.2 (2015-06-12)
 ------------------

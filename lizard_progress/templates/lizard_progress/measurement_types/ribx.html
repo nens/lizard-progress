@@ -12,8 +12,7 @@
      <h3>Compleet</h3>
   {% endif %}
   {% if location.not_part_of_project %}
-    <strong>Dit object is geen eigendom van {{
-    location.activity.project.organization }} en hoort niet bj de
+    <strong>Dit object is geen eigendom van {{ location.activity.project.organization }} en hoort niet bj de
     werkzaamheden.</strong>
   {% else %}
     <p>Opdrachtnemer: {{ location.activity.contractor }}<br />

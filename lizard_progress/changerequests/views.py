@@ -198,7 +198,7 @@ class NewRequestView(ActivityView):
         if self.form.is_valid():
             request = self.create_new_request()
 
-            if self.user_is_manager():
+            if request.created_by_manager:
                 # Auto accept
                 request.accept()
 
@@ -226,6 +226,7 @@ class NewRequestNewLocation(NewRequestView):
             activity=self.activity,
             request_type=self.request_type,
             request_status=models.Request.REQUEST_STATUS_OPEN,
+            created_by_manager=self.user_is_manager(),
             location_code=self.form.cleaned_data['location_code'],
             old_location_code=(
                 self.form.cleaned_data['old_location_code'] or None),
@@ -245,6 +246,7 @@ class NewRequestMoveLocation(NewRequestView):
             activity=self.activity,
             request_type=self.request_type,
             request_status=models.Request.REQUEST_STATUS_OPEN,
+            created_by_manager=self.user_is_manager(),
             location_code=self.form.cleaned_data['location_code'],
             motivation=self.form.cleaned_data['motivation'],
             the_geom='POINT({x} {y})'.format(
@@ -266,6 +268,7 @@ class NewRequestRemoveCode(NewRequestView):
             activity=self.activity,
             request_type=self.request_type,
             request_status=models.Request.REQUEST_STATUS_OPEN,
+            created_by_manager=self.user_is_manager(),
             location_code=self.form.cleaned_data['location_code'],
             motivation=self.form.cleaned_data['motivation'],
             the_geom=location.the_geom)

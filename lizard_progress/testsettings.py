@@ -84,6 +84,12 @@ STATICFILES_FINDERS = STATICFILES_FINDERS
 
 # Let tasks (called with .delay()) run as if they were called normally.
 CELERY_ALWAYS_EAGER = True
+import djcelery
+djcelery.setup_loader()
+BROKER_URL = 'memory'
+
+# For testing, use the in-memory email backend
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 
 try:
     # Import local settings that aren't stored in svn/git.

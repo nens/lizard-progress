@@ -187,7 +187,7 @@ class RibxParser(ProgressParser):
             location.get_absolute_url())
 
         self.activity.notify_managers(
-            notification_type, actor=self.activity.contractor,
+            notification_type, actor=models.UserRole.ROLE_UPLOADER,
             action_object=self.file_object.name, target=location,
             extra={'link': location_link})
 

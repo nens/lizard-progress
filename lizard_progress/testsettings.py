@@ -92,7 +92,7 @@ BROKER_URL = 'memory'
 EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 
 # For translating things in Celery tasks, mostly.
-LANGUAGE_CODE = 'nl_NL'
+LANGUAGE_CODE = 'nl-NL'
 
 try:
     # Import local settings that aren't stored in svn/git.

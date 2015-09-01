@@ -39,6 +39,7 @@ from lizard_progress import configuration
 from lizard_progress import forms
 from lizard_progress import models
 from lizard_progress.util import dates
+from lizard_progress.util import geo
 from lizard_progress.util import directories
 
 
@@ -266,9 +267,9 @@ class PlanningView(ActivityView):
                     not_part_of_project=(
                         not_owned_by_organisation if care_about_ownership
                         else False),
-                    the_geom=(models.osgeo_3d_line_to_2d_wkt(geom)
+                    the_geom=(geo.osgeo_3d_line_to_2d_wkt(geom)
                               if loctype == models.Location.LOCATION_TYPE_PIPE
-                              else models.osgeo_3d_point_to_2d_wkt(geom)))
+                              else geo.osgeo_3d_point_to_2d_wkt(geom)))
 
                 for (location_code,
                      (geom, loctype, not_owned_by_organisation)) in

@@ -21,7 +21,7 @@ from ribxlib import parsers
 from lizard_progress import models
 from lizard_progress.changerequests.models import Request
 from lizard_progress.email_notifications.models import NotificationType
-
+from lizard_progress.util import geo
 from lizard_progress.specifics import ProgressParser
 from lizard_progress.specifics import UnSuccessfulParserResult
 
@@ -82,6 +82,13 @@ class RibxParser(ProgressParser):
                     # request instead of recording a measurement.
                     # Creating the request also automatically
                     # sends an email notification.
+
+                    # Deletion requests can only handle point geometries;
+                    # if geom is a line, take its midpoint.
+                    geom = item.geom
+                    if geo.is_line(geom):
+                        geom = geo.get_midpoint(geom)
+
                     Request.objects.create(
                         activity=self.activity,
                         request_type=Request.REQUEST_TYPE_REMOVE_CODE,

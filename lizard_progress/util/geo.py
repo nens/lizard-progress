@@ -9,6 +9,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from django.contrib.gis.geos import LineString
+
+from osgeo import ogr
+
 from lizard_map import coordinates
 
 
@@ -44,3 +48,45 @@ def rd_to_google_extent(rd_extent, extra_border=0.1):
     }
 
     return extent
+
+
+def is_line(geom):
+    """Decide whether geom is a line geometry (of several possible types)."""
+    if isinstance(geom, LineString):
+        # django.contrib.gis.geos.LineString
+        return True
+
+    if hasattr(geom, 'ExportToWkt') and 'LINESTRING' in geom.ExportToWkt():
+        # osgeo.ogr.Geometry linestring
+        return True
+
+    if isinstance(geom, basestring) and 'LINESTRING' in geom:
+        # A WKT string
+        return True
+
+    return False
+
+
+def get_midpoint(line):
+    """Takes a ogr linestring and returns the point between its first and
+    last points."""
+    points = line.GetPoints()
+    first = points[0]
+    last = points[-1]
+
+    x = (first[0] + last[0]) / 2
+    y = (first[1] + last[1]) / 2
+
+    return ogr.CreateGeometryFromWkt('POINT ({} {})'.format(x, y))
+
+
+def osgeo_3d_line_to_2d_wkt(geom):
+    points = geom.GetPoints()
+    return 'LINESTRING({} {}, {} {})'.format(
+        points[0][0], points[0][1],
+        points[1][0], points[1][1])
+
+
+def osgeo_3d_point_to_2d_wkt(geom):
+    point = geom.GetPoint()
+    return 'POINT({} {})'.format(point[0], point[1])

@@ -42,6 +42,7 @@ from lizard_progress.email_notifications import notify
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.util import directories
+from lizard_progress.util import geo
 
 RDNEW = 28992
 SRID = RDNEW
@@ -54,35 +55,6 @@ class AlreadyUploadedError(ValueError):
         self.filename = filename
         super(AlreadyUploadedError, self).__init__(
             "{} was already uploaded.".format(filename))
-
-
-def is_line(geom):
-    """Decide whether geom is a line geometry (of several possible types)."""
-    if isinstance(geom, LineString):
-        # django.contrib.gis.geos.LineString
-        return True
-
-    if hasattr(geom, 'ExportToWkt') and 'LINESTRING' in geom.ExportToWkt():
-        # osgeo.ogr.Geometry linestring
-        return True
-
-    if isinstance(geom, basestring) and 'LINESTRING' in geom:
-        # A WKT string
-        return True
-
-    return False
-
-
-def osgeo_3d_line_to_2d_wkt(geom):
-    points = geom.GetPoints()
-    return 'LINESTRING({} {}, {} {})'.format(
-        points[0][0], points[0][1],
-        points[1][0], points[1][1])
-
-
-def osgeo_3d_point_to_2d_wkt(geom):
-    point = geom.GetPoint()
-    return 'POINT({} {})'.format(point[0], point[1])
 
 
 class ErrorMessage(models.Model):
@@ -602,14 +574,14 @@ class Location(models.Model):
         """Set our geometrical location, IF it wasn't set yet.
         location can be either a Point or a LineString."""
         if hasattr(location, 'ExportToWkt'):
-            if is_line(location):
-                location = osgeo_3d_line_to_2d_wkt(location)
+            if geo.is_line(location):
+                location = geo.osgeo_3d_line_to_2d_wkt(location)
             else:
-                location = osgeo_3d_point_to_2d_wkt(location)
+                location = geo.osgeo_3d_point_to_2d_wkt(location)
 
         if self.the_geom is None:
             self.the_geom = location
-            self.is_point = not is_line(location)
+            self.is_point = not geo.is_line(location)
             self.save()
 
     def plan_date(self, date):
@@ -1116,13 +1088,13 @@ class Measurement(models.Model):
         didn't have a point yet.
 
         location can be a Point or a LineString."""
-        self.is_point = not is_line(location)
+        self.is_point = not geo.is_line(location)
 
         if hasattr(location, 'ExportToWkt'):
             if self.is_point:
-                location = osgeo_3d_point_to_2d_wkt(location)
+                location = geo.osgeo_3d_point_to_2d_wkt(location)
             else:
-                location = osgeo_3d_line_to_2d_wkt(location)
+                location = geo.osgeo_3d_line_to_2d_wkt(location)
         self.the_geom = location
         self.save()
         self.location.plan_location(location)

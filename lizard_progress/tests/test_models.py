@@ -15,8 +15,6 @@ import factory
 import os
 import tempfile
 
-import osgeo.ogr
-
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
 
@@ -788,14 +786,6 @@ class TestActivity(FixturesTestCase):
             activity=activity, when=today)
 
         self.assertEquals(activity.latest_log.when, today)
-
-
-class TestIsLine(FixturesTestCase):
-    def test_with_point(self):
-        amersfoort = osgeo.ogr.Geometry(osgeo.ogr.wkbPoint)
-        amersfoort.AddPoint(155000, 463000)
-
-        self.assertFalse(models.is_line(amersfoort))
 
 
 class TestUploadLog(FixturesTestCase):

@@ -91,6 +91,9 @@ BROKER_URL = 'memory'
 # For testing, use the in-memory email backend
 EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 
+# For translating things in Celery tasks, mostly.
+LANGUAGE_CODE = 'nl_NL'
+
 try:
     # Import local settings that aren't stored in svn/git.
     from lizard_progress.local_testsettings import *

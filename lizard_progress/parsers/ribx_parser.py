@@ -12,8 +12,11 @@ import json
 
 from PIL.ImageFile import ImageFile
 import logging
+import os
 
+from django.conf import settings
 from django.contrib.sites.models import Site
+from django.utils import translation
 
 from ribxlib import models as ribxmodels
 from ribxlib import parsers
@@ -193,9 +196,15 @@ class RibxParser(ProgressParser):
             Site.objects.get_current().domain +
             location.get_absolute_url())
 
+        with translation.override(settings.LANGUAGE_CODE):
+            # Let terms like 'pipe' be translated to Dutch
+            target = unicode(location)
+
         self.activity.notify_managers(
-            notification_type, actor=models.UserRole.ROLE_UPLOADER,
-            action_object=self.file_object.name, target=location,
+            notification_type,
+            actor=unicode(self.activity.contractor),
+            action_object=os.path.basename(self.file_object.name),
+            target=target,
             extra={'link': location_link})
 
         return location

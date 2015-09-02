@@ -135,11 +135,13 @@ def make_point_style(img):
         rule.symbols.append(symbol)
         return rule
 
+    cutoff = 5000
+
     # Below cutoff - allow overlap True
-    rule_detailed = make_rule(0, 50000, img, True)
+    rule_detailed = make_rule(0, cutoff, img, True)
 
     # Over cutoff - overlap False
-    rule_global = make_rule(50000, 1000000000.0, img, False)
+    rule_global = make_rule(cutoff, 1000000000.0, img, False)
 
     style = mapnik.Style()
     style.rules.append(rule_detailed)

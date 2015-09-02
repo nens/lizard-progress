@@ -90,6 +90,8 @@ Changelog of lizard-progress
 - Emails for new change requests now correctly say whether the request
   was made by a manager or an uploader.
 
+- Presentation tweaks to prepare for the demo (popup, zoom levels).
+
 
 2.5.2 (2015-06-12)
 ------------------

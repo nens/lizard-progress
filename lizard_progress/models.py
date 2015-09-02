@@ -560,6 +560,12 @@ class Location(models.Model):
 
         return u
 
+    def latest_measurement_date(self):
+        measurements = list(self.measurement_set.all())
+        if not measurements:
+            return None
+        return max(m.date for m in measurements)
+
     def get_absolute_url(self):
         """Return an URL that goes to the Map page, zooming to this
         location.

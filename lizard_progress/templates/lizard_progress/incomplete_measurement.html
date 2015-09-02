@@ -1,7 +1,16 @@
 <h2>{{ activity }}</h2>
 
-<p>Code: {{ location.location_code }}<br />
+{% if location.location_type == "pipe" %}
+   <h3>Streng {{ location.location_code }}</h3>
+{% elif location.location_type == "manhole" %}
+   <h3>Put {{ location.location_code }}</h3>
+{% elif location.location_type == "drain" %}
+   <h3>Kolk {{ location.location_code }}</h3>
+{% else %}
+   <h3>Code: {{ location.location_code }}</h3>
+{% endif %}
 
+<p>
   {% if location.not_part_of_project %}
     <strong>Dit object is geen eigendom van {{ location.activity.project.organization }} en hoort niet bj de werkzaamheden.</strong>
   {% else %}

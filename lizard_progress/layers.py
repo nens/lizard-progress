@@ -201,6 +201,7 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
     def mapnik_query_date(self, is_point, planned, ontime, complete):
         return build_location_query(
             self.activity_id, is_point=is_point, complete=complete,
+            not_part_of_project=False,
             dates_matter=True, planned=planned, ontime=ontime,
             numbers=self.show_numbers_on_map)
 

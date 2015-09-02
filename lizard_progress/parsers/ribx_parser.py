@@ -97,7 +97,7 @@ class RibxParser(ProgressParser):
                         request_type=Request.REQUEST_TYPE_REMOVE_CODE,
                         location_code=item.ref,
                         motivation=item.work_impossible,
-                        the_geom=geom.ExportToWkt())
+                        the_geom=geo.osgeo_3d_point_to_2d_wkt(geom))
                 else:
                     measurement = self.save_measurement(item)
                     if measurement is not None:

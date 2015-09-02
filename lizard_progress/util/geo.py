@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.contrib.gis.geos import LineString
+from django.contrib.gis.geos import Point
 
 from osgeo import ogr
 
@@ -88,5 +89,11 @@ def osgeo_3d_line_to_2d_wkt(geom):
 
 
 def osgeo_3d_point_to_2d_wkt(geom):
-    point = geom.GetPoint()
-    return 'POINT({} {})'.format(point[0], point[1])
+    if isinstance(geom, Point):
+        # Geos point, not osgeo
+        x, y = geom.x, geom.y
+    else:
+        point = geom.GetPoint()
+        x, y = point[:2]
+
+    return 'POINT({} {})'.format(x, y)

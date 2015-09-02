@@ -20,6 +20,7 @@ from django.contrib.sites.models import Site
 from django.dispatch import receiver
 from lizard_map.models import WorkspaceEditItem
 
+from lizard_progress.util import geo
 from lizard_progress import models as pmodels
 from lizard_progress.email_notifications.models import NotificationType
 
@@ -430,6 +431,17 @@ class Request(models.Model):
         y = self.the_geom.y
 
         return (x, y, x, y)
+
+    @classmethod
+    def create_deletion_request(cls, location, motivation, user_is_manager):
+        return cls.objects.create(
+            activity=location.activity,
+            request_type=cls.REQUEST_TYPE_REMOVE_CODE,
+            request_status=cls.REQUEST_STATUS_OPEN,
+            created_by_manager=user_is_manager,
+            location_code=location.location_code,
+            motivation=motivation,
+            the_geom=geo.osgeo_3d_point_to_2d_wkt(location.the_geom))
 
 
 class RequestComment(models.Model):

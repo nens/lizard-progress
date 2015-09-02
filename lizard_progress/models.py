@@ -1773,20 +1773,19 @@ class LizardConfiguration(models.Model):
 
 @receiver(post_save, sender=Location)
 def message_project_complete(sender, instance, **kwargs):
-    notification_type = NotificationType.objects.get(name="project voltooid")
     kwargs = {
         'action_object': instance.activity.project,
         'extra': {'link': Site.objects.get_current().domain +
                   instance.activity.project.get_absolute_url(), }
     }
     if instance.complete and instance.activity.project.is_complete():
+        notification_type = NotificationType.objects.get(
+            name="project voltooid")
         return instance.activity.notify_managers(notification_type, **kwargs)
 
 
 @receiver(post_save, sender=Location)
 def message_activity_complete(sender, instance, **kwargs):
-    notification_type = NotificationType.objects.get(
-        name="werkzaamheid voltooid")
     kwargs = {
         'action_object': instance.activity,
         'target': instance.activity.project,
@@ -1795,4 +1794,6 @@ def message_activity_complete(sender, instance, **kwargs):
     }
 
     if instance.complete and instance.activity.is_complete():
+        notification_type = NotificationType.objects.get(
+            name="werkzaamheid voltooid")
         return instance.activity.notify_managers(notification_type, **kwargs)

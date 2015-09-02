@@ -19,6 +19,7 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 
 from lizard_progress.views.activity import ActivityView
+from lizard_progress.util import geo
 from lizard_progress import models as pmodels
 
 from . import models
@@ -264,14 +265,9 @@ class NewRequestRemoveCode(NewRequestView):
             location_code=self.form.cleaned_data['location_code'],
             activity=self.activity)
 
-        return models.Request.objects.create(
-            activity=self.activity,
-            request_type=self.request_type,
-            request_status=models.Request.REQUEST_STATUS_OPEN,
-            created_by_manager=self.user_is_manager(),
-            location_code=self.form.cleaned_data['location_code'],
-            motivation=self.form.cleaned_data['motivation'],
-            the_geom=location.the_geom)
+        return models.Request.create_deletion_request(
+            location, self.form.cleaned_data['motivation'],
+            self.user_is_manager())
 
 
 class RequestSeen(ActivityView):

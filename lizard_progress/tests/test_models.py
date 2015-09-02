@@ -15,6 +15,8 @@ import factory
 import os
 import tempfile
 
+from osgeo import ogr
+
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
 
@@ -101,6 +103,7 @@ class LocationF(factory.DjangoModelFactory):
 
     location_code = "SOME_ID"
     activity = factory.SubFactory(ActivityF)
+    the_geom = 'POINT(425000 150000)'
 
     information = {"key": "value"}
 

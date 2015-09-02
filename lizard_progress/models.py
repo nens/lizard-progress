@@ -561,7 +561,7 @@ class Location(models.Model):
         return u
 
     def latest_measurement_date(self):
-        measurements = list(self.measurement_set.all())
+        measurements = list(self.measurement_set.filter(date__isnull=False))
         if not measurements:
             return None
         return max(m.date for m in measurements)

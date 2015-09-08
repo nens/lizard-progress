@@ -220,3 +220,12 @@ td.clickable:hover {
 .dl-horizontal dt {
     white-space: normal;
 }
+
+div#warning {
+    color: #fff;
+    background-color: #157681;
+    font-weight: bold;
+    padding: 10px;
+    border: solid black 1px;
+    margin-bottom: 10px;
+}

@@ -2,6 +2,13 @@
 
 {% with mtype=view.activity.measurement_type %}
   {% if view.planning_uses_ribx %}
+    {% if view.activity.has_locations %}
+    <div id="warning">
+      <strong>Let op:</strong> voor deze werkzaamheid zijn al locaties
+      gepland. Als u een eerste planning voor een werkzaamheid wilt
+      uploaden, bent u wellicht bij de verkeerde werkzaamheid.
+    </div>
+    {% endif %}
     <p>Het metingtype van deze werkzaamheid is <strong>{{ mtype }}</strong>. Bij dit metingtype worden te inspecteren strengen, kolken en/of putten gepland door het uploaden van een RIBX(A) bestand.
     </p>
   {% else %}

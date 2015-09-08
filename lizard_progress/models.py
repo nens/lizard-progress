@@ -792,6 +792,9 @@ class Activity(models.Model):
         return self.location_set.filter(
             not_part_of_project=False).count()
 
+    def has_locations(self):
+        return self.location_set.filter(not_part_of_project=False).exists()
+
     def num_complete_locations(self):
         return self.location_set.filter(
             complete=True, not_part_of_project=False).count()

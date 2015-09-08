@@ -92,6 +92,9 @@ Changelog of lizard-progress
 
 - Presentation tweaks to prepare for the demo (popup, zoom levels).
 
+- Add a warning for RIBX location planning if there already are
+  locations.
+
 
 2.5.2 (2015-06-12)
 ------------------

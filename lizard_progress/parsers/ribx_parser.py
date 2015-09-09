@@ -53,31 +53,26 @@ class RibxParser(ProgressParser):
                 self.record_error(error['line'], None, error['message'])
             return self._parser_result([])
 
-        measurements = []
+        measurements = self.get_measurements(ribx)
 
+        if not measurements:
+            self.record_error(0, None, 'Bestand bevat geen gegevens.')
+
+        return self._parser_result(measurements)
+
+    def get_measurements(self, ribx):
         # Use these to check whether locations are inside extent
-        min_x = self.activity.config_value('minimum_x_coordinate')
-        max_x = self.activity.config_value('maximum_x_coordinate')
-        min_y = self.activity.config_value('minimum_y_coordinate')
-        max_y = self.activity.config_value('maximum_y_coordinate')
+        self.min_x = self.activity.config_value('minimum_x_coordinate')
+        self.max_x = self.activity.config_value('maximum_x_coordinate')
+        self.min_y = self.activity.config_value('minimum_y_coordinate')
+        self.max_y = self.activity.config_value('maximum_y_coordinate')
 
+        measurements = []
         for item in itertools.chain(
                 ribx.inspection_pipes, ribx.cleaning_pipes,
                 ribx.inspection_manholes, ribx.cleaning_manholes,
                 ribx.drains):
-            error = False
-            if item.geom:
-                if not (min_x <= item.geom.GetX() <= max_x):
-                    self.record_error(
-                        item.sourceline, 'X_NOT_IN_EXTENT',
-                        self.ERRORS['X_NOT_IN_EXTENT'].format(min_x, max_x))
-                    error = True
-                if not (min_y <= item.geom.GetY() <= max_y):
-                    self.record_error(
-                        item.sourceline, 'Y_NOT_IN_EXTENT',
-                        self.ERRORS['Y_NOT_IN_EXTENT'].format(min_y, max_y))
-                    error = True
-
+            error = self.check_coordinates(item)
             if not error:
                 if item.work_impossible:
                     # This is not a measurement, but a claim that the
@@ -85,28 +80,46 @@ class RibxParser(ProgressParser):
                     # request instead of recording a measurement.
                     # Creating the request also automatically
                     # sends an email notification.
-
-                    # Deletion requests can only handle point geometries;
-                    # if geom is a line, take its midpoint.
-                    geom = item.geom
-                    if geo.is_line(geom):
-                        geom = geo.get_midpoint(geom)
-
-                    Request.objects.create(
-                        activity=self.activity,
-                        request_type=Request.REQUEST_TYPE_REMOVE_CODE,
-                        location_code=item.ref,
-                        motivation=item.work_impossible,
-                        the_geom=geo.osgeo_3d_point_to_2d_wkt(geom))
+                    self.create_deletion_request(item)
                 else:
                     measurement = self.save_measurement(item)
                     if measurement is not None:
                         measurements.append(measurement)
 
-        if not measurements:
-            self.record_error(0, None, 'Bestand bevat geen gegevens.')
+        return measurements
 
-        return self._parser_result(measurements)
+    def check_coordinates(self, item):
+        error = False
+        if item.geom:
+            if not (self.min_x <= item.geom.GetX() <= self.max_x):
+                self.record_error(
+                    item.sourceline, 'X_NOT_IN_EXTENT',
+                    self.ERRORS['X_NOT_IN_EXTENT'].format(
+                        self.min_x, self.max_x))
+                error = True
+            if not (self.min_y <= item.geom.GetY() <= self.max_y):
+                self.record_error(
+                    item.sourceline, 'Y_NOT_IN_EXTENT',
+                    self.ERRORS['Y_NOT_IN_EXTENT'].format(
+                        self.min_y, self.max_y))
+                error = True
+        return error
+
+    def create_deletion_request(self, item):
+        # Deletion requests can only handle point geometries;
+        # if geom is a line, take its midpoint.
+        geom = item.geom
+        if geo.is_line(geom):
+            geom = geo.get_midpoint(geom)
+
+        try:
+            location = self.activity.location_set.get(location_code=item.ref)
+            Request.create_deletion_request(
+                location, motivation=item.work_impossible,
+                user_is_manager=False)
+        except models.Location.DoesNotExist:
+            # Already deleted?
+            pass
 
     def save_measurement(self, item):
         """item is a pipe, drain or manhole object that has properties

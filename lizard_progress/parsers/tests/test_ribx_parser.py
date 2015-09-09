@@ -6,7 +6,7 @@ import osgeo.ogr
 from lizard_progress.tests import test_models
 
 from lizard_progress.parsers import ribx_parser
-
+from lizard_progress.changerequests.models import Request
 from lizard_progress.tests.base import FixturesTestCase
 
 # Some helper variables for when the actual value doesn't matter.
@@ -31,7 +31,16 @@ class MockItem(object):
             self.media = set()
 
 
-class TestSaveMeasurement(FixturesTestCase):
+class MockRibx(object):
+    def __init__(self):
+        self.inspection_pipes = []
+        self.cleaning_pipes = []
+        self.inspection_manholes = []
+        self.cleaning_manholes = []
+        self.drains = []
+
+
+class TestRibxParser(FixturesTestCase):
     def setUp(self):
         self.mtype = test_models.AvailableMeasurementTypeF.create(
             slug='ribx_reiniging_inspectie_riool')
@@ -86,3 +95,34 @@ class TestSaveMeasurement(FixturesTestCase):
             self.location, today)
 
         self.assertEquals(m, None)
+
+    def test_that_deletion_request_is_created(self):
+        ribx = MockRibx()
+
+        drain = MockItem(self.location.location_code, today, amersfoort)
+        drain.work_impossible = 'Testing'
+        ribx.drains.append(drain)
+
+        measurements = self.parser.get_measurements(ribx)
+        self.assertEquals(measurements, [])
+
+        self.assertTrue(Request.objects.filter(
+            activity=self.activity, location_code=self.location.location_code,
+            request_type=Request.REQUEST_TYPE_REMOVE_CODE,
+            request_status=Request.REQUEST_STATUS_OPEN).exists())
+
+    def test_that_only_one_deletion_request_is_created(self):
+        ribx = MockRibx()
+
+        drain = MockItem(self.location.location_code, today, amersfoort)
+        drain.work_impossible = 'Testing'
+        ribx.drains.append(drain)
+        ribx.drains.append(drain)
+
+        measurements = self.parser.get_measurements(ribx)
+        self.assertEquals(measurements, [])
+
+        self.assertEquals(Request.objects.filter(
+            activity=self.activity, location_code=self.location.location_code,
+            request_type=Request.REQUEST_TYPE_REMOVE_CODE,
+            request_status=Request.REQUEST_STATUS_OPEN).count(), 1)

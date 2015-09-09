@@ -434,14 +434,15 @@ class Request(models.Model):
 
     @classmethod
     def create_deletion_request(cls, location, motivation, user_is_manager):
-        return cls.objects.create(
+        request, created = cls.objects.get_or_create(
             activity=location.activity,
             request_type=cls.REQUEST_TYPE_REMOVE_CODE,
             request_status=cls.REQUEST_STATUS_OPEN,
-            created_by_manager=user_is_manager,
-            location_code=location.location_code,
-            motivation=motivation,
-            the_geom=geo.osgeo_3d_point_to_2d_wkt(location.the_geom))
+            location_code=location.location_code, defaults=dict(
+                created_by_manager=user_is_manager,
+                motivation=motivation,
+                the_geom=geo.osgeo_3d_point_to_2d_wkt(location.the_geom)))
+        return request
 
 
 class RequestComment(models.Model):

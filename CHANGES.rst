@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.5.3 (unreleased)
+2.6.0 (2015-09-09)
 ------------------
 
 - The project dashboard page still looked at UploadedFiles to determine

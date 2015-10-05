@@ -1,4 +1,191 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
+
+{% block content %}
+
+    <div class="container" id="project-slug">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="title">
+            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container" id="project-details">
+      
+      <div class="row">
+        <div class="col-md-9">
+
+          <div class="row">
+            <div class="col-md-12 details-tabs">
+              <div>
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" role="tablist">
+                  <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Dashboard</a></li>
+                  <li role="presentation"><a href="#files" aria-controls="profile" role="tab" data-toggle="tab">Bestanden</a></li>
+                  <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Werkzaamheden</a></li>
+                </ul>
+
+                <!-- Tab panes -->
+                <div class="tab-content">
+                  <div role="tabpanel" class="tab-pane fade in active" id="home">
+                    <div class="row quickbar well">
+                      <div class="col-md-4 text-center">
+                        6 <span class="text-muted">geplande metingen</span>
+                      </div>
+                      <div class="col-md-4 text-center">
+                        345 <span class="text-muted">ingevoerde metingen</span>
+                      </div>
+                      <div class="col-md-4 text-center">
+                        3 <span class="text-muted">uploaders</span>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <div role="tabpanel" class="tab-pane fade" id="files">
+                    <div class="panel panel-default">
+                      <div class="panel-heading">
+                        <h3 class="panel-title">Projectdocumenten</h3>
+                      </div>
+
+                      <!-- Table -->
+                      <table class="table">
+                        <tbody>
+                          <tr>
+                            <th scope="row"><a href="#">Handleiding inwinning gegevens.doc</a> (1.9MB)</th>
+                            <td>
+                              <button class="btn btn-danger" type="submit" data-toggle="tooltip" data-placement="top" title="Verwijderen">
+                                <i class="fa fa-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                          <tr>
+                            <th scope="row"><a href="#">Metfile_Goed.doc</a> (5.9KB)</th>
+                            <td>
+                              <button class="btn btn-danger" type="submit" data-toggle="tooltip" data-placement="top" title="Verwijderen">
+                                <i class="fa fa-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+
+                  <div role="tabpanel" class="tab-pane fade" id="profile">
+                    <table class="table table-striped top-buffer">
+                          <thead>
+                            <tr>
+                              <th>Uitvoerder</th>
+                              <th>Werkzaamheid</th>
+                              <th>Geplande metingen</th>
+                              <th>Ingevoerde metingen</th>
+                              <th>Laatste upload</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <th scope="row"><a href="">Aannemer</a></th>
+                              <td>Inpeiling Dwarsprofielen</td>
+                              <td>345</td>
+                              <td>0</td>
+                              <td data-toggle="tooltip" data-placement="top" title="mrt 24, 2015, 2:30 p.m.">3 dagen geleden</td>
+                            </tr>
+                            <tr>
+                              <th scope="row"><a href="">Aannemer</a></th>
+                              <td>Uitpeiling Dwarsprofielen</td>
+                              <td>349</td>
+                              <td>0</td>
+                              <td data-toggle="tooltip" data-placement="top" title="mrt 24, 2015, 2:30 p.m.">3 dagen geleden</td>
+                            </tr>
+                            <tr>
+                              <th scope="row"><a href="">HDSR2</a></th>
+                              <td>Inpeiling Dwarsprofielen</td>
+                              <td>345</td>
+                              <td>212</td>
+                              <td data-toggle="tooltip" data-placement="top" title="mrt 20, 2015, 2:30 p.m.">5 dagen geleden</td>
+                            </tr>
+                            <tr>
+                              <th scope="row"><a href="">Opdrachtgever</a></th>
+                              <td>Nader onderzoek waterbodemkwaliteit</td>
+                              <td>9</td>
+                              <td>0</td>
+                              <td data-toggle="tooltip" data-placement="top" title="mrt 12, 2015, 2:30 p.m.">8 dagen geleden</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          </div>
+        
+        </div>
+
+
+        <div class="col-md-3" role="complementary">
+          <nav class="sidebar hidden-print">
+            <ul class="nav sidenav">
+              <li>
+                <a href="#" class="active"><i class="fa fa-lg fa-tachometer"></i> &nbsp; dashboard</a>
+              </li>
+              <li>
+                <a href="#"><i class="fa fa-lg fa-calendar"></i> &nbsp; planning</a>
+              </li>
+              <li>
+                <a href="#"><i class="fa fa-lg fa-cogs"></i> &nbsp; configuratie</a>
+              </li>
+              <li>
+                <a href="#"><i class="fa fa-lg fa-question-circle"></i> &nbsp; aanvragen <span class="badge">4x</span></a>
+              </li>
+              <li>
+                <a href="#"><i class="fa fa-lg fa-globe"></i> &nbsp; kaart</a>
+              </li>
+              <li>
+                <a href="#"><i class="fa fa-lg fa-share"></i> &nbsp; exporteren</a>
+              </li>
+            </ul>
+          </nav>
+        </div>  
+
+      </div>
+    </div>
+
+{% endblock content %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 {% block contentpage %}
 

@@ -1,5 +1,95 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div id="organisation" class="col-md-12">
+      <div class="profile-picture">
+        <img data-src="holder.js/100x100" class="img-thumbnail" alt="">
+      </div>
+
+      <div class="organisation-title">
+        <p>{{ view.organization }}<p>
+      </div>
+
+      <div class="details">
+        <ul>
+          <li><a href="mailto:">info@{{view.organization|lower}}.nl</a></li>
+          <li><a href="http://www.{{view.organization|lower}}.nl/">www.{{view.organization|lower}}.nl</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-10"></div>
+    <div class="col-md-2">
+      <div class="dropdown">
+          <ul class="nav nav-pills" role="tablist">
+            <li role="presentation" class="active">
+              <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                Recent eerst
+                <span class="caret"></span>
+              </a>
+              <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
+                <li><a href="?orderby=leastrecent">Minst recent</a></li>
+                <li><a href="?orderby=mosturgent">Minste tijd over</a></li>
+                <li><a href="?orderby=leasturgent">Meeste tijd over</a></li>
+              </ul>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div><!-- /.container -->
+
+
+    <div class="container" id="projects">
+      <div>
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Projecten</a></li>
+          <!-- <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Archief</a></li> -->
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane fade in active" id="home">
+
+          {% for project in view.projects %}
+              <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
+                <div class="col-md-9">
+                  <p class="project-title"><i class="fa fa-star-o"></i>&nbsp;<a href="{% url "lizard_progress_dashboardview" project.slug %}">{{project.name}}</a></p>
+                  <p class="project-description"></p>
+                  <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
+                </div>
+                <div class="col-md-3 stats text-right">
+                  <ul>
+                    <li>Totaal {{ project.number_of_complete_locations }}x</li>
+                    <li>Gereed {{ project.percentage_done }}</li>
+                  </ul>
+                </div>
+              </div>
+          {% empty %}
+            <p class="small">(Er zijn nog geen projecten)</p>
+          {% endfor %}
+
+            <div class="row">
+              <div class="col-md-offset-5 col-md-2">
+                <a href="project-add.html"><button type="button" class="btn btn-primary btn-lg">+ Project toevoegen</button></a>
+              </div>
+            </div>
+          </div>
+          <div role="tabpanel" class="tab-pane fade" id="profile">
+            <div id="calendar"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+{% endblock content %}
+
+
 {% block contentpage %}
 <h2>Laatste uploads</h2>
 <table class="table table-bordered table-hover progressbase">

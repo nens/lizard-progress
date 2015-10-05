@@ -51,13 +51,13 @@
           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
               <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Admin <span class="caret"></span></a>
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ user }} <span class="caret"></span></a>
                 <ul class="dropdown-menu">
                   <li><a href="profiel.html">Uw profiel</a></li>
                   <li><a href="settings.html">Instellingen</a></li>
                   <li><a href="help.html">Help</a></li>
                   <li role="separator" class="divider"></li>
-                  <li><a href="https://sso.lizard.net/accounts/login/?next=/">Uitloggen</a></li>
+                  <li><a href="/accounts/logout">Uitloggen</a></li>
                 </ul>
               </li>
             </ul>
@@ -72,94 +72,8 @@
     </div>
 
 
-    <div class="container">
-      <div class="row">
-        <div id="organisation" class="col-md-12">
-          <div class="profile-picture">
-            <img data-src="holder.js/100x100" class="img-thumbnail" alt="">
-          </div>
-
-          <div class="organisation-title">
-            <p>Purmerend<p>
-          </div>
-
-          <div class="details">
-            <ul>
-              <li><a href="mailto:info@gemeentepurmerend.nl">info@gemeentepurmerend.nl</a></li>
-              <li><a href="http://www.purmerend.nl/">www.purmerend.nl</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-10"></div>
-        <div class="col-md-2">
-          <div class="dropdown">
-              <ul class="nav nav-pills" role="tablist">
-                <li role="presentation" class="active">
-                  <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                    Recent eerst
-                    <span class="caret"></span>
-                  </a>
-                  <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
-                    <li><a href="#">Minst recent</a></li>
-                    <li><a href="#">Minste tijd over</a></li>
-                    <li><a href="#">Meeste tijd over</a></li>
-                  </ul>
-                </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div><!-- /.container -->
-
-
-
-    <div class="container" id="projects">
-      <div>
-        <!-- Nav tabs -->
-        <ul class="nav nav-tabs" role="tablist">
-          <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Projecten</a></li>
-          <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Archief</a></li>
-        </ul>
-
-        <!-- Tab panes -->
-        <div class="tab-content">
-          <div role="tabpanel" class="tab-pane fade in active" id="home">
-
-          {% for project in view.projects %}
-              <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
-                <div class="col-md-9">
-                  <p class="project-title"><i class="fa fa-star-o"></i>&nbsp;<a href="{% url "lizard_progress_dashboardview" project.slug %}">{{project.organization.name}}</a></p>
-                  <p class="project-description">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Natus asperiores similique, aliquid tenetur id hic ex tempore, error itaque, nobis magnam voluptas voluptates. Vitae magni est, sint, laudantium delectus ad.</p>
-                  <p class="project-age">1 dag geleden</p>
-                </div>
-                <div class="col-md-3 stats text-right">
-                  <ul>
-                    <li>Totaal {{ project.number_of_complete_locations }}x</li>
-                    <li>Gereed {{ project.percentage_done }}</li>
-                  </ul>
-                </div>
-              </div>
-          {% empty %}
-            <p class="small">(Er zijn nog geen projecten)</p>
-          {% endfor %}
-
-            <div class="row">
-              <div class="col-md-offset-5 col-md-2">
-                <a href="project-add.html"><button type="button" class="btn btn-primary btn-lg">+ Project toevoegen</button></a>
-              </div>
-            </div>
-          </div>
-          <div role="tabpanel" class="tab-pane fade" id="profile">
-            <div id="calendar"></div>
-          </div>
-
-        </div>
-
-      </div>
-
-
+    {% block content %}    
+    {% endblock content %}
 
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

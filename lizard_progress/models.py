@@ -401,15 +401,21 @@ class Project(models.Model):
             activity__project=self, complete=True,
             not_part_of_project=False).count()
 
+    @property
     def percentage_done(self):
-        if any(not activity.needs_predefined_locations()
-               for activity in self.activity_set.all()):
+        try:
+            if any(not activity.needs_predefined_locations()
+                   for activity in self.activity_set.all()):
+                return "N/A"
+        except AttributeError:
             return "N/A"
-
-        percentage = (
-            (100 * self.number_of_complete_locations()) /
-            self.number_of_locations())
-        return "{percentage:2.0f}%".format(percentage=percentage)
+        try:
+            percentage = (
+                (100 * self.number_of_complete_locations()) /
+                self.number_of_locations())
+            return "{percentage:2.0f}%".format(percentage=percentage)
+        except ZeroDivisionError:
+            return "N/A"
 
     def is_complete(self):
         """Project is complete if there are any activities, and they are

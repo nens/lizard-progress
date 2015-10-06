@@ -519,6 +519,10 @@ class Location(models.Model):
     the_geom = models.GeometryField(null=True, srid=SRID)
     is_point = models.BooleanField(default=True)
 
+    # This slight denormalisation is necessary for the Geoserver views,
+    # otherwise they become insance.
+    one_measurement_uploaded = models.BooleanField(default=False)
+
     # Any extra known information about the location
     information = JSONField(null=True, blank=True)
 

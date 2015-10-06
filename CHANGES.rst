@@ -5,7 +5,8 @@ Changelog of lizard-progress
 2.6.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add a extra field to Location to signal that this Location has at
+  least one measurement, to make the Publiekskaart SQL a lot simpler.
 
 
 2.6.0 (2015-09-09)

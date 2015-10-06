@@ -15,7 +15,7 @@ $(document).ready(function() {
     });    
   }
   $('.drilldown').on('input', function(e) {
-    var query = e.target.value;
+    var query = e.target.value.toLowerCase();
     $('.row.project').each(function(i,element) { 
       if($(element).find('a').html().toLowerCase().indexOf(query) > -1) {
         $(element).removeClass('hide');

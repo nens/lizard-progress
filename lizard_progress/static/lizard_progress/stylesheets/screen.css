@@ -436,8 +436,8 @@ th {
 }
 @font-face {
   font-family: 'Glyphicons Halflings';
-  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot);
-  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?#iefix) format("embedded-opentype"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff2) format("woff2"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff) format("woff"), url(../fonts/bootstrap/glyphicons-halflings-regular.ttf) format("truetype"), url(../fonts/bootstrap/glyphicons-halflings-regular.svg#glyphicons_halflingsregular) format("svg");
+  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?1435309638);
+  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?&1435309638#iefix) format("embedded-opentype"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff2?1435309638) format("woff2"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff?1435309638) format("woff"), url(../fonts/bootstrap/glyphicons-halflings-regular.ttf?1435309638) format("truetype"), url(../fonts/bootstrap/glyphicons-halflings-regular.svg?1435309638#glyphicons_halflingsregular) format("svg");
 }
 /* line 24, ../bower_components/twbs-bootstrap-sass/assets/stylesheets/bootstrap/_glyphicons.scss */
 .glyphicon {
@@ -8906,7 +8906,7 @@ button.close {
 /* line 46, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a {
   line-height: 2em;
-  font-size: 2.2em;
+  font-size: 1.9em;
   color: #027377;
   font-weight: 500;
   text-decoration: none;
@@ -9027,4 +9027,9 @@ button.close {
 /* line 153, ../sass/modules/_project_manager_home.scss */
 #project-details .details-tabs {
   margin: 20px 0 0 0;
+}
+
+/* line 160, ../sass/modules/_project_manager_home.scss */
+table tr.clickable {
+  cursor: pointer;
 }

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.1 (unreleased)
+2.6.1 (2015-10-06)
 ------------------
 
 - Add a extra field to Location to signal that this Location has at

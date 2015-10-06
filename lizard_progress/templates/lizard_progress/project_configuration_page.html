@@ -1,42 +1,198 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block contentpage %}
-<h2>Configuratie {{ view.project }}</h2>
 
-<form method="post" action="{% url "lizard_progress_project_configuration_view" project_slug=view.project_slug %}">
-    <table class="table table-bordered progressbase">
-        <thead>
-            <th>Optie</th>
-            <th>Type</th>
-            <th>Waarde</th>
-        </thead>
-        <tbody>
-            {% for option, current_value in view.config_options %}
-            <tr>
-                <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
-                <td>
-                    {% if option.type == "float" %}
-                        Decimaal getal
-                    {% elif option.type == "int" %}
-                        Geheel getal
-                    {% elif option.type == "boolean" %}
-                        Ja / Nee
-                    {% else %}
-                        Tekst
-                    {% endif %}
-                </td>
-                <td>
-                    {% if option.type == "boolean" %}
-                        <input type="checkbox" name="{{ option.option }}" {% if current_value %}checked="checked"{% endif %}>
-                    {% else %}
-                        <input type="text" name="{{ option.option }}" value="{{ current_value }}">
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
-    {% csrf_token %}
-</form>
-{% endblock contentpage %}
+{% block content %}
+
+    <div class="container" id="project-slug">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="title">
+            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container" id="project-details">
+      
+      <div class="row">
+        <div class="col-md-11">
+
+          <div class="row">
+            <div class="col-md-12 details-tabs">
+
+            <div>
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a href="#project" aria-controls="profile" role="tab" data-toggle="tab">Projectinstellingen</a></li>
+                <li role="presentation"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Projectbestanden toevoegen</a></li>
+                <li role="presentation"><a href="#email" aria-controls="profile" role="tab" data-toggle="tab">E-mailconfiguratie</a></li>
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+
+                <div role="tabpanel" class="tab-pane fade in active" id="project">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">Projectinstellingen</h3>
+                    </div>
+                    <div class="panel-body">
+
+                        <form method="post" action="{% url "lizard_progress_project_configuration_view" project_slug=view.project_slug %}">
+
+                                    {% for option, current_value in view.config_options %}
+                                    <div class="form-group">
+                                      <label for="{{ option.option }}">{{ option.short_description }}</label><p class="small "><i>{{option.long_description}}</i></p>
+                                        {% if option.type == "boolean" %}
+                                            <input type="checkbox" class="form-control" id="{{ option.option }}" name="{{ option.option }}" {% if current_value %}checked="checked"{% endif %}>
+                                        {% else %}
+                                            <input type="text" class="form-control" id="{{ option.option }}" name="{{ option.option }}" value="{{ current_value }}">
+                                        {% endif %}                                      
+                                    </div>
+                                    {% endfor %}                                    
+
+
+                            <input type="submit" value="Opslaan" class="btn btn-medium btn-primary" data-toggle="tooltip" data-placement="right" title="" data-original-title="Instellingen opslaan">
+                            {% csrf_token %}
+                        </form>
+
+
+                    </div>
+                  </div>
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">Project archiveren</h3>
+                    </div>
+                    <div class="panel-body">
+                      <form>
+                        <div class="form-group">
+                          <button class="btn btn-warning" type="submit" data-toggle="tooltip" data-placement="right" title="" data-original-title="Het project sluiten en archiveren">
+                            <i class="fa fa-lg fa-briefcase"></i>&nbsp;&nbsp;Archiveren
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                <div role="tabpanel" class="tab-pane fade in" id="home">
+
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">Projectdocumenten (pdf, doc, xls)</h3>
+                    </div>
+                    <div class="panel-body">
+                      <form>
+                        <div class="form-group">
+                          <div class="form-group">
+                            <div class="col-md-12">
+                              <label for="exampleInputFile">Bestand</label>
+                              <input type="file" id="exampleInputFile">
+                            </div>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">Hydrovakken (ESRI Shapefile, zipped)</h3>
+                    </div>
+                    <div class="panel-body">
+                      <form>
+                        <div class="form-group">
+                          <div class="form-group">
+                            <div class="col-md-12">
+                              <label for="exampleInputFile">Bestand</label>
+                              <input type="file" id="exampleInputFile">
+                            </div>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                <div role="tabpanel" class="tab-pane fade" id="email">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">E-mailconfiguratie</h3>
+                    </div>
+                    <div class="panel-body alert alert-info">
+                      <p>Hier stel je voor dit project de e-mail notificaties in. Aangevinkt betekent e-mail versturen.</p>
+                    </div>
+                    <div class="panel-body">
+                      <form>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox"> Aanvraag goedgekeurd
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox"> Aanvraag afgekeurd
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox"> Aanvraag ingediend
+                          </label>
+                          </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox"> Aanvraag commentaar toegevoegd
+                          </label>
+                          </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox"> Project voltooid
+                          </label>
+                        </div>
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox"> Werkzaamheid voltooid
+                          </label>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            </div>
+          </div>
+        
+        </div>
+
+        <div class="col-md-1" role="complementary">
+          <nav class="sidebar hidden-print">
+            <ul class="nav sidenav">
+              <li data-toggle="tooltip" data-placement="left" title="Dashboard">
+                <a href="../dashboard"><i class="fa fa-lg fa-tachometer"></i></a>
+              </li>
+              <li data-toggle="tooltip" data-placement="left" title="Planning">
+                <a href="#"><i class="fa fa-lg fa-calendar"></i></a>
+              </li>
+              <li data-toggle="tooltip" data-placement="left" title="Configuratie">
+                <a class="active" href="."><i class="fa fa-lg fa-cogs"></i></a>
+              </li>
+              <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
+                <a href="#"><i class="fa fa-lg fa-question-circle"></i></a>
+              </li>
+              <li data-toggle="tooltip" data-placement="left" title="Kaart">
+                <a href="#"><i class="fa fa-lg fa-globe"></i></a>
+              </li>
+              <li data-toggle="tooltip" data-placement="left" title="Exporteren">
+                <a href="#"><i class="fa fa-lg fa-share"></i></a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>        
+{% endblock %}

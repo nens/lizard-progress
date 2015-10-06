@@ -24,8 +24,8 @@
                 <!-- Nav tabs -->
                 <ul class="nav nav-tabs" role="tablist">
                   <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Dashboard</a></li>
-                  <li role="presentation"><a href="#files" aria-controls="profile" role="tab" data-toggle="tab">Bestanden</a></li>
                   <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Werkzaamheden</a></li>
+                  <li role="presentation"><a href="#files" aria-controls="profile" role="tab" data-toggle="tab">Bestanden</a></li>
                 </ul>
 
                 <!-- Tab panes -->
@@ -42,6 +42,9 @@
                         3 <span class="text-muted">uploaders</span>
                       </div>
                     </div>
+                    {% for activity in view.activities %}
+                      <img width="500" height="300" src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=activity.id %}" title="Voortgang {{ activity }}"/>
+                    {% endfor %}                                          
                   </div>
 
 
@@ -88,34 +91,21 @@
                             </tr>
                           </thead>
                           <tbody>
-                            <tr>
-                              <th scope="row"><a href="">Aannemer</a></th>
-                              <td>Inpeiling Dwarsprofielen</td>
-                              <td>345</td>
-                              <td>0</td>
-                              <td data-toggle="tooltip" data-placement="top" title="mrt 24, 2015, 2:30 p.m.">3 dagen geleden</td>
+                            {% for activity in view.activities %}
+                            <tr class="clickable" data-url="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
+                              <td>{{ activity.contractor }}</td>
+                              <td>{{ activity.measurement_type }}</td>
+                              <td>{{ activity.num_locations }}</td>
+                              <td>{{ activity.num_measurements }}</td>
+                              <td>
+                                {% with activity.latest_log as latest %}
+                                  {% if latest %}
+                                    {{ latest.when }}
+                                  {% endif %}
+                                {% endwith %}
+                              </td>
                             </tr>
-                            <tr>
-                              <th scope="row"><a href="">Aannemer</a></th>
-                              <td>Uitpeiling Dwarsprofielen</td>
-                              <td>349</td>
-                              <td>0</td>
-                              <td data-toggle="tooltip" data-placement="top" title="mrt 24, 2015, 2:30 p.m.">3 dagen geleden</td>
-                            </tr>
-                            <tr>
-                              <th scope="row"><a href="">HDSR2</a></th>
-                              <td>Inpeiling Dwarsprofielen</td>
-                              <td>345</td>
-                              <td>212</td>
-                              <td data-toggle="tooltip" data-placement="top" title="mrt 20, 2015, 2:30 p.m.">5 dagen geleden</td>
-                            </tr>
-                            <tr>
-                              <th scope="row"><a href="">Opdrachtgever</a></th>
-                              <td>Nader onderzoek waterbodemkwaliteit</td>
-                              <td>9</td>
-                              <td>0</td>
-                              <td data-toggle="tooltip" data-placement="top" title="mrt 12, 2015, 2:30 p.m.">8 dagen geleden</td>
-                            </tr>
+                            {% endfor %}
                           </tbody>
                         </table>
                   </div>
@@ -139,7 +129,7 @@
                 <a href="#"><i class="fa fa-lg fa-calendar"></i> &nbsp; planning</a>
               </li>
               <li>
-                <a href="#"><i class="fa fa-lg fa-cogs"></i> &nbsp; configuratie</a>
+                <a href="../config"><i class="fa fa-lg fa-cogs"></i> &nbsp; configuratie</a>
               </li>
               <li>
                 <a href="#"><i class="fa fa-lg fa-question-circle"></i> &nbsp; aanvragen <span class="badge">4x</span></a>

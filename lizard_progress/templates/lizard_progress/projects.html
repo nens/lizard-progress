@@ -4,6 +4,16 @@
 <script>
 $(document).ready(function() {
   $('.drilldown').focus();
+  if($('.drilldown').val()) {
+    var query = $('.drilldown').val();
+    $('.row.project').each(function(i,element) { 
+      if($(element).find('a').html().toLowerCase().indexOf(query) > -1) {
+        $(element).removeClass('hide');
+      } else {
+        $(element).addClass('hide');
+      }
+    });    
+  }
   $('.drilldown').on('input', function(e) {
     var query = e.target.value;
     $('.row.project').each(function(i,element) { 
@@ -98,7 +108,7 @@ $(document).ready(function() {
 
             <div class="row">
               <div class="col-md-offset-5 col-md-2">
-                <a href="project-add.html"><button type="button" class="btn btn-primary btn-lg">+ Project toevoegen</button></a>
+                <a href="{% url "lizard_progress_newproject" %}"><button type="button" class="btn btn-primary btn-lg">+ Project toevoegen</button></a>
               </div>
             </div>
           </div>

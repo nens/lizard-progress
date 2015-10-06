@@ -30,6 +30,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
 from django.utils.functional import cached_property
+from django.views.generic import TemplateView
 from django.views.static import serve
 from django import http
 from django.contrib import auth
@@ -242,7 +243,7 @@ class KickOutMixin(object):
         return actions
 
 
-class ProjectsView(KickOutMixin, ProjectsMixin, UiView):
+class ProjectsView(KickOutMixin, ProjectsMixin, TemplateView):
     """Displays a list of projects to choose from."""
     template_name = "lizard_progress/projects.html"
 
@@ -712,7 +713,7 @@ class ArchiveProjectsView(ProjectsView):
 
 
 class NewProjectView(ProjectsView):
-    template_name = "lizard_progress/newproject.html"
+    template_name = "lizard_progress/new_project.html"
 
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def dispatch(self, request, *args, **kwargs):

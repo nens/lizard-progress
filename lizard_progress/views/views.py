@@ -18,22 +18,22 @@ import shutil
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
+from django import http
 from django.conf import settings
+from django.contrib import auth
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.http import HttpResponseRedirect
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.utils.translation import ugettext as _
 from django.utils.functional import cached_property
-from django.views.generic import TemplateView
+from django.utils.translation import ugettext as _
+from django.views.generic.base import TemplateView
 from django.views.static import serve
-from django import http
-from django.contrib import auth
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
@@ -63,6 +63,14 @@ class ProjectsMixin(object):
     project_slug = None
     project = None
     activity = None
+    sortparams = {
+        "mostrecent": ("meest recent", ("created_at", True)),
+        "leastrecent": ("minst recent", ("created_at", False)),
+        "mosturgent": ("meest gereed", ("percentage_done", True)),
+        "leasturgent": ("minst gereed", ("percentage_done", False)),
+        "name": ("naam", ("name", False)),
+        "namereversed": ("naam omgekeerd", ("name", True))
+    }
 
     def dispatch(self, request, *args, **kwargs):
         self.project_slug = kwargs.get('project_slug')
@@ -89,13 +97,40 @@ class ProjectsMixin(object):
         return super(
             ProjectsMixin, self).dispatch(request, *args, **kwargs)
 
+    def get(self, request, *args, **kwargs):
+        order = request.GET.get('orderby')
+        try:
+            self.orderby = self.sortparams[order][0]
+        except KeyError:
+            order = "mostrecent"
+            self.orderby = self.sortparams[order][0]
+        self.order = self.sortparams[order][1]
+        self.orderchoices = {
+            key: value[0] for key, value in self.sortparams.iteritems()
+            if not value[0] == self.orderby
+            }
+        return super(ProjectsMixin, self).get(request, *args, **kwargs)
+
     def projects(self):
         """Returns a list of projects the current user has access to."""
-
+        projecttable = Project.objects.select_related(
+            'organization').prefetch_related(
+            'activity_set__contractor').filter(is_archived=False)
+        NAs = []
+        notNAs = []
+        for project in projecttable:
+            if getattr(project, self.order[0]) == "N/A":
+                NAs.append(project)
+            else:
+                notNAs.append(project)
+        sortedprojects = sorted(notNAs, reverse=self.order[1],
+               key=lambda a: getattr(a, self.order[0]))
+        if self.order[1]:
+            sortedprojects += NAs
+        else:
+            sortedprojects = NAs + sortedprojects
         projects = []
-        for project in Project.objects.select_related(
-                'organization').prefetch_related(
-                'activity_set__contractor').filter(is_archived=False):
+        for project in sortedprojects:
             if has_access(project=project, userprofile=self.profile):
                 projects.append(project)
         return projects

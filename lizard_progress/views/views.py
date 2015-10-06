@@ -748,7 +748,7 @@ class ArchiveProjectsView(ProjectsView):
 
 
 class NewProjectView(ProjectsView):
-    template_name = "lizard_progress/newproject.html"
+    template_name = "lizard_progress/new_project.html"
 
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def dispatch(self, request, *args, **kwargs):

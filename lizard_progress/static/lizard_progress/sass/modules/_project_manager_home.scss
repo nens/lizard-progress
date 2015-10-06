@@ -45,7 +45,7 @@
     }
     p.project-title a {
       line-height: 2em;
-      font-size: 2.2em;
+      font-size: 1.9em;
       color: $lizard-turquoise-dark;
       font-weight: 500;
       text-decoration: none;
@@ -153,4 +153,10 @@
   .details-tabs {
     margin: 20px 0 0 0;
   }
+}
+
+
+
+table tr.clickable {
+  cursor: pointer;
 }

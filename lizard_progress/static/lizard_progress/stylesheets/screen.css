@@ -3,7 +3,7 @@
  * In this file you should write your main styles. (or centralize your imports)
  * Import this file using the following HTML or equivalent:
  * <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
-/* line 5, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 5, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -25,45 +25,45 @@ time, mark, audio, video {
   vertical-align: baseline;
 }
 
-/* line 22, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 22, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 html {
   line-height: 1;
 }
 
-/* line 24, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 24, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 ol, ul {
   list-style: none;
 }
 
-/* line 26, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 26, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 table {
   border-collapse: collapse;
   border-spacing: 0;
 }
 
-/* line 28, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 28, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 caption, th, td {
   text-align: left;
   font-weight: normal;
   vertical-align: middle;
 }
 
-/* line 30, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 30, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 q, blockquote {
   quotes: none;
 }
-/* line 103, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 103, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 q:before, q:after, blockquote:before, blockquote:after {
   content: "";
   content: none;
 }
 
-/* line 32, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 32, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 a img {
   border: none;
 }
 
-/* line 116, ../../../../../../home/vagrant/.rvm/gems/ruby-2.2.1/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 116, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 article, aside, details, figcaption, figure, footer, header, hgroup, main, menu, nav, section, summary {
   display: block;
 }
@@ -436,8 +436,8 @@ th {
 }
 @font-face {
   font-family: 'Glyphicons Halflings';
-  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?1444037131);
-  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?&1444037131#iefix) format("embedded-opentype"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff2?1444037131) format("woff2"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff?1444037131) format("woff"), url(../fonts/bootstrap/glyphicons-halflings-regular.ttf?1444037131) format("truetype"), url(../fonts/bootstrap/glyphicons-halflings-regular.svg?1444037131#glyphicons_halflingsregular) format("svg");
+  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?1435309638);
+  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?&1435309638#iefix) format("embedded-opentype"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff2?1435309638) format("woff2"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff?1435309638) format("woff"), url(../fonts/bootstrap/glyphicons-halflings-regular.ttf?1435309638) format("truetype"), url(../fonts/bootstrap/glyphicons-halflings-regular.svg?1435309638#glyphicons_halflingsregular) format("svg");
 }
 /* line 24, ../bower_components/twbs-bootstrap-sass/assets/stylesheets/bootstrap/_glyphicons.scss */
 .glyphicon {
@@ -8843,7 +8843,7 @@ button.close {
   position: relative;
   width: 200px;
   height: 100px;
-  background-image: url('../images/logo.png?1444037131');
+  background-image: url('../images/logo.png?1435314235');
   background-repeat: no-repeat;
   background-size: 50%;
 }
@@ -8906,7 +8906,7 @@ button.close {
 /* line 46, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a {
   line-height: 2em;
-  font-size: 2.2em;
+  font-size: 1.9em;
   color: #027377;
   font-weight: 500;
   text-decoration: none;
@@ -9027,4 +9027,9 @@ button.close {
 /* line 153, ../sass/modules/_project_manager_home.scss */
 #project-details .details-tabs {
   margin: 20px 0 0 0;
+}
+
+/* line 160, ../sass/modules/_project_manager_home.scss */
+table tr.clickable {
+  cursor: pointer;
 }

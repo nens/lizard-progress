@@ -1,6 +1,7 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
 {% block extra_js %}
+
 <script>
 $(document).ready(function() {
   $('.drilldown').focus();
@@ -100,6 +101,13 @@ $(document).ready(function() {
                     <li>Totaal {{ project.number_of_complete_locations }}x</li>
                     <li>Gereed {{ project.percentage_done }}</li>
                   </ul>
+                  <div class="progress-bar horizontal">
+                    <div class="progress-track">
+                      <div class="progress-fill">
+                        <span>75%</span>
+                      </div>
+                    </div>
+                  </div>                  
                 </div>
               </div>
           {% empty %}

@@ -169,30 +169,8 @@
         
         </div>
 
-        <div class="col-md-1" role="complementary">
-          <nav class="sidebar hidden-print">
-            <ul class="nav sidenav">
-              <li data-toggle="tooltip" data-placement="left" title="Dashboard">
-                <a href="../dashboard"><i class="fa fa-lg fa-tachometer"></i></a>
-              </li>
-              <li data-toggle="tooltip" data-placement="left" title="Planning">
-                <a href="#"><i class="fa fa-lg fa-calendar"></i></a>
-              </li>
-              <li data-toggle="tooltip" data-placement="left" title="Configuratie">
-                <a class="active" href="."><i class="fa fa-lg fa-cogs"></i></a>
-              </li>
-              <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
-                <a href="#"><i class="fa fa-lg fa-question-circle"></i></a>
-              </li>
-              <li data-toggle="tooltip" data-placement="left" title="Kaart">
-                <a href="{% url "lizard_progress_mapview" project_slug=view.project_slug %}"><i class="fa fa-lg fa-globe"></i></a>
-              </li>
-              <li data-toggle="tooltip" data-placement="left" title="Exporteren">
-                <a href="#"><i class="fa fa-lg fa-share"></i></a>
-              </li>
-            </ul>
-          </nav>
-        </div>
+      {% include "lizard_progress/sidebar_include.html" with active="configuration" %}
+
       </div>
     </div>        
 {% endblock %}

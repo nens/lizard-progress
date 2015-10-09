@@ -21,6 +21,12 @@
     <link rel="stylesheet"
       href="{{ STATIC_URL }}lizard_progress/bower_components/sweetalert/dist/sweetalert.css" />      
     <link rel="stylesheet"
+      href="{{ STATIC_URL }}lizard_progress/sortable-theme-light.css" />          
+    <link rel="stylesheet"
+      href="{{ STATIC_URL }}lizard_progress/sortable-theme-dark.css" />                
+          <link rel="stylesheet"
+      href="{{ STATIC_URL }}lizard_progress/sortable-theme-bootstrap.css" />                
+    <link rel="stylesheet"
       href="{{ STATIC_URL }}lizard_progress/stylesheets/screen.css" />    
   
 
@@ -53,9 +59,9 @@
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ user }} <span class="caret"></span></a>
                 <ul class="dropdown-menu">
-                  <li><a href="profiel.html">Uw profiel</a></li>
-                  <li><a href="settings.html">Instellingen</a></li>
-                  <li><a href="help.html">Help</a></li>
+                  <li><a href="{% url "lizard_progress_single_user_management" user_id=view.user.id %}">Uw profiel</a></li>
+                  <li><a href="/us/admin/organization/errorconfiguration/">Instellingen</a></li>
+                  <li><a href="https://uploadservice.staging.lizard.net/static_media/lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf" target="_blank">Help</a></li>
                   <li role="separator" class="divider"></li>
                   <li><a href="/accounts/logout">Uitloggen</a></li>
                 </ul>
@@ -63,7 +69,7 @@
             </ul>
             <form class="navbar-form navbar-right" role="search" action="search-results.html">
               <div class="form-group">
-                <input type="text" class="form-control" placeholder="Projecten doorzoeken...">
+                <!-- <input type="text" class="form-control" placeholder="Projecten doorzoeken..."> -->
               </div>
             </form>
           </div><!-- /.navbar-collapse -->
@@ -84,6 +90,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/holder/2.8.0/holder.js"></script>
 
     <script src="{{ STATIC_URL }}lizard_progress/bower_components/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="{{ STATIC_URL }}lizard_progress/sortable.min.js"></script>
 
     <script>
     $(function () {

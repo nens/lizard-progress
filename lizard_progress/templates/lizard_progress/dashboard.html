@@ -1,12 +1,34 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
-{% block content %}
+{% block extra_js %}
+    <script>
+    $('.project').on('click', function(e) {
+      e.preventDefault();
+      $('.projectswitcher').toggle();
+      
+    });
 
+    </script>
+{% endblock extra_js %}
+
+{% block content %}
     <div class="container" id="project-slug">
       <div class="row">
         <div class="col-md-12">
           <div class="title">
-            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
+            <span class="org">
+              <a href="/">{{ view.organization|lower }}</a> / 
+            </span>
+            <span class="project">
+              <a href=".">{{ view.project.name|lower }}</a> <i class="fa fa-caret-down"></i>{% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}
+            </span>
+            <div class="projectswitcher">
+              <ul>
+              {% for project in view.projects %}
+                <li>{{ project.name }}</li>
+              {% endfor %}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -49,6 +71,8 @@
       
       </div>
     </div>
+
+
 
 {% endblock content %}
 

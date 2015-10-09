@@ -356,6 +356,13 @@ class Project(models.Model):
 
     project_type = models.ForeignKey(ProjectType, null=True, blank=True)
     created_at = models.DateTimeField(default=datetime.datetime.now)
+    piedict = {
+        2: "pie025",
+        3: "pie037",
+        4: "pie050",
+        5: "pie062",
+        6: "pie075",
+    }
 
     class Meta:
         ordering = ('name',)
@@ -413,9 +420,26 @@ class Project(models.Model):
             percentage = (
                 (100 * self.number_of_complete_locations()) /
                 self.number_of_locations())
-            return "{percentage:2.0f}%".format(percentage=percentage)
+            return int(percentage)
         except ZeroDivisionError:
             return "N/A"
+
+    @property
+    def pie(self):
+        x = self.percentage_done
+        if x == "N/A":
+            return "pienan"
+        elif x == 0:
+            return "pie000"
+        elif x < 12.5:
+            return "pie012"
+        elif x >= 100:
+            return "pie100"
+        elif x > 87.5:
+            return "pie087"
+        else:
+            return self.piedict[int(round(x/12.5))]
+
 
     def is_complete(self):
         """Project is complete if there are any activities, and they are

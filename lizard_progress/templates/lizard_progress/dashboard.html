@@ -11,7 +11,13 @@
     <style>
     .projectswitcher {
       display:none;
-      position:absolute;left:270px;z-index:99999;background-color:#fff;height:200px;width:500px;overflow:scroll;
+      position:absolute;
+      left:20px;
+      z-index:99999;
+      background-color:#fff;
+      height:200px;
+      width:500px;
+      overflow:scroll;
       -webkit-box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
       -moz-box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
       box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
@@ -33,7 +39,7 @@
             <div class="projectswitcher" style="">
               <ul style="padding:0 20px 20px 20px;">
               {% for project in view.projects %}
-                <li><a style="font-size:0.75em;" href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name }}</a></li>
+                <li style="font-size:0.75em;">{{ view.organization|lower|truncatechars:9 }} / <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name|lower }}</a></li>
               {% endfor %}
               </ul>
             </div>

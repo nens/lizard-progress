@@ -21,6 +21,7 @@
           
             <div class="col-md-12 details-tabs">
               <div>
+                  <div class="row">
                     <div class="row quickbar well">
                       <div class="col-md-4 text-center">
                         6 <span class="text-muted">geplande metingen</span>
@@ -30,19 +31,25 @@
                       </div>
                       <div class="col-md-4 text-center">
                         3 <span class="text-muted">uploaders</span>
-                      </div>
                     </div>
-                    {% for activity in view.activities %}
-                      <img width="500" height="300" src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=activity.id %}" title="Voortgang {{ activity }}"/>
-                    {% endfor %}                                          
                   </div>
-
-                  
+                    </div class="row">
+                        {% for activity in view.activities %}
+                        <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
+                          <div class="col-md-3">
+                            <div class="panel panel-default">
+                              <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ activity.name }}</h4></div>
+                              <div class="panel-body pie-lg {{ activity.pie }}"></div>
+                            </div>
+                          </div>
+                        </a>
+                        {% endfor %}
+                  </div>
 
 
             </div>
-          
-        
+
+
         </div>
 
         {% include "lizard_progress/sidebar_include.html" with active="dashboard" %}

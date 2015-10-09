@@ -1,48 +1,71 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block extrabar %}
-  <div id="actions2" class="sidebar-inner">
-  <ul class="nav nav-pills" style="clear: both; padding-left: 14px;">
-    <li {% if view.active_menu == "activitydashboard" %}class="active"{% endif %}>
-      <a title="Activity Dashboard" href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity_id %}">Werkzaamheiddashboard</a>
-    </li>
-    {% if view.show_planning_menu %}
-      <li {% if view.active_menu == "planning" %}class="active"{% endif %}>
-        <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">Planning</a>
-      </li>
-    {% endif %}
-    {% if view.user_is_manager %}
-      <li {% if view.active_menu == "config" %}class="active"{% endif %}>
-        <a title="Configuratie" href="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">Configuratie</a>
-      </li>
-    {% endif %}
-    {% if view.user_is_uploader %}
-      <li {% if view.active_menu == "upload" %}class="active"{% endif %}>
-        <a title="Upload files" href="{% url "lizard_progress_uploadhomeview" project_slug=view.project_slug activity_id=view.activity_id %}">Upload</a>
-      </li>
-    {% endif %}
-    {% if view.activity.measurement_type.has_only_point_locations %}
-      <li {% if view.active_menu == "requests" %}class="active"{% endif %}>
-        <a title="Aanvragen" href="{% url "changerequests_main" project_slug=view.project_slug activity_id=view.activity_id %}">Aanvragen{{ view.change_requests_menu_string }}</a>
-      </li>
-    {% endif %}
-  </ul>
-  </div>
+
+{% block content %}
+
+    <div class="container" id="project-slug">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="title">
+            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href="../dashboard">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container" id="project-details">
+
+      
+      <div class="row">
+
+        <div class="col-md-11">        
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              {{ view.activity.contractor }} / {{ view.activity.measurement_type }}
+            </h3>
+          </div>
+
+          <div class="panel-body">
+
+          <span class="pull-right" style="margin:0 0 5px 0;">
+            <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Planning werkzaamheid">
+              <i class="fa fa-calendar"></i>
+            </button>
+            <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Instellingen werkzaamheid">
+              <i class="fa fa-cog"></i>
+            </button>            
+          </span>          
+            <div class="col-md-3">
+              <div class="panel panel-default">
+                <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ view.activity.name }}</h4></div>
+                <div class="panel-body pie-lg {{ view.activity.pie }}"></div>
+              </div>
+            </div>
+            <dl style="float: left;">
+              <dt>Opdrachtnemer:</dt>
+              <dd>{{ view.activity.contractor }}</dd>
+              <dt>Type meting:</dt>
+              <dd>{{ view.activity.measurement_type }}</dd>
+              {% if view.user_is_manager %}
+                <dt>Planning:</dt>
+                <dd><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">inplannen</a></dd>
+              {% endif %}
+              <dt>Open aanvragen:</dt>
+              <dd>{{ view.activity.open_requests.count }}</dd>
+            </dl>
+
+          </div>
+        </div>
+      </div>
+
+
+        {% include "lizard_progress/sidebar_include.html" with active="activities" %}
+      </div>
+    </div>        
 {% endblock %}
 
-{% block contentpage %}
-  {# Override this on the other pages #}
-  <img width="500" height="300" src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=view.activity_id %}" title="Voortgang {{ view.activity }}" style="float: left;"/>
-  <dl style="float: left;">
-    <dt>Opdrachtnemer:</dt>
-    <dd>{{ view.activity.contractor }}</dd>
-    <dt>Type meting:</dt>
-    <dd>{{ view.activity.measurement_type }}</dd>
-    {% if view.user_is_manager %}
-      <dt>Planning:</dt>
-      <dd><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">inplannen</a></dd>
-    {% endif %}
-    <dt>Open aanvragen:</dt>
-    <dd>{{ view.activity.open_requests.count }}</dd>
-  </dl>
-{% endblock contentpage %}
+
+

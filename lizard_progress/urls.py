@@ -13,12 +13,14 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 
+from lizard_progress.views import ActivitiesView
 from lizard_progress.views import DashboardView
 from lizard_progress.views import DashboardCsvView
 from lizard_progress.views import DownloadHomeView
 from lizard_progress.views import DownloadView
 from lizard_progress.views import DownloadDocumentsView
 from lizard_progress.views import DownloadOrganizationDocumentView
+from lizard_progress.views import InlineMapView
 from lizard_progress.views import MapView
 from lizard_progress.views import ProjectsView
 from lizard_progress.views import UploadDialogView
@@ -104,7 +106,9 @@ activity_urls = [
 
 project_urls = [
     # Kaartlagen view
-    url('^map/$', login_required(MapView.as_view()),
+    url('^map/$', login_required(InlineMapView.as_view()),
+        name='lizard_progress_inlinemapview'),    
+    url('^mapinline/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
     url('^map/change_request/(?P<change_request>[^/]+)/$',
         login_required(MapView.as_view()),
@@ -115,6 +119,9 @@ project_urls = [
     # Dashboard page
     url('^dashboard/$', login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),
+    url('^activities/$', login_required(ActivitiesView.as_view()),
+        name='lizard_progress_activitiesView'),
+
     # Edit activities
     url('^edit_activities/$',
         login_required(views.EditActivities.as_view()),

@@ -1,7 +1,74 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block topbar %}
-{% endblock %}
+
+{% block content %}
+<div class="container" id="project-slug">
+  <div class="row">
+    <div class="title">
+      <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href="">instellingen</a></span>
+    </div>
+  </div>
+</div>
+
+
+<div class="container">
+    <div class="row">
+      <div class="col-md-2">
+        <div class="list-group settings-menu">
+          <a href="#" class="list-group-item active">Algemeen</a>
+          <a href="#" class="list-group-item">Gebruikersbeheer</a>
+          <a href="#" class="list-group-item">Documentenbeheer</a>
+          <a href="#" class="list-group-item">Inpeiling</a>
+          <a href="#" class="list-group-item">Uitpeiling</a>
+        </div>
+      </div>
+      <div class="col-md-10">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Algemene instellingen voor '{{ view.organization }}'</h3>
+          </div>
+          
+          <div class="panel-body" style="background-color:#DAEDF7;">
+            <p>Dit zijn de standaardwaarden voor het Configuratiescherm van
+            een project. Deze waarden worden alleen gebruikt bij
+            het <u>aanmaken</u> van een project, als het project eenmaal
+            aangemaakt is kunnen de waarden van dat project aangepast worden
+            op het Configuratiescherm van dat project.</p>
+          </div>
+        </div>
+
+
+            {% with option_blocks=view.config_option_blocks %}
+
+              {# Repeat this twice so that the generic options come first #}
+              {% for option_block in option_blocks.items %}
+                {% if option_block.0.0 == "" %}
+                  {% with mtype_slug="" mtype_name="Algemeen" options=option_block.1 %}
+                  <div class="panel panel-default">
+                    {% include "lizard_progress/organization_config_block.html" %}
+                  </div>
+                  {% endwith %}
+                {% endif %}
+              {% endfor %}
+
+              {% for option_block in option_blocks.items %}
+                {% if option_block.0.0 != "" %}
+                  {% with mtype_slug=option_block.0.0 mtype_name=option_block.0.1 options=option_block.1 %}
+                  <div class="panel panel-default">
+                    {% include "lizard_progress/organization_config_block.html" %}
+                  </div>
+                  {% endwith %}
+                {% endif %}
+              {% endfor %}
+            {% endwith %}            
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}
+
 
 {% block contentpage %}
 

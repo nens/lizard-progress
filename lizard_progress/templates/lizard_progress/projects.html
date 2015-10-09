@@ -1,47 +1,131 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block contentpage %}
-<h2>Laatste uploads</h2>
-<table class="table table-bordered table-hover progressbase">
-<thead>
-  <th><i rel="tooltip" title="Aantal open anvragen" class="icon icon-warning-sign"></i></th>
-  <th>Project</th>
-  <th>Laatste upload</th>
-  <th>Soort</th>
-  <th>Door</th>
-  <th>Aantal</th>
-  <th>Totaal nu</th>
-  <th>%</th>
-</thead>
-{% for project in view.projects %}
-<tr class="clickable" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
-  <td>
-    {% with numrequests=project.num_open_requests %}
-      {% if numrequests > 0 %}
-        <b>{{ numrequests }}</b>
-      {% endif %}
-    {% endwith %}
- </td>
-  <td>{{ project.name }}</td>
-  {% with log=project.latest_log %}
-    {% if log %}
-      <td>{{ log.when }}</td>
-      <td>{{ log.mtype }}</td>
-      <td>{{ log.uploading_organization }}</td>
-      <td>{{ log.num_measurements }}</td>
-      <td>{{ project.number_of_complete_locations }}</td>
-      <td>{{ project.percentage_done }}</td>
-    {% else %}
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-    {% endif %}
-  {% endwith %}
-</tr>
-{% endfor %}
-</table>
+{% block extra_js %}
 
-{% endblock contentpage %}
+<script>
+$(document).ready(function() {
+  $('.drilldown').focus();
+  if($('.drilldown').val()) {
+    var query = $('.drilldown').val();
+    $('.row.project').each(function(i,element) { 
+      if($(element).find('a').html().toLowerCase().indexOf(query) > -1) {
+        $(element).removeClass('hide');
+      } else {
+        $(element).addClass('hide');
+      }
+    });    
+  }
+  $('.drilldown').on('input', function(e) {
+    var query = e.target.value.toLowerCase();
+    $('.row.project').each(function(i,element) { 
+      if($(element).find('a').html().toLowerCase().indexOf(query) > -1) {
+        $(element).removeClass('hide');
+      } else {
+        $(element).addClass('hide');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div id="organisation" class="col-md-12">
+      <div class="profile-picture">
+        <img data-src="holder.js/100x100" class="img-thumbnail" alt="">
+      </div>
+
+      <div class="organisation-title">
+        <p>{{ view.organization }}<p>
+      </div>
+
+      <div class="details">
+        <ul>
+          <li><a href="mailto:">info@{{view.organization|lower}}.nl</a></li>
+          <li><a href="http://www.{{view.organization|lower}}.nl/">www.{{view.organization|lower}}.nl</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-10"></div>
+    <div class="col-md-2">
+      <div class="dropdown">
+          <ul class="nav nav-pills" role="tablist">
+            <li role="presentation" class="active">
+              <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                {{view.orderby}}
+                <span class="caret"></span>
+              </a>
+              <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
+                {% for queryname, choicename in view.orderchoices.items %}
+                  <li><a href="?orderby={{queryname}}">{{choicename}}</a></li>
+                {% endfor %}
+              </ul>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div><!-- /.container -->
+
+
+    <div class="container" id="projects">
+      <div>
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Projecten</a></li>
+          <!-- <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Archief</a></li> -->
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane fade in active" id="home">
+
+          <input class="form-control drilldown" style="margin:20px 0 20px 0;" id="focusedInput" type="text" value="" placeholder="Filter projecten op naam">
+
+          {% for project in view.projects %}
+              <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
+                <div class="col-md-9">
+                  <p class="project-title">
+                    <!-- <i class="fa fa-star-o"></i>&nbsp; -->
+                    <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{project.name}}</a>
+                  </p>
+                  <p class="project-description"></p>
+                  <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
+                </div>
+                <div class="col-md-3 stats text-right">
+                  <ul>
+                    <li>Totaal {{ project.number_of_complete_locations }}x</li>
+                    <li><div class="pie-md {{ project.pie }} vcenter"></div></li>
+                  </ul>
+                  <div class="progress-bar horizontal">
+                    <div class="progress-track">
+                      <div class="progress-fill">
+                        <span>75%</span>
+                      </div>
+                    </div>
+                  </div>                  
+                </div>
+              </div>
+          {% empty %}
+            <p class="small">(Er zijn nog geen projecten)</p>
+          {% endfor %}
+
+            <div class="row">
+              <div class="col-md-offset-5 col-md-2">
+                <a href="{% url "lizard_progress_newproject" %}"><button type="button" class="btn btn-primary btn-lg">+ Project toevoegen</button></a>
+              </div>
+            </div>
+          </div>
+          <div role="tabpanel" class="tab-pane fade" id="profile">
+            <div id="calendar"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+{% endblock content %}

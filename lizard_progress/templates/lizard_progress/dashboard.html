@@ -1,4 +1,91 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
+
+{% block content %}
+
+    <div class="container" id="project-slug">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="title">
+            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container" id="project-details">
+      
+      <div class="row">
+        <div class="col-md-9">
+
+          
+            <div class="col-md-12 details-tabs">
+              <div>
+                  <div class="row">
+                    <div class="row quickbar well">
+                      <div class="col-md-4 text-center">
+                        6 <span class="text-muted">geplande metingen</span>
+                      </div>
+                      <div class="col-md-4 text-center">
+                        345 <span class="text-muted">ingevoerde metingen</span>
+                      </div>
+                      <div class="col-md-4 text-center">
+                        3 <span class="text-muted">uploaders</span>
+                    </div>
+                  </div>
+                    </div class="row">
+                        {% for activity in view.activities %}
+                        <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
+                          <div class="col-md-3">
+                            <div class="panel panel-default">
+                              <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ activity.name }}</h4></div>
+                              <div class="panel-body pie-lg {{ activity.pie }}"></div>
+                            </div>
+                          </div>
+                        </a>
+                        {% endfor %}
+                  </div>
+
+
+            </div>
+
+
+        </div>
+
+        {% include "lizard_progress/sidebar_include.html" with active="dashboard" %}
+      
+      </div>
+    </div>
+
+{% endblock content %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 {% block contentpage %}
 

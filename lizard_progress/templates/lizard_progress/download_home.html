@@ -1,206 +1,258 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block css %}
-  {{block.super}}
+
+{% block extra_js %}
   <link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/jquery-ui.css" type="text/css" />
-  <link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
-{% endblock css %}
-
-{% block javascript %}
-  {{block.super}}
+  <link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />  
   <script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/jquery-ui.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.flash.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html4.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
-{% endblock javascript %}
+{% endblock extra_js %}
 
-{% block contentpage %}
 
-  {% if view.user_is_manager %}
-    <div id="upload-wrapper" data-upload-dialog-url="{{ view.upload_dialog_url }}">
-      <button type="button" class="upload btn btn-primary"
-              data-upload-url="{% url "lizard_progress_upload_projectfile" project_slug=view.project.slug%}"
-              ><i class="icon-upload"></i> Projectdocumenten uploaden</button>
-      <button type="button" class="redirect btn btn-primary"
-              data-redirect-url="{% url "lizard_progress_upload_hydrovakken" project_slug=view.project.slug %}"
-              ><i class="icon-upload"></i> Monstervakken uploaden</button>
+
+{% block content %}
+
+    <div class="container" id="project-slug">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="title">
+            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
+          </div>
+        </div>
+      </div>
     </div>
-  {% endif %}
 
-  <h3>Documenten {{ view.project.name }}</h3>
+    <div class="container" id="project-details">
+      
+      <div class="row">
+        <div class="col-md-11">
 
-  <table class="table table-bordered fixed">
-    <thead>
-      <th>Filename</th>
-      <th style="width: 6em;">Download</th>
-      {% if view.user_is_manager %}
-        <th style="width: 6em;">Delete</th>
-      {% endif %}
-    </thead>
-    {% for file in view.files.organization %}
-      <tr>
-        <td class="filename">{{ file.filename }} ({{ file.size }})</td>
-        <td class="download"><a href="{{ file.url }}">download</a></td>
-        {% if view.user_is_manager %}
-          <td><a class="delete_file"
-                 data-message="Wilt u dit bestand verwijderen uit dit project?"
-                 href="{{ file.url }}">delete</a>
-          </td>
-        {% endif %}
-      </tr>
-    {% endfor %}
-  </table>
 
-  {% if view.files.monstervakken %}
-    <h3>Monstervakken shapefile</h3>
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Documenten {{ view.project.name }}</h3>
+                </div>
+                <div class="panel-body">
+                  <table class="table table fixed">
+                    <thead>
+                      <th>Filename</th>
+                      <th style="width: 6em;">Download</th>
+                      {% if view.user_is_manager %}
+                        <th style="width: 6em;">Verwijderen</th>
+                      {% endif %}
+                    </thead>
+                    {% for file in view.files.organization %}
+                      <tr>
+                        <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+                        <td class="download"><a href="{{ file.url }}">download</a></td>
+                        {% if view.user_is_manager %}
+                          <td><a class="delete_file"
+                                 data-message="Wilt u dit bestand verwijderen uit dit project?"
+                                 href="{{ file.url }}">verwijderen</a>
+                          </td>
+                        {% endif %}
+                      </tr>
+                      {% empty %}
+                      <tr>
+                        <td class="text-info">Geen bestanden</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                      </tr>
+                    {% endfor %}
+                  </table>
+                </div>
+              </div>
 
-    <table class="table table-bordered fixed">
-      <thead>
-        <th>Omschrijving</th>
-        <th>Downloads (3 files zijn samen een shape)</th>
-      </thead>
-      {% for file in view.files.monstervakken %}
-        <tr>
-          <td class="filename">{{ file.description }}</td>
-          <td class="download">
-            <a href="{{ file.urls.shp }}">.shp</a>,
-            <a href="{{ file.urls.dbf }}">.dbf</a>,
-            <a href="{{ file.urls.shx }}">.shx</a>
-          </td>
-        </tr>
-      {% endfor %}
-    </table>
-  {% endif %}
+              {% if view.files.monstervakken %}
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Monstervakken shapefile</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table fixed">
+                      <thead>
+                        <th>Omschrijving</th>
+                        <th>Downloads (3 files zijn samen een shape)</th>
+                      </thead>
+                      {% for file in view.files.monstervakken %}
+                        <tr>
+                          <td class="filename">{{ file.description }}</td>
+                          <td class="download">
+                            <a href="{{ file.urls.shp }}">.shp</a>,
+                            <a href="{{ file.urls.dbf }}">.dbf</a>,
+                            <a href="{{ file.urls.shx }}">.shx</a>
+                          </td>
+                        </tr>
+                      {% empty %}
+                      {% endfor %}
+                    </table>
 
-  {% if view.exports or view.csv %}
-    <h3>Exports</h3>
 
-    {% if view.exports %}
-      <table class="table table-bordered progressbase">
-        <thead>
-          <th>Opdrachtnemer</th>
-          <th>Soort meting</th>
-          <th>Soort file</th>
-          <th>Gegenereerd</th>
-          <th>Up to date</th>
-          <th>Bestand</th>
-          <th>Start</th>
-        </thead>
-        <tbody>
-          {% for export_run in view.exports %}
-            <tr {% if not export_run.present and export_run.export_running %}class="please-reload-me"{% endif %}>
-              <td>{{ export_run.activity.contractor }}</td>
-              <td>{{ export_run.activity.measurement_type }}</td>
-              <td>
-                {% if export_run.exporttype == "allfiles" %}ZIP bestand
-                {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties
-                {% elif export_run.exporttype == "pipeshape" %}Shapefile met strengen
-                {% elif export_run.exporttype == "drainshape" %}Shapefile met kolken
-                {% elif export_run.exporttype == "manholeshape" %}Shapefile met putten
-                {% elif export_run.exporttype == "met" %}MET bestand
-                {% elif export_run.exporttype == "dxf" %}Zipped DXF
-                {% elif export_run.exporttype == "csv" %}Zipped CSV
-                {% elif export_run.exporttype == "lizard" %}Export naar Lizard
-                {% else %}Onbekend{% endif%}
-              </td>
-              <td id="present-{{ export_run.id }}">
-                {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">{% elif export_run.error_message %}<span class="small">{{ export_run.error_message }}</span>
-                {% endif %}
-              </td>
-              <td id="uptodate-{{ export_run.id }}">
-                {% if export_run.available %}
-                  {% if export_run.exporttype == "pointshape" %}
-                    Onbekend
-                  {% elif export_run.up_to_date %}
-                    Ja
-                  {% else %}
-                    Nee
-                  {% endif %}
-                {% endif %}
-              </td>
-              <td id="download-{{ export_run.id }}">
-                {% if export_run.present %}
-                  <a href="{% url "lizard_progress_download_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>
-                {% endif %}
-              </td>
-              <td>
-                <button type="button"
-                        autocomplete="off" {# So it doesn't stay disabled after reloading in Firefox #}
-                        {% if export_run.export_running %}disabled="disabled"{% endif %}
-                        data-export-run-url="{% url "lizard_progress_start_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}"
-                        data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif"
-                        data-export-run-id="{{ export_run.id }}"
-                        class="export-run-button btn btn-primary">
-                  Genereer
-                </button>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
-    {% if view.csv %}
-      <table class="table table-bordered fixed">
-        <thead>
-          <th>Werkzaamheid</th>
-          <th style="width: 6em;">CSV bestand</th>
-        </thead>
-        <tbody>
-          {% for activity, url in view.csv %}
-            <tr>
-              <td class="filename">{{ activity }}</td>
-              <td class="download"><a href="{{ url }}">CSV file voortgang</a></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
-  {% endif %}
+                </div>
+              </div>
+              {% endif %}                
 
-  {% if view.files.reports or view.files.contractor_monstervakken %}
-    <h3>Rapportages</h3>
 
-    <table class="table table-bordered fixed">
-      <thead>
-        <th>Filenaam</th>
-        <th style="width: 6em;">Download</th>
-      </thead>
-      <tbody>
-        {% for file in view.files.reports %}
-          <tr>
-            <td class="filename">{{ file.filename }} ({{ file.size }})</td>
-            <td class="download"><a href="{{ file.url }}">download</a></td>
-          </tr>
-        {% endfor %}
-        {% for file in view.files.contractor_monstervakken %}
-          <tr>
-            <td class="filename">{{ file.filename }} ({{ file.size }})</td>
-            <td class="download"><a href="{{ file.url }}">download</a></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% endif %}
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Exports</h3>
+                </div>
+                <div class="panel-body">
+                  {% if view.exports %}
+                    <table class="table table-striped progressbase">
+                      <thead>
+                        <th>Opdrachtnemer</th>
+                        <th>Soort meting</th>
+                        <th>Soort file</th>
+                        <th>Gegenereerd</th>
+                        <th>Up to date</th>
+                        <th>Bestand</th>
+                        <th>Start</th>
+                      </thead>
+                      <tbody>
+                        {% for export_run in view.exports %}
+                          <tr {% if not export_run.present and export_run.export_running %}class="please-reload-me"{% endif %}>
+                            <td>{{ export_run.activity.contractor }}</td>
+                            <td>{{ export_run.activity.measurement_type }}</td>
+                            <td>
+                              {% if export_run.exporttype == "allfiles" %}ZIP bestand
+                              {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties
+                              {% elif export_run.exporttype == "pipeshape" %}Shapefile met strengen
+                              {% elif export_run.exporttype == "drainshape" %}Shapefile met kolken
+                              {% elif export_run.exporttype == "manholeshape" %}Shapefile met putten
+                              {% elif export_run.exporttype == "met" %}MET bestand
+                              {% elif export_run.exporttype == "dxf" %}Zipped DXF
+                              {% elif export_run.exporttype == "csv" %}Zipped CSV
+                              {% elif export_run.exporttype == "lizard" %}Export naar Lizard
+                              {% else %}Onbekend{% endif%}
+                            </td>
+                            <td id="present-{{ export_run.id }}">
+                              {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">{% elif export_run.error_message %}<span class="small">{{ export_run.error_message }}</span>
+                              {% endif %}
+                            </td>
+                            <td id="uptodate-{{ export_run.id }}">
+                              {% if export_run.available %}
+                                {% if export_run.exporttype == "pointshape" %}
+                                  Onbekend
+                                {% elif export_run.up_to_date %}
+                                  Ja
+                                {% else %}
+                                  Nee
+                                {% endif %}
+                              {% endif %}
+                            </td>
+                            <td id="download-{{ export_run.id }}">
+                              {% if export_run.present %}
+                                <a href="{% url "lizard_progress_download_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>
+                              {% endif %}
+                            </td>
+                            <td>
+                              <button type="button"
+                                      autocomplete="off" {# So it does not stay disabled after reloading in Firefox #}
+                                      {% if export_run.export_running %}disabled="disabled"{% endif %}
+                                      data-export-run-url="{% url "lizard_progress_start_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}"
+                                      data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif"
+                                      data-export-run-id="{{ export_run.id }}"
+                                      class="export-run-button btn btn-primary">
+                                <i class="fa fa-lg fa-share" data-toggle="tooltip" data-placement="right" title="Genereren"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  {% endif %}                                  
+                </div>
+              </div>
 
-  {% if view.files.results %}
-    <h3>Berekende resultaten</h3>
 
-    <table class="table table-bordered fixed">
-      <thead>
-        <th>Filenaam</th>
-        <th style="width: 6em;">Download</th>
-      </thead>
-      <tbody>
-        {% for file in view.files.results %}
-          <tr>
-            <td class="filename">{{ file.filename }} ({{ file.size }})</td>
-            <td class="download"><a href="{{ file.url }}">download</a></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% endif %}
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Werkzaamheden voortgang</h3>
+                </div>
+                <div class="panel-body">
+                    {% if view.csv %}
+                      <table class="table fixed">
+                        <thead>
+                          <th>Werkzaamheid</th>
+                          <th style="width: 6em;">CSV</th>
+                        </thead>
+                        <tbody>
+                          {% for activity, url in view.csv %}
+                            <tr>
+                              <td class="filename">{{ activity }}</td>
+                              <td class="download"><a href="{{ url }}">CSV file voortgang</a></td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    {% endif %}                
+                </div>
+              </div>
 
-{% endblock contentpage %}
+
+            {% if view.files.reports or view.files.contractor_monstervakken %}
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Rapportages</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table fixed">
+                      <thead>
+                        <th>Filenaam</th>
+                        <th style="width: 6em;">Download</th>
+                      </thead>
+                      <tbody>
+                        {% for file in view.files.reports %}
+                          <tr>
+                            <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+                            <td class="download"><a href="{{ file.url }}">download</a></td>
+                          </tr>
+                        {% endfor %}
+                        {% for file in view.files.contractor_monstervakken %}
+                          <tr>
+                            <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+                            <td class="download"><a href="{{ file.url }}">download</a></td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                </div>
+              </div>
+              {% endif %}                
+
+
+              {% if view.files.results %}
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Berekende resultaten</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table fixed">
+                      <thead>
+                        <th>Filenaam</th>
+                        <th style="width: 6em;">Download</th>
+                      </thead>
+                      <tbody>
+                        {% for file in view.files.results %}
+                          <tr>
+                            <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+                            <td class="download"><a href="{{ file.url }}">download</a></td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>                 
+                </div>
+              </div>              
+              {% endif %}
+
+          </div>
+          {% include "lizard_progress/sidebar_include.html" with active="download" %}
+      </div>
+      </div>
+{% endblock %}
+

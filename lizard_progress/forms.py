@@ -118,6 +118,7 @@ class NewProjectForm(forms.Form):
 
 class SingleUserForm(forms.Form):
     username = forms.RegexField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
         label="Gebruikersnaam", max_length=30, regex=r"^[\w.@+-]+$",
         help_text=_(
             "Required. 30 characters or fewer. Letters, digits and "
@@ -127,18 +128,23 @@ class SingleUserForm(forms.Form):
                          "@/./+/-/_ characters.")})
 
     first_name = forms.CharField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
         label="Voornaam", max_length=30, required=False)
     last_name = forms.CharField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
         label="Achternaam", max_length=30, required=False)
 
-    email = forms.EmailField(label="Email adres", required=False)
+    email = forms.EmailField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
+        label="Email adres",
+        required=False)
 
     new_password1 = forms.CharField(
         label=_("New password"), required=False,
-        widget=forms.PasswordInput)
+        widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
     new_password2 = forms.CharField(
         label=_("New password confirmation"), required=False,
-        widget=forms.PasswordInput)
+        widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
 
     def __init__(self, user, *args, **kwargs):
         """Store which user we are editing."""

@@ -38,7 +38,12 @@
               <i class="fa fa-cog"></i>
             </button>            
           </span>          
-            <img width="500" height="300" src="{% url "lizard_progress_dashboardgraphview" project_slug=view.project.slug activity_id=view.activity_id %}" title="Voortgang {{ view.activity }}" style="float: left;"/>
+            <div class="col-md-3">
+              <div class="panel panel-default">
+                <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ view.activity.name }}</h4></div>
+                <div class="panel-body pie-lg {{ view.activity.pie }}"></div>
+              </div>
+            </div>
             <dl style="float: left;">
               <dt>Opdrachtnemer:</dt>
               <dd>{{ view.activity.contractor }}</dd>

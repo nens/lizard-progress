@@ -1,0 +1,30 @@
+{% extends "lizard_progress/progressbase2.html" %}
+
+
+
+{% block content %}
+
+    <div class="container" id="project-slug">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="title">
+            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container" id="project-details">
+      
+      <div class="row">
+        <div class="col-md-11">
+        <iframe width="100%" height="800" src="{% url "lizard_progress_mapview" project_slug=view.project_slug %}"></iframe>
+	
+        
+        </div>
+
+      {% include "lizard_progress/sidebar_include.html" with active="map" %}
+      </div>
+    </div>        
+{% endblock %}

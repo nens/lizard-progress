@@ -6,6 +6,23 @@
 <link rel="stylesheet"
       type="text/css"
       href="{{ STATIC_URL }}lizard_progress/lizard_progress.css" />
+<style>
+#sidebar {
+	top: 0 !important;
+}
+#rightbar {
+	top: 0 !important;
+}
+#content {
+	top: 0 !important;
+}
+#edit-workspace > ul {
+	display: none !important;
+}
+.secondary-sidebar-button {
+	display: none !important;	
+}
+</style>
 {% endblock css %}
 
 {% block map-javascript %}
@@ -13,6 +30,8 @@
 <script type="text/javascript"
         src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
 {% endblock map-javascript %}
+
+{% block header %}{% endblock header %}
 
 {% block sidebar %}
   {# Put workspace things back in the sidebar, boo Lizard 4 #}
@@ -25,8 +44,7 @@
 {% endblock secondary-sidebar %}
 
 {# So we don't need sidebar actions either #}
-{% block sidebar-actions %}
-{% endblock sidebar-actions %}
+
 
 {% block rightbar %}
   {% include "lizard_progress/map_legend.html" %}

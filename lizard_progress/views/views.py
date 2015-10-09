@@ -290,6 +290,10 @@ class View(KickOutMixin, ProjectsMixin, TemplateView):
     template_name = 'lizard_progress/home.html'
 
 
+class InlineMapView(View):
+    template_name = 'lizard_progress/map_inline.html'
+
+
 class MapView(View, AppView):
     """View that can show a project's locations as map layers."""
     template_name = 'lizard_progress/map.html'
@@ -368,6 +372,13 @@ class MapView(View, AppView):
                 if 'load-default-location' in action.klass]
 
     @property
+    def sidebar_actions(self):
+        """..."""
+        actions = super(MapView, self).sidebar_actions
+        actions[0].name = 'Kaartlagen'
+        return actions       
+
+    @property
     def breadcrumbs(self):
         """Breadcrumbs for this page."""
 
@@ -396,6 +407,10 @@ class DashboardView(ProjectsView):
     active_menu = "dashboard"
 
     @property
+    def total_activities(self):
+        return self.project.activity_set.count()
+
+    @property
     def breadcrumbs(self):
         """Breadcrumbs for this page."""
 
@@ -408,6 +423,35 @@ class DashboardView(ProjectsView):
                              .format(project=self.project.name)),
                 url=reverse(
                     'lizard_progress_dashboardview',
+                    kwargs={'project_slug': self.project_slug})))
+
+        return crumbs
+
+
+class ActivitiesView(ProjectsView):
+    """Show the activities page. The page shows activities in this project,
+    number of planned and uploaded measurements, links to pages for
+    planning and for adding and removing contractors and measurement
+    types, and progress graphs.
+
+    """
+
+    template_name = 'lizard_progress/activities.html'
+    active_menu = "dashboard"
+
+    @property
+    def breadcrumbs(self):
+        """Breadcrumbs for this page."""
+
+        crumbs = super(DashboardView, self).breadcrumbs
+
+        crumbs.append(
+            Action(
+                name="Activities",
+                description=("{project} dashboard"
+                             .format(project=self.project.name)),
+                url=reverse(
+                    'lizard_progress_activitiesview',
                     kwargs={'project_slug': self.project_slug})))
 
         return crumbs

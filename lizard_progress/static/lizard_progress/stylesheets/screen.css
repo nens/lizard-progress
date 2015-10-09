@@ -436,8 +436,8 @@ th {
 }
 @font-face {
   font-family: 'Glyphicons Halflings';
-  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?1435309638);
-  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?&1435309638#iefix) format("embedded-opentype"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff2?1435309638) format("woff2"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff?1435309638) format("woff"), url(../fonts/bootstrap/glyphicons-halflings-regular.ttf?1435309638) format("truetype"), url(../fonts/bootstrap/glyphicons-halflings-regular.svg?1435309638#glyphicons_halflingsregular) format("svg");
+  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?1444137813);
+  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?&1444137813#iefix) format("embedded-opentype"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff2?1444137813) format("woff2"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff?1444137813) format("woff"), url(../fonts/bootstrap/glyphicons-halflings-regular.ttf?1444137813) format("truetype"), url(../fonts/bootstrap/glyphicons-halflings-regular.svg?1444137813#glyphicons_halflingsregular) format("svg");
 }
 /* line 24, ../bower_components/twbs-bootstrap-sass/assets/stylesheets/bootstrap/_glyphicons.scss */
 .glyphicon {
@@ -8843,7 +8843,7 @@ button.close {
   position: relative;
   width: 200px;
   height: 100px;
-  background-image: url('../images/logo.png?1435314235');
+  background-image: url('../images/logo.png?1444137813');
   background-repeat: no-repeat;
   background-size: 50%;
 }
@@ -8891,7 +8891,7 @@ button.close {
 
 /* line 36, ../sass/modules/_project_manager_home.scss */
 #projects .project {
-  margin: 0 0 30px 0;
+  margin: 0 0 0 0;
 }
 /* line 38, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title {
@@ -8906,99 +8906,103 @@ button.close {
 /* line 46, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a {
   line-height: 2em;
-  font-size: 1.9em;
+  font-size: 1.5em;
   color: #027377;
   font-weight: 500;
   text-decoration: none;
 }
 /* line 53, ../sass/modules/_project_manager_home.scss */
+#projects .project p.project-title a:hover {
+  text-decoration: underline;
+}
+/* line 56, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-description {
   font-size: 1.1em;
   color: #95a5a6;
 }
-/* line 57, ../sass/modules/_project_manager_home.scss */
+/* line 60, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-age {
   font-size: 1.1em;
   font-style: italic;
   color: #bdc3c7;
 }
-/* line 63, ../sass/modules/_project_manager_home.scss */
+/* line 66, ../sass/modules/_project_manager_home.scss */
 #projects .stats {
   color: #027377;
   padding: 30px;
 }
-/* line 66, ../sass/modules/_project_manager_home.scss */
+/* line 69, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul {
   display: inline;
 }
-/* line 68, ../sass/modules/_project_manager_home.scss */
+/* line 71, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul li {
   display: inline;
   margin: 5px;
   font-weight: bold;
 }
-/* line 77, ../sass/modules/_project_manager_home.scss */
+/* line 80, ../sass/modules/_project_manager_home.scss */
 #projects .project:not(:first-child) {
   border-top: 1px solid #ecf0f1;
   margin-top: 20px;
   padding-top: 20px;
 }
-/* line 82, ../sass/modules/_project_manager_home.scss */
+/* line 85, ../sass/modules/_project_manager_home.scss */
 #projects .project:last-child {
   margin: 0 0 50px 0;
   padding: 0 0 30px 0;
   border-bottom: 1px solid #ecf0f1;
 }
 
-/* line 89, ../sass/modules/_project_manager_home.scss */
+/* line 92, ../sass/modules/_project_manager_home.scss */
 #project-slug {
   border-bottom: 1px solid #ecf0f1;
   margin-bottom: 25px;
   padding: 20px 0 20px 0;
 }
-/* line 93, ../sass/modules/_project_manager_home.scss */
+/* line 96, ../sass/modules/_project_manager_home.scss */
 #project-slug .title {
   padding: 0 0 0 20px;
   font-size: 2em;
   color: #ecf0f1;
 }
-/* line 97, ../sass/modules/_project_manager_home.scss */
+/* line 100, ../sass/modules/_project_manager_home.scss */
 #project-slug .title .org a {
   color: #ecf0f1;
 }
-/* line 100, ../sass/modules/_project_manager_home.scss */
+/* line 103, ../sass/modules/_project_manager_home.scss */
 #project-slug .title .project a {
   color: #027377;
 }
 
-/* line 108, ../sass/modules/_project_manager_home.scss */
+/* line 111, ../sass/modules/_project_manager_home.scss */
 #project-details .quickbar {
   border: 1px solid #bdc3c7;
   margin: 20px;
 }
-/* line 112, ../sass/modules/_project_manager_home.scss */
+/* line 115, ../sass/modules/_project_manager_home.scss */
 #project-details p.description {
   font-size: 1.1em;
   color: #95a5a6;
   padding: 20px 0 0 10px;
 }
-/* line 117, ../sass/modules/_project_manager_home.scss */
+/* line 120, ../sass/modules/_project_manager_home.scss */
 #project-details p.age {
   padding: 0 0 0 10px;
   font-style: italic;
   color: #bdc3c7;
 }
-/* line 123, ../sass/modules/_project_manager_home.scss */
+/* line 126, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar.affix {
   position: fixed;
   top: 20px;
 }
-/* line 127, ../sass/modules/_project_manager_home.scss */
+/* line 130, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar.affix .sidenav, #project-details .sidebar.affix-bottom .sidenav {
   margin-top: 0;
   margin-bottom: 0;
 }
-/* line 131, ../sass/modules/_project_manager_home.scss */
+/* line 134, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav > li {
   padding-left: 18px;
   font-weight: 700;
@@ -9007,7 +9011,7 @@ button.close {
   padding: 0 0 10px 0;
   border-left: 1px solid #ecf0f1;
 }
-/* line 139, ../sass/modules/_project_manager_home.scss */
+/* line 142, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav > li > a {
   display: block;
   padding: 15px 20px;
@@ -9015,21 +9019,21 @@ button.close {
   font-weight: 500;
   color: #767676;
 }
-/* line 146, ../sass/modules/_project_manager_home.scss */
+/* line 149, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav .nav {
   display: none;
   padding-bottom: 10px;
 }
-/* line 150, ../sass/modules/_project_manager_home.scss */
+/* line 153, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar a.active {
   background-color: #ecf0f1;
 }
-/* line 153, ../sass/modules/_project_manager_home.scss */
+/* line 156, ../sass/modules/_project_manager_home.scss */
 #project-details .details-tabs {
-  margin: 20px 0 0 0;
+  margin: 0;
 }
 
-/* line 160, ../sass/modules/_project_manager_home.scss */
+/* line 163, ../sass/modules/_project_manager_home.scss */
 table tr.clickable {
   cursor: pointer;
 }

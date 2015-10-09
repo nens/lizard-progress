@@ -1,6 +1,15 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
 {% block extra_js %}
+<style>
+.projects-affix-list.affix {
+  height:100px;
+  top:0;
+  padding-top:10px;
+  background-color:#fff;
+  z-index:999;
+}
+</style>
 
 <script>
 $(document).ready(function() {
@@ -25,7 +34,17 @@ $(document).ready(function() {
       }
     });
   });
+  $('#myAffix').affix({
+    offset: {
+      top: 200
+    }
+  });
+  $('#myAffix').width($('.navbar').first().width());
 });
+$( window ).resize(function() {
+  $('#myAffix').width($('.navbar').first().width());
+});
+
 </script>
 {% endblock %}
 
@@ -49,49 +68,46 @@ $(document).ready(function() {
       </div>
     </div>
   </div>
-  <div class="row">
-    <div class="col-md-10"></div>
-    <div class="col-md-2">
-      <div class="dropdown">
-          <ul class="nav nav-pills" role="tablist">
-            <li role="presentation" class="active">
-              <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                {{view.orderby}}
-                <span class="caret"></span>
-              </a>
-              <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
-                {% for queryname, choicename in view.orderchoices.items %}
-                  <li><a href="?orderby={{queryname}}">{{choicename}}</a></li>
-                {% endfor %}
-              </ul>
-            </li>
-        </ul>
-      </div>
-    </div>
-  </div>
+
 </div><!-- /.container -->
 
 
     <div class="container" id="projects">
-      <div>
-        <!-- Nav tabs -->
-        <ul class="nav nav-tabs" role="tablist">
-          <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Projecten</a></li>
-          <!-- <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Archief</a></li> -->
-        </ul>
 
-        <!-- Tab panes -->
-        <div class="tab-content">
-          <div role="tabpanel" class="tab-pane fade in active" id="home">
 
-          <input class="form-control drilldown" style="margin:20px 0 20px 0;" id="focusedInput" type="text" value="" placeholder="Filter projecten op naam">
+    <div class="projects-affix-list" id="myAffix">
+          <div class="dropdown pull-right" style="padding:0 0 20px 0;">
+              <ul class="nav nav-pills" role="tablist">
+                <li role="presentation" class="active">
+                  <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                    {{ view.orderby }}
+                    <span class="caret"></span>
+                  </a>
+                  <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
+                    {% for queryname, choicename in view.orderchoices.items %}
+                      <li><a href="?orderby={{queryname}}">{{ choicename }}</a></li>
+                    {% endfor %}
+                  </ul>
+                </li>
+            </ul>
+          </div>
+
+          <input 
+            class="form-control drilldown" 
+            style="margin:20px 0 20px 0;" 
+            id="focusedInput" 
+            type="text" 
+            value="" 
+            placeholder="Filter projecten op naam" 
+          />
+    </div>
 
           {% for project in view.projects %}
               <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
                 <div class="col-md-9">
                   <p class="project-title">
                     <!-- <i class="fa fa-star-o"></i>&nbsp; -->
-                    <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{project.name}}</a>
+                    <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name }}</a>
                   </p>
                   <p class="project-description"></p>
                   <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
@@ -120,9 +136,7 @@ $(document).ready(function() {
               </div>
             </div>
           </div>
-          <div role="tabpanel" class="tab-pane fade" id="profile">
-            <div id="calendar"></div>
-          </div>
+
 
         </div>
 

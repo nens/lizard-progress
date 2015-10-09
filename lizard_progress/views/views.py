@@ -283,7 +283,7 @@ class ProjectsView(KickOutMixin, ProjectsMixin, TemplateView):
     template_name = "lizard_progress/projects.html"
 
 
-class View(KickOutMixin, ProjectsMixin, AppView):
+class View(KickOutMixin, ProjectsMixin, TemplateView):
     """The app's root, shows a choice of projects, or a choice of
     dashboard / upload / map layer pages if a project is chosen."""
 
@@ -294,7 +294,7 @@ class InlineMapView(View):
     template_name = 'lizard_progress/map_inline.html'
 
 
-class MapView(View):
+class MapView(View, AppView):
     """View that can show a project's locations as map layers."""
     template_name = 'lizard_progress/map.html'
 

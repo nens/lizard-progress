@@ -16,7 +16,7 @@ $(document).ready(function() {
     });    
   }
   $('.drilldown').on('input', function(e) {
-    var query = e.target.value;
+    var query = e.target.value.toLowerCase();
     $('.row.project').each(function(i,element) { 
       if($(element).find('a').html().toLowerCase().indexOf(query) > -1) {
         $(element).removeClass('hide');
@@ -99,7 +99,7 @@ $(document).ready(function() {
                 <div class="col-md-3 stats text-right">
                   <ul>
                     <li>Totaal {{ project.number_of_complete_locations }}x</li>
-                    <li>Gereed {{ project.percentage_done }}</li>
+                    <li><div class="pie-md {{ project.pie }} vcenter"></div></li>
                   </ul>
                   <div class="progress-bar horizontal">
                     <div class="progress-track">

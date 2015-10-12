@@ -10,6 +10,7 @@
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.flash.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html4.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/javascripts/bootstrap/collapse.js"></script>
 {% endblock extra_js %}
 
 
@@ -23,48 +24,60 @@
       <div class="row">
         <div class="col-md-11">
 
-
+          <div class="panel-group" id="accordion">
               <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Documenten {{ view.project.name }}</h3>
+                  <a data-toggle="collapse" href="#collapse-documenten" data-parent="#accordion">
+                    <div class="panel-title">
+                      Documenten {{ view.project.name }}
+                    </div>
+                  </a>
                 </div>
-                <div class="panel-body">
-                  <table class="table table fixed">
-                    <thead>
-                      <th>Filename</th>
-                      <th style="width: 6em;">Download</th>
-                      {% if view.user_is_manager %}
-                        <th style="width: 6em;">Verwijderen</th>
-                      {% endif %}
-                    </thead>
-                    {% for file in view.files.organization %}
-                      <tr>
-                        <td class="filename">{{ file.filename }} ({{ file.size }})</td>
-                        <td class="download"><a href="{{ file.url }}">download</a></td>
+                <div id="collapse-documenten" class = "panel-collapse collapse out">
+                  <div class="panel-body">
+                    <table class="table table fixed">
+                      <thead>
+                        <th>Filename</th>
+                        <th style="width: 6em;">Download</th>
                         {% if view.user_is_manager %}
-                          <td><a class="delete_file"
-                                 data-message="Wilt u dit bestand verwijderen uit dit project?"
-                                 href="{{ file.url }}">verwijderen</a>
-                          </td>
+                          <th style="width: 6em;">Verwijderen</th>
                         {% endif %}
-                      </tr>
-                      {% empty %}
-                      <tr>
-                        <td class="text-info">Geen bestanden</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                      </tr>
-                    {% endfor %}
-                  </table>
+                      </thead>
+                      {% for file in view.files.organization %}
+                        <tr>
+                          <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+                          <td class="download"><a href="{{ file.url }}">download</a></td>
+                          {% if view.user_is_manager %}
+                            <td><a class="delete_file"
+                                   data-message="Wilt u dit bestand verwijderen uit dit project?"
+                                   href="{{ file.url }}">verwijderen</a>
+                            </td>
+                          {% endif %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                          <td class="text-info">Geen bestanden</td>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                        </tr>
+                      {% endfor %}
+                    </table>
+                  </div>
                 </div>
               </div>
 
               {% if view.files.monstervakken %}
               <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Monstervakken shapefile</h3>
+                  <a data-toggle="collapse" href="#collapse-monstervakken" data-parent="#accordion">
+
+                    <div class="panel-title">
+                      <a>Monstervakken shapefile</a>
+                    </div>
+                  </a>
                 </div>
-                <div class="panel-body">
+                <div id="collapse-monstervakken" class="panel-collapse collapse out">
+                  <div class="panel-body">
                     <table class="table fixed">
                       <thead>
                         <th>Omschrijving</th>
@@ -82,8 +95,7 @@
                       {% empty %}
                       {% endfor %}
                     </table>
-
-
+                  </div>
                 </div>
               </div>
               {% endif %}                
@@ -91,98 +103,106 @@
 
               <div class="panel panel-default">
                 <div class="panel-heading">
+                  <a data-toggle="collapse" href="#collapse-exports" data-parent="#accordion">
                     <h3 class="panel-title">Exports</h3>
+                  </a>
                 </div>
-                <div class="panel-body">
-                  {% if view.exports %}
-                    <table class="table table-striped progressbase">
-                      <thead>
-                        <th>Opdrachtnemer</th>
-                        <th>Soort meting</th>
-                        <th>Soort file</th>
-                        <th>Gegenereerd</th>
-                        <th>Up to date</th>
-                        <th>Bestand</th>
-                        <th>Start</th>
-                      </thead>
-                      <tbody>
-                        {% for export_run in view.exports %}
-                          <tr {% if not export_run.present and export_run.export_running %}class="please-reload-me"{% endif %}>
-                            <td>{{ export_run.activity.contractor }}</td>
-                            <td>{{ export_run.activity.measurement_type }}</td>
-                            <td>
-                              {% if export_run.exporttype == "allfiles" %}ZIP bestand
-                              {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties
-                              {% elif export_run.exporttype == "pipeshape" %}Shapefile met strengen
-                              {% elif export_run.exporttype == "drainshape" %}Shapefile met kolken
-                              {% elif export_run.exporttype == "manholeshape" %}Shapefile met putten
-                              {% elif export_run.exporttype == "met" %}MET bestand
-                              {% elif export_run.exporttype == "dxf" %}Zipped DXF
-                              {% elif export_run.exporttype == "csv" %}Zipped CSV
-                              {% elif export_run.exporttype == "lizard" %}Export naar Lizard
-                              {% else %}Onbekend{% endif%}
-                            </td>
-                            <td id="present-{{ export_run.id }}">
-                              {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">{% elif export_run.error_message %}<span class="small">{{ export_run.error_message }}</span>
-                              {% endif %}
-                            </td>
-                            <td id="uptodate-{{ export_run.id }}">
-                              {% if export_run.available %}
-                                {% if export_run.exporttype == "pointshape" %}
-                                  Onbekend
-                                {% elif export_run.up_to_date %}
-                                  Ja
-                                {% else %}
-                                  Nee
+                <div id="collapse-exports" class="panel-collapse collapse in">
+                  <div class="panel-body">
+                    {% if view.exports %}
+                      <table class="table table-striped progressbase">
+                        <thead>
+                          <th>Opdrachtnemer</th>
+                          <th>Soort meting</th>
+                          <th>Soort file</th>
+                          <th>Gegenereerd</th>
+                          <th>Up to date</th>
+                          <th>Bestand</th>
+                          <th>Start</th>
+                        </thead>
+                        <tbody>
+                          {% for export_run in view.exports %}
+                            <tr {% if not export_run.present and export_run.export_running %}class="please-reload-me"{% endif %}>
+                              <td>{{ export_run.activity.contractor }}</td>
+                              <td>{{ export_run.activity.measurement_type }}</td>
+                              <td>
+                                {% if export_run.exporttype == "allfiles" %}ZIP bestand
+                                {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties
+                                {% elif export_run.exporttype == "pipeshape" %}Shapefile met strengen
+                                {% elif export_run.exporttype == "drainshape" %}Shapefile met kolken
+                                {% elif export_run.exporttype == "manholeshape" %}Shapefile met putten
+                                {% elif export_run.exporttype == "met" %}MET bestand
+                                {% elif export_run.exporttype == "dxf" %}Zipped DXF
+                                {% elif export_run.exporttype == "csv" %}Zipped CSV
+                                {% elif export_run.exporttype == "lizard" %}Export naar Lizard
+                                {% else %}Onbekend{% endif%}
+                              </td>
+                              <td id="present-{{ export_run.id }}">
+                                {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">{% elif export_run.error_message %}<span class="small">{{ export_run.error_message }}</span>
                                 {% endif %}
-                              {% endif %}
-                            </td>
-                            <td id="download-{{ export_run.id }}">
-                              {% if export_run.present %}
-                                <a href="{% url "lizard_progress_download_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>
-                              {% endif %}
-                            </td>
-                            <td>
-                              <button type="button"
-                                      autocomplete="off" {# So it does not stay disabled after reloading in Firefox #}
-                                      {% if export_run.export_running %}disabled="disabled"{% endif %}
-                                      data-export-run-url="{% url "lizard_progress_start_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}"
-                                      data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif"
-                                      data-export-run-id="{{ export_run.id }}"
-                                      class="export-run-button btn btn-primary">
-                                <i class="fa fa-lg fa-share" data-toggle="tooltip" data-placement="right" title="Genereren"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  {% endif %}                                  
+                              </td>
+                              <td id="uptodate-{{ export_run.id }}">
+                                {% if export_run.available %}
+                                  {% if export_run.exporttype == "pointshape" %}
+                                    Onbekend
+                                  {% elif export_run.up_to_date %}
+                                    Ja
+                                  {% else %}
+                                    Nee
+                                  {% endif %}
+                                {% endif %}
+                              </td>
+                              <td id="download-{{ export_run.id }}">
+                                {% if export_run.present %}
+                                  <a href="{% url "lizard_progress_download_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>
+                                {% endif %}
+                              </td>
+                              <td>
+                                <button type="button"
+                                        autocomplete="off" {# So it does not stay disabled after reloading in Firefox #}
+                                        {% if export_run.export_running %}disabled="disabled"{% endif %}
+                                        data-export-run-url="{% url "lizard_progress_start_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}"
+                                        data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif"
+                                        data-export-run-id="{{ export_run.id }}"
+                                        class="export-run-button btn btn-primary">
+                                  <i class="fa fa-lg fa-share" data-toggle="tooltip" data-placement="right" title="Genereren"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
 
 
               <div class="panel panel-default">
                 <div class="panel-heading">
+                  <a data-toggle="collapse" href="#collapse-voortgang" data-parent="#accordion">
                     <h3 class="panel-title">Werkzaamheden voortgang</h3>
+                  </a>
                 </div>
-                <div class="panel-body">
-                    {% if view.csv %}
-                      <table class="table fixed">
-                        <thead>
-                          <th>Werkzaamheid</th>
-                          <th style="width: 6em;">CSV</th>
-                        </thead>
-                        <tbody>
-                          {% for activity, url in view.csv %}
-                            <tr>
-                              <td class="filename">{{ activity }}</td>
-                              <td class="download"><a href="{{ url }}">CSV file voortgang</a></td>
-                            </tr>
-                          {% endfor %}
-                        </tbody>
-                      </table>
-                    {% endif %}                
+                <div id="collapse-voortgang" class="panel-collapse collapse out">
+                  <div class="panel-body">
+                      {% if view.csv %}
+                        <table class="table fixed">
+                          <thead>
+                            <th>Werkzaamheid</th>
+                            <th style="width: 6em;">CSV</th>
+                          </thead>
+                          <tbody>
+                            {% for activity, url in view.csv %}
+                              <tr>
+                                <td class="filename">{{ activity }}</td>
+                                <td class="download"><a href="{{ url }}">CSV file voortgang</a></td>
+                              </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                      {% endif %}
+                  </div>
                 </div>
               </div>
 
@@ -190,9 +210,12 @@
             {% if view.files.reports or view.files.contractor_monstervakken %}
               <div class="panel panel-default">
                 <div class="panel-heading">
+                  <a data-toggle="collapse" href="#collapse-rapportages" data-parent="#accordion">
                     <h3 class="panel-title">Rapportages</h3>
+                  </a>
                 </div>
-                <div class="panel-body">
+                <div id="collapse-rapportages" class="panel-collapse collapse out">
+                  <div class="panel-body">
                     <table class="table fixed">
                       <thead>
                         <th>Filenaam</th>
@@ -213,6 +236,7 @@
                         {% endfor %}
                       </tbody>
                     </table>
+                  </div>
                 </div>
               </div>
               {% endif %}                
@@ -221,9 +245,12 @@
               {% if view.files.results %}
               <div class="panel panel-default">
                 <div class="panel-heading">
+                  <a data-toggle="collapse" href="#collapse-resultaten" data-parent="#accordion">
                     <h3 class="panel-title">Berekende resultaten</h3>
+                  </a>
                 </div>
-                <div class="panel-body">
+                <div id="collapse-resultaten" class="panel-collapse collapse out">
+                  <div class="panel-body">
                     <table class="table fixed">
                       <thead>
                         <th>Filenaam</th>
@@ -237,11 +264,12 @@
                           </tr>
                         {% endfor %}
                       </tbody>
-                    </table>                 
+                    </table>
+                  </div>
                 </div>
               </div>              
               {% endif %}
-
+          </div>
           </div>
           {% include "lizard_progress/sidebar_include.html" with active="download" %}
       </div>

@@ -5,7 +5,8 @@ Changelog of lizard-progress
 2.6.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Reloading the exported file page was very slow, and automatically
+  repeated every second. Fixed that.
 
 
 2.6.1 (2015-10-06)

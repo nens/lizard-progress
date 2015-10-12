@@ -32,6 +32,21 @@
   }
 }
 
+.projectswitcher {
+  display:none;
+  position:absolute;
+  left:20px;
+  z-index:99999;
+  background-color:#fff;
+  height:200px;
+  width:500px;
+  overflow:scroll;
+  -webkit-box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
+  -moz-box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
+  box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
+}
+
+
 #projects {
   .project {
     margin: 0 0 0 0;

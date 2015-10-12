@@ -1476,8 +1476,8 @@ class UploadedFile(models.Model):
         """This will be turned into JSON to send to the UI."""
         return {
             'id': self.id,
-            'project_id': self.activity.project.id,
-            'activity_id': self.activity.id,
+            'project_id': self.activity.project_id,
+            'activity_id': self.activity_id,
             'uploaded_by': self.get_uploaded_by_name(),
             'uploaded_at': self.uploaded_at.strftime("%d/%m/%y %H:%M"),
             'filename': os.path.basename(self.path),

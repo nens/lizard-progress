@@ -76,7 +76,8 @@ $( window ).resize(function() {
 
 
     <div class="projects-affix-list" id="myAffix">
-          <div class="dropdown pull-right" style="padding:0 0 20px 0;">
+          <div class="row">
+            <div class="dropdown pull-right" >
               <ul class="nav nav-pills" role="tablist">
                 <li role="presentation" class="active">
                   <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
@@ -89,17 +90,24 @@ $( window ).resize(function() {
                     {% endfor %}
                   </ul>
                 </li>
-            </ul>
+              </ul>
+            </div>
+            <a href="{% url "lizard_progress_newproject" %}">
+              <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
+                + Project toevoegen
+              </button>
+            </a>
           </div>
-
-          <input 
-            class="form-control drilldown" 
-            style="margin:20px 0 20px 0;" 
-            id="focusedInput" 
-            type="text" 
-            value="" 
-            placeholder="Filter projecten op naam" 
-          />
+          <div class="row">
+            <input
+              class="form-control drilldown"
+              style="margin:20px 0 20px 0;"
+              id="focusedInput"
+              type="text"
+              value=""
+              placeholder="Filter projecten op naam"
+            />
+          </div>
     </div>
 
           {% for project in view.projects %}
@@ -130,11 +138,6 @@ $( window ).resize(function() {
             <p class="small">(Er zijn nog geen projecten)</p>
           {% endfor %}
 
-            <div class="row">
-              <div class="col-md-offset-5 col-md-2">
-                <a href="{% url "lizard_progress_newproject" %}"><button type="button" class="btn btn-primary btn-lg">+ Project toevoegen</button></a>
-              </div>
-            </div>
           </div>
 
 

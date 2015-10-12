@@ -1,13 +1,24 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
-{% block contentpage %}
+{% block content %}
+    {% include "lizard_progress/projectswitcher.html" %}
 
-<h3>{{ view.description }}</h3>
 
-<form action="{{ view.url }}" method="post">
-{% csrf_token %}
-{{ view.form.as_p }}
-<input type="submit" class="btn" value="Aanvragen">
-</form>
+    <div class="container" id="project-details">
 
-{% endblock %}
+      
+      <div class="row">
+
+        <div class="col-md-11">        
+
+			<h3>{{ view.description }}</h3>
+
+			<form action="{{ view.url }}" method="post">
+			{% csrf_token %}
+			{{ view.form.as_p }}
+			<input type="submit" class="btn" value="Aanvragen">
+			</form>
+
+		</div>
+	</div>
+{% endblock content %}

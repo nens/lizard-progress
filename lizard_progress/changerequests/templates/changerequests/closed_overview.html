@@ -1,6 +1,17 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
-{% block contentpage %}
+{% block content %}
+    {% include "lizard_progress/projectswitcher.html" %}
+
+
+    <div class="container" id="project-details">
+
+      
+      <div class="row">
+
+        <div class="col-md-11">        
+
+
 <h2>Gesloten aanvragen {{ view.project.name }}</h2>
 
 {% with closedrequests=view.closed_requests %}
@@ -36,4 +47,72 @@
 <p>Er zijn geen gesloten aanvragen voor dit project.</p>
 {% endif %}
 {% endwith %}
-{% endblock contentpage %}
+
+
+</div>
+
+        <div class="col-md-1" role="complementary">
+      <nav class="sidebar hidden-print">
+        <ul class="nav sidenav">
+          <li data-toggle="tooltip" data-placement="left" title="Dashboard">
+            <a href="../../../dashboard/"><i class="fa fa-lg fa-tachometer"></i></a>
+          </li>   
+          <li data-toggle="tooltip" data-placement="left" title="Werkzaamheden">
+            <a 
+                class="active" 
+                href="../../../activities/">
+                <i class="fa fa-lg fa-tasks"></i>
+            </a>
+          </li>
+          <li data-toggle="tooltip" data-placement="left" title="Bestanden">
+            <a 
+            {% if active == 'download' %}
+                class="active" 
+            {% endif %}
+                href="../../../download/">
+                <i class="fa fa-lg fa-files-o"></i>
+            </a>
+          </li>    
+          <li data-toggle="tooltip" data-placement="left" title="Configuratie">
+            <a 
+            {% if active == 'configuration' %}
+                class="active" 
+            {% endif %}
+                href="../../../config/">
+                <i class="fa fa-lg fa-cogs"></i>
+            </a>
+          </li>
+<!--          <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
+            <a 
+            {% if active == 'aanvragen' %}
+                class="active" 
+            {% endif %}        
+                href="#">
+                <i class="fa fa-lg fa-question-circle"></i>
+            </a>
+          </li> -->
+          <li data-toggle="tooltip" data-placement="left" title="Kaart">
+            <a 
+            {% if active == 'map' %}
+                class="active" 
+            {% endif %}        
+                href="../../../map/">
+                <i class="fa fa-lg fa-globe"></i>
+            </a>
+            
+          </li>
+<!--          <li data-toggle="tooltip" data-placement="left" title="Exporteren">
+            <a 
+            {% if active == 'export' %}
+                class="active" 
+            {% endif %}        
+                href="#">
+                <i class="fa fa-lg fa-share"></i>
+            </a>
+          </li> -->
+        </ul>
+      </nav>
+    </div>
+
+</div>
+{% endblock content %}

@@ -1,104 +1,115 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
-{% block contentpage %}
+{% block content %}
+    {% include "lizard_progress/projectswitcher.html" %}
 
-{% with view.changerequest as cr %}
-<h3>Aanvraag ({{ cr.status_description }})</h3>
 
-<dl class="dl-horizontal">
-    <dt>Type aanvraag</dt>
-    <dd>{{ cr.type_description }}</dd>
+    <div class="container" id="project-details">
 
-    <dt>Locatie</dt>
-    <dd>
-        {{ cr.location_code }}
-        {% if cr.old_location_code %}
-            (vervangt {{cr.old_location_code }})
-        {% endif %}
-    </dd>
+      
+      <div class="row">
 
-    {% if cr.request_type == 2 %}
-        <dt>Nieuwe co&ouml;rdinaten</dt>
-        <dd>({{ cr.the_geom.x }}, {{ cr.the_geom.y }})</dd>
-    {% endif %}
+        <div class="col-md-11">        
 
-    {% if cr.request_type == 3 %}
-        <dt>Co&ouml;rdinaten</dt>
-        <dd>({{ cr.the_geom.x }}, {{ cr.the_geom.y }})</dd>
-    {% endif %}
+        {% with view.changerequest as cr %}
+        <h3>Aanvraag ({{ cr.status_description }})</h3>
 
-    <dt>Werkzaamheid</dt>
-    <dd>{{ cr.activity }}</dd>
+        <dl class="dl-horizontal">
+            <dt>Type aanvraag</dt>
+            <dd>{{ cr.type_description }}</dd>
 
-    <dt>Motivatie</dt>
-    <dd>
-        {% if view.user_is_contractor and cr.is_open %}
-            <form action="{{ cr.get_absolute_url }}change_motivation/" method="post">
-                {% csrf_token %}
-                <textarea cols="50" rows="4" name="motivation">{{ cr.motivation }}</textarea><br />
-                <input class="btn" type="submit" value="Motivatie opslaan">
-            </form>
-        {% else %}
-            {{ cr.motivation }}
-        {% endif %}
-    </dd>
-    {% if cr.refusal_reason %}
-        <dt>Geweigerd vanwege</dt>
-        <dd>{{ cr.refusal_reason }}</dd>
-    {% endif %}
-    {% if cr.invalid_reason %}
-        <dt>Ongeldig vanwege</dt>
-        <dd>{{ cr.invalid_reason }}</dd>
-    {% endif %}
-    {% if cr.is_open %}
-        <dt>Goedkeuring</dt>
-        <dd>
-            <form action="{{ cr.get_absolute_url }}acceptance/" method="post">
-                {% csrf_token %}
-                {% if view.user_is_manager %}
-                    <input type="submit" name="accept" class="btn btn-success" value="Goedkeuren">
-                    <input type="submit" name="refuse" class="btn btn-danger" value="Afkeuren">
-                    Reden: <input name="reason" type="text" value="">
-                    {% if view.acceptance_error %}
-                        <span class="text-error">
-                            {{ view.acceptance_error }}
-                        </span>
-                    {% endif %}
-                {% else %}
-                    <input type="submit" name="withdraw" class="btn btn-danger" value="Annuleren">
+            <dt>Locatie</dt>
+            <dd>
+                {{ cr.location_code }}
+                {% if cr.old_location_code %}
+                    (vervangt {{cr.old_location_code }})
                 {% endif %}
-            </form>
-        </dd>
-    {% endif %}
-    <dt></dt>
-    <dd>
-        <a href="{% url "lizard_progress_mapview_change_request" project_slug=view.project_slug change_request=cr.id %}" class="btn btn-default">Toon op kaart</a>
-    </dd>
-</dl>
+            </dd>
 
-<h3>Commentaar</h3>
-<dl class="dl-horizontal">
-    {% for comment in cr.requestcomment_set.all %}
-        <dt>
-            {% if comment.user.get_full_name %}
-                {{ comment.user.get_full_name }}
-            {% else %}
-                {{ comment.user.username }}
+            {% if cr.request_type == 2 %}
+                <dt>Nieuwe co&ouml;rdinaten</dt>
+                <dd>({{ cr.the_geom.x }}, {{ cr.the_geom.y }})</dd>
             {% endif %}
-            op {{ comment.comment_time|date:"d/m" }}
-        </dt>
-        <dd>{{ comment.comment }}</dd>
-    {% endfor %}
-    <dt></dt>
-    <dd>
-        <form action="{{ cr.get_absolute_url }}add_comment/" method="post">
-            {% csrf_token %}
-            <textarea name="comment" cols="50" rows="4"></textarea><br />
-            <input class="btn" type="submit" value="Commentaar toevoegen">
-        </form>
-    </dd>
-</dl>
 
-{% endwith %}
+            {% if cr.request_type == 3 %}
+                <dt>Co&ouml;rdinaten</dt>
+                <dd>({{ cr.the_geom.x }}, {{ cr.the_geom.y }})</dd>
+            {% endif %}
 
-{% endblock contentpage %}
+            <dt>Werkzaamheid</dt>
+            <dd>{{ cr.activity }}</dd>
+
+            <dt>Motivatie</dt>
+            <dd>
+                {% if view.user_is_contractor and cr.is_open %}
+                    <form action="{{ cr.get_absolute_url }}change_motivation/" method="post">
+                        {% csrf_token %}
+                        <textarea cols="50" rows="4" name="motivation">{{ cr.motivation }}</textarea><br />
+                        <input class="btn" type="submit" value="Motivatie opslaan">
+                    </form>
+                {% else %}
+                    {{ cr.motivation }}
+                {% endif %}
+            </dd>
+            {% if cr.refusal_reason %}
+                <dt>Geweigerd vanwege</dt>
+                <dd>{{ cr.refusal_reason }}</dd>
+            {% endif %}
+            {% if cr.invalid_reason %}
+                <dt>Ongeldig vanwege</dt>
+                <dd>{{ cr.invalid_reason }}</dd>
+            {% endif %}
+            {% if cr.is_open %}
+                <dt>Goedkeuring</dt>
+                <dd>
+                    <form action="{{ cr.get_absolute_url }}acceptance/" method="post">
+                        {% csrf_token %}
+                        {% if view.user_is_manager %}
+                            <input type="submit" name="accept" class="btn btn-success" value="Goedkeuren">
+                            <input type="submit" name="refuse" class="btn btn-danger" value="Afkeuren">
+                            Reden: <input name="reason" type="text" value="">
+                            {% if view.acceptance_error %}
+                                <span class="text-error">
+                                    {{ view.acceptance_error }}
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <input type="submit" name="withdraw" class="btn btn-danger" value="Annuleren">
+                        {% endif %}
+                    </form>
+                </dd>
+            {% endif %}
+            <dt></dt>
+            <dd>
+                <a href="{% url "lizard_progress_mapview_change_request" project_slug=view.project_slug change_request=cr.id %}" class="btn btn-default">Toon op kaart</a>
+            </dd>
+        </dl>
+
+        <h3>Commentaar</h3>
+        <dl class="dl-horizontal">
+            {% for comment in cr.requestcomment_set.all %}
+                <dt>
+                    {% if comment.user.get_full_name %}
+                        {{ comment.user.get_full_name }}
+                    {% else %}
+                        {{ comment.user.username }}
+                    {% endif %}
+                    op {{ comment.comment_time|date:"d/m" }}
+                </dt>
+                <dd>{{ comment.comment }}</dd>
+            {% endfor %}
+            <dt></dt>
+            <dd>
+                <form action="{{ cr.get_absolute_url }}add_comment/" method="post">
+                    {% csrf_token %}
+                    <textarea name="comment" cols="50" rows="4"></textarea><br />
+                    <input class="btn" type="submit" value="Commentaar toevoegen">
+                </form>
+            </dd>
+        </dl>
+
+        {% endwith %}
+
+</div>
+</div>
+{% endblock content %}

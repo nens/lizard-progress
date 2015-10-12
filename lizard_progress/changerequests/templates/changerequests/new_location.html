@@ -1,9 +1,20 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
-{% block contentpage %}
+{% block content %}
+    {% include "lizard_progress/projectswitcher.html" %}
 
-<form>
-{{ view.form.as_p }}
-</form>
 
-{% endblock %}
+    <div class="container" id="project-details">
+
+      
+      <div class="row">
+
+        <div class="col-md-11">        
+
+			<form>
+			{{ view.form.as_p }}
+			</form>
+
+	</div>
+</div>
+{% endblock content %}

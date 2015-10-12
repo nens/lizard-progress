@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.2 (unreleased)
+2.6.2 (2015-10-12)
 ------------------
 
 - Reloading the exported file page was very slow, and automatically

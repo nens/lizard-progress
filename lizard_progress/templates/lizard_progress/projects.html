@@ -52,20 +52,20 @@ $( window ).resize(function() {
 <div class="container">
   <div class="row">
     <div id="organisation" class="col-md-12">
-      <div class="profile-picture">
+<!--       <div class="profile-picture">
         <img data-src="holder.js/100x100" class="img-thumbnail" alt="">
-      </div>
+      </div> -->
 
       <div class="organisation-title">
         <p>{{ view.organization }}<p>
       </div>
 
-      <div class="details">
+<!--       <div class="details">
         <ul>
           <li><a href="mailto:">info@{{view.organization|lower}}.nl</a></li>
           <li><a href="http://www.{{view.organization|lower}}.nl/">www.{{view.organization|lower}}.nl</a></li>
         </ul>
-      </div>
+      </div> -->
     </div>
   </div>
 
@@ -101,7 +101,7 @@ $( window ).resize(function() {
           <div class="row">
             <input
               class="form-control drilldown"
-              style="margin:20px 0 20px 0;"
+              style="margin:20px 0 20px 20px;width:98%;"
               id="focusedInput"
               type="text"
               value=""

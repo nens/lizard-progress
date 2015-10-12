@@ -5,13 +5,29 @@
 
 .top-buffer { margin-top:20px; }
 
+
+
+.uploadservice_logo {
+  padding: 10px 0 0 0;
+}
+.uploadservice_logo i {
+  font-size: 1.5em;
+}
+.uploadservice_logo a {
+  font-family: 'Helvetica', sans-serif;
+  font-size: 1.7em;
+  font-weight: bolder;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
 #organisation {
   margin: 20px;
 
   .organisation-title {
     position: absolute;
     top: 0;
-    left: 140px;
+    left: 0;
     font-size: 2em;
     font-weight: bold;
     color: $lizard-turquoise-dark;
@@ -111,9 +127,9 @@
   .title {
     padding: 0 0 0 20px;
     font-size: 2em;
-    color: $clouds;
+    color: $darkclouds;
     .org a {
-      color: $clouds;
+      color: $darkclouds;
     }
     .project a {
       color: $lizard-turquoise-dark;

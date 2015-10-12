@@ -1,21 +1,111 @@
-<h2>Weekplanning</h2>
+{% include "lizard_progress/projectswitcher.html" %}    
 
-<p>Shapefiles met locaties kunt u vinden onder het "Download" menu. Bij de locaties kan ingevuld worden in welke week en eventueel op welke dag ze gedaan gaan worden. De ingevulde shapefiles kunnen hier weer ge&uuml;pload worden.</p>
 
-{% for location_type in view.location_types %}
-  <div style="float: left;">
-    <h3>
-      {% if location_type == 'point' %}Locaties{% endif %}
-      {% if location_type == 'pipe' %}Strengen{% endif %}
-      {% if location_type == 'manhole' %}Putten{% endif %}
-      {% if location_type == 'drain' %}Kolken{% endif %}
-    </h3>
-    <form method="post"
-          action="{% url "lizard_progress_upload_date_shapefiles" location_type=location_type project_slug=view.project_slug activity_id=view.activity_id %}"
-          enctype="multipart/form-data">
-      {{ view.shapefile_form.as_p }}
-      <input type="submit" value="Shapefile versturen" class="btn btn-primary">
-      {% csrf_token %}
-    </form>
+<div class="container" id="project-details">
+  
+  <div class="row">
+    <div class="col-md-11">
+
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Weekplanning</h3>
+        </div>
+
+        <div class="panel-body">
+
+          <p>Shapefiles met locaties kunt u vinden onder het "Download" menu. Bij de locaties kan ingevuld worden in welke week en eventueel op welke dag ze gedaan gaan worden. De ingevulde shapefiles kunnen hier weer ge&uuml;pload worden.</p>
+
+          {% for location_type in view.location_types %}
+            <div style="float: left;">
+              <h3>
+                {% if location_type == 'point' %}Locaties{% endif %}
+                {% if location_type == 'pipe' %}Strengen{% endif %}
+                {% if location_type == 'manhole' %}Putten{% endif %}
+                {% if location_type == 'drain' %}Kolken{% endif %}
+              </h3>
+              <form method="post"
+                    action="{% url "lizard_progress_upload_date_shapefiles" location_type=location_type project_slug=view.project_slug activity_id=view.activity_id %}"
+                    enctype="multipart/form-data">
+                {{ view.shapefile_form.as_p }}
+                <input type="submit" value="Shapefile versturen" class="btn btn-primary">
+                {% csrf_token %}
+              </form>
+            </div>
+          {% endfor %}
+    
+        </div>
+      </div>
+
+
+
+
+
+    </div>
+  <div class="col-md-1" role="complementary">
+    <nav class="sidebar hidden-print">
+      <ul class="nav sidenav">
+        <li data-toggle="tooltip" data-placement="left" title="Dashboard">
+          <a href="../../dashboard/"><i class="fa fa-lg fa-tachometer"></i></a>
+        </li>   
+        <li data-toggle="tooltip" data-placement="left" title="Werkzaamheden">
+          <a 
+            class="active" 
+            href="../../activities/">
+            <i class="fa fa-lg fa-tasks"></i>
+          </a>
+        </li>
+        <li data-toggle="tooltip" data-placement="left" title="Bestanden">
+          <a 
+          {% if active == 'download' %}
+            class="active" 
+          {% endif %}
+            href="../../download/">
+            <i class="fa fa-lg fa-files-o"></i>
+          </a>
+        </li>    
+        <li data-toggle="tooltip" data-placement="left" title="Configuratie">
+          <a 
+          {% if active == 'configuration' %}
+            class="active" 
+          {% endif %}
+            href="../../config/">
+            <i class="fa fa-lg fa-cogs"></i>
+          </a>
+        </li>
+        <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
+          <a 
+          {% if active == 'aanvragen' %}
+            class="active" 
+          {% endif %}        
+            href="#">
+            <i class="fa fa-lg fa-question-circle"></i>
+          </a>
+        </li>
+        <li data-toggle="tooltip" data-placement="left" title="Kaart">
+          <a 
+          {% if active == 'map' %}
+            class="active" 
+          {% endif %}        
+            href="../../map/">
+            <i class="fa fa-lg fa-globe"></i>
+          </a>
+          
+        </li>
+<!--        <li data-toggle="tooltip" data-placement="left" title="Exporteren">
+          <a 
+          {% if active == 'export' %}
+            class="active" 
+          {% endif %}        
+            href="#">
+            <i class="fa fa-lg fa-share"></i>
+          </a>
+        </li> -->
+      </ul>
+    </nav>
+  </div>    
   </div>
-{% endfor %}
+  </div>
+
+
+

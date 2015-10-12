@@ -1,52 +1,8 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
-{% block extra_js %}
-    <script>
-    $('.project').on('click', function(e) {
-      e.preventDefault();
-      $('.projectswitcher').toggle();
-      
-    });
-    </script>
-    <style>
-    .projectswitcher {
-      display:none;
-      position:absolute;
-      left:20px;
-      z-index:99999;
-      background-color:#fff;
-      height:200px;
-      width:500px;
-      overflow:scroll;
-      -webkit-box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
-      -moz-box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
-      box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
-    }
-    </style>
-{% endblock extra_js %}
 
 {% block content %}
-    <div class="container" id="project-slug">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="title">
-            <span class="org">
-              <a href="/">{{ view.organization|lower }}</a> / 
-            </span>
-            <span class="project">
-              <a href=".">{{ view.project.name|lower }}</a> <i class="fa fa-caret-down"></i>{% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}
-            </span>
-            <div class="projectswitcher" style="">
-              <ul style="padding:0 20px 20px 20px;">
-              {% for project in view.projects %}
-                <li style="font-size:0.75em;">{{ view.organization|lower|truncatechars:9 }} / <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name|lower }}</a></li>
-              {% endfor %}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include "lizard_progress/projectswitcher.html" %}
 
 
     <div class="container" id="project-details">

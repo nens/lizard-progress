@@ -3,15 +3,7 @@
 
 {% block content %}
 
-    <div class="container" id="project-slug">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="title">
-            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include "lizard_progress/projectswitcher.html" %}    
 
 
     <div class="container" id="project-details">
@@ -26,8 +18,8 @@
               <!-- Nav tabs -->
               <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a href="#project" aria-controls="profile" role="tab" data-toggle="tab">Projectinstellingen</a></li>
-                <li role="presentation"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Projectbestanden toevoegen</a></li>
-                <li role="presentation"><a href="#email" aria-controls="profile" role="tab" data-toggle="tab">E-mailconfiguratie</a></li>
+                <!-- <li role="presentation"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Projectbestanden toevoegen</a></li> -->
+                <li role="presentation"><a href="../email_config/" aria-controls="profile" role="tab" >E-mailconfiguratie</a></li>
               </ul>
 
               <!-- Tab panes -->
@@ -68,9 +60,11 @@
                     <div class="panel-body">
                       <form>
                         <div class="form-group">
-                          <button class="btn btn-warning" type="submit" data-toggle="tooltip" data-placement="right" title="" data-original-title="Het project sluiten en archiveren">
-                            <i class="fa fa-lg fa-briefcase"></i>&nbsp;&nbsp;Archiveren
-                          </button>
+                          <a href="{% url "lizard_progress_archive" project_slug=view.project.slug %}?action=archive">
+                            <button class="btn btn-warning" type="submit" data-toggle="tooltip" data-placement="right" title="" data-original-title="Het project sluiten en archiveren">
+                              <i class="fa fa-lg fa-briefcase"></i>&nbsp;&nbsp;Archiveren
+                            </button>
+                          </a>
                         </div>
                       </form>
                     </div>

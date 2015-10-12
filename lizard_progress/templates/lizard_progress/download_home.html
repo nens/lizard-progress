@@ -16,15 +16,7 @@
 
 {% block content %}
 
-    <div class="container" id="project-slug">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="title">
-            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include "lizard_progress/projectswitcher.html" %}    
 
     <div class="container" id="project-details">
       

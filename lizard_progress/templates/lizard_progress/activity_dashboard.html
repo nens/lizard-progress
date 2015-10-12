@@ -3,15 +3,7 @@
 
 {% block content %}
 
-    <div class="container" id="project-slug">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="title">
-            <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href="../dashboard">{{ view.project.name|lower }}</a> {% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include "lizard_progress/projectswitcher.html" %}
 
 
     <div class="container" id="project-details">
@@ -31,9 +23,11 @@
           <div class="panel-body">
 
           <span class="pull-right" style="margin:0 0 5px 0;">
+            <a href="./planning/">
             <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Planning werkzaamheid">
               <i class="fa fa-calendar"></i>
             </button>
+            </a>
             <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Instellingen werkzaamheid">
               <i class="fa fa-cog"></i>
             </button>            

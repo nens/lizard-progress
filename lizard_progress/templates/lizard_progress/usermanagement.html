@@ -1,29 +1,60 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block topbar %}
-{% endblock %}
+{% block content %}
+<div class="container" id="project-slug">
+  <div class="row">
+    <div class="title">
+      <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href="">instellingen</a></span>
+    </div>
+  </div>
+</div>
 
-{% block contentpage %}
-<h2>Gebruikersbeheer {{ view.organization }}</h2>
 
-<table class="table table-bordered progressbase">
-<thead>
-  <th>Gebruikersnaam</th>
-  <th>Voor- en achternaam</th>
-  <th>Email</th>
-  <th>Rollen</th>
-  <th>Verwijderen</th>
-</thead>
-{% for profile in view.users %}
-<tr>
-  <td><a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}">{{ profile.user.username }}</a></td>
-  <td>{{ profile.user.get_full_name }}</td>
-  <td>{{ profile.user.email }}</td>
-  <td>{{ profile.roles_description }}</td>
-  <td>{% if profile.user != view.user %}<a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}" class="delete_file" data-message="Dit verwijdert deze gebruiker van de Uploadservice. Deze gebruikersnaam kan daarna niet meer gebruikt worden. Weet u het zeker?">delete</a>{% endif %}</td>
-</tr>
-{% endfor %}
-</table>
+<div class="container">
+    <div class="row">
+      <div class="col-md-2">
+        <div class="list-group settings-menu">
+          <a href="/us/admin/organization/errorconfiguration/" class="list-group-item">Algemeen</a>
+          <a href="/us/users/" class="list-group-item active">Gebruikersbeheer</a>
+          <a href="/us/projects/documents/download/" class="list-group-item">Documentenbeheer</a>
+<!--           <a href="#" class="list-group-item">Inpeiling</a>
+          <a href="#" class="list-group-item">Uitpeiling</a> -->
+        </div>
+      </div>
+      <div class="col-md-10">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Gebruikersbeheer voor '{{ view.organization }}'</h3>
+          </div>
+          
+          <div class="panel-body">
 
-<p><a href="{% url "lizard_progress_new_user_management" %}">Nieuwe gebruiker toevoegen</a></p>
-{% endblock contentpage %}
+            <table class="table table-bordered progressbase">
+            <thead>
+              <th>Gebruikersnaam</th>
+              <th>Voor- en achternaam</th>
+              <th>Email</th>
+              <th>Rollen</th>
+              <th>Verwijderen</th>
+            </thead>
+            {% for profile in view.users %}
+            <tr>
+              <td><a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}">{{ profile.user.username }}</a></td>
+              <td>{{ profile.user.get_full_name }}</td>
+              <td>{{ profile.user.email }}</td>
+              <td>{{ profile.roles_description }}</td>
+              <td>{% if profile.user != view.user %}<a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}" class="delete_file" data-message="Dit verwijdert deze gebruiker van de Uploadservice. Deze gebruikersnaam kan daarna niet meer gebruikt worden. Weet u het zeker?">delete</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </table>
+
+            <p><a href="{% url "lizard_progress_new_user_management" %}"><button class="btn btn-primary btn-md">+ Nieuwe gebruiker toevoegen</button></a></p>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}
+

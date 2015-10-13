@@ -43,6 +43,15 @@
   </head>
   <body>
 
+
+ {% if messages %}
+    <div id="messages" class="messages container">
+      {% for message in messages %}
+        <p class="text-warning">{{ message|safe }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
     <div class="container">
       <nav class="navbar navbar-default">
         <div class="container-fluid">
@@ -64,6 +73,9 @@
                 <ul class="dropdown-menu">
                   <li><a href="{% url "lizard_progress_single_user_management" user_id=view.user.id %}">Uw profiel</a></li>
                   <li><a href="/us/admin/organization/errorconfiguration/">Instellingen</a></li>
+                  {% if view.user_has_manager_role %}
+                  <li><a href="/us/archive/">Archief</a></li>
+                  {% endif %}
                   <li><a href="https://uploadservice.staging.lizard.net/static_media/lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf" target="_blank">Help</a></li>
                   <li role="separator" class="divider"></li>
                   <li><a href="/accounts/logout">Uitloggen</a></li>

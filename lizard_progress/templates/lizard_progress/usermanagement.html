@@ -3,8 +3,10 @@
 {% block content %}
 <div class="container" id="project-slug">
   <div class="row">
+  <div class="col-md-12">
     <div class="title">
       <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href="">instellingen</a></span>
+    </div>
     </div>
   </div>
 </div>
@@ -17,6 +19,7 @@
           <a href="/us/admin/organization/errorconfiguration/" class="list-group-item">Algemeen</a>
           <a href="/us/users/" class="list-group-item active">Gebruikersbeheer</a>
           <a href="/us/projects/documents/download/" class="list-group-item">Documentenbeheer</a>
+          <a href="{% url "lizard_progress_editvisibility" %}" class="list-group-item">Zichtbaarheid Metingtypes</a>
 <!--           <a href="#" class="list-group-item">Inpeiling</a>
           <a href="#" class="list-group-item">Uitpeiling</a> -->
         </div>
@@ -24,11 +27,10 @@
       <div class="col-md-10">
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h3 class="panel-title">Gebruikersbeheer voor '{{ view.organization }}'</h3>
+            <h3 class="panel-title"><i class="fa fa-users"></i>&nbsp;Gebruikersbeheer voor '{{ view.organization }}'</h3>
           </div>
           
           <div class="panel-body">
-
             <table class="table table-bordered progressbase">
             <thead>
               <th>Gebruikersnaam</th>

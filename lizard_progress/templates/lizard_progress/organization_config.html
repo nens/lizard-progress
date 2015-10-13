@@ -4,8 +4,10 @@
 {% block content %}
 <div class="container" id="project-slug">
   <div class="row">
+  <div class="col-md-12">
     <div class="title">
       <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href="">instellingen</a></span>
+    </div>
     </div>
   </div>
 </div>
@@ -18,6 +20,7 @@
           <a href="/us/admin/organization/errorconfiguration/" class="list-group-item active">Algemeen</a>
           <a href="/us/users/" class="list-group-item">Gebruikersbeheer</a>
           <a href="/us/projects/documents/download/" class="list-group-item">Documentenbeheer</a>
+          <a href="{% url "lizard_progress_editvisibility" %}" class="list-group-item">Zichtbaarheid Metingtypes</a>
 <!--           <a href="#" class="list-group-item">Inpeiling</a>
           <a href="#" class="list-group-item">Uitpeiling</a> -->
         </div>

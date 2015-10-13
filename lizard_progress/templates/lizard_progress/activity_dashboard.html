@@ -1,12 +1,15 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
+{% block css %}{% endblock css %}
+{% block javascript %}{% endblock javascript %}
+
 
 {% block content %}
 
     {% include "lizard_progress/projectswitcher.html" %}
 
 
-    <div class="container" id="project-details">
+    <div class="container">
 
       
       <div class="row">
@@ -23,21 +26,34 @@
           <div class="panel-body">
 
           <span class="pull-right" style="margin:0 0 5px 0;">
+            {% if view.show_planning_menu %}
             <a href="./planning/">
             <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Planning werkzaamheid">
               <i class="fa fa-calendar"></i>
             </button>
             </a>
+            {% endif %}
+            {% if view.user_is_manager %}
             <a href="./config/">
             <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Instellingen werkzaamheid">
               <i class="fa fa-cog"></i>
             </button>
             </a> 
+            {% endif %}
+            {% if view.activity.measurement_type.has_only_point_locations %}
             <a href="./changerequests/">
             <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Aanvragen">
               <i class="fa fa-question-circle"></i>&nbsp;Aanvragen
             </button>
-            </a>             
+            </a>     
+            {% endif %}
+            {% if view.user_is_uploader %}
+            <a href="./upload/">
+            <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Uploaden">
+              <i class="fa fa-cloud-upload"></i>&nbsp;Uploaden
+            </button>
+            </a>
+            {% endif %}
           </span>          
             <div class="col-md-3">
               <div class="panel panel-default">

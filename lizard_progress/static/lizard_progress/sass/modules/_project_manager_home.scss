@@ -62,6 +62,10 @@
   box-shadow: 6px 6px 29px -12px rgba(0,0,0,0.75);
 }
 
+.inline-pipe {
+  border-left:1px solid #ccc;
+  padding-left:13px;
+}
 
 #projects {
   .project {
@@ -73,6 +77,14 @@
         font-size: 1.4em;
         margin: 0 5px 0 0;
       }
+    }
+    ul li.project-latest {
+      font-size: 1.3em;
+      color: $darkclouds;
+    }
+    p.project-no-latest {
+      font-size: 0.9em;
+      color: $darkclouds;
     }
     p.project-title a {
       line-height: 2em;
@@ -86,7 +98,7 @@
     }    
     p.project-description {
       font-size: 1.1em;
-      color: $concrete;
+      color: $asbestos;
     }
     p.project-age {
       font-size: 1.1em;
@@ -96,18 +108,26 @@
   }
   .stats {
     color: $lizard-turquoise-dark;
-    padding: 30px;
+    padding-top: 30px;
+    vertical-align: middle;
     ul {
-      display: inline;
+      position: absolute;
+      right:0px;
+      display: inline-flex;
       li {
-        display: inline;
+        display: inline-flex;
         margin: 5px;
         font-weight: bold;
+        span {
+          padding-top:27px;
+        }
+        div.pie-md{
+
+        }
       }
     }
 
   }
-
   .project:not(:first-child) {
     border-top: 1px solid $clouds;
     margin-top: 20px;

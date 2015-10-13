@@ -377,7 +377,11 @@ class ProjectActivityMixin(object):
 
     @property
     def pie(self):
-        x = self.percentage_done
+        try:
+            x = self.percentage_done
+        except:
+            logger.debug('Database error.')
+            x = "N/A"  # Ugly hack to catch all empty database related errors.
         if x == "N/A":
             return "pienan"
         elif x == 0:
@@ -389,7 +393,10 @@ class ProjectActivityMixin(object):
         elif x > 87.5:
             return "pie087"
         else:
-            return self.piedict[int(round(x/12.5))]
+            try:
+                return self.piedict[int(round(x/12.5))]
+            except:
+                return "ERROR-percentage-done-is---{}".format(x)
 
 
 class Project(ProjectActivityMixin, models.Model):

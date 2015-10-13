@@ -112,26 +112,36 @@ $( window ).resize(function() {
 
           {% for project in view.projects %}
               <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
-                <div class="col-md-9">
+                <div class="col-md-8">
                   <p class="project-title">
                     <!-- <i class="fa fa-star-o"></i>&nbsp; -->
                     <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name }}</a>
                   </p>
                   <p class="project-description"></p>
                   <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
+                    {% with log=project.latest_log %}
+                      {% if log %}
+                        <ul class="list-inline">
+                          <li class="project-latest">Laatste upload: {{ log.when|timesince }} geleden</li>
+                          {% if log.mtype %}
+                              <li class="project-latest"><span class="inline-pipe">met type: {{ log.mtype }}</span></li>
+                          {% endif %}
+                          {% if log.uploading_organization %}
+                              <li class="project-latest"><span class="inline-pipe">door: {{ log.uploading_organization }}</span></li>
+                          {% endif %}
+                            <li class="project-latest"><span class="inline-pipe">met: {{ log.num_measurements }} meting{% if log.num_measurements == 0 or log.num_measurements > 1 %}en{% endif %}</span></li>
+                        </ul>
+                        {% else %}
+                          <p class="project-no-latest">(Er is nog geen laatste upload.)</p>
+                      {%  endif %}
+                    {% endwith %}
                 </div>
-                <div class="col-md-3 stats text-right">
+                <div class="col-md-4 stats">
                   <ul>
-                    <li>Totaal {{ project.number_of_complete_locations }}x</li>
-                    <li><div class="pie-md {{ project.pie }} vcenter"></div></li>
+                    <li><span>Locaties compleet: {{ project.number_of_complete_locations }}x</span></li>
+                    <li><div class="pie-md {{ project.pie }}"></div></li>
                   </ul>
-                  <div class="progress-bar horizontal">
-                    <div class="progress-track">
-                      <div class="progress-fill">
-                        <span>75%</span>
-                      </div>
-                    </div>
-                  </div>                  
+
                 </div>
               </div>
           {% empty %}

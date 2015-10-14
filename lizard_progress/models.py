@@ -489,6 +489,14 @@ class Project(ProjectActivityMixin, models.Model):
             request_status=Request.REQUEST_STATUS_OPEN,
             activity__project=self).count()
 
+    def num_open_requests_for_user(self, organization):
+        from lizard_progress.changerequests.models import Request
+        return Request.objects.filter(
+            request_status=Request.REQUEST_STATUS_OPEN,
+            activity__project=self,
+            activity__contractor=organization
+        ).count()
+
     def available_layers(self, user):
         """Yield available map layers for user."""
         from lizard_progress.util.workspaces import MapLayer

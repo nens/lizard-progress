@@ -77,6 +77,7 @@ $( window ).resize(function() {
 
     <div class="projects-affix-list" id="myAffix">
           <div class="row">
+
             <div class="dropdown pull-right" >
               <ul class="nav nav-pills" role="tablist">
                 <li role="presentation" class="active">
@@ -97,6 +98,13 @@ $( window ).resize(function() {
                 + Project toevoegen
               </button>
             </a>
+            {% with numrequests=view.total_requests %}
+              {% if numrequests > 0 %}
+                <div class="pull-right" style="margin: 3px 20px 0 0;">
+                  <div class="requests-warning request-container" style="position:relative;"><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg"></i></div>
+                </div>
+              {% endif %}
+            {% endwith %}
           </div>
           <div class="row">
             <input
@@ -110,13 +118,22 @@ $( window ).resize(function() {
           </div>
     </div>
 
-          {% for project in view.projects %}
+          {% for project, numrequests in view.projects_requests %}
               <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
                 <div class="col-md-8">
+                <ul style="display:inline-block;">
+                    <li style="display:inline-block;">
+                      {% if numrequests > 0 %}
+                        <div class="request-warning request-container"><div class="project-request-number request-sm">{{ numrequests }}</div><a href="{% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a></div>
+                      {% endif %}
+                    </li>
+                <li style="display:inline-block;">
                   <p class="project-title">
                     <!-- <i class="fa fa-star-o"></i>&nbsp; -->
                     <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name }}</a>
                   </p>
+                </li>
+                </ul>
                   <p class="project-description"></p>
                   <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
                     {% with log=project.latest_log %}

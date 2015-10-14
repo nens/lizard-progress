@@ -201,6 +201,7 @@ $("a.delete_file").click(function (event) {
 
 // A button that redirects to some page
 $("button.redirect").click(function (event) {
+    console.log(event);
     event.preventDefault();
     var url = $(this).attr("data-redirect-url");
     if (url) {

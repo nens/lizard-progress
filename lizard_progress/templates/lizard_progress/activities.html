@@ -32,7 +32,8 @@ $(document).on('ready', function() {
                   <thead>
                     <tr>
                       <th>Uitvoerder</th>
-                      <th>Werkzaamheid</th>
+                      <th>Naam</th>
+                      <th>Type</th>
                       <th>Geplande metingen</th>
                       <th>Ingevoerde metingen</th>
                       <th>Voortgang</th>
@@ -43,6 +44,7 @@ $(document).on('ready', function() {
                     {% for activity in view.activities %}
                     <tr class="clickable" data-url="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
                       <td>{{ activity.contractor }}</td>
+                      <td>{{ activity.name }}</td>
                       <td>{{ activity.measurement_type }}</td>
                       <td>{{ activity.num_locations }}</td>
                       <td>{{ activity.num_measurements }}</td>

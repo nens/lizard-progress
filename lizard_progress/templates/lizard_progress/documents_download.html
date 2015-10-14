@@ -1,4 +1,4 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
 {% block css %}
 {{block.super}}
@@ -8,6 +8,7 @@
 
 {% block javascript %}
 {{block.super}}
+<script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/upload_page.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/jquery-ui.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
@@ -16,36 +17,72 @@
 <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.js"></script>
 {% endblock javascript %}
 
-{% block contentpage %}
+{% block content %}
 
-{% if view.user_is_manager %}
-<div id="upload-wrapper" data-upload-dialog-url="/us/upload/">
-  <button type="button" class="upload btn btn-primary" data-upload-url="{% url "lizard_progress_upload_orgfile" %}"><i class="icon-upload"></i> Organisatiedocumenten uploaden</button>
+<div class="container" id="project-slug">
+  <div class="row">
+  <div class="col-md-12">
+    <div class="title">
+      <span class="org"><a href="/">{{ view.organization|lower }}</a> / </span><span class="project"><a href=".">instellingen</a></span>
+    </div>
+    </div>
+  </div>
 </div>
-{% endif %}
 
-{% if view.files and view.files.organization %}
-<h3>Documenten {{ view.organization }}</h3>
-<p>Deze documenten worden gekopi&euml;erd naar elk nieuw aangemaakt project.</p>
 
-<table class="table table-bordered fixed">
-  <thead>
-    <th>Filename</th>
-    <th style="width: 6em;">Download</th>
-    {% if view.user_is_manager %}
-    <th style="width: 6em;">Delete</th>
-    {% endif %}
-  </thead>
-  {% for file in view.files.organization %}
-  <tr>
-    <td class="filename">{{ file.filename }} ({{ file.size }})</td>
-    <td class="download"><a href="{{ file.url }}">download</a></td>
-    {% if view.user_is_manager %}
-    <td><a class="delete_file" data-message="Wilt u dit bestand verwijderen?" href="{{ file.url }}">delete</a></td>
-    {% endif %}
-  </tr>
-  {% endfor %}
-</table>
-{% endif %}
+<div class="container" id="project-details">
+    <div class="row">
+      <div class="col-md-2">
+        <div class="list-group settings-menu">
+          <a href="/us/admin/organization/errorconfiguration/" class="list-group-item">Algemeen</a>
+          <a href="/us/users/" class="list-group-item">Gebruikersbeheer</a>
+          <a href="/us/projects/documents/download/" class="list-group-item active">Documentenbeheer</a>
+          <a href="{% url "lizard_progress_editvisibility" %}" class="list-group-item">Zichtbaarheid Metingtypes</a>
+          <!-- <a href="#" class="list-group-item">Inpeiling</a>
+          <a href="#" class="list-group-item">Uitpeiling</a> -->
+        </div>
+      </div>
+      <div class="col-md-10">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title"><i class="fa fa-file-o"></i>&nbsp;Documentenbeheer voor '{{ view.organization }}'</h3>
+          </div>
+          
+          <div class="panel-body">
 
-{% endblock contentpage %}
+            {% if view.user_is_manager %}
+            <div id="upload-wrapper" data-upload-dialog-url="/us/upload/">
+              <button type="button" class="upload btn btn-primary" data-upload-url="{% url "lizard_progress_upload_orgfile" %}"><i class="icon-upload"></i> Organisatiedocumenten uploaden</button>
+            </div>
+            {% endif %}
+
+            {% if view.files and view.files.organization %}
+            <h3>Documenten {{ view.organization }}</h3>
+            <p>Deze documenten worden gekopi&euml;erd naar elk nieuw aangemaakt project.</p>
+
+            <table class="table table-bordered fixed">
+              <thead>
+                <th>Filename</th>
+                <th style="width: 6em;">Download</th>
+                {% if view.user_is_manager %}
+                <th style="width: 6em;">Delete</th>
+                {% endif %}
+              </thead>
+              {% for file in view.files.organization %}
+              <tr>
+                <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+                <td class="download"><a href="{{ file.url }}">download</a></td>
+                {% if view.user_is_manager %}
+                <td><a class="delete_file" data-message="Wilt u dit bestand verwijderen?" href="{{ file.url }}">delete</a></td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </table>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

@@ -1,30 +1,59 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block contentpage %}
-<h2>Archief</h2>
+{% block content %}
+    <div class="container" id="project-slug">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="title">
+            <span class="org">
+              <a href="/">{{ view.organization|lower }}</a> / 
+            </span>
+            <span class="project projecttoggle">
+              <a href=".">archief</a>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
 
 
-<div class="tree">
-    <ul>
-        <li>
-	  {% for year, types in view.archive_tree %}
-            <span><i class="icon-calendar"></i>{{ year }}</span>
-            <ul>
-	      {% for projecttype, projects in types %}
-    	        <li style="display: none;">
-                  <span class="badge badge-success"><i class="icon-minus-sign"></i>{{ projecttype }}</span>
+    <div class="container" id="archief">
+      <div class="row">
+        <div class="col-md-12">        
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              Archief
+            </h3>
+          </div>
+
+          <div class="panel-body">
+            <div class="tree">
+              <ul>
+                <li>
+            	  {% for year, types in view.archive_tree %}
+                  <span><i class="icon-calendar"></i>{{ year }}</span>
                   <ul>
-		    {% for project in projects %}
+            	      {% for projecttype, projects in types %}
+          	        <li style="display: none;">
+                        <span class="badge badge-success"><i class="icon-minus-sign"></i>{{ projecttype }}</span>
+                        <ul>
+            		    {% for project in projects %}
                       <li style="display: none;">
-	                <a href="{% url "lizard_progress_dashboardview" project.slug %}"><span>{{ project }}</a>
+      	                <a href="{% url "lizard_progress_dashboardview" project.slug %}"><span>{{ project }}</span></a>
                       </li>
-		    {% endfor %}
+            		    {% endfor %}
+                        </ul>
+                      </li>
+                    {% endfor %}
                   </ul>
+            	  {% endfor %}
                 </li>
-              {% endfor %}
-            </ul>
-	  {% endfor %}
-        </li>
-    </ul>
-</div>
-{% endblock contentpage %}
+              </ul>
+            </div>
+          </div>
+          </div>
+        </div>      
+      </div>
+  </div>
+{% endblock content %}

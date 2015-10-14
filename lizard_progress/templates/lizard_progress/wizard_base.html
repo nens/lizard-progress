@@ -21,34 +21,18 @@
                 <p>U bent geen projectbeheerder en mag geen nieuwe projecten toevoegen.</p>
               {% else %}
                 <form action="" method="post" class="form-horizontal">{% csrf_token %}
-                  {{ view.form.non_field_errors }}
+                  <p class="text-warning">{{ view.form.non_field_errors }}</p>
 
                   {% for fields in view.grouped_form_fields %}
-
-                    {% if forloop.counter <= 2 %}
-                      <div class="form-group">
-                        <label for="description" class="col-sm-2 control-label">
-                        {{ fields.0.label_tag }}
-                        </label>
-                        <div class="col-sm-10">
-                          {{ fields.0 }}{{ fields.0.errors }}
+                      <div class="panel panel-default">
+                        <div class="panel-body">
+                          {% for field in fields %}
+                            <div class="col-sm-12">
+                              {{ field.label_tag}}{{ field }}<span class="text-warning">{{ field.errors }}</span>
+                            </div>
+                          {% endfor %}
                         </div>
                       </div>
-                    {% else %}
-                    <div class="panel panel-default">
-                      <div class="panel-body">                    
-                      <div class="form-group">
-                        <label for="description" class="col-sm-2 control-label">
-                          {{ fields.0.label_tag }}
-                        </label>
-                        <div class="col-sm-10">
-                           <!-- <input type="text" class="form-control" id="description" placeholder="Projectnaam"> -->
-                           {{ fields.0 }}{{ fields.0.errors }}
-                        </div>
-                      </div>     
-                      </div>
-                    </div>         
-                  {% endif %}                    
                 {% endfor %}
 
                   <div class="form-group">
@@ -60,10 +44,13 @@
                 
               </form>
             <hr size="1" noshade />
-            <p class="small">Instellen uit welke metingtypes hier gekozen kan worden? Zie
-            de <a href="{% url "lizard_progress_editvisibility" %}"><i
-            class="icon-pencil"></i> "Zichtbaarheid Metingtypes"</a> pagina.</p>
+            <p class="small">
+              Instellen uit welke metingtypes hier gekozen kan worden?
+              Zie de <a href="{% url "lizard_progress_editvisibility" %}"><i class="icon-pencil"></i> "Zichtbaarheid Metingtypes"</a> pagina.
+            </p>
           {% endif %}
+
+
     
 
 

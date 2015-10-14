@@ -1,49 +1,72 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block contentpage %}
-<h3>Huidige werkzaamheden:</h3>
+{% block content %}
+    {% include "lizard_progress/projectswitcher.html" %}    
 
-{% with activities=view.current_activities %}
-  {% if activities %}
-    <table class="table">
-      <thead>
-        <th>Omschrijving</th>
-        <th>Opdrachtnemer</th>
-        <th>Werkzaamheid</th>
-        <th>Verwijderen</th>
-      </thead>
 
-      <tbody>
-        {% for activity in view.current_activities %}
-          <tr>
-            <td>{{ activity.name }}</td>
-            <td>{{ activity.contractor }}</td>
-            <td>{{ activity.measurement_type }}</td>
-            <td>
-              {% if activity.has_measurements %}Heeft metingen{% else %}
-                <form method="post"
-                      action="{% url "lizard_progress_delete_activity" project_slug=view.project.slug activity_id=activity.id %}">
-                  {% csrf_token %}
-                  <input type="submit" class="btn btn-primary"
-                         name="submit" value="Verwijderen">
-                </form>
-              {% endif %}
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>Nog geen werkzaamheden toegevoegd aan project.
-  {% endif %}
-{% endwith %}
+    <div class="container" id="project-details">
+      
+      <div class="row">
+        <div class="col-md-11">
+      <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 class="panel-title">Huidige werkzaamheden</h3>
+              </div>
 
-<h3>Toevoegen:</h3>
+          <div class="panel-body">
 
-<form method="post" action="{{ view.url }}">
-  {% csrf_token %}
-  {{ view.form.non_field_errors }}
-  {{ view.form.as_p }}
-  <p><input type="submit" class="btn btn-primary" name="submit" value="Werkzaamheid toevoegen"></p>
-</form>
-{% endblock contentpage %}
+          {% with activities=view.current_activities %}
+            {% if activities %}
+              <table class="table">
+                <thead>
+                  <th>Omschrijving</th>
+                  <th>Opdrachtnemer</th>
+                  <th>Werkzaamheid</th>
+                  <th>Verwijderen</th>
+                </thead>
+
+                <tbody>
+                  {% for activity in view.current_activities %}
+                    <tr>
+                      <td>{{ activity.name }}</td>
+                      <td>{{ activity.contractor }}</td>
+                      <td>{{ activity.measurement_type }}</td>
+                      <td>
+                        {% if activity.has_measurements %}Heeft metingen{% else %}
+                          <form method="post"
+                                action="{% url "lizard_progress_delete_activity" project_slug=view.project.slug activity_id=activity.id %}">
+                            {% csrf_token %}
+                            <input type="submit" class="btn btn-primary"
+                                   name="submit" value="Verwijderen">
+                          </form>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p>Nog geen werkzaamheden toegevoegd aan project.
+            {% endif %}
+          {% endwith %}
+
+          <h3>Toevoegen:</h3>
+
+          <form method="post" action="{{ view.url }}">
+            {% csrf_token %}
+            {{ view.form.non_field_errors }}
+            {{ view.form.as_p }}
+            <p><input type="submit" class="btn btn-primary" name="submit" value="Werkzaamheid toevoegen"></p>
+          </form>
+            </div>
+
+            </div>
+  
+        
+        </div>
+
+      {% include "lizard_progress/sidebar_include.html" with active="activities" %}
+      </div>
+    </div>        
+          
+{% endblock content %}

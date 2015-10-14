@@ -16,6 +16,9 @@
       {% endif %}
     {% endblock %}</title>
 
+    {% block css %}
+    {% endblock css %}
+
     <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,600,700">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     <link rel="stylesheet"
@@ -27,8 +30,11 @@
           <link rel="stylesheet"
       href="{{ STATIC_URL }}lizard_progress/sortable-theme-bootstrap.css" />                
     <link rel="stylesheet"
-      href="{{ STATIC_URL }}lizard_progress/stylesheets/screen.css" />    
-  
+      href="{{ STATIC_URL }}lizard_progress/stylesheets/screen.css" />   
+    <link type="text/css"
+          href="{{ STATIC_URL }}jqueryui/smoothness/jquery-ui.css"
+          rel="stylesheet"
+          media="screen, projection" />
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -38,6 +44,15 @@
     <![endif]-->
   </head>
   <body>
+
+
+ {% if messages %}
+    <div id="messages" class="messages container">
+      {% for message in messages %}
+        <p class="text-warning">{{ message|safe }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
 
     <div class="container">
       <nav class="navbar navbar-default">
@@ -60,6 +75,9 @@
                 <ul class="dropdown-menu">
                   <li><a href="{% url "lizard_progress_single_user_management" user_id=view.user.id %}">Uw profiel</a></li>
                   <li><a href="/us/admin/organization/errorconfiguration/">Instellingen</a></li>
+                  {% if view.user_has_manager_role %}
+                  <li><a href="/us/archive/">Archief</a></li>
+                  {% endif %}
                   <li><a href="https://uploadservice.staging.lizard.net/static_media/lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf" target="_blank">Help</a></li>
                   <li role="separator" class="divider"></li>
                   <li><a href="/accounts/logout">Uitloggen</a></li>
@@ -87,9 +105,15 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/holder/2.8.0/holder.js"></script>
-
+    
+    <script src="{{ STATIC_URL }}jqueryui/jquery-ui.js"></script>
     <script src="{{ STATIC_URL }}lizard_progress/bower_components/sweetalert/dist/sweetalert.min.js"></script>
     <script src="{{ STATIC_URL }}lizard_progress/sortable.min.js"></script>
+
+    {% block javascript %}
+      {{ block.super }}
+      <script src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+    {% endblock javascript %}
 
     <script>
     $(function () {

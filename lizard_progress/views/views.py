@@ -454,7 +454,12 @@ class DashboardView(ProjectsView):
 
     @property
     def total_activities(self):
+        # import pdb;pdb.set_trace()
         return self.project.activity_set.count()
+
+    @property
+    def num_open_requests(self):
+        return self.project.num_open_requests
 
     @property
     def breadcrumbs(self):

@@ -26,12 +26,16 @@
                     </div>
                   </div>
                     </div class="row">
-                        {% for activity in view.activities %}
+                        {% for activity, numrequests in view.activity_requests %}
                         <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
                           <div class="col-md-3">
                             <div class="panel panel-default">
                               <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ activity.name }}</h4></div>
-                              <div class="panel-body pie-lg {{ activity.pie }}"></div>
+                              <div class="panel-body pie-lg {{ activity.pie }}">
+                                 {% if numrequests > 0 %}
+                                  <div class="request-warning request-container"><div class="project-request-number request-lg">{{ numrequests }}</div><a href="../{{ activity.id }}/changerequests/"><i class="fa fa-exclamation-triangle exclamation-lg"></i></a></div>
+                                {% endif %}
+                              </div>
                             </div>
                           </div>
                         </a>

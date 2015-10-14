@@ -181,6 +181,52 @@ class ProjectsMixin(object):
             self.profile and
             self.profile.has_role(models.UserRole.ROLE_UPLOADER))
 
+    @property
+    def total_requests(self):
+        from lizard_progress.changerequests.models import Request
+        if self.user_is_manager():
+            return Request.objects.filter(
+                request_status=Request.REQUEST_STATUS_OPEN,
+                project__organization=self.profile.organization
+            ).count()
+        else:
+            return Request.objects.filter(
+                request_status=Request.REQUEST_STATUS_OPEN,
+                activity__contractor=self.profile.organization
+            ).count()
+
+    def total_activity_requests(self, activity):
+        from lizard_progress.changerequests.models import Request
+        if self.user_is_manager():
+            return Request.objects.filter(
+                request_status=Request.REQUEST_STATUS_OPEN,
+                project__organization=self.profile.organization,
+                activity=activity
+            ).count()
+        else:
+            return Request.objects.filter(
+                request_status=Request.REQUEST_STATUS_OPEN,
+                activity__contractor=self.profile.organization,
+                activity=activity
+            ).count()
+
+    @property
+    def activity_requests(self):
+        for activity in self.activities():
+            yield activity, self.total_activity_requests(activity)
+
+
+    @property
+    def projects_requests(self):
+        for project in self.projects():
+            yield project, self.num_project_requests(project)
+
+    def num_project_requests(self, project):
+        if self.user_is_manager:
+            return project.num_open_requests
+        else:
+            return project.num_open_requests_for_user(self.profile.organization)
+
     def user_is_manager(self):
         """User is a manager if his organization owns this projects
         and user has the ROLE_MANAGER role."""

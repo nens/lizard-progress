@@ -8959,7 +8959,7 @@ div.project-request-number {
   width: 50px;
   height: 50px;
   text-align: right;
-  color: red;
+  color: #e74c3c;
   position: absolute;
   margin: 3pt 0 0 -2pt;
   z-index: 2;
@@ -9146,7 +9146,7 @@ div.request-sm {
   margin: 0;
 }
 
-/* line 261, ../sass/modules/_project_manager_home.scss */
+/* line 263, ../sass/modules/_project_manager_home.scss */
 table tr.clickable {
   cursor: pointer;
 }

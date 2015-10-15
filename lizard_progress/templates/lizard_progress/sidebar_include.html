@@ -1,0 +1,108 @@
+{% comment "Note" %}
+This template is intended to be included by some other templates, and expects a keyword 'active' to be supplied.
+
+ - dashboard.html supplies with='dashboard'
+ - activities.html supplies with='activities'
+ - download.html supplies with='download'
+ - project_configuration_page.html supplies with='configuration'
+ - map.html supplies with='map'
+
+Dashboard will show in 3 columns width, while the others will have a 1 column width and will include tooltips.
+{% endcomment %}
+
+
+
+{% if active == 'dashboard' %}
+	<div class="col-md-3" role="complementary">
+	  <nav class="sidebar hidden-print">
+	    <ul class="nav sidenav">
+	      <li>
+	        <a href="." class="active"><i class="fa fa-lg fa-tachometer"></i> &nbsp; dashboard</a>
+	      </li>
+	      <li>
+	        <a href="../activities/"><i class="fa fa-lg fa-tasks"></i> &nbsp; werkzaamheden <span class="badge">{{ view.total_activities }}x</span></a>
+	      </li>
+	      <li>
+	        <a href="../download/"><i class="fa fa-lg fa-files-o"></i> &nbsp; bestanden</a>
+	      </li>	      	      
+	      <li>
+	        <a href="../config/"><i class="fa fa-lg fa-cogs"></i> &nbsp; configuratie</a>
+	      </li>
+<!-- 	      <li>
+	        <a href="#"><i class="fa fa-lg fa-question-circle"></i> &nbsp; aanvragen <span class="badge">4x</span></a>
+	      </li> -->
+	      <li>
+	        <a href="../map/"><i class="fa fa-lg fa-globe"></i> &nbsp; kaart</a>
+	      </li>
+<!-- 	      <li>
+	        <a href="#"><i class="fa fa-lg fa-share"></i> &nbsp; exporteren</a>
+	      </li> -->
+	    </ul>
+	  </nav>
+	</div>  
+{% else %}
+	<div class="col-md-1" role="complementary">
+	  <nav class="sidebar hidden-print">
+	    <ul class="nav sidenav">
+	      <li data-toggle="tooltip" data-placement="left" title="Dashboard">
+	        <a href="../dashboard/"><i class="fa fa-lg fa-tachometer"></i></a>
+	      </li>   
+	      <li data-toggle="tooltip" data-placement="left" title="Werkzaamheden">
+	        <a 
+	        {% if active == 'activities' %}
+	        	class="active" 
+	        {% endif %}
+	        	href="../activities/">
+	        	<i class="fa fa-lg fa-tasks"></i>
+	        </a>
+	      </li>
+	      <li data-toggle="tooltip" data-placement="left" title="Bestanden">
+	        <a 
+	        {% if active == 'download' %}
+	        	class="active" 
+	        {% endif %}
+	        	href="../download/">
+	        	<i class="fa fa-lg fa-files-o"></i>
+	        </a>
+	      </li>	   
+	      <li data-toggle="tooltip" data-placement="left" title="Configuratie">
+	        <a 
+	        {% if active == 'configuration' %}
+	        	class="active" 
+	        {% endif %}
+	        	href="../config/">
+	        	<i class="fa fa-lg fa-cogs"></i>
+	        </a>
+	      </li>
+<!-- 	      <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
+	        <a 
+	        {% if active == 'aanvragen' %}
+	        	class="active" 
+	        {% endif %}        
+	        	href="#">
+	        	<i class="fa fa-lg fa-question-circle"></i>
+	        </a>
+	      </li> -->
+	      <li data-toggle="tooltip" data-placement="left" title="Kaart">
+	        <a 
+	        {% if active == 'map' %}
+	        	class="active" 
+	        {% endif %}        
+	        	href="../map/">
+	        	<i class="fa fa-lg fa-globe"></i>
+	        </a>
+	        
+	      </li>
+<!-- 	      <li data-toggle="tooltip" data-placement="left" title="Exporteren">
+	        <a 
+	        {% if active == 'export' %}
+	        	class="active" 
+	        {% endif %}        
+	        	href="#">
+	        	<i class="fa fa-lg fa-share"></i>
+	        </a>
+	      </li> -->
+	    </ul>
+	  </nav>
+	</div>
+{% endif %}

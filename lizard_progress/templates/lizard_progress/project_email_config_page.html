@@ -1,27 +1,77 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block contentpage %}
-<h2>E-mail configuratie {{ view.project }}</h2>
 
-<form method="post" action="{% url "lizard_progress_project_email_config_view" project_slug=view.project_slug %}">
-    <table class="table table-bordered progressbase">
-        <thead>
-            <th>Notificatie</th>
-            <th>Ontvangen?</th>
-        </thead>
-        <tbody>
-        {% for option, current_value in view.config_options %}
-            <tr>
-                <td>
-                    {{ option.name }}<br />
-                    <span class="small">{{ option.description }}</span>
-                </td>
-                <td><input type="checkbox" name="{{ option.name }}" {% if current_value %}checked="checked"{% endif %}></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
-    {% csrf_token %}
-</form>
-{% endblock contentpage %}
+{% block content %}
+
+    {% include "lizard_progress/projectswitcher.html" %}    
+
+
+    <div class="container" id="project-details">
+      
+      <div class="row">
+        <div class="col-md-11">
+
+          <div class="row">
+            <div class="col-md-12 details-tabs">
+
+            <div>
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation"><a href="../config/" aria-controls="profile" role="tab">Projectinstellingen</a></li>
+                <!-- <li role="presentation"><a href="#home" aria-controls="home" role="tab">Projectbestanden toevoegen</a></li> -->
+                <li role="presentation" class="active"><a href="../email_config/" aria-controls="profile" role="tab">E-mailconfiguratie</a></li>
+              </ul>
+
+              <!-- Tab panes -->
+              <div class="tab-content">
+
+                <div role="tabpanel" class="tab-pane fade in active" id="project">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">E-mail configuratie {{ view.project }}</h3>
+                    </div>
+                    <div class="panel-body">
+
+                        <form method="post" action="{% url "lizard_progress_project_email_config_view" project_slug=view.project_slug %}">
+                            <table class="table table-bordered progressbase">
+                                <thead>
+                                    <th>Notificatie</th>
+                                    <th>Ontvangen?</th>
+                                </thead>
+                                <tbody>
+                                {% for option, current_value in view.config_options %}
+                                    <tr>
+                                        <td>
+                                            {{ option.name }}<br />
+                                            <span class="small">{{ option.description }}</span>
+                                        </td>
+                                        <td><input type="checkbox" name="{{ option.name }}" {% if current_value %}checked="checked"{% endif %}></td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                            <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
+                            {% csrf_token %}
+                        </form>
+
+                    </div>
+                  </div>
+
+                </div>
+
+
+              </div>
+
+            </div>
+
+            </div>
+          </div>
+        
+        </div>
+
+      {% include "lizard_progress/sidebar_include.html" with active="configuration" %}
+
+      </div>
+    </div>        
+{% endblock %}
+

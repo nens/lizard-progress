@@ -18,21 +18,22 @@ import shutil
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
+from django import http
 from django.conf import settings
+from django.contrib import auth
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.http import HttpResponseRedirect
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.utils.translation import ugettext as _
 from django.utils.functional import cached_property
+from django.utils.translation import ugettext as _
+from django.views.generic.base import TemplateView
 from django.views.static import serve
-from django import http
-from django.contrib import auth
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
@@ -62,6 +63,14 @@ class ProjectsMixin(object):
     project_slug = None
     project = None
     activity = None
+    sortparams = {
+        "mostrecent": ("meest recent", ("created_at", True)),
+        "leastrecent": ("minst recent", ("created_at", False)),
+        "mosturgent": ("meest gereed", ("percentage_done", True)),
+        "leasturgent": ("minst gereed", ("percentage_done", False)),
+        "name": ("naam", ("name", False)),
+        "namereversed": ("naam omgekeerd", ("name", True))
+    }
 
     def dispatch(self, request, *args, **kwargs):
         self.project_slug = kwargs.get('project_slug')
@@ -88,13 +97,40 @@ class ProjectsMixin(object):
         return super(
             ProjectsMixin, self).dispatch(request, *args, **kwargs)
 
+    def get(self, request, *args, **kwargs):
+        order = request.GET.get('orderby')
+        try:
+            self.orderby = self.sortparams[order][0]
+        except KeyError:
+            order = "mostrecent"
+            self.orderby = self.sortparams[order][0]
+        self.order = self.sortparams[order][1]
+        self.orderchoices = {
+            key: value[0] for key, value in self.sortparams.iteritems()
+            if not value[0] == self.orderby
+            }
+        return super(ProjectsMixin, self).get(request, *args, **kwargs)
+
     def projects(self):
         """Returns a list of projects the current user has access to."""
-
+        projecttable = Project.objects.select_related(
+            'organization').prefetch_related(
+            'activity_set__contractor').filter(is_archived=False)
+        NAs = []
+        notNAs = []
+        for project in projecttable:
+            if getattr(project, self.order[0]) == "N/A":
+                NAs.append(project)
+            else:
+                notNAs.append(project)
+        sortedprojects = sorted(notNAs, reverse=self.order[1],
+               key=lambda a: getattr(a, self.order[0]))
+        if self.order[1]:
+            sortedprojects += NAs
+        else:
+            sortedprojects = NAs + sortedprojects
         projects = []
-        for project in Project.objects.select_related(
-                'organization').prefetch_related(
-                'activity_set__contractor').filter(is_archived=False):
+        for project in sortedprojects:
             if has_access(project=project, userprofile=self.profile):
                 projects.append(project)
         return projects
@@ -144,6 +180,51 @@ class ProjectsMixin(object):
         return (
             self.profile and
             self.profile.has_role(models.UserRole.ROLE_UPLOADER))
+
+    @property
+    def total_requests(self):
+        from lizard_progress.changerequests.models import Request
+        if self.user_has_manager_role():
+            return Request.objects.filter(
+                request_status=Request.REQUEST_STATUS_OPEN,
+                activity__project__organization=self.profile.organization
+            ).count()
+        else:
+            return Request.objects.filter(
+                request_status=Request.REQUEST_STATUS_OPEN,
+                activity__contractor=self.profile.organization
+            ).count()
+
+    def total_activity_requests(self, activity):
+        from lizard_progress.changerequests.models import Request
+        if self.user_is_manager():
+            return Request.objects.filter(
+                request_status=Request.REQUEST_STATUS_OPEN,
+                activity__project__organization=self.profile.organization,
+                activity=activity
+            ).count()
+        else:
+            return Request.objects.filter(
+                request_status=Request.REQUEST_STATUS_OPEN,
+                activity__contractor=self.profile.organization,
+                activity=activity
+            ).count()
+
+    @property
+    def activity_requests(self):
+        for activity in self.activities():
+            yield activity, self.total_activity_requests(activity)
+
+    @property
+    def projects_requests(self):
+        for project in self.projects():
+            yield project, self.num_project_requests(project)
+
+    def num_project_requests(self, project):
+        if self.user_is_manager():
+            return project.num_open_requests
+        else:
+            return project.num_open_requests_for_user(self.profile.organization)
 
     def user_is_manager(self):
         """User is a manager if his organization owns this projects
@@ -199,7 +280,6 @@ class KickOutMixin(object):
         self.request = request
         self.user = request.user
         self.profile = models.UserProfile.get_by_user(self.user)
-
         self.organization = getattr(self.profile, 'organization', None)
 
         if not self.organization:
@@ -242,19 +322,23 @@ class KickOutMixin(object):
         return actions
 
 
-class ProjectsView(KickOutMixin, ProjectsMixin, UiView):
+class ProjectsView(KickOutMixin, ProjectsMixin, TemplateView):
     """Displays a list of projects to choose from."""
     template_name = "lizard_progress/projects.html"
 
 
-class View(KickOutMixin, ProjectsMixin, AppView):
+class View(KickOutMixin, ProjectsMixin, TemplateView):
     """The app's root, shows a choice of projects, or a choice of
     dashboard / upload / map layer pages if a project is chosen."""
 
     template_name = 'lizard_progress/home.html'
 
 
-class MapView(View):
+class InlineMapView(View):
+    template_name = 'lizard_progress/map_inline.html'
+
+
+class MapView(View, AppView):
     """View that can show a project's locations as map layers."""
     template_name = 'lizard_progress/map.html'
 
@@ -332,6 +416,13 @@ class MapView(View):
                 if 'load-default-location' in action.klass]
 
     @property
+    def sidebar_actions(self):
+        """..."""
+        actions = super(MapView, self).sidebar_actions
+        actions[0].name = 'Kaartlagen'
+        return actions       
+
+    @property
     def breadcrumbs(self):
         """Breadcrumbs for this page."""
 
@@ -360,6 +451,15 @@ class DashboardView(ProjectsView):
     active_menu = "dashboard"
 
     @property
+    def total_activities(self):
+        # import pdb;pdb.set_trace()
+        return self.project.activity_set.count()
+
+    @property
+    def num_open_requests(self):
+        return self.project.num_open_requests
+
+    @property
     def breadcrumbs(self):
         """Breadcrumbs for this page."""
 
@@ -372,6 +472,35 @@ class DashboardView(ProjectsView):
                              .format(project=self.project.name)),
                 url=reverse(
                     'lizard_progress_dashboardview',
+                    kwargs={'project_slug': self.project_slug})))
+
+        return crumbs
+
+
+class ActivitiesView(ProjectsView):
+    """Show the activities page. The page shows activities in this project,
+    number of planned and uploaded measurements, links to pages for
+    planning and for adding and removing contractors and measurement
+    types, and progress graphs.
+
+    """
+
+    template_name = 'lizard_progress/activities.html'
+    active_menu = "dashboard"
+
+    @property
+    def breadcrumbs(self):
+        """Breadcrumbs for this page."""
+
+        crumbs = super(DashboardView, self).breadcrumbs
+
+        crumbs.append(
+            Action(
+                name="Activities",
+                description=("{project} dashboard"
+                             .format(project=self.project.name)),
+                url=reverse(
+                    'lizard_progress_activitiesview',
                     kwargs={'project_slug': self.project_slug})))
 
         return crumbs
@@ -712,7 +841,7 @@ class ArchiveProjectsView(ProjectsView):
 
 
 class NewProjectView(ProjectsView):
-    template_name = "lizard_progress/newproject.html"
+    template_name = "lizard_progress/new_project.html"
 
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def dispatch(self, request, *args, **kwargs):

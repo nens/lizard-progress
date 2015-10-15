@@ -1,97 +1,177 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
-{% block contentpage %}
-    <h2>Aanvragen {{ view.activity }}</h2>
+{% block javascript %}
+    <script src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock javascript %}
 
-    {% with openrequests=view.open_requests %}
-    {% with closedrequests=view.recently_closed_requests %}
-    {% if openrequests %}
-        <h3>Open aanvragen</h3>
-        <table class="table progressbase">
-            <thead>
-             <tr>
-              <th></th>
-              <th>Datum</th>
-              <th>Werkzaamheid</th>
-              <th>Aanvraagtype</th>
-              <th>Locatie</th>
-              <th></th>
-             </tr>
-            </thead>
-            <tbody>
-                {% for request in openrequests %}
-                <tr data-url="{{ request.get_absolute_url }}">
-                    <td class="clickable">
-                        {% if not request.did_last_action %}
-                            <i class="icon icon-warning-sign"></i>
-                        {% endif %}
-                    </td>
-                    <td class="clickable">{{ request.creation_date|date:"d/m" }}</td>
-                    <td class="clickable">{{ request.activity }}</td>
-                    <td class="clickable">{{ request.type_description }}</td>
-                    <td class="clickable">
-                        {{ request.location_code }}
-                        {% if request.old_location_code %}
-                            (vervangt {{ request.old_location_code }})
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{{ request.get_absolute_url }}">bekijk details</a>
-                        |
-                        <a href="{% url "lizard_progress_mapview_change_request" project_slug=view.project_slug change_request=request.id %}">bekijk op kaart</a>
-                    </td>
-                </tr>
+{% block content %}
+    {% include "lizard_progress/projectswitcher.html" %}
+
+
+    <div class="container" id="project-details">
+
+      
+      <div class="row">
+
+        <div class="col-md-11">        
+
+        <h2>Aanvragen {{ view.activity }}</h2>
+
+        {% with openrequests=view.open_requests %}
+        {% with closedrequests=view.recently_closed_requests %}
+        {% if openrequests %}
+            <h3>Open aanvragen</h3>
+            <table class="table progressbase">
+                <thead>
+                 <tr>
+                  <th></th>
+                  <th>Datum</th>
+                  <th>Werkzaamheid</th>
+                  <th>Aanvraagtype</th>
+                  <th>Locatie</th>
+                  <th></th>
+                 </tr>
+                </thead>
+                <tbody>
+                    {% for request in openrequests %}
+                    <tr data-url="{{ request.get_absolute_url }}">
+                        <td class="clickable">
+                            {% if not request.did_last_action %}
+                                <i class="icon icon-warning-sign"></i>
+                            {% endif %}
+                        </td>
+                        <td class="clickable">{{ request.creation_date|date:"d/m" }}</td>
+                        <td class="clickable">{{ request.activity }}</td>
+                        <td class="clickable">{{ request.type_description }}</td>
+                        <td class="clickable">
+                            {{ request.location_code }}
+                            {% if request.old_location_code %}
+                                (vervangt {{ request.old_location_code }})
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ request.get_absolute_url }}">bekijk details</a>
+                            |
+                            <a href="{% url "lizard_progress_mapview_change_request" project_slug=view.project_slug change_request=request.id %}">bekijk op kaart</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {% if closedrequests %}
+            <h3>Recente afgesloten aanvragen</h3>
+            <table class="table progressbase">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Datum</th>
+                        <th>Organisatie</th>
+                        <th>Werkzaamheid</th>
+                        <th>Aanvraagtype</th>
+                        <th>Locatie</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for request in closedrequests %}
+                    <tr class="{% if request.is_accepted %}success{% endif %}{% if request.is_refused %}danger{% endif %}{% if request.is_invalid %}warning{% endif %}" data-url="{{ request.get_absolute_url }}">
+                        {% comment %}
+                            The tds are clickable here, and not the trs, because the last td should not be clickable. Otherwise clicking the 'X' button does both things.
+                        {% endcomment %}
+                        <td class="clickable">{{ request.status_description }}</td>
+                        <td class="clickable">{{ request.creation_date|date:"d/m" }}</td>
+                        <td class="clickable">{{ request.contractor.organization }}</td>
+                        <td class="clickable">{{ request.mtype }}</td>
+                        <td class="clickable">{{ request.type_description }}</td>
+                        <td class="clickable">{{ request.location_code }}
+                            {% if request.old_location_code %}
+                                (vervangt {{ request.old_location_code }}
+                            {% endif %}
+
+                        </td>
+                        <td>
+                            <button class="close" type="button" title="Markeer als gezien" data-post-url="{{ request.get_absolute_url }}set_seen/" aria-hidden="true">&times;</button>
+                        </td>
+                    </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
+                </tbody>
+            </table>
+        {% endif %}
+        <p><a href="{% url "changerequests_closed" project_slug=view.project_slug activity_id=view.activity_id %}">Klik hier voor een overzicht van alle afgesloten aanvragen van dit project</a></p>
+        {% endwith %}
+        {% endwith %}
 
-    {% if closedrequests %}
-        <h3>Recente afgesloten aanvragen</h3>
-        <table class="table progressbase">
-            <thead>
-                <tr>
-                    <th>Status</th>
-                    <th>Datum</th>
-                    <th>Organisatie</th>
-                    <th>Werkzaamheid</th>
-                    <th>Aanvraagtype</th>
-                    <th>Locatie</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for request in closedrequests %}
-                <tr class="{% if request.is_accepted %}success{% endif %}{% if request.is_refused %}danger{% endif %}{% if request.is_invalid %}warning{% endif %}" data-url="{{ request.get_absolute_url }}">
-                    {% comment %}
-                        The tds are clickable here, and not the trs, because the last td should not be clickable. Otherwise clicking the 'X' button does both things.
-                    {% endcomment %}
-                    <td class="clickable">{{ request.status_description }}</td>
-                    <td class="clickable">{{ request.creation_date|date:"d/m" }}</td>
-                    <td class="clickable">{{ request.contractor.organization }}</td>
-                    <td class="clickable">{{ request.mtype }}</td>
-                    <td class="clickable">{{ request.type_description }}</td>
-                    <td class="clickable">{{ request.location_code }}
-                        {% if request.old_location_code %}
-                            (vervangt {{ request.old_location_code }}
-                        {% endif %}
+        <h3>Nieuwe aanvragen</h3>
+        <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_removecode" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode laten vervallen</button>
+        <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_movelocation" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode verplaatsen</button>
+        <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_newlocation" project_slug=view.project_slug activity_id=view.activity_id %}">Nieuwe of vervangende locatiecode</button>
 
-                    </td>
-                    <td>
-                        <button class="close" type="button" title="Markeer als gezien" data-post-url="{{ request.get_absolute_url }}set_seen/" aria-hidden="true">&times;</button>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
-    <p><a href="{% url "changerequests_closed" project_slug=view.project_slug activity_id=view.activity_id %}">Klik hier voor een overzicht van alle afgesloten aanvragen van dit project</a></p>
-    {% endwith %}
-    {% endwith %}
 
-    <h3>Nieuwe aanvragen</h3>
-    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_removecode" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode laten vervallen</button>
-    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_movelocation" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode verplaatsen</button>
-    <button type="button" class="redirect btn btn-primary" data-redirect-url="{% url "changerequests_newlocation" project_slug=view.project_slug activity_id=view.activity_id %}">Nieuwe of vervangende locatiecode</button>
+    </div>
+        <div class="col-md-1" role="complementary">
+      <nav class="sidebar hidden-print">
+        <ul class="nav sidenav">
+          <li data-toggle="tooltip" data-placement="left" title="Dashboard">
+            <a href="../../dashboard/"><i class="fa fa-lg fa-tachometer"></i></a>
+          </li>   
+          <li data-toggle="tooltip" data-placement="left" title="Werkzaamheden">
+            <a 
+                class="active" 
+                href="../../activities/">
+                <i class="fa fa-lg fa-tasks"></i>
+            </a>
+          </li>
+          <li data-toggle="tooltip" data-placement="left" title="Bestanden">
+            <a 
+            {% if active == 'download' %}
+                class="active" 
+            {% endif %}
+                href="../../download/">
+                <i class="fa fa-lg fa-files-o"></i>
+            </a>
+          </li>    
+          <li data-toggle="tooltip" data-placement="left" title="Configuratie">
+            <a 
+            {% if active == 'configuration' %}
+                class="active" 
+            {% endif %}
+                href="../../config/">
+                <i class="fa fa-lg fa-cogs"></i>
+            </a>
+          </li>
+<!--          <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
+            <a 
+            {% if active == 'aanvragen' %}
+                class="active" 
+            {% endif %}        
+                href="#">
+                <i class="fa fa-lg fa-question-circle"></i>
+            </a>
+          </li> -->
+          <li data-toggle="tooltip" data-placement="left" title="Kaart">
+            <a 
+            {% if active == 'map' %}
+                class="active" 
+            {% endif %}        
+                href="../../map/">
+                <i class="fa fa-lg fa-globe"></i>
+            </a>
+            
+          </li>
+<!--          <li data-toggle="tooltip" data-placement="left" title="Exporteren">
+            <a 
+            {% if active == 'export' %}
+                class="active" 
+            {% endif %}        
+                href="#">
+                <i class="fa fa-lg fa-share"></i>
+            </a>
+          </li> -->
+        </ul>
+      </nav>
+    </div>
+</div>
 
-{% endblock contentpage %}
+{% endblock content %}

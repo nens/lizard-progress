@@ -1,4 +1,101 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
+
+
+{% block content %}
+    {% include "lizard_progress/projectswitcher.html" %}
+
+
+    <div class="container" id="project-details">
+      
+      <div class="row">
+        <div class="col-md-9">
+
+          
+            <div class="col-md-12 details-tabs">
+              <div>
+                  <div class="row">
+                    <div class="col-md-12 well">
+                      <div class="col-md-4 text-center">
+                        {{ view.project.number_of_locations }} <span class="text-muted">geplande meting{{ view.total_activities|pluralize:"en" }}</span>
+                      </div>
+                      <div class="col-md-4 text-center">
+                        {{ view.project.number_of_complete_locations }} <span class="text-muted">ingevoerde meting{{ view.project.number_of_complete_locations|pluralize:"en" }}</span>
+                      </div>
+                      <div class="col-md-4 text-center">
+                        {{ view.num_open_requests }} <span class="text-muted">open aanvr{{ view.num_open_requests|pluralize:"aag,agen" }}</span>
+                      </div>
+                    </div>
+                    {% if view.user_is_manager %}
+                      <div class="row">
+                        <div class="col-md-12">
+                            <a href="{% url "lizard_progress_edit_activities" project_slug=view.project_slug %}">
+                              <button type="button" class="btn btn-primary btn-sm pull-right" style="margin:-10px 0 10px 0;">
+                                Beheer werkzaamheden
+                              </button>
+                            </a>
+                        </div>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="row">
+                    {% for activity, numrequests in view.activity_requests %}
+                    <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
+                      <div class="col-md-3">
+                        <div class="panel panel-default">
+                          <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ activity.name }}</h4></div>
+                          <div class="panel-body pie-lg {{ activity.pie }}">
+                             {% if numrequests > 0 %}
+                              <div class="request-warning request-container"><div class="project-request-number request-lg">{{ numrequests }}</div><a href="../{{ activity.id }}/changerequests/"><i class="fa fa-exclamation-triangle exclamation-lg"></i></a></div>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+                    {% endfor %}
+                  </div>
+              </div>
+
+            </div>
+
+
+        </div>
+
+        {% include "lizard_progress/sidebar_include.html" with active="dashboard" %}
+      
+      </div>
+    </div>
+
+
+
+{% endblock content %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 {% block contentpage %}
 

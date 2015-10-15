@@ -347,9 +347,61 @@ def current_files(measurements):
     return set(measurement.filename for measurement in measurements)
 
 
-class Project(models.Model):
-    name = models.CharField(max_length=50, unique=False,
-                            verbose_name='projectnaam')
+class ProjectActivityMixin(object):
+    piedict = {
+        1: "pie012",
+        2: "pie025",
+        3: "pie037",
+        4: "pie050",
+        5: "pie062",
+        6: "pie075",
+        7: "pie087"
+    }
+
+    @cached_property
+    def latest_log(self):
+        """Return the UploadedLog belonging to this activity with the
+        most recent 'when' date, or None if there are no such
+        UploadedLogs."""
+        latest_log = UploadLog.latest_for_project(self)
+        print(latest_log)
+        return latest_log[0] if latest_log else None
+
+    @staticmethod
+    def percentage(total, part):
+        try:
+            percentage = (
+                (100 * part) / total)
+            return int(percentage)
+        except ZeroDivisionError:
+            return "N/A"
+
+    @property
+    def pie(self):
+        try:
+            x = self.percentage_done
+        except:
+            logger.debug('Database error.')
+            x = "N/A"  # Ugly hack to catch all empty database related errors.
+        if x == "N/A":
+            return "pienan"
+        elif x == 0:
+            return "pie000"
+        elif x < 12.5:
+            return "pie012"
+        elif x >= 100:
+            return "pie100"
+        elif x > 87.5:
+            return "pie087"
+        else:
+            try:
+                return self.piedict[int(round(x/12.5))]
+            except:
+                return "ERROR-percentage-done-is---{}".format(x)
+
+
+class Project(ProjectActivityMixin, models.Model):
+    name = models.CharField(max_length=50, unique=False, verbose_name='projectnaam')
     slug = models.SlugField(max_length=60, unique=True)
     organization = models.ForeignKey(Organization, null=False)
     is_archived = models.BooleanField(default=False)
@@ -401,15 +453,9 @@ class Project(models.Model):
             activity__project=self, complete=True,
             not_part_of_project=False).count()
 
+    @property
     def percentage_done(self):
-        if any(not activity.needs_predefined_locations()
-               for activity in self.activity_set.all()):
-            return "N/A"
-
-        percentage = (
-            (100 * self.number_of_complete_locations()) /
-            self.number_of_locations())
-        return "{percentage:2.0f}%".format(percentage=percentage)
+        return self.percentage(self.number_of_locations(), self.number_of_complete_locations())
 
     def is_complete(self):
         """Project is complete if there are any activities, and they are
@@ -419,11 +465,6 @@ class Project(models.Model):
         """
         return self.activity_set.exists() and all(
             activity.is_complete() for activity in self.activity_set.all())
-
-    @cached_property
-    def latest_log(self):
-        latest_log = UploadLog.latest_for_project(self)
-        return latest_log[0] if latest_log else None
 
     def refresh_hydrovakken(self):
         """Find Hydrovakken shapefiles belonging to this project.
@@ -447,6 +488,14 @@ class Project(models.Model):
         return Request.objects.filter(
             request_status=Request.REQUEST_STATUS_OPEN,
             activity__project=self).count()
+
+    def num_open_requests_for_user(self, organization):
+        from lizard_progress.changerequests.models import Request
+        return Request.objects.filter(
+            request_status=Request.REQUEST_STATUS_OPEN,
+            activity__project=self,
+            activity__contractor=organization
+        ).count()
 
     def available_layers(self, user):
         """Yield available map layers for user."""
@@ -706,7 +755,7 @@ class AvailableMeasurementType(models.Model):
         return cls.objects.get(slug='dwarsprofiel')
 
 
-class Activity(models.Model):
+class Activity(ProjectActivityMixin, models.Model):
     """An activity is a part of a project. Measurements happen as
     part of an activity. All measurements in an activity share the
     same set of locations and the same configuration, and have a
@@ -878,14 +927,6 @@ class Activity(models.Model):
 
         return activity
 
-    @cached_property
-    def latest_log(self):
-        """Return the UploadedLog belonging to this activity with the
-        most recent 'when' date, or None if there are no such
-        UploadedLogs."""
-        latest_log = UploadLog.latest_for_activity(self)
-        return latest_log[0] if latest_log else None
-
     def available_layers(self, user):
         """Yield available map layers."""
         if not has_access(user, self.project, self.contractor):
@@ -954,6 +995,14 @@ class Activity(models.Model):
     def show_numbers_on_map(self):
         """Should map layers show numbers for multiple recent uploads."""
         return self.project.show_numbers_on_map
+
+    @property
+    def percentage_done(self):
+        if self.has_locations():
+            return self.percentage(self.num_locations(), self.num_complete_locations())
+        else:
+            return "N/A"
+
 
 
 class ExpectedAttachment(models.Model):

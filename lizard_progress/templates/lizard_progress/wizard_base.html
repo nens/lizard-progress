@@ -1,55 +1,60 @@
-{% extends "lizard_ui/lizardbase.html" %}
-{% load i18n %}
-
-{% block css %}
-{{ block.super }}
-<link rel="stylesheet"
-      type="text/css"
-      href="{{ STATIC_URL }}lizard_progress/lizard_progress.css"/>
-<style type="text/css">
-div#content {
-    padding: 20px;
-}
-</style>
-{% endblock css %}
-
-{% block breadcrumbs %}
-{{ block.super }}
-&rarr; <a href="{% url "lizard_progress_projecten" %}" title="Home">Home</a>
-&rarr; <a href="{% url "lizard_progress_admin" %}" rel="tipsy-south" title="Administratieve taken">Admin</a>
-{% endblock breadcrumbs %}
-
-{% block sidebar %}
-<div class="sidebarbox sidebarbox-stretched">
-  <h2>Admin</h2>
-  {% include "lizard_progress/admin_tasks.html" %}
-</div>
-{% endblock sidebar %}
+{% extends "lizard_progress/progressbase2.html" %}{% load i18n %}
 
 {% block content %}
-{# <h1>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</h1> #}
-{% if wizard.form.is_multipart %}
-<form enctype="multipart/form-data" method="post" action="">
-{% else %}
-<form method="post" action="">
-{% endif %}
-{% csrf_token %}
-{{ wizard.form.media }}
-{{ wizard.management_form }}
-{% if wizard.form.forms %}
-    {{ wizard.form.management_form }}
-    {% for form in wizard.form.forms %}
-        {{ form.as_p }}
-    {% endfor %}
-{% else %}
-    <table class="wizard-table">
-    {{ wizard.form.as_table }}
-    </table>
-{% endif %}
-{% if wizard.steps.prev %}
-<button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}">{% trans "Opnieuw" %}</button>
-<button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">{% trans "&lt; Terug" %}</button>
-{% endif %}
-<input type="submit" name="submit" value="{% trans "Verder &gt;" %}" />
-</form>
+
+    <div class="container" id="project-slug">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="title">
+            <span class="org"><a href="../">{{ view.organization|lower }}</a> / </span><span class="project"><a href="#">nieuw project</a></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+
+              
+              {% if not view.user_is_manager %}
+                <p>U bent geen projectbeheerder en mag geen nieuwe projecten toevoegen.</p>
+              {% else %}
+                <form action="" method="post" class="form-horizontal">{% csrf_token %}
+                  <p class="text-warning">{{ view.form.non_field_errors }}</p>
+
+                  {% for fields in view.grouped_form_fields %}
+                      <div class="panel panel-default">
+                        <div class="panel-body">
+                          {% for field in fields %}
+                            <div class="col-sm-12">
+                              {{ field.label_tag}}{{ field }}<span class="text-warning">{{ field.errors }}</span>
+                            </div>
+                          {% endfor %}
+                        </div>
+                      </div>
+                {% endfor %}
+
+                  <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                      <button type="submit" class="btn btn-primary">Nieuw project toevoegen</button>
+                    </div>
+                  </div>
+
+                
+              </form>
+            <hr size="1" noshade />
+            <p class="small">
+              Instellen uit welke metingtypes hier gekozen kan worden?
+              Zie de <a href="{% url "lizard_progress_editvisibility" %}"><i class="icon-pencil"></i> "Zichtbaarheid Metingtypes"</a> pagina.
+            </p>
+          {% endif %}
+
+
+    
+
+
+
+    </div>
+
 {% endblock content %}

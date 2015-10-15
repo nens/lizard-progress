@@ -99,6 +99,7 @@ class ActivityMixin(object):
             self.date_planning and self.user_is_activity_uploader))
 
 
+
 class ActivityView(KickOutMixin, ProjectsMixin, ActivityMixin, UiView):
     """Base class for the Activity pages. It's a ProjectsView with
     self.activity set."""

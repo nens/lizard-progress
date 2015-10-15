@@ -67,6 +67,7 @@ class NewProjectForm(forms.Form):
         super(NewProjectForm, self).__init__(*args, **kwargs)
 
         self.fields['ptype'] = forms.ModelChoiceField(
+            widget=forms.Select(attrs={'class' : 'form-control'}),
             label=_("Project type (optional)"),
             queryset=models.ProjectType.objects.filter(
                 organization=self.organization),
@@ -74,12 +75,14 @@ class NewProjectForm(forms.Form):
 
         for i in range(1, 1 + self.NUM_ACTIVITIES):
             self.fields['contractor' + str(i)] = forms.ModelChoiceField(
+                widget=forms.Select(attrs={'class' : 'form-control'}),
                 label=_("Contractor") + " " + str(i),
                 queryset=models.Organization.objects.all(),
                 required=False
             )
 
             self.fields['measurementtype' + str(i)] = forms.ModelChoiceField(
+                widget=forms.Select(attrs={'class' : 'form-control'}),
                 label=_("Measurement type") + " " + str(i),
                 queryset=self.organization.
                 visible_available_measurement_types(),
@@ -87,6 +90,7 @@ class NewProjectForm(forms.Form):
             )
 
             self.fields['activity{}'.format(i)] = forms.CharField(
+                widget=forms.Select(attrs={'class' : 'form-control'}),
                 label=_('Activity (name, optional)') + " " + str(i),
                 max_length=100, required=False)
 
@@ -106,6 +110,7 @@ class NewProjectForm(forms.Form):
         return cleaned_data
 
     name = forms.CharField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
         label=_("Project name"),
         max_length=50,
         validators=[project_name_validator])
@@ -113,6 +118,7 @@ class NewProjectForm(forms.Form):
 
 class SingleUserForm(forms.Form):
     username = forms.RegexField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
         label="Gebruikersnaam", max_length=30, regex=r"^[\w.@+-]+$",
         help_text=_(
             "Required. 30 characters or fewer. Letters, digits and "
@@ -122,18 +128,23 @@ class SingleUserForm(forms.Form):
                          "@/./+/-/_ characters.")})
 
     first_name = forms.CharField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
         label="Voornaam", max_length=30, required=False)
     last_name = forms.CharField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
         label="Achternaam", max_length=30, required=False)
 
-    email = forms.EmailField(label="Email adres", required=False)
+    email = forms.EmailField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
+        label="Email adres",
+        required=False)
 
     new_password1 = forms.CharField(
         label=_("New password"), required=False,
-        widget=forms.PasswordInput)
+        widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
     new_password2 = forms.CharField(
         label=_("New password confirmation"), required=False,
-        widget=forms.PasswordInput)
+        widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
 
     def __init__(self, user, *args, **kwargs):
         """Store which user we are editing."""

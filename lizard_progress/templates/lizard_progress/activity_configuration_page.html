@@ -1,40 +1,123 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
-{% block contentpage %}
-    <h2>Configuratie {{ view.activity }}</h2>
+{% block content %}
+    {% include "lizard_progress/projectswitcher.html" %}
 
-    <form method="post" action="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">
-        <table class="table table-bordered progressbase">
-            <thead>
-                <th>Optie</th>
-                <th>Type</th>
-                <th>Waarde</th>
-            </thead>
-            {% for option, current_value in view.config_options %}
-                <tr>
-                    <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
-                    <td>
-                        {% if option.type == "float" %}
-                            Decimaal getal
-                        {% elif option.type == "int" %}
-                            Geheel getal
-                        {% elif option.type == "boolean" %}
-                            Ja / Nee
-                        {% else %}
-                            Tekst
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if option.type == "boolean" %}
-                            <input type="checkbox" name="{{ option.option }}" {% if current_value %}checked="checked"{% endif %}>
-                        {% else %}
-                            <input type="text" name="{{ option.option }}" value="{{ current_value }}">
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-        <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
-        {% csrf_token %}
-    </form>
-{% endblock contentpage %}
+
+    <div class="container" id="project-details">
+
+      
+      <div class="row">
+
+        <div class="col-md-11">  
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title"><a href="..">Werkzaamheden</a> > Configuratie {{ view.activity }}</h3>
+                </div>
+
+                <div class="panel-body">
+                    <form method="post" action="{% url "lizard_progress_activity_configuration_view" project_slug=view.project_slug activity_id=view.activity_id %}">
+                        <table class="table table-bordered progressbase">
+                            <thead>
+                                <th>Optie</th>
+                                <th>Type</th>
+                                <th>Waarde</th>
+                            </thead>
+                            {% for option, current_value in view.config_options %}
+                                <tr>
+                                    <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
+                                    <td>
+                                        {% if option.type == "float" %}
+                                            Decimaal getal
+                                        {% elif option.type == "int" %}
+                                            Geheel getal
+                                        {% elif option.type == "boolean" %}
+                                            Ja / Nee
+                                        {% else %}
+                                            Tekst
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if option.type == "boolean" %}
+                                            <input type="checkbox" name="{{ option.option }}" {% if current_value %}checked="checked"{% endif %}>
+                                        {% else %}
+                                            <input type="text" name="{{ option.option }}" value="{{ current_value }}">
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                        <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">
+                        {% csrf_token %}
+                    </form>                    
+                </div>
+
+            </div>
+            </div>
+
+  <div class="col-md-1" role="complementary">
+    <nav class="sidebar hidden-print">
+      <ul class="nav sidenav">
+        <li data-toggle="tooltip" data-placement="left" title="Dashboard">
+          <a href="../../dashboard/"><i class="fa fa-lg fa-tachometer"></i></a>
+        </li>   
+        <li data-toggle="tooltip" data-placement="left" title="Werkzaamheden">
+          <a 
+            class="active" 
+            href="../../activities/">
+            <i class="fa fa-lg fa-tasks"></i>
+          </a>
+        </li>
+        <li data-toggle="tooltip" data-placement="left" title="Bestanden">
+          <a 
+          {% if active == 'download' %}
+            class="active" 
+          {% endif %}
+            href="../../download/">
+            <i class="fa fa-lg fa-files-o"></i>
+          </a>
+        </li>    
+        <li data-toggle="tooltip" data-placement="left" title="Configuratie">
+          <a 
+          {% if active == 'configuration' %}
+            class="active" 
+          {% endif %}
+            href="../../config/">
+            <i class="fa fa-lg fa-cogs"></i>
+          </a>
+        </li>
+        <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
+          <a 
+          {% if active == 'aanvragen' %}
+            class="active" 
+          {% endif %}        
+            href="#">
+            <i class="fa fa-lg fa-question-circle"></i>
+          </a>
+        </li>
+        <li data-toggle="tooltip" data-placement="left" title="Kaart">
+          <a 
+          {% if active == 'map' %}
+            class="active" 
+          {% endif %}        
+            href="../../map/">
+            <i class="fa fa-lg fa-globe"></i>
+          </a>
+          
+        </li>
+<!--        <li data-toggle="tooltip" data-placement="left" title="Exporteren">
+          <a 
+          {% if active == 'export' %}
+            class="active" 
+          {% endif %}        
+            href="#">
+            <i class="fa fa-lg fa-share"></i>
+          </a>
+        </li> -->
+      </ul>
+    </nav>
+  </div>   
+      </div>
+    </div>  
+{% endblock content %}

@@ -19,9 +19,20 @@ $(document).on('ready', function() {
 
 
     <div class="container" id="project-details">
-      
+
       <div class="row">
         <div class="col-md-11">
+            {% if view.user_is_manager %}
+              <div class="row">
+                <div class="col-md-12">
+                  <a href="{% url "lizard_progress_edit_activities" project_slug=view.project_slug %}">
+                    <button type="button" class="btn btn-primary btn-sm pull-right" style="margin:-10px 0 10px 0;">
+                      Beheer werkzaamheden
+                    </button>
+                  </a>
+                </div>
+              </div>
+            {% endif %}
 			<div class="panel panel-default">
               <div class="panel-heading">
                 <h3 class="panel-title">Werkzaamheden</h3>

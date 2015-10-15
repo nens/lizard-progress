@@ -24,9 +24,11 @@
                       <div class="col-md-3 text-center">
                         3 <span class="text-muted">uploaders</span>
                       </div>
-                      <div class="col-md-3 text-center">
-                        {{ view.num_open_requests }} <span class="text-muted">open aanvr{{ view.num_open_requests|pluralize:"aag,agen" }}</span>
-                      </div>                      
+                        {% if view.user_is_manager %}
+                          <div class="col-md-3 text-center">
+                            {{ view.num_open_requests }} <span class="text-muted">open aanvr{{ view.num_open_requests|pluralize:"aag,agen" }}</span>
+                          </div>
+                        {% endif %}
                   </div>
                     </div class="row">
                         {% for activity, numrequests in view.activity_requests %}

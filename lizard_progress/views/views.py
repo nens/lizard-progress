@@ -183,21 +183,12 @@ class ProjectsMixin(object):
 
     @property
     def total_requests(self):
-        print("TOTAL REQUESTS")
         from lizard_progress.changerequests.models import Request
         if self.user_has_manager_role():
-            print("TOTAL MANAGER")
-            print(Request.REQUEST_STATUS_OPEN)
-            print(self.profile.organization)
-            print(Request.objects.count())
-            print("QUERYING")
-            query = Request.objects.filter(
+            return Request.objects.filter(
                 request_status=Request.REQUEST_STATUS_OPEN,
                 activity__project__organization=self.profile.organization
             ).count()
-            print("QUERIED")
-            print(query)
-            return query
         else:
             return Request.objects.filter(
                 request_status=Request.REQUEST_STATUS_OPEN,
@@ -288,9 +279,7 @@ class KickOutMixin(object):
         So admin can't."""
         self.request = request
         self.user = request.user
-        print("SETTING PROFILE")
         self.profile = models.UserProfile.get_by_user(self.user)
-        print("SETTING ORGANIZATION")
         self.organization = getattr(self.profile, 'organization', None)
 
         if not self.organization:

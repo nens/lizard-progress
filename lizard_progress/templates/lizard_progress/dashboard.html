@@ -15,20 +15,15 @@
               <div>
                   <div class="row">
                     <div class="row quickbar well">
-                      <div class="col-md-3 text-center">
-                        {{ view.total_activities }} <span class="text-muted">geplande meting{{ view.total_activities|pluralize:"en" }}</span>
+                      <div class="col-md-4 text-center">
+                        {{ view.project.number_of_locations }} <span class="text-muted">geplande meting{{ view.total_activities|pluralize:"en" }}</span>
                       </div>
-                      <div class="col-md-3 text-center">
-                        345 <span class="text-muted">ingevoerde metingen</span>
+                      <div class="col-md-4 text-center">
+                        {{ view.project.number_of_complete_locations }} <span class="text-muted">ingevoerde meting{{ view.project.number_of_complete_locations|pluralize:"en" }}</span>
                       </div>
-                      <div class="col-md-3 text-center">
-                        3 <span class="text-muted">uploaders</span>
+                      <div class="col-md-4 text-center">
+                        {{ view.num_open_requests }} <span class="text-muted">open aanvr{{ view.num_open_requests|pluralize:"aag,agen" }}</span>
                       </div>
-                        {% if view.user_is_manager %}
-                          <div class="col-md-3 text-center">
-                            {{ view.num_open_requests }} <span class="text-muted">open aanvr{{ view.num_open_requests|pluralize:"aag,agen" }}</span>
-                          </div>
-                        {% endif %}
                   </div>
                     </div class="row">
                         {% for activity, numrequests in view.activity_requests %}

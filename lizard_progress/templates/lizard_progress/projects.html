@@ -69,97 +69,102 @@ $( window ).resize(function() {
     </div>
   </div>
 
-</div><!-- /.container -->
-
+</div>
 
     <div class="container" id="projects">
 
-
     <div class="projects-affix-list" id="myAffix">
-          <div class="row">
-
-            <div class="dropdown pull-right" >
-              <ul class="nav nav-pills" role="tablist">
-                <li role="presentation" class="active">
-                  <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                    {{ view.orderby }}
-                    <span class="caret"></span>
-                  </a>
-                  <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
-                    {% for queryname, choicename in view.orderchoices.items %}
-                      <li><a href="?orderby={{queryname}}">{{ choicename }}</a></li>
-                    {% endfor %}
-                  </ul>
-                </li>
+      <div class="row">
+        <div class="dropdown pull-right">
+          <ul class="nav nav-pills" role="tablist">
+            <li role="presentation" class="active">
+              <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                {{ view.orderby }}
+                <span class="caret"></span>
+              </a>
+              <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
+                {% for queryname, choicename in view.orderchoices.items %}
+                  <li><a href="?orderby={{queryname}}">{{ choicename }}</a></li>
+                {% endfor %}
               </ul>
+            </li>
+          </ul>
+        </div>
+        <a href="{% url "lizard_progress_newproject" %}">
+          <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
+            + Project toevoegen
+          </button>
+        </a>
+        {% with numrequests=view.total_requests %}
+          {% if numrequests > 0 %}
+            <div class="pull-right" style="margin: 3px 20px 0 0;">
+              <div class="requests-warning request-container" style="position:relative;"><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg"></i></div>
             </div>
-            <a href="{% url "lizard_progress_newproject" %}">
-              <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
-                + Project toevoegen
-              </button>
-            </a>
-            {% with numrequests=view.total_requests %}
-              {% if numrequests > 0 %}
-                <div class="pull-right" style="margin: 3px 20px 0 0;">
-                  <div class="requests-warning request-container" style="position:relative;"><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg"></i></div>
-                </div>
-              {% endif %}
-            {% endwith %}
-          </div>
-          <div class="row">
-            <input
-              class="form-control drilldown"
-              style="margin:20px 0 20px 20px;width:98%;"
-              id="focusedInput"
-              type="text"
-              value=""
-              placeholder="Filter projecten op naam"
-            />
-          </div>
+          {% endif %}
+        {% endwith %}
+      </div>
+      <div class="row">
+        <input
+          class="form-control drilldown"
+          style="margin:20px 0 20px 20px;width:98%;"
+          id="focusedInput"
+          type="text"
+          value=""
+          placeholder="Filter projecten op naam"
+        />
+      </div>
     </div>
 
           {% for project, numrequests in view.projects_requests %}
               <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
-                <div class="col-md-8">
-                <ul style="display:inline-block;">
-                    <li style="display:inline-block;">
-                      {% if numrequests > 0 %}
-                        <div class="request-warning request-container"><div class="project-request-number request-sm">{{ numrequests }}</div><a href="{% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a></div>
-                      {% endif %}
-                    </li>
-                <li style="display:inline-block;">
-                  <p class="project-title">
-                    <!-- <i class="fa fa-star-o"></i>&nbsp; -->
-                    <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name }}</a>
-                  </p>
-                </li>
-                </ul>
-                  <p class="project-description"></p>
-                  <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
-                    {% with log=project.latest_log %}
-                      {% if log %}
-                        <ul class="list-inline">
-                          <li class="project-latest">Laatste upload: {{ log.when|timesince }} geleden</li>
-                          {% if log.mtype %}
-                              <li class="project-latest"><span class="inline-pipe">met type: {{ log.mtype }}</span></li>
-                          {% endif %}
-                          {% if log.uploading_organization %}
-                              <li class="project-latest"><span class="inline-pipe">door: {{ log.uploading_organization }}</span></li>
-                          {% endif %}
-                            <li class="project-latest"><span class="inline-pipe">met: {{ log.num_measurements }} meting{% if log.num_measurements == 0 or log.num_measurements > 1 %}en{% endif %}</span></li>
+                  <div class="row">
+                    <div class="col-md-8">
+                        <ul style="display:inline-block;">
+                            <li style="display:inline-block;">
+                              {% if numrequests > 0 %}
+                                <div class="request-warning request-container"><div class="project-request-number request-sm">{{ numrequests }}</div><a href="{% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a></div>
+                              {% endif %}
+                            </li>
+                        <li style="display:inline-block;">
+                          <p class="project-title">
+                            <!-- <i class="fa fa-star-o"></i>&nbsp; -->
+                            <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name }}</a>
+                          </p>
+                        </li>
                         </ul>
-                        {% else %}
-                          <p class="project-no-latest">(Er is nog geen laatste upload.)</p>
-                      {%  endif %}
-                    {% endwith %}
-                </div>
-                <div class="col-md-4 stats">
-                  <ul>
-                    <li><span>Locaties compleet: {{ project.number_of_complete_locations }}x</span></li>
-                    <li><div class="pie-md {{ project.pie }}"></div></li>
-                  </ul>
+                                          <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
 
-                </div>
+                    </div>
+
+                          <p class="project-description"></p>
+                        <div class="col-md-4 stats">
+                          <ul>
+                            <li><span>Locaties compleet: {{ project.number_of_complete_locations }}x</span></li>
+                            <li><div class="pie-md {{ project.pie }}"></div></li>
+                          </ul>
+                        </div>
+                  </div>
+
+                    <div class="row">
+                      <div class="col-md-12">
+                        {% with log=project.latest_log %}
+                          {% if log %}
+                            <ul class="list-inline">
+                              <li class="project-latest">Laatste upload: {{ log.when|timesince }} geleden</li>
+                              {% if log.activity.measurement_type %}
+                                  <li class="project-latest"><span class="inline-pipe">met type: {{ log.activity.measurement_type }}</span></li>
+                              {% endif %}
+                              {% if log.activity.contractor %}
+                                  <li class="project-latest"><span class="inline-pipe">door: {{ log.activity.contractor }}</span></li>
+                              {% endif %}
+                                <li class="project-latest"><span class="inline-pipe">met: {{ log.num_measurements }} meting{% if log.num_measurements == 0 or log.num_measurements > 1 %}en{% endif %}</span></li>
+                            </ul>
+                            {% else %}
+                              <p class="project-no-latest">(Er is nog geen laatste upload.)</p>
+                          {%  endif %}
+                        {% endwith %}
+                      </div>
+                    </div>
               </div>
           {% empty %}
             <p class="small">(Er zijn nog geen projecten)</p>

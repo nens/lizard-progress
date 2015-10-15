@@ -363,7 +363,8 @@ class ProjectActivityMixin(object):
         """Return the UploadedLog belonging to this activity with the
         most recent 'when' date, or None if there are no such
         UploadedLogs."""
-        latest_log = UploadLog.latest_for_activity(self)
+        latest_log = UploadLog.latest_for_project(self)
+        print(latest_log)
         return latest_log[0] if latest_log else None
 
     @staticmethod
@@ -400,8 +401,7 @@ class ProjectActivityMixin(object):
 
 
 class Project(ProjectActivityMixin, models.Model):
-    name = models.CharField(max_length=50, unique=False,
-                            verbose_name='projectnaam')
+    name = models.CharField(max_length=50, unique=False, verbose_name='projectnaam')
     slug = models.SlugField(max_length=60, unique=True)
     organization = models.ForeignKey(Organization, null=False)
     is_archived = models.BooleanField(default=False)

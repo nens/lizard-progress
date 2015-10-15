@@ -8991,25 +8991,24 @@ div.request-sm {
 }
 /* line 121, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title {
-  margin-top: 20px;
-  margin-bottom: -10px;
+  margin: 20px 0 0 0;
 }
-/* line 124, ../sass/modules/_project_manager_home.scss */
+/* line 123, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title .fa {
   font-size: 1.4em;
   margin: 0 5px 0 0;
 }
-/* line 129, ../sass/modules/_project_manager_home.scss */
+/* line 128, ../sass/modules/_project_manager_home.scss */
 #projects .project ul li.project-latest {
-  font-size: 1.3em;
+  font-size: 0.9em;
   color: #ced0d0;
 }
-/* line 133, ../sass/modules/_project_manager_home.scss */
+/* line 132, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-no-latest {
   font-size: 0.9em;
   color: #ced0d0;
 }
-/* line 137, ../sass/modules/_project_manager_home.scss */
+/* line 136, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a {
   line-height: 2em;
   font-size: 1.5em;
@@ -9017,17 +9016,18 @@ div.request-sm {
   font-weight: 500;
   text-decoration: none;
 }
-/* line 144, ../sass/modules/_project_manager_home.scss */
+/* line 143, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a:hover {
   text-decoration: underline;
 }
-/* line 147, ../sass/modules/_project_manager_home.scss */
+/* line 146, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-description {
-  font-size: 1.1em;
+  font-size: 0.8em;
   color: #7f8c8d;
 }
-/* line 151, ../sass/modules/_project_manager_home.scss */
+/* line 150, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-age {
+  margin: -10px 0 10px 0;
   font-size: 1.1em;
   font-style: italic;
   color: #bdc3c7;
@@ -9035,12 +9035,12 @@ div.request-sm {
 /* line 157, ../sass/modules/_project_manager_home.scss */
 #projects .stats {
   color: #027377;
-  padding-top: 30px;
   vertical-align: middle;
 }
-/* line 161, ../sass/modules/_project_manager_home.scss */
+/* line 160, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul {
   position: absolute;
+  top: 5px;
   right: 0px;
   display: inline-flex;
 }
@@ -9062,8 +9062,8 @@ div.request-sm {
 }
 /* line 184, ../sass/modules/_project_manager_home.scss */
 #projects .project:last-child {
-  margin: 0 0 50px 0;
-  padding: 0 0 30px 0;
+  margin: 20px 0 50px 0;
+  padding: 20px 0 30px 0;
   border-bottom: 1px solid #ecf0f1;
 }
 

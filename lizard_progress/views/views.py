@@ -183,12 +183,21 @@ class ProjectsMixin(object):
 
     @property
     def total_requests(self):
+        print("TOTAL REQUESTS")
         from lizard_progress.changerequests.models import Request
-        if self.user_is_manager():
-            return Request.objects.filter(
+        if self.user_has_manager_role():
+            print("TOTAL MANAGER")
+            print(Request.REQUEST_STATUS_OPEN)
+            print(self.profile.organization)
+            print(Request.objects.count())
+            print("QUERYING")
+            query = Request.objects.filter(
                 request_status=Request.REQUEST_STATUS_OPEN,
-                project__organization=self.profile.organization
+                activity__project__organization=self.profile.organization
             ).count()
+            print("QUERIED")
+            print(query)
+            return query
         else:
             return Request.objects.filter(
                 request_status=Request.REQUEST_STATUS_OPEN,
@@ -200,7 +209,7 @@ class ProjectsMixin(object):
         if self.user_is_manager():
             return Request.objects.filter(
                 request_status=Request.REQUEST_STATUS_OPEN,
-                project__organization=self.profile.organization,
+                activity__project__organization=self.profile.organization,
                 activity=activity
             ).count()
         else:
@@ -215,14 +224,13 @@ class ProjectsMixin(object):
         for activity in self.activities():
             yield activity, self.total_activity_requests(activity)
 
-
     @property
     def projects_requests(self):
         for project in self.projects():
             yield project, self.num_project_requests(project)
 
     def num_project_requests(self, project):
-        if self.user_is_manager:
+        if self.user_is_manager():
             return project.num_open_requests
         else:
             return project.num_open_requests_for_user(self.profile.organization)
@@ -280,8 +288,9 @@ class KickOutMixin(object):
         So admin can't."""
         self.request = request
         self.user = request.user
+        print("SETTING PROFILE")
         self.profile = models.UserProfile.get_by_user(self.user)
-
+        print("SETTING ORGANIZATION")
         self.organization = getattr(self.profile, 'organization', None)
 
         if not self.organization:

@@ -40,13 +40,11 @@
             </button>
             </a> 
             {% endif %}
-            {% if view.activity.measurement_type.has_only_point_locations %}
             <a href="./changerequests/">
             <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Aanvragen">
               <i class="fa fa-question-circle"></i>&nbsp;Aanvragen
             </button>
             </a>     
-            {% endif %}
             {% if view.user_is_uploader %}
             <a href="./upload/">
             <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Uploaden">

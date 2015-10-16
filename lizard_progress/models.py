@@ -1014,7 +1014,7 @@ class ExpectedAttachment(models.Model):
         filename = os.path.basename(path)
 
         try:
-            expected_attachment = cls.objects.get(
+            expected_attachment = cls.objects.distinct().get(
                 measurements__location__activity=activity,
                 filename__iexact=filename)
         except cls.DoesNotExist:
@@ -1259,9 +1259,10 @@ class Measurement(models.Model):
                     # this is probably unintended by the user anyway,
                     # he just gave two files on two different dates the
                     # same name). So then we raise an exception.
-                    expected_attachment = ExpectedAttachment.objects.get(
-                        filename=filename,
-                        measurements__location__activity=activity)
+                    expected_attachment = (
+                        ExpectedAttachment.objects.distinct().get(
+                            filename=filename,
+                            measurements__location__activity=activity))
                     if expected_attachment.uploaded:
                         raise AlreadyUploadedError(filename)
 

@@ -15,8 +15,6 @@ import factory
 import os
 import tempfile
 
-from osgeo import ogr
-
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
 
@@ -475,6 +473,30 @@ class TestMeasurement(FixturesTestCase):
         self.assertRaises(
             models.AlreadyUploadedError,
             lambda: measurement2.setup_expected_attachments(['1.jpg']))
+
+    def test_expected_attachment_with_two_measurements_is_found(self):
+        # Beware! When using filters over M2M relations, distinct()
+        # may be necessary.
+
+        activity = ActivityF.create()
+        measurement1 = MeasurementF.create(location__activity=activity)
+        measurement2 = MeasurementF.create(location__activity=activity)
+        expected_attachment = ExpectedAttachmentF.create(
+            filename='test.txt')
+
+        measurement1.expected_attachments.add(expected_attachment)
+        measurement2.expected_attachments.add(expected_attachment)
+
+        self.assertRaises(
+            models.ExpectedAttachment.MultipleObjectsReturned,
+            lambda: models.ExpectedAttachment.objects.get(
+                measurements__location__activity=activity,
+                filename='test.txt'))
+
+        self.assertTrue(
+            models.ExpectedAttachment.objects.distinct().get(
+                measurements__location__activity=activity,
+                filename='test.txt'))
 
     # From here, test Measurement.delete
 

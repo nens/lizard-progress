@@ -3,7 +3,7 @@
  * In this file you should write your main styles. (or centralize your imports)
  * Import this file using the following HTML or equivalent:
  * <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
-/* line 5, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 5, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -25,45 +25,45 @@ time, mark, audio, video {
   vertical-align: baseline;
 }
 
-/* line 22, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 22, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 html {
   line-height: 1;
 }
 
-/* line 24, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 24, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 ol, ul {
   list-style: none;
 }
 
-/* line 26, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 26, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 table {
   border-collapse: collapse;
   border-spacing: 0;
 }
 
-/* line 28, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 28, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 caption, th, td {
   text-align: left;
   font-weight: normal;
   vertical-align: middle;
 }
 
-/* line 30, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 30, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 q, blockquote {
   quotes: none;
 }
-/* line 103, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 103, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 q:before, q:after, blockquote:before, blockquote:after {
   content: "";
   content: none;
 }
 
-/* line 32, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 32, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 a img {
   border: none;
 }
 
-/* line 116, ../../../../../../../../../../var/lib/gems/2.1.0/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
+/* line 116, ../../../../../../../../../.rvm/gems/ruby-2.1.2@global/gems/compass-core-1.0.3/stylesheets/compass/reset/_utilities.scss */
 article, aside, details, figcaption, figure, footer, header, hgroup, main, menu, nav, section, summary {
   display: block;
 }
@@ -436,8 +436,8 @@ th {
 }
 @font-face {
   font-family: 'Glyphicons Halflings';
-  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?1444728529);
-  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?&1444728529#iefix) format("embedded-opentype"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff2?1444728529) format("woff2"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff?1444728529) format("woff"), url(../fonts/bootstrap/glyphicons-halflings-regular.ttf?1444728529) format("truetype"), url(../fonts/bootstrap/glyphicons-halflings-regular.svg?1444728529#glyphicons_halflingsregular) format("svg");
+  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?1444137813);
+  src: url(../fonts/bootstrap/glyphicons-halflings-regular.eot?&1444137813#iefix) format("embedded-opentype"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff2?1444137813) format("woff2"), url(../fonts/bootstrap/glyphicons-halflings-regular.woff?1444137813) format("woff"), url(../fonts/bootstrap/glyphicons-halflings-regular.ttf?1444137813) format("truetype"), url(../fonts/bootstrap/glyphicons-halflings-regular.svg?1444137813#glyphicons_halflingsregular) format("svg");
 }
 /* line 24, ../bower_components/twbs-bootstrap-sass/assets/stylesheets/bootstrap/_glyphicons.scss */
 .glyphicon {
@@ -8843,7 +8843,7 @@ button.close {
   position: relative;
   width: 200px;
   height: 100px;
-  background-image: url('../images/logo.png?1444728529');
+  background-image: url('../images/logo.png?1444137813');
   background-repeat: no-repeat;
   background-size: 50%;
 }
@@ -8931,30 +8931,25 @@ button.close {
 }
 
 /* line 71, ../sass/modules/_project_manager_home.scss */
-.fa {
-  color: #027377;
-}
-
-/* line 75, ../sass/modules/_project_manager_home.scss */
 i.exclamation-lg {
   z-index: 1;
   font-size: 2.5em;
 }
 
-/* line 80, ../sass/modules/_project_manager_home.scss */
+/* line 76, ../sass/modules/_project_manager_home.scss */
 i.exclamation-sm {
   z-index: 1;
   font-size: 1em;
 }
 
-/* line 85, ../sass/modules/_project_manager_home.scss */
+/* line 81, ../sass/modules/_project_manager_home.scss */
 div.request-container {
   position: relative;
   width: 30px;
   height: 35px;
 }
 
-/* line 91, ../sass/modules/_project_manager_home.scss */
+/* line 87, ../sass/modules/_project_manager_home.scss */
 div.project-request-number {
   width: 50px;
   height: 50px;
@@ -8967,7 +8962,7 @@ div.project-request-number {
   float: right;
 }
 
-/* line 102, ../sass/modules/_project_manager_home.scss */
+/* line 98, ../sass/modules/_project_manager_home.scss */
 div.request-lg {
   position: absolute;
   top: -10px;
@@ -8976,7 +8971,7 @@ div.request-lg {
   font-size: 1.8em;
 }
 
-/* line 109, ../sass/modules/_project_manager_home.scss */
+/* line 105, ../sass/modules/_project_manager_home.scss */
 div.request-sm {
   position: absolute;
   top: -5px;
@@ -8985,30 +8980,30 @@ div.request-sm {
   font-size: 0.8em;
 }
 
-/* line 119, ../sass/modules/_project_manager_home.scss */
+/* line 115, ../sass/modules/_project_manager_home.scss */
 #projects .project {
   margin: 0 0 0 0;
 }
-/* line 121, ../sass/modules/_project_manager_home.scss */
+/* line 117, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title {
   margin: 20px 0 0 0;
 }
-/* line 123, ../sass/modules/_project_manager_home.scss */
+/* line 119, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title .fa {
   font-size: 1.4em;
   margin: 0 5px 0 0;
 }
-/* line 128, ../sass/modules/_project_manager_home.scss */
+/* line 124, ../sass/modules/_project_manager_home.scss */
 #projects .project ul li.project-latest {
   font-size: 0.9em;
   color: #ced0d0;
 }
-/* line 132, ../sass/modules/_project_manager_home.scss */
+/* line 128, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-no-latest {
   font-size: 0.9em;
   color: #ced0d0;
 }
-/* line 136, ../sass/modules/_project_manager_home.scss */
+/* line 132, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a {
   line-height: 2em;
   font-size: 1.5em;
@@ -9016,106 +9011,106 @@ div.request-sm {
   font-weight: 500;
   text-decoration: none;
 }
-/* line 143, ../sass/modules/_project_manager_home.scss */
+/* line 139, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a:hover {
   text-decoration: underline;
 }
-/* line 146, ../sass/modules/_project_manager_home.scss */
+/* line 142, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-description {
   font-size: 0.8em;
   color: #7f8c8d;
 }
-/* line 150, ../sass/modules/_project_manager_home.scss */
+/* line 146, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-age {
   margin: -10px 0 10px 0;
   font-size: 1.1em;
   font-style: italic;
   color: #bdc3c7;
 }
-/* line 157, ../sass/modules/_project_manager_home.scss */
+/* line 153, ../sass/modules/_project_manager_home.scss */
 #projects .stats {
   color: #027377;
   vertical-align: middle;
 }
-/* line 160, ../sass/modules/_project_manager_home.scss */
+/* line 156, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul {
   position: absolute;
   top: 5px;
   right: 0px;
   display: inline-flex;
 }
-/* line 165, ../sass/modules/_project_manager_home.scss */
+/* line 161, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul li {
   display: inline-flex;
   margin: 5px;
   font-weight: bold;
 }
-/* line 169, ../sass/modules/_project_manager_home.scss */
+/* line 165, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul li span {
   padding-top: 27px;
 }
-/* line 179, ../sass/modules/_project_manager_home.scss */
+/* line 175, ../sass/modules/_project_manager_home.scss */
 #projects .project:not(:first-child) {
   border-top: 1px solid #ecf0f1;
   margin-top: 20px;
   padding-top: 20px;
 }
-/* line 184, ../sass/modules/_project_manager_home.scss */
+/* line 180, ../sass/modules/_project_manager_home.scss */
 #projects .project:last-child {
   margin: 20px 0 50px 0;
   padding: 20px 0 30px 0;
   border-bottom: 1px solid #ecf0f1;
 }
 
-/* line 192, ../sass/modules/_project_manager_home.scss */
+/* line 188, ../sass/modules/_project_manager_home.scss */
 #project-slug {
   border-bottom: 1px solid #ecf0f1;
   margin-bottom: 25px;
   padding: 20px 0 20px 0;
 }
-/* line 196, ../sass/modules/_project_manager_home.scss */
+/* line 192, ../sass/modules/_project_manager_home.scss */
 #project-slug .title {
   padding: 0 0 0 20px;
   font-size: 2em;
   color: #ced0d0;
 }
-/* line 200, ../sass/modules/_project_manager_home.scss */
+/* line 196, ../sass/modules/_project_manager_home.scss */
 #project-slug .title .org a {
   color: #ced0d0;
 }
-/* line 203, ../sass/modules/_project_manager_home.scss */
+/* line 199, ../sass/modules/_project_manager_home.scss */
 #project-slug .title .project a {
   color: #027377;
 }
 
-/* line 211, ../sass/modules/_project_manager_home.scss */
+/* line 207, ../sass/modules/_project_manager_home.scss */
 #project-details .quickbar {
   border: 1px solid #bdc3c7;
   margin: 20px;
 }
-/* line 215, ../sass/modules/_project_manager_home.scss */
+/* line 211, ../sass/modules/_project_manager_home.scss */
 #project-details p.description {
   font-size: 1.1em;
   color: #95a5a6;
   padding: 20px 0 0 10px;
 }
-/* line 220, ../sass/modules/_project_manager_home.scss */
+/* line 216, ../sass/modules/_project_manager_home.scss */
 #project-details p.age {
   padding: 0 0 0 10px;
   font-style: italic;
   color: #bdc3c7;
 }
-/* line 226, ../sass/modules/_project_manager_home.scss */
+/* line 222, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar.affix {
   position: fixed;
   top: 20px;
 }
-/* line 230, ../sass/modules/_project_manager_home.scss */
+/* line 226, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar.affix .sidenav, #project-details .sidebar.affix-bottom .sidenav {
   margin-top: 0;
   margin-bottom: 0;
 }
-/* line 234, ../sass/modules/_project_manager_home.scss */
+/* line 230, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav > li {
   padding-left: 18px;
   font-weight: 700;
@@ -9124,7 +9119,7 @@ div.request-sm {
   padding: 0 0 10px 0;
   border-left: 1px solid #ecf0f1;
 }
-/* line 242, ../sass/modules/_project_manager_home.scss */
+/* line 238, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav > li > a {
   display: block;
   padding: 15px 20px;
@@ -9132,21 +9127,21 @@ div.request-sm {
   font-weight: 500;
   color: #767676;
 }
-/* line 249, ../sass/modules/_project_manager_home.scss */
+/* line 245, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav .nav {
   display: none;
   padding-bottom: 10px;
 }
-/* line 253, ../sass/modules/_project_manager_home.scss */
+/* line 249, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar a.active {
   background-color: #ecf0f1;
 }
-/* line 256, ../sass/modules/_project_manager_home.scss */
+/* line 252, ../sass/modules/_project_manager_home.scss */
 #project-details .details-tabs {
   margin: 0;
 }
 
-/* line 263, ../sass/modules/_project_manager_home.scss */
+/* line 259, ../sass/modules/_project_manager_home.scss */
 table tr.clickable {
   cursor: pointer;
 }

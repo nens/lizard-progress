@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.3 (unreleased)
+2.6.3 (2015-10-16)
 ------------------
 
 - Fix bug where multiple ExpectedAttachments were returned by a filter()

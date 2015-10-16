@@ -1216,10 +1216,6 @@ class Measurement(models.Model):
         - Deletes ExpectedAttachments that aren't connected to any
           Measurements anymore due to the previous item.
 
-        Return a boolean that is True if all expected attachments for
-        this measurement have been uploaded, or False if there are
-        still expected attachments that weren't.
-
         """
         filenames = set(filenames)
 
@@ -1240,8 +1236,9 @@ class Measurement(models.Model):
             try:
                 # If the attachment already exists and is attached to this,
                 # then that is OK.
-                expected_attachment = ExpectedAttachment.objects.get(
+                ExpectedAttachment.objects.get(
                     filename=filename, measurements=self)
+                continue
             except ExpectedAttachment.DoesNotExist:
                 try:
                     # If an attachment with the same filename is

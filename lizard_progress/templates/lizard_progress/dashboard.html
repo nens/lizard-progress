@@ -28,11 +28,11 @@
                     {% if view.user_is_manager %}
                       <div class="row">
                         <div class="col-md-12">
-                            <a href="{% url "lizard_progress_edit_activities" project_slug=view.project_slug %}">
-                              <button type="button" class="btn btn-primary btn-sm pull-right" style="margin:-10px 0 10px 0;">
-                                Beheer werkzaamheden
-                              </button>
-                            </a>
+                          <a href="{% url "lizard_progress_edit_activities" project_slug=view.project_slug %}">
+                            <button type="button" style="margin:0 0 15px 0;" class="btn btn-primary btn-sm pull-right" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Werkzaamheden toevoegen / verwijderen">
+                              <i class="fa fa-cog"></i>&nbsp;Beheer werkzaamheden
+                            </button>
+                          </a>
                         </div>
                       </div>
                     {% endif %}

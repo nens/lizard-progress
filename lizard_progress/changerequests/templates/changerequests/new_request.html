@@ -1,5 +1,14 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
+
+{% block extra_js %}
+<script>
+$(document).on('ready', function() {
+	$('input.form-control').first().focus();
+});
+</script>
+{% endblock extra_js %}
+
 {% block content %}
     {% include "lizard_progress/projectswitcher.html" %}
 
@@ -11,14 +20,49 @@
 
         <div class="col-md-11">        
 
-			<h3>{{ view.description }}</h3>
+          <!-- Nav tabs -->
+          <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation"><a href="{% url "changerequests_main" project_slug=view.project_slug activity_id=view.activity_id %}" aria-controls="profile" role="tab" data-toggle="tab">Aanvragen</a></li>
+            <li role="presentation"><a href="{% url "changerequests_closed" project_slug=view.project_slug activity_id=view.activity_id %}">Afgesloten aanvragen</a></li>
+            <li role="presentation"{% if view.description == 'Locatiecode laten vervallen' %} class="active"{% endif %}>
+            	<a href="{% url "changerequests_removecode" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode laten vervallen</a></li>
+            <li role="presentation"{% if view.description == 'Locatiecode verplaatsen' %} class="active"{% endif %}>
+            	<a href="{% url "changerequests_movelocation" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode verplaatsen</a></li>
+            <li role="presentation"{% if view.description == 'Nieuwe of vervangende locatiecode' %} class="active"{% endif %}>
+            	<a href="{% url "changerequests_newlocation" project_slug=view.project_slug activity_id=view.activity_id %}">Nieuwe/vervangende locatiecode</a></li>
+          </ul>
 
-			<form action="{{ view.url }}" method="post">
-			{% csrf_token %}
-			{{ view.form.as_p }}
-			<input type="submit" class="btn" value="Aanvragen">
-			</form>
 
-		</div>
-	</div>
+
+          <!-- Tab panes -->
+          <div class="tab-content">
+
+            <div role="tabpanel" class="tab-pane fade in active" id="project">
+
+
+              <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > {{ view.description }}</h3>
+                    </div>
+
+                        <div class="panel-body">            
+
+							<form action="{{ view.url }}" method="post">
+							{% csrf_token %}
+							{{ view.form.as_p }}
+							<input type="submit" class="btn" value="Aanvragen">
+							</form>
+
+			   </div>
+	        </div>                
+        </div>
+        </div>
+        </div>
+
+
+
+
+    
+	{% include "lizard_progress/sidebar_include.html" with active="activities" %}
+</div>
 {% endblock content %}

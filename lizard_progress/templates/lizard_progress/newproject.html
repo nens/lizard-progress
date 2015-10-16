@@ -1,9 +1,14 @@
-{% extends "lizard_progress/progressbase.html" %}
+{% extends "lizard_progress/progressbase2.html" %}
 
-{% block topbar %}
-{% endblock %}
+{% block extra_js %}
+<script>
+$(document).on('ready', function() {
+  $('input.form-control').first().focus();
+});
+</script>
+{% endblock extra_js %}
 
-{% block contentpage %}
+{% block content %}
   <h2>Project toevoegen</h2>
   {% if not view.user_is_manager %}
     <p>U bent geen projectbeheerder en mag geen nieuwe projecten toevoegen.</p>
@@ -30,4 +35,4 @@
     de <a href="{% url "lizard_progress_editvisibility" %}"><i
     class="icon-pencil"></i> "Zichtbaarheid Metingtypes"</a> pagina.</p>
   {% endif %}
-{% endblock contentpage %}
+{% endblock content %}

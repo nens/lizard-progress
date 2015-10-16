@@ -64,6 +64,7 @@ def new_request_form_factory(activity, request_type):
 
     class NewRequestForm(forms.Form):
         location_code = forms.CharField(
+            widget=forms.TextInput(attrs={'class' : 'form-control'}),
             label="Locatiecode", required=True)
 
         def clean_location_code(self):
@@ -94,6 +95,7 @@ def new_request_form_factory(activity, request_type):
 
         if request_type == models.Request.REQUEST_TYPE_NEW_LOCATION:
             old_location_code = forms.CharField(
+                widget=forms.TextInput(attrs={'class' : 'form-control'}),
                 label="Oude locatiecode",
                 help_text="Alleen nodig als de nieuwe code deze vervangt",
                 required=False)
@@ -128,17 +130,19 @@ def new_request_form_factory(activity, request_type):
                 models.Request.REQUEST_TYPE_NEW_LOCATION,
                 models.Request.REQUEST_TYPE_MOVE_LOCATION):
             rd_x = forms.FloatField(
+                widget=forms.TextInput(attrs={'class' : 'form-control'}),
                 label="X-coordinaat",
                 help_text="In Rijksdriehoekprojectie",
                 required=True)
             rd_y = forms.FloatField(
+                widget=forms.TextInput(attrs={'class' : 'form-control'}),
                 label="Y-coordinaat",
                 help_text="In Rijksdriehoekprojectie",
                 required=True)
 
         motivation = forms.CharField(
-            label="Motivatie", required=True,
-            widget=forms.Textarea)
+            widget=forms.Textarea(attrs={'class' : 'form-control'}),
+            label="Motivatie", required=True)
 
     return NewRequestForm
 

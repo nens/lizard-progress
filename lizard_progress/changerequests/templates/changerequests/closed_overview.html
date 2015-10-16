@@ -11,108 +11,73 @@
 
         <div class="col-md-11">        
 
-
-<h2>Gesloten aanvragen {{ view.project.name }}</h2>
-
-{% with closedrequests=view.closed_requests %}
-{% if closedrequests %}
-<table class="table progressbase">
-    <thead>
-     <tr>
-      <th>Status</th>
-      <th>Datum</th>
-      <th>Organisatie</th>
-      <th>Werkzaamheid</th>
-      <th>Aanvraagtype</th>
-      <th>Locatie</th>
-      <th></th>
-     </tr>
-    </thead>
-    <tbody>
-    {% for request in closedrequests %}
-    <tr class="clickable{% if request.is_accepted %} success{% endif %}{% if request.is_refused %} danger{% endif %}{% if request.is_invalid %} warning{% endif %}" data-url="{{ request.get_absolute_url }}">
-      <td>{{ request.status_description }}</td>
-      <td>{{ request.creation_date|date:"d/m" }}</td>
-      <td>{{ request.contractor.organization }}</td>
-      <td>{{ request.mtype }}</td>
-      <td>{{ request.type_description }}</td>
-      <td>{{ request.location_code }}
-        {% if request.old_location_code %} (vervangt {{ request.old_location_code }}{% endif %}</td>
-      <td><a href="{{ request.get_absolute_url }}">bekijk</a></td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>Er zijn geen gesloten aanvragen voor dit project.</p>
-{% endif %}
-{% endwith %}
+          <!-- Nav tabs -->
+          <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation"><a href="{% url "changerequests_main" project_slug=view.project_slug activity_id=view.activity_id %}">Aanvragen</a></li>
+            <li role="presentation" class="active"><a href="{% url "changerequests_closed" project_slug=view.project_slug activity_id=view.activity_id %}">Afgesloten aanvragen</a></li>
+            <li role="presentation"><a href="{% url "changerequests_removecode" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode laten vervallen</a></li>
+            <li role="presentation"><a href="{% url "changerequests_movelocation" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode verplaatsen</a></li>
+            <li role="presentation"><a href="{% url "changerequests_newlocation" project_slug=view.project_slug activity_id=view.activity_id %}">Nieuwe/vervangende locatiecode</a></li>
+          </ul>
 
 
-</div>
 
-        <div class="col-md-1" role="complementary">
-      <nav class="sidebar hidden-print">
-        <ul class="nav sidenav">
-          <li data-toggle="tooltip" data-placement="left" title="Dashboard">
-            <a href="../../../dashboard/"><i class="fa fa-lg fa-tachometer"></i></a>
-          </li>   
-          <li data-toggle="tooltip" data-placement="left" title="Werkzaamheden">
-            <a 
-                class="active" 
-                href="../../../activities/">
-                <i class="fa fa-lg fa-tasks"></i>
-            </a>
-          </li>
-          <li data-toggle="tooltip" data-placement="left" title="Bestanden">
-            <a 
-            {% if active == 'download' %}
-                class="active" 
-            {% endif %}
-                href="../../../download/">
-                <i class="fa fa-lg fa-files-o"></i>
-            </a>
-          </li>    
-          <li data-toggle="tooltip" data-placement="left" title="Configuratie">
-            <a 
-            {% if active == 'configuration' %}
-                class="active" 
-            {% endif %}
-                href="../../../config/">
-                <i class="fa fa-lg fa-cogs"></i>
-            </a>
-          </li>
-<!--          <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
-            <a 
-            {% if active == 'aanvragen' %}
-                class="active" 
-            {% endif %}        
-                href="#">
-                <i class="fa fa-lg fa-question-circle"></i>
-            </a>
-          </li> -->
-          <li data-toggle="tooltip" data-placement="left" title="Kaart">
-            <a 
-            {% if active == 'map' %}
-                class="active" 
-            {% endif %}        
-                href="../../../map/">
-                <i class="fa fa-lg fa-globe"></i>
-            </a>
-            
-          </li>
-<!--          <li data-toggle="tooltip" data-placement="left" title="Exporteren">
-            <a 
-            {% if active == 'export' %}
-                class="active" 
-            {% endif %}        
-                href="#">
-                <i class="fa fa-lg fa-share"></i>
-            </a>
-          </li> -->
-        </ul>
-      </nav>
-    </div>
+          <!-- Tab panes -->
+          <div class="tab-content">
+
+            <div role="tabpanel" class="tab-pane fade in active" id="project">
+
+
+              <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > Gesloten aanvragen {{ view.project.name }}</h3>
+                    </div>
+
+                        <div class="panel-body">                    
+
+                          {% with closedrequests=view.closed_requests %}
+                          {% if closedrequests %}
+                          <table class="table progressbase">
+                              <thead>
+                               <tr>
+                                <th>Status</th>
+                                <th>Datum</th>
+                                <th>Organisatie</th>
+                                <th>Werkzaamheid</th>
+                                <th>Aanvraagtype</th>
+                                <th>Locatie</th>
+                                <th></th>
+                               </tr>
+                              </thead>
+                              <tbody>
+                              {% for request in closedrequests %}
+                              <tr class="clickable{% if request.is_accepted %} success{% endif %}{% if request.is_refused %} danger{% endif %}{% if request.is_invalid %} warning{% endif %}" data-url="{{ request.get_absolute_url }}">
+                                <td>{{ request.status_description }}</td>
+                                <td>{{ request.creation_date|date:"d/m" }}</td>
+                                <td>{{ request.contractor.organization }}</td>
+                                <td>{{ request.mtype }}</td>
+                                <td>{{ request.type_description }}</td>
+                                <td>{{ request.location_code }}
+                                  {% if request.old_location_code %} (vervangt {{ request.old_location_code }}{% endif %}</td>
+                                <td><a href="{{ request.get_absolute_url }}">bekijk</a></td>
+                              </tr>
+                              {% endfor %}
+                              </tbody>
+                          </table>
+                          {% else %}
+                          <p>Er zijn geen gesloten aanvragen voor dit project.</p>
+                          {% endif %}
+                          {% endwith %}
+
+
+                      </div>
+              
+          </div>
+          </div>
+          </div>
+          </div>
+
+    {% include "lizard_progress/sidebar_include.html" with active="activities" %}
 
 </div>
 {% endblock content %}

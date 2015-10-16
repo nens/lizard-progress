@@ -244,17 +244,20 @@ class AddActivityForm(forms.Form):
         super(AddActivityForm, self).__init__(args)
 
         self.fields['measurementtype'] = forms.ModelChoiceField(
+            widget=forms.Select(attrs={'class' : 'form-control'}),
             label=_("Measurement type"),
             queryset=project.organization
             .visible_available_measurement_types(),
             required=True)
 
     contractor = forms.ModelChoiceField(
+        widget=forms.Select(attrs={'class' : 'form-control'}),
         label=_("Contractor"),
         queryset=models.Organization.objects.all(),
         required=True)
 
     description = forms.CharField(
+        widget=forms.TextInput(attrs={'class' : 'form-control'}),
         label=_('Description (optional)'), required=False, max_length=100)
 
 

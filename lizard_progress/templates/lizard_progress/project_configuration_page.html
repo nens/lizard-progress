@@ -1,5 +1,42 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
+{% block extra_js %}
+<script>
+$(document).on('ready', function() {
+  $('input.form-control').first().focus();
+});
+$('.reactivate').on('click', function(e) {
+  e.preventDefault();
+  var redirectUrl = $(e.target).parent().attr('href');
+  swal({
+    title: "Weet u het zeker?",
+    text: "U staat op het punt om dit project opnieuw te activeren. U kunt het later weer archiveren.",
+    type: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#DD6B55",
+    confirmButtonText: "Ja, activeer dit project",
+    closeOnConfirm: false
+  }, function() {
+    window.location.href = redirectUrl;
+  });
+});
+$('.archive').on('click', function(e) {
+  e.preventDefault();
+  var redirectUrl = $(e.target).parent().attr('href');
+  swal({
+    title: "Weet u het zeker?",
+    text: "U staat op het punt om dit project te archiveren. U kunt het later weer heractiveren.",
+    type: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#DD6B55",
+    confirmButtonText: "Ja, archiveer dit project",
+    closeOnConfirm: false
+  }, function() {
+    window.location.href = redirectUrl;
+  });
+});
+ </script>
+{% endblock extra_js %}
 
 {% block content %}
 
@@ -28,7 +65,7 @@
                 <div role="tabpanel" class="tab-pane fade in active" id="project">
                   <div class="panel panel-default">
                     <div class="panel-heading">
-                      <h3 class="panel-title">Projectinstellingen</h3>
+                      <h3 class="panel-title"><i class="fa fa-cog"></i>&nbsp;Projectinstellingen</h3>
                     </div>
                     <div class="panel-body">
 
@@ -53,22 +90,33 @@
 
                     </div>
                   </div>
+                  {% if view.user_is_manager %}
                   <div class="panel panel-default">
                     <div class="panel-heading">
-                      <h3 class="panel-title">Project archiveren</h3>
+                      <h3 class="panel-title"><i class="fa fa-cog"></i>&nbsp;Project archiveren</h3>
                     </div>
                     <div class="panel-body">
                       <form>
                         <div class="form-group">
-                          <a href="{% url "lizard_progress_archive" project_slug=view.project.slug %}?action=archive">
-                            <button class="btn btn-warning" type="submit" data-toggle="tooltip" data-placement="right" title="" data-original-title="Het project sluiten en archiveren">
-                              <i class="fa fa-lg fa-briefcase"></i>&nbsp;&nbsp;Archiveren
-                            </button>
-                          </a>
+                          {% if view.project.is_archived %}
+                            <a class="reactivate" href="{% url "lizard_progress_archive" project_slug=view.project.slug %}?action=activate">
+                              <button class="btn btn-success" type="submit" data-toggle="tooltip" data-placement="right" title="" data-original-title="Het project her-activeren">
+                                <i class="fa fa-lg fa-briefcase"></i>&nbsp;&nbsp;Activeren
+                              </button>
+                            </a>                        
+                          {% else %}
+                            <a class="archive" href="{% url "lizard_progress_archive" project_slug=view.project.slug %}?action=archive">
+                              <button class="btn btn-warning" type="submit" data-toggle="tooltip" data-placement="right" title="" data-original-title="Het project sluiten en archiveren">
+                                <i class="fa fa-lg fa-briefcase"></i>&nbsp;&nbsp;Archiveren
+                              </button>
+                            </a>
+                          {% endif %}
                         </div>
                       </form>
                     </div>
                   </div>
+                  {% endif %}
+
                 </div>
 
                 <div role="tabpanel" class="tab-pane fade in" id="home">

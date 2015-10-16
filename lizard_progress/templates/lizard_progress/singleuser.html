@@ -1,5 +1,11 @@
 {% extends "lizard_progress/progressbase2.html" %}
-
+{% block extra_js %}
+<script>
+$(document).on('ready', function() {
+  $('input.form-control').first().focus();
+});
+</script>
+{% endblock extra_js %}
 
 {% block content %}
 

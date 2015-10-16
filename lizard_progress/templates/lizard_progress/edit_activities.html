@@ -10,7 +10,7 @@
         <div class="col-md-11">
       <div class="panel panel-default">
               <div class="panel-heading">
-                <h3 class="panel-title">Huidige werkzaamheden</h3>
+                <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;Huidige werkzaamheden</h3>
               </div>
 
           <div class="panel-body">
@@ -46,24 +46,37 @@
                 </tbody>
               </table>
             {% else %}
-              <p>Nog geen werkzaamheden toegevoegd aan project.
+              <p>Nog geen werkzaamheden toegevoegd aan project.</p>
             {% endif %}
           {% endwith %}
+            </div>
+            </div>
 
-          <h3>Toevoegen:</h3>
+          <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;Werkzaamheid toevoegen</h3>
+              </div>
+
+          <div class="panel-body">
 
           <form method="post" action="{{ view.url }}">
             {% csrf_token %}
             {{ view.form.non_field_errors }}
             {{ view.form.as_p }}
-            <p><input type="submit" class="btn btn-primary" name="submit" value="Werkzaamheid toevoegen"></p>
+            <p><input type="submit" class="btn btn-primary" name="submit" value="+ Toevoegen"></p>
           </form>
-            </div>
-
-            </div>
-  
-        
+          </div>
         </div>
+
+ 
+
+
+
+
+
+        
+
+  </div>
 
       {% include "lizard_progress/sidebar_include.html" with active="activities" %}
       </div>

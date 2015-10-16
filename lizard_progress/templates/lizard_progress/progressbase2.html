@@ -71,7 +71,7 @@
           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
               <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ user }} <span class="caret"></span></a>
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user"></i>&nbsp;{{ user }} <span class="caret"></span></a>
                 <ul class="dropdown-menu">
                   <li><a href="{% url "lizard_progress_single_user_management" user_id=view.user.id %}">Uw profiel</a></li>
                   <li><a href="/us/admin/organization/errorconfiguration/">Instellingen</a></li>
@@ -98,6 +98,14 @@
     {% block content %}    
     {% endblock content %}
 
+    <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <hr>
+        <p class="text-muted pull-right small">&copy;&nbsp;Lizard 2015</p>    
+      </div>
+    </div>
+    
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -119,11 +127,17 @@
     $(function () {
       $('[data-toggle="tooltip"]').tooltip();
     });
-    $('.projecttoggle').on('click', function(e) {
+    $('.project.projecttoggle > i').on('click', function(e) {
       e.preventDefault();
       $('.projectswitcher').toggle();
-      
-    });    
+    });  
+    $(document).mouseup(function (e) {
+        var container = $(".projectswitcher");
+        if (!container.is(e.target) // if the target of the click isn't the container...
+            && container.has(e.target).length === 0) { // ... nor a descendant of the container
+            container.hide();
+        }
+    });
     </script>
     {% block extra_js %}
     {% endblock extra_js %}

@@ -6,8 +6,11 @@
               <a href="/">{{ view.organization|lower }}</a> / 
             </span>
             <span class="project projecttoggle">
-              <a href=".">{{ view.project.name|lower }}</a> <i class="fa fa-caret-down"></i>{% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}
+              <a href="{% url "lizard_progress_dashboardview" view.project.slug %}">{{ view.project.name|lower }}</a> <i class="fa fa-caret-down" style="cursor:pointer;"></i>{% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}
             </span>
+            {% if view.activity %}
+            / <a href=".">{{ view.activity.name|lower }}</a>
+            {% endif %}
             <div class="projectswitcher" style="">
               <ul style="padding:0 20px 20px 20px;">
               {% for project in view.projects %}

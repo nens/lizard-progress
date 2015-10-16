@@ -5,7 +5,11 @@
 
 .top-buffer { margin-top:20px; }
 
-
+h4.panel-title {
+  white-space: normal;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
 
 .uploadservice_logo {
   padding: 10px 0 0 0;
@@ -69,11 +73,13 @@
 }
 
 i.exclamation-lg{
+  color:$lizard-turquoise-dark;
   z-index:1;
   font-size:2.5em;
 }
 
 i.exclamation-sm{
+  color:$lizard-turquoise-dark;
   z-index:1;
   font-size:1em;
 }

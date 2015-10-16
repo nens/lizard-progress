@@ -1216,10 +1216,6 @@ class Measurement(models.Model):
         - Deletes ExpectedAttachments that aren't connected to any
           Measurements anymore due to the previous item.
 
-        Return a boolean that is True if all expected attachments for
-        this measurement have been uploaded, or False if there are
-        still expected attachments that weren't.
-
         """
         filenames = set(filenames)
 

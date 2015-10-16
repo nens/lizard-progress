@@ -5,7 +5,8 @@ Changelog of lizard-progress
 2.6.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix bug where multiple ExpectedAttachments were returned by a filter()
+  over a M2M relation.
 
 
 2.6.2 (2015-10-12)

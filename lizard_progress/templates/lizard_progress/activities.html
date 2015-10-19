@@ -58,7 +58,7 @@ $(document).on('ready', function() {
                       <td>{{ activity.measurement_type }}</td>
                       <td>{{ activity.num_locations }}</td>
                       <td>{{ activity.num_measurements }}</td>
-                      <td><div class="pie-xs {{activity.pie}}"></div></td>
+                      <td><div class="pie-xs {{activity.pie}}">{{activity.pie}}</div></td>
                       <td>
                         {% with activity.latest_log as latest %}
                           {% if latest %}

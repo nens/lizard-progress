@@ -7,42 +7,40 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-import datetime
-import functools
-import json
-import logging
-import os
-import random
-import shutil
-import string
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db import models
+from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import MultiLineString
 from django.contrib.gis.geos import fromstr
-from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.measure import D
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
-from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 from django.db import connection
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
-
 from jsonfield import JSONField
-
-import lizard_progress.specifics
 from lizard_progress.email_notifications import notify
-from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.email_notifications.models import NotificationSubscription
+from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
+import datetime
+import functools
+import json
+import lizard_progress.specifics
+import logging
+import os
+import random
+import shutil
+import string
 
 RDNEW = 28992
 SRID = RDNEW
@@ -492,6 +490,8 @@ class Location(models.Model):
         (LOCATION_TYPE_DRAIN, ) * 2,
     )
 
+    CLOSE_BY_DISTANCE = 10  # m. For the multiple projects graph.
+
     # A location / scheduled measurement in an activity
     activity = models.ForeignKey('Activity', null=True)
 
@@ -614,6 +614,20 @@ class Location(models.Model):
     @property
     def all_expected_attachments_present(self):
         return not self.missing_attachments().exists()
+
+    def close_by_locations_of_same_organisation(self):
+        """Return a queryset of complete locations close to this one from the
+        same organisation.
+
+        """
+        if not self.the_geom:
+            return Location.objects.empty()
+
+        return Location.objects.filter(
+            activity__project__organization=self.activity.project.organization,
+            location__the_geom__distance_lte=(
+                self.the_geom, D(m=self.CLOSE_BY_DISTANCE)),
+            complete=True)
 
     def set_completeness(self):
         self.complete = (

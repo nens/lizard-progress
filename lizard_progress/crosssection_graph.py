@@ -10,15 +10,13 @@ from __future__ import absolute_import
 from __future__ import division
 
 
+from fractions import Fraction
+from lizard_progress import models
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from metfilelib.util.linear_algebra import Line, Point
 import colorsys
 import itertools
 import math
-from fractions import Fraction
-
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from metfilelib.util.linear_algebra import Line, Point
-
-from lizard_progress import models
 
 
 class PlottingData:
@@ -94,23 +92,25 @@ class PlottingData:
         return line, left, right, p1['bottom']
 
 
-def location_code_graph(organization, location_code):
-    return graph(
+def locations_close_by_graph(organization, location):
+    """Return a graph of locations that within 'distance' meters to this
+    one, in any project of this organization.
+
+    """
+    return graph(location, (
         measurement for measurement in
         models.Measurement.objects.filter(
-            location__activity__project__organization=organization,
-            location__location_code=location_code,
-            location__complete=True).select_related(
+            location__in=location.close_by_locations_of_same_organisation()
+        ).select_related(
             'location',
             'location__activity',
             'location__activity__measurement_type',
-            'location__activity__project',
-            'location__activity__contractor')
+            'location__activity__project')
         if (measurement.location.activity.measurement_type.implementation_slug
-            == 'dwarsprofiel'))
+            == 'dwarsprofiel')))
 
 
-def graph(measurements):
+def graph(location, measurements):
     data = [PlottingData(m.data, m.location, m.date) for m in measurements]
     from lizard_progress.views import ScreenFigure
     if len(data) == 1:
@@ -134,8 +134,12 @@ def graph(measurements):
         ax = fig.add_subplot(111)
         colors = get_colors(len(data))
         ax.set_title(
-            'Dwarsprofielen van alle projecten op locatie {code}'.format(
-                code=data[0].location.location_code))
+            'Dwarsprofielen binnen {distance}m van locatie {code} '
+            'in {activity}'
+            .format(
+                distance=models.Location.CLOSE_BY_DISTANCE,
+                code=location.location_code,
+                activity=location.activity))
 
         for d, color in zip(data, colors):
             ax.plot(

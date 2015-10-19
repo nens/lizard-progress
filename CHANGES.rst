@@ -8,6 +8,9 @@ Changelog of lizard-progress
 - Do not send any mails if a change request was made by the manager and
   auto-accepted.
 
+- The "multiple projects dwarsprofiel graph" now filters locations based
+  on their distance to one chosen location, not on location code.
+
 
 2.6.3 (2015-10-16)
 ------------------

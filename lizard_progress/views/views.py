@@ -69,7 +69,8 @@ class ProjectsMixin(object):
         "mosturgent": ("meest gereed", ("percentage_done", True)),
         "leasturgent": ("minst gereed", ("percentage_done", False)),
         "name": ("naam", ("name", False)),
-        "namereversed": ("naam omgekeerd", ("name", True))
+        "namereversed": ("naam omgekeerd", ("name", True)),
+        "changerequest": ("aanvragen", ("num_open_requests", True))
     }
 
     def dispatch(self, request, *args, **kwargs):

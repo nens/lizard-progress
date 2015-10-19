@@ -1689,9 +1689,11 @@ class ExportRun(models.Model):
         directory = directories.exports_dir(self.activity)
         return os.path.join(
             directory,
-            "{project}-{activityid}-{exporttype}.{extension}").format(
+            "{project}-{activityid}-{activity}-{exporttype}.{extension}"
+        ).format(
             project=self.activity.project.slug,
             activityid=self.activity.id,
+            activity=directories.clean(self.activity.name),
             exporttype=self.exporttype,
             extension=extension).encode('utf8')
 

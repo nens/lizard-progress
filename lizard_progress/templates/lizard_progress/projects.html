@@ -56,7 +56,7 @@ $( window ).resize(function() {
     <div id="organisation" class="col-md-12">
       <div class="organisation-title">
         <p class="hidden-xs">{{ view.organization }}<p>
-        <p class="hidden-sm hidden-md hidden-lg" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="{{view.organization}}">{{ view.organization|truncatechars:10 }}<p>
+        <!-- <p class="hidden-sm hidden-md hidden-lg" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="{{view.organization}}">{{ view.organization|truncatechars:10 }}<p> -->
       </div>
     </div>
   </div>
@@ -112,7 +112,7 @@ $( window ).resize(function() {
           {% for project, numrequests in view.projects_requests %}
               <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
                   <div class="row">
-                    <div class="col-md-8">
+                    <div class="col-md-8 col-sm-8 col-xs-8">
                         <ul style="display:inline-block;">
                             <li style="display:inline-block;">
                               {% if numrequests > 0 %}
@@ -131,7 +131,7 @@ $( window ).resize(function() {
                     </div>
 
                           <p class="project-description"></p>
-                        <div class="col-md-4 stats">
+                        <div class="col-md-4 col-sm-4 col-xs4 stats">
                           <ul>
                             <li><span>Locaties compleet: {{ project.number_of_complete_locations }}x</span></li>
                             <li>

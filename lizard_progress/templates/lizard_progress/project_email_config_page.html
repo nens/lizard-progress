@@ -18,7 +18,7 @@
               <!-- Nav tabs -->
               <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation"><a href="../config/" aria-controls="profile" role="tab">Projectinstellingen</a></li>
-                <!-- <li role="presentation"><a href="#home" aria-controls="home" role="tab">Projectbestanden toevoegen</a></li> -->
+                <li role="presentation"><a href="{% url "lizard_progress_upload_hydrovakken" project_slug=view.project.slug %}">Monstervakken toevoegen</a></li>
                 <li role="presentation" class="active"><a href="../email_config/" aria-controls="profile" role="tab">E-mailconfiguratie</a></li>
               </ul>
 

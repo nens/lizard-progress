@@ -54,9 +54,9 @@ $('.archive').on('click', function(e) {
             <div>
               <!-- Nav tabs -->
               <ul class="nav nav-tabs" role="tablist">
-                <li role="presentation" class="active"><a href="#project" aria-controls="profile" role="tab" data-toggle="tab">Projectinstellingen</a></li>
-                <!-- <li role="presentation"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Projectbestanden toevoegen</a></li> -->
-                <li role="presentation"><a href="../email_config/" aria-controls="profile" role="tab" >E-mailconfiguratie</a></li>
+                <li role="presentation" class="active"><a href="#">Projectinstellingen</a></li>
+                <li role="presentation"><a href="{% url "lizard_progress_upload_hydrovakken" project_slug=view.project.slug %}">Monstervakken toevoegen</a></li>
+                <li role="presentation"><a href="../email_config/">E-mailconfiguratie</a></li>
               </ul>
 
               <!-- Tab panes -->

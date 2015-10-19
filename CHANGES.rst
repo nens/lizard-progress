@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.4 (unreleased)
+2.6.4 (2015-10-19)
 ------------------
 
 - Do not send any mails if a change request was made by the manager and

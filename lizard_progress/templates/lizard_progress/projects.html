@@ -92,7 +92,10 @@ $( window ).resize(function() {
         {% with numrequests=view.total_requests %}
           {% if numrequests > 0 %}
             <div class="pull-right" style="margin: 3px 20px 0 0;">
-              <div class="requests-warning request-container" style="position:relative;"><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg"></i></div>
+              <a href="?orderby=changerequest">
+                <div class="requests-warning request-container" style="position:relative;
+               "><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg"></i></div>
+              </a>
             </div>
           {% endif %}
         {% endwith %}

@@ -6,6 +6,14 @@ $(document).on('ready', function() {
 });
 </script>
 {% endblock extra_js %}
+{% block extra_css %}
+<style>
+form label.radio, form label.checkbox {
+    font-weight: normal;
+    padding-left: 20px;
+}
+</style>
+{% endblock extra_css %}
 
 {% block content %}
 
@@ -33,24 +41,28 @@ $(document).on('ready', function() {
         <div class="col-md-12">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title">
-				{% if view.edited_user %}
-				{% if view.user.get_full_name %}{{ view.edited_user.get_full_name }} {% endif %}({{ view.edited_user }})
-				{% else %}
-				Nieuwe gebruiker {{ view.organization }}
-				{% endif %}              	
+              <h3 class="panel-title"><i class="fa fa-user"></i>&nbsp;
+        				{% if view.edited_user %}
+        				{% if view.user.get_full_name %}{{ view.edited_user.get_full_name }} {% endif %}({{ view.edited_user }})
+        				{% else %}
+        				Nieuwe gebruiker {{ view.organization }}
+        				{% endif %}              	
               </h3>
             </div>
             <div class="panel-body">
-				<form method="post" action="">
-				{% csrf_token %}
-				<table>
-				{{ view.form }}
-				<!-- <hr size="1" noshade /> -->
-				<!-- <input type="submit" class="btn btn-primary" value="Aanpassingen opslaan"/> -->
-				<tr><td></td><td><input type="submit" class="btn btn-primary" value="Aanpassingen opslaan"></td></tr>
-				</table>
-				</form>
+      				<form method="post" action="" >
+      				{% csrf_token %}
+              {% for field in view.form %}
+                  <div class="form-group">
+                      {{ field.errors }}
+                      {{ field.label_tag }} {{ field }}
+                      {% if field.help_text %}
+                        <p class="help text-warning">{{ field.help_text|safe }}</p>
+                      {% endif %}
+                  </div>
+              {% endfor %}      				
+                <input type="submit" class="btn btn-primary" value="Aanpassingen opslaan">
+      				</form>
             </div>
           </div>
 <!--           <div class="panel panel-default">

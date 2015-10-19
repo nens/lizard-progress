@@ -1,5 +1,35 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
+{% block javascript %}
+{{ block.super }}
+
+<script>
+$('a.delete-user').on('click', function(e) {
+  e.preventDefault();
+  swal({
+    title: "Weet u het zeker?",
+    text: "Dit verwijdert deze gebruiker van de Uploadservice. Deze gebruikersnaam kan daarna niet meer gebruikt worden.",
+    type: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#DD6B55",
+    confirmButtonText: "Ja, verwijder deze gebruiker",
+    closeOnConfirm: false
+  }, function() {
+      $.ajaxSetup({
+        headers: { "X-CSRFToken": getCookie("csrftoken") }
+      });
+      $.ajax({
+        url: $(this).attr("href"),
+        type: 'DELETE',
+        success: function () {
+            location.reload(true);
+        }
+      });
+  });
+});
+</script>
+{% endblock javascript %}
+
 {% block content %}
 <div class="container" id="project-slug">
   <div class="row">
@@ -45,7 +75,10 @@
               <td>{{ profile.user.get_full_name }}</td>
               <td>{{ profile.user.email }}</td>
               <td>{{ profile.roles_description }}</td>
-              <td>{% if profile.user != view.user %}<a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}" class="delete_file" data-message="Dit verwijdert deze gebruiker van de Uploadservice. Deze gebruikersnaam kan daarna niet meer gebruikt worden. Weet u het zeker?">delete</a>{% endif %}</td>
+              <td>{% if profile.user != view.user %}
+              <a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}" class="delete-user" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Verwijderen"><button type="button" class="btn btn-danger"><i class="fa fa-remove"></i></button></a>
+              {% endif %}
+              </td>
             </tr>
             {% endfor %}
             </table>

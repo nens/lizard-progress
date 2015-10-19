@@ -222,12 +222,14 @@ class SingleUserForm(forms.Form):
             initial_uploader = not show_admin_role
 
         self.fields['is_uploader'] = forms.BooleanField(
+            widget=forms.CheckboxInput(attrs={'class': 'form-control'}),
             label="Mag uploaden", initial=initial_uploader, required=False)
 
         # This field is only allowed in organizations that have projects
         if ((self.edited_user and profile.organization.is_project_owner) or
                 show_admin_role):
             self.fields['is_manager'] = forms.BooleanField(
+                widget=forms.CheckboxInput(attrs={'class': 'form-control'}),
                 label="Mag projecten beheren", initial=initial_manager,
                 required=False)
 
@@ -235,6 +237,7 @@ class SingleUserForm(forms.Form):
         # safety
         if not editing_self:
             self.fields['is_admin'] = forms.BooleanField(
+                widget=forms.CheckboxInput(attrs={'class': 'form-control'}),
                 label="Mag gebruikers beheren", initial=initial_admin,
                 required=False)
 

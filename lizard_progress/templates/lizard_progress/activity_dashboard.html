@@ -17,42 +17,42 @@
         <div class="col-md-11">        
 
         <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">
+          <div class="panel-heading clearfix">
+            <h3 class="panel-title pull-left" style="padding-top: 7.5px;">
               <i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard">{{ view.project.name }}</a> /  {{ view.activity.name }} ({{ view.activity.contractor }})
             </h3>
-          </div>
-
-          <div class="panel-body">
-
-          <span class="pull-right" style="margin:0 0 5px 0;">
+            <div class="btn-group pull-right">
             {% if view.show_planning_menu %}
             <a href="./planning/">
-            <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Planning werkzaamheid">
+            <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Planning werkzaamheid">
               <i class="fa fa-calendar"></i>
             </button>
             </a>
             {% endif %}
             {% if view.user_is_manager %}
             <a href="./config/">
-            <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Instellingen werkzaamheid">
+            <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Instellingen werkzaamheid">
               <i class="fa fa-cog"></i>
             </button>
             </a> 
             {% endif %}
             <a href="./changerequests/">
-            <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Aanvragen">
+            <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Aanvragen">
               <i class="fa fa-question-circle"></i>&nbsp;Aanvragen
             </button>
             </a>     
             {% if view.user_is_uploader %}
             <a href="./upload/">
-            <button class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Uploaden">
+            <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Uploaden">
               <i class="fa fa-cloud-upload"></i>&nbsp;Uploaden
             </button>
             </a>
-            {% endif %}
-          </span>          
+            {% endif %}            
+            </div>
+          </div>
+
+          <div class="panel-body">
+         
             <div class="col-md-3">
               <div class="panel panel-default">
                 <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ view.activity.name }}</h4></div>

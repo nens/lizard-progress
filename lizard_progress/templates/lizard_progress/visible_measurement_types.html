@@ -58,7 +58,13 @@
                   <tr {% if mtype.visible %}class="success"{% endif %}>
                     <td>{% firstof mtype.mtype.implementation mtype.mtype.slug %}</td>
                     <td>{{ mtype.mtype }}</td>
-                    <td>{% if mtype.visible %}Ja{% else %}Nee {% endif %}</td>
+                    <td>
+                      {% if mtype.visible %}
+                        <i class="fa fa-eye" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Zichtbaar"></i>
+                      {% else %}
+                        <i class="fa fa-eye-slash" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Niet zichtbaar"></i>&nbsp;
+                      {% endif %}
+                    </td>
                     <td>
                       <input type="submit" value="{% if mtype.visible %}Maak onzichtbaar{% else %}Maak zichtbaar{% endif %}" class="btn btn-small btn-primary">
                     </td>

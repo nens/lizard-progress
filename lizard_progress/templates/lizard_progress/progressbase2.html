@@ -16,8 +16,7 @@
       {% endif %}
     {% endblock %}</title>
 
-    {% block css %}
-    {% endblock css %}
+    {% block css %}{% endblock css %}
 
     <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,600,700">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
@@ -36,6 +35,8 @@
           rel="stylesheet"
           media="screen, projection" />
 
+
+    {% block extra_css %}{% endblock extra_css %}
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>

@@ -1,6 +1,6 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
-{% block extra_js %}
+{% block extra_css %}
 <style>
 .projects-affix-list.affix {
   height:100px;
@@ -10,7 +10,9 @@
   z-index:999;
 }
 </style>
+{% endblock extra_css %}
 
+{% block extra_js %}
 <script>
 $(document).ready(function() {
   $('.drilldown').focus();
@@ -132,7 +134,7 @@ $( window ).resize(function() {
                           </p>
                         </li>
                         </ul>
-                                          <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
+                        <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
 
                     </div>
 

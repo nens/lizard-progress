@@ -46,15 +46,6 @@
   </head>
   <body>
 
-
- {% if messages %}
-    <div id="messages" class="messages container">
-      {% for message in messages %}
-        <p class="text-warning">{{ message|safe }}</p>
-      {% endfor %}
-    </div>
-  {% endif %}
-
     <div class="container">
       <nav class="navbar navbar-default">
         <div class="container-fluid">
@@ -80,6 +71,10 @@
                   <li><a href="/us/archive/">Archief</a></li>
                   {% endif %}
                   <li><a href="https://uploadservice.staging.lizard.net/static_media/lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf" target="_blank">Help</a></li>
+                  {% if view.user_is_manager %}
+                  <li role="separator" class="divider"></li>
+                  <li><a href="{% url "lizard_progress_newproject" %}">+ Project toevoegen</a></li>
+                  {% endif %}                  
                   <li role="separator" class="divider"></li>
                   <li><a href="/accounts/logout">Uitloggen</a></li>
                 </ul>
@@ -107,6 +102,31 @@
       </div>
     </div>
     
+
+
+ {% if not messages %}
+<div class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Modal title</h4>
+      </div>
+      <div class="modal-body">
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Consectetur odio aut exercitationem excepturi nobis, officiis, nam totam, accusantium, id aspernatur magni deleniti at placeat. Ullam corporis accusantium blanditiis quam architecto?</p>
+      {% for message in messages %}
+        <p class="text-warning">{{ message|safe }}</p>
+      {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal --> 
+
+  {% endif %}
+
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>

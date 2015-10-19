@@ -82,11 +82,13 @@ $( window ).resize(function() {
             </li>
           </ul>
         </div>
+        {% if view.user_is_manager %}
         <a href="{% url "lizard_progress_newproject" %}">
           <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
             + Project toevoegen
           </button>
         </a>
+        {% endif %}
         {% with numrequests=view.total_requests %}
           {% if numrequests > 0 %}
             <div class="pull-right" style="margin: 3px 20px 0 0;">
@@ -124,7 +126,7 @@ $( window ).resize(function() {
                           </p>
                         </li>
                         </ul>
-                        <p class="project-age" title="{{project.created_at}}">{{ project.created_at|timesince }} geleden</p>
+                        <p class="project-age" title="{{ project.created_at }}">{{ project.created_at|timesince }} geleden</p>
 
                     </div>
 
@@ -132,7 +134,10 @@ $( window ).resize(function() {
                         <div class="col-md-4 stats">
                           <ul>
                             <li><span>Locaties compleet: {{ project.number_of_complete_locations }}x</span></li>
-                            <li><div class="pie-md {{ project.pie }}"></div></li>
+                            <li>
+                              <div class="hidden-xs hidden-sm pie-md {{ project.pie }}"></div>
+                              <div class="hidden-md hidden-lg pie-sm {{ project.pie }}"></div>
+                            </li>
                           </ul>
                         </div>
                   </div>

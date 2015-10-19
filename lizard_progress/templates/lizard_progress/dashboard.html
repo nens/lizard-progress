@@ -1,9 +1,45 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
 
+{% block extra_js %}
+<script src="{{ STATIC_URL }}lizard_progress/odometer.min.js"></script>
+<link rel="stylesheet"
+  href="{{ STATIC_URL }}lizard_progress/odometer.minimal.css" />      
+
+<script>
+var el1 = document.querySelector('.total-activities');
+od1 = new Odometer({
+  el: el1,
+  value: 0,
+  format: '',
+  theme: 'minimal'
+});
+od1.update({{ view.project.number_of_locations }});
+
+var el2 = document.querySelector('.complete-locations');
+od2 = new Odometer({
+  el: el2,
+  value: 0,
+  format: '',
+  theme: 'minimal'
+});
+od2.update({{ view.project.number_of_complete_locations }});
+
+var el3 = document.querySelector('.open-requests');
+od3 = new Odometer({
+  el: el3,
+  value: 0,
+  format: '',
+  theme: 'minimal'
+});
+od3.update({{ view.num_open_requests }});
+</script>
+{% endblock extra_js %}
+
+
+
 {% block content %}
     {% include "lizard_progress/projectswitcher.html" %}
-
 
     <div class="container" id="project-details">
       
@@ -14,15 +50,15 @@
             <div class="col-md-12 details-tabs">
               <div>
                   <div class="row">
-                    <div class="col-md-12 well">
+                    <div class="col-md-12 well" style="background-color:#D9EDF7;border:1px solid #D9EDF7;font-size:1.25em;">
                       <div class="col-md-4 text-center">
-                        {{ view.project.number_of_locations }} <span class="text-muted">geplande meting{{ view.total_activities|pluralize:"en" }}</span>
+                        <span class="total-activities"></span>&nbsp;<span class="text-muted">geplande meting{{ view.project.number_of_locations|pluralize:"en" }}</span>
                       </div>
                       <div class="col-md-4 text-center">
-                        {{ view.project.number_of_complete_locations }} <span class="text-muted">ingevoerde meting{{ view.project.number_of_complete_locations|pluralize:"en" }}</span>
+                        <span class="complete-locations"></span>&nbsp;<span class="text-muted">ingevoerde meting{{ view.project.number_of_complete_locations|pluralize:"en" }}</span>
                       </div>
                       <div class="col-md-4 text-center">
-                        {{ view.num_open_requests }} <span class="text-muted">open aanvr{{ view.num_open_requests|pluralize:"aag,agen" }}</span>
+                        <span class="open-requests"></span>&nbsp;<span class="text-muted">open aanvr{{ view.num_open_requests|pluralize:"aag,agen" }}</span>
                       </div>
                     </div>
                     {% if view.user_is_manager %}

@@ -11,6 +11,8 @@ Changelog of lizard-progress
 - The "multiple projects dwarsprofiel graph" now filters locations based
   on their distance to one chosen location, not on location code.
 
+- Activity names are now part of export filenames.
+
 
 2.6.3 (2015-10-16)
 ------------------

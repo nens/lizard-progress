@@ -9160,6 +9160,14 @@ table tr.clickable {
   display: none !important;
 }
 
+/* line 273, ../sass/modules/_project_manager_home.scss */
+div.panel-heading > h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 50%;
+}
+
 /* line 1, ../sass/modules/_progress_pies.scss */
 .pie-xs {
   width: 20px;

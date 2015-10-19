@@ -269,3 +269,10 @@ table tr.clickable {
 .ui-widget-overlay {
   display: none !important;
 }
+
+div.panel-heading > h3 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 50%;
+}

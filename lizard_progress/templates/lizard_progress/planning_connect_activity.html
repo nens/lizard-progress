@@ -1,15 +1,33 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
 
-{% block contentpage %}
-<h2>Werkzaamheid koppelen aan een andere werkzaamheid.</h2>
+{% block content %}
 
-<p>De werkzaamheid {{ view.activity }} moet locaties kopi&euml;ren van:</p>
+    {% include "lizard_progress/projectswitcher.html" %}    
 
-  <form method="post">
-    {{ view.form.as_p }}
-    <input type="submit" value="Locaties kopi&euml;ren" class="btn btn-primary">
-    {% csrf_token %}
-  </form>
+<div class="container" id="project-details">
+  <div class="row">
+  <div class="col-md-11">
 
-<p><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">Terug naar de planningspagina.</a></p>
+
+	  <div class="panel panel-default">
+	    <div class="panel-heading">
+	      <h3 class="panel-title">Werkzaamheid koppelen aan een andere werkzaamheid</h3>
+	    </div>
+	    <div class="panel-body">
+
+			<p>De werkzaamheid {{ view.activity }} moet locaties kopi&euml;ren van:</p>
+
+			  <form method="post">
+			    {{ view.form.as_p }}
+			    <input type="submit" value="Locaties kopi&euml;ren" class="btn btn-primary">
+			    {% csrf_token %}
+			  </form>
+
+			<p><a class="small" href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">Terug naar de planningspagina.</a></p>
+		</div>
+	</div>
+</div>
+{% include "lizard_progress/sidebar_include.html" with active="configuration" %}
+</div>
+</div>
 {% endblock %}

@@ -15,7 +15,7 @@
             <div class="projectswitcher" style="">
               <ul style="padding:0 20px 20px 20px;">
               {% for project in view.projects %}
-                <li style="font-size:0.75em;">{{ view.organization|lower|truncatechars:9 }} / <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name|lower|truncatechars:10 }}</a></li>
+                <li style="font-size:0.75em;">{{ view.organization|lower|truncatechars:15 }} / <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name|lower|truncatechars:25 }}</a></li>
               {% endfor %}
               </ul>
             </div>

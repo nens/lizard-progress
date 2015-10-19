@@ -29,7 +29,9 @@ $(document).on('ready', function() {
                 {% if view.user_is_manager %}
                   <div class="btn-group pull-right">
                   <button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Werkzaamheden toevoegen / verwijderen">
-                    <i class="fa fa-cog"></i>&nbsp;Beheer
+                    <a class="text-muted" href="{% url "lizard_progress_edit_activities" project_slug=view.project_slug %}">
+                      <i class="fa fa-cog"></i>&nbsp;Beheer
+                    </a>
                   </button>                      
                   </div>
                 {% endif %}

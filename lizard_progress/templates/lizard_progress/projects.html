@@ -54,20 +54,10 @@ $( window ).resize(function() {
 <div class="container">
   <div class="row">
     <div id="organisation" class="col-md-12">
-<!--       <div class="profile-picture">
-        <img data-src="holder.js/100x100" class="img-thumbnail" alt="">
-      </div> -->
-
       <div class="organisation-title">
-        <p>{{ view.organization }}<p>
+        <p class="hidden-xs">{{ view.organization }}<p>
+        <p class="hidden-sm hidden-md hidden-lg" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="{{view.organization}}">{{ view.organization|truncatechars:10 }}<p>
       </div>
-
-<!--       <div class="details">
-        <ul>
-          <li><a href="mailto:">info@{{view.organization|lower}}.nl</a></li>
-          <li><a href="http://www.{{view.organization|lower}}.nl/">www.{{view.organization|lower}}.nl</a></li>
-        </ul>
-      </div> -->
     </div>
   </div>
 

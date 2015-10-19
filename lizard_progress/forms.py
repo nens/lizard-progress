@@ -90,7 +90,7 @@ class NewProjectForm(forms.Form):
             )
 
             self.fields['activity{}'.format(i)] = forms.CharField(
-                widget=forms.Select(attrs={'class' : 'form-control'}),
+                widget=forms.TextInput(attrs={'class' : 'form-control'}),
                 label=_('Activity (name, optional)') + " " + str(i),
                 max_length=100, required=False)
 

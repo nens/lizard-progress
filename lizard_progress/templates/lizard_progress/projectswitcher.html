@@ -6,15 +6,16 @@
               <a href="/">{{ view.organization|lower }}</a> / 
             </span>
             <span class="project projecttoggle">
-              <a href="{% url "lizard_progress_dashboardview" view.project.slug %}">{{ view.project.name|lower }}</a> <i class="fa fa-caret-down" style="cursor:pointer;"></i>{% if view.project.is_archived %} <i title="Gearchiveerd" class="fa fa-briefcase"></i> {% endif %}
+              <a href="{% url "lizard_progress_dashboardview" view.project.slug %}">{{ view.project.name|lower }}</a> <i class="fa fa-caret-down" style="cursor:pointer;"></i>
             </span>
+            {% if view.project.is_archived %}&nbsp;<a href="{% url "lizard_progress_project_configuration_view" view.project.slug %}" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Dit project is gearchiveerd. Klik hier om naar de configuratiepagina te gaan waar u het weer kunt activeren..."><i title="Gearchiveerd" class="fa fa-briefcase text-muted"></i></a> {% endif %}
             {% if view.activity %}
             / <a href=".">{{ view.activity.name|lower }}</a>
             {% endif %}
             <div class="projectswitcher" style="">
               <ul style="padding:0 20px 20px 20px;">
               {% for project in view.projects %}
-                <li style="font-size:0.75em;">{{ view.organization|lower|truncatechars:9 }} / <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name|lower }}</a></li>
+                <li style="font-size:0.75em;">{{ view.organization|lower|truncatechars:9 }} / <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name|lower|truncatechars:10 }}</a></li>
               {% endfor %}
               </ul>
             </div>

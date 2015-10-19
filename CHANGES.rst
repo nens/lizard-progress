@@ -5,7 +5,8 @@ Changelog of lizard-progress
 2.6.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Do not send any mails if a change request was made by the manager and
+  auto-accepted.
 
 
 2.6.3 (2015-10-16)

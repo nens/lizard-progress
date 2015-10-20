@@ -1,4 +1,7 @@
 {% extends "lizard_progress/activity_dashboard.html" %}
+{% block javascript %}
+    <script src="{{ STATIC_URL }}lizard_progress/lizard_progress.js"></script>
+{% endblock javascript %}
 
 {% block content %}
     {% include "lizard_progress/projectswitcher.html" %}

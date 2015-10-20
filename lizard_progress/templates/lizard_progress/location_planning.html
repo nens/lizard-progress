@@ -8,7 +8,11 @@
 
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="..">Werkzaamheden</a> > Planning {{ view.activity }}</h3>
+          <div class="btn-group btn-breadcrumb">
+              <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+              <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity.id %}" class="btn btn-default">Voortgang {{ view.activity|truncatechars:35 }}</a>
+              <a href="." class="btn btn-default"><i class="fa fa-calendar"></i>&nbsp;Planning</a>
+          </div>
         </div>
         {% if view.activity.has_locations %}
         <div class="panel-body alert alert-info">
@@ -75,67 +79,6 @@
 
 
     </div>
-  <div class="col-md-1" role="complementary">
-    <nav class="sidebar hidden-print">
-      <ul class="nav sidenav">
-        <li data-toggle="tooltip" data-placement="left" title="Dashboard">
-          <a href="../../dashboard/"><i class="fa fa-lg fa-tachometer"></i></a>
-        </li>   
-        <li data-toggle="tooltip" data-placement="left" title="Werkzaamheden">
-          <a 
-            class="active" 
-            href="../">
-            <i class="fa fa-lg fa-tasks"></i>
-          </a>
-        </li>
-        <li data-toggle="tooltip" data-placement="left" title="Bestanden">
-          <a 
-          {% if active == 'download' %}
-            class="active" 
-          {% endif %}
-            href="../../download/">
-            <i class="fa fa-lg fa-files-o"></i>
-          </a>
-        </li>    
-        <li data-toggle="tooltip" data-placement="left" title="Configuratie">
-          <a 
-          {% if active == 'configuration' %}
-            class="active" 
-          {% endif %}
-            href="../../config/">
-            <i class="fa fa-lg fa-cogs"></i>
-          </a>
-        </li>
-<!--         <li data-toggle="tooltip" data-placement="left" title="Aanvragen">
-          <a 
-          {% if active == 'aanvragen' %}
-            class="active" 
-          {% endif %}        
-            href="#">
-            <i class="fa fa-lg fa-question-circle"></i>
-          </a>
-        </li> -->
-        <li data-toggle="tooltip" data-placement="left" title="Kaart">
-          <a 
-          {% if active == 'map' %}
-            class="active" 
-          {% endif %}        
-            href="../../map/">
-            <i class="fa fa-lg fa-globe"></i>
-          </a>
-          
-        </li>
-<!--        <li data-toggle="tooltip" data-placement="left" title="Exporteren">
-          <a 
-          {% if active == 'export' %}
-            class="active" 
-          {% endif %}        
-            href="#">
-            <i class="fa fa-lg fa-share"></i>
-          </a>
-        </li> -->
-      </ul>
-    </nav>
-  </div>    
+    {% include "lizard_progress/sidebar_include.html" with active="activities" %}
   </div>
   </div>

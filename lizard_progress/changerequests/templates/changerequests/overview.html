@@ -36,7 +36,11 @@
             {% if openrequests %}
               <div class="panel panel-default">
                     <div class="panel-heading">
-                      <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > Open Aanvragen {{ view.activity }}</h3>
+                        <div class="btn-group btn-breadcrumb">
+                            <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+                            <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity.id %}" class="btn btn-default">{{ view.activity|truncatechars:35 }}</a>
+                            <a href="." class="btn btn-default"><i class="fa fa-question-circle"></i>&nbsp;Open aanvragen</a>
+                        </div>    
                     </div>
 
                         <div class="panel-body">            
@@ -82,7 +86,12 @@
             {% else %}
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > Open Aanvragen {{ view.activity }}</h3>
+                        <!-- <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > Open Aanvragen {{ view.activity }}</h3> -->
+                        <div class="btn-group btn-breadcrumb">
+                            <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+                            <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity.id %}" class="btn btn-default">{{ view.activity|truncatechars:35 }}</a>
+                            <a href="." class="btn btn-default"><i class="fa fa-question-circle"></i>&nbsp;Open aanvragen</a>
+                        </div>                        
                     </div>
 
                     <div class="panel-body">            
@@ -91,53 +100,7 @@
                 </div>
             {% endif %}
 
-        {% if closedrequests %}
-              <div class="panel panel-default">
-                    <div class="panel-heading">
-                      <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > Recente afgesloten aanvragen {{ view.activity }}</h3>
-                    </div>
 
-                        <div class="panel-body">                    
-            
-            <table class="table progressbase">
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Datum</th>
-                        <th>Organisatie</th>
-                        <th>Werkzaamheid</th>
-                        <th>Aanvraagtype</th>
-                        <th>Locatie</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for request in closedrequests %}
-                    <tr class="{% if request.is_accepted %}success{% endif %}{% if request.is_refused %}danger{% endif %}{% if request.is_invalid %}warning{% endif %}" data-url="{{ request.get_absolute_url }}">
-                        {% comment %}
-                            The tds are clickable here, and not the trs, because the last td should not be clickable. Otherwise clicking the 'X' button does both things.
-                        {% endcomment %}
-                        <td class="clickable">{{ request.status_description }}</td>
-                        <td class="clickable">{{ request.creation_date|date:"d/m" }}</td>
-                        <td class="clickable">{{ request.contractor.organization }}</td>
-                        <td class="clickable">{{ request.mtype }}</td>
-                        <td class="clickable">{{ request.type_description }}</td>
-                        <td class="clickable">{{ request.location_code }}
-                            {% if request.old_location_code %}
-                                (vervangt {{ request.old_location_code }}
-                            {% endif %}
-
-                        </td>
-                        <td>
-                            <button class="close" type="button" title="Markeer als gezien" data-post-url="{{ request.get_absolute_url }}set_seen/" aria-hidden="true">&times;</button>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            </div>
-        </div>
-        {% endif %}
         
         {% endwith %}
         {% endwith %}

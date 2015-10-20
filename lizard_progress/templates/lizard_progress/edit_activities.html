@@ -1,5 +1,26 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
+{% block extra_js %}
+<script type="text/javascript">
+  $('.delete-form').on('submit', function(e) {
+  e.preventDefault();
+  var redirectUrl = $(e.target).attr('action');
+  swal({
+    title: "Weet u het zeker?",
+    text: "U staat op het punt om deze werkzaamheid te Verwijderen.",
+    type: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#DD6B55",
+    cancelButtonText: "Nee",
+    confirmButtonText: "Ja, verwijder",
+    closeOnConfirm: false
+  }, function() {
+    window.location.href = redirectUrl;
+  });
+});
+</script>
+{% endblock extra_js %}
+
 {% block content %}
     {% include "lizard_progress/projectswitcher.html" %}    
 
@@ -10,7 +31,11 @@
         <div class="col-md-11">
       <div class="panel panel-default">
               <div class="panel-heading">
-                <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;Huidige werkzaamheden</h3>
+                        <div class="btn-group btn-breadcrumb">
+                            <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+                            
+                            <a href="." class="btn btn-default"><i class="fa fa-cog"></i>&nbsp;Beheer werkzaamheden</a>
+                        </div>    
               </div>
 
           <div class="panel-body">
@@ -33,11 +58,11 @@
                       <td>{{ activity.measurement_type }}</td>
                       <td>
                         {% if activity.has_measurements %}Heeft metingen{% else %}
-                          <form method="post"
+                          <form class="delete-form" method="post"
                                 action="{% url "lizard_progress_delete_activity" project_slug=view.project.slug activity_id=activity.id %}">
                             {% csrf_token %}
-                            <input type="submit" class="btn btn-primary"
-                                   name="submit" value="Verwijderen">
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                   name="submit" value="Verwijderen"><i class="fa fa-close"></i></button>
                           </form>
                         {% endif %}
                       </td>
@@ -54,7 +79,7 @@
 
           <div class="panel panel-default">
               <div class="panel-heading">
-                <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;Werkzaamheid toevoegen</h3>
+                <h3 class="panel-title"><i class="fa fa-plus-circle"></i>&nbsp;Werkzaamheid toevoegen</h3>
               </div>
 
           <div class="panel-body">

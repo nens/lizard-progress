@@ -22,7 +22,7 @@ $(document).on('ready', function() {
 
           <!-- Nav tabs -->
           <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation"><a href="{% url "changerequests_main" project_slug=view.project_slug activity_id=view.activity_id %}" aria-controls="profile" role="tab" data-toggle="tab">Aanvragen</a></li>
+            <li role="presentation"><a href="{% url "changerequests_main" project_slug=view.project_slug activity_id=view.activity_id %}">Aanvragen</a></li>
             <li role="presentation"><a href="{% url "changerequests_closed" project_slug=view.project_slug activity_id=view.activity_id %}">Afgesloten aanvragen</a></li>
             <li role="presentation"{% if view.description == 'Locatiecode laten vervallen' %} class="active"{% endif %}>
             	<a href="{% url "changerequests_removecode" project_slug=view.project_slug activity_id=view.activity_id %}">Locatiecode laten vervallen</a></li>
@@ -42,7 +42,11 @@ $(document).on('ready', function() {
 
               <div class="panel panel-default">
                     <div class="panel-heading">
-                      <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > {{ view.description }}</h3>
+                      <div class="btn-group btn-breadcrumb">
+                        <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+                        <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity.id %}" class="btn btn-default">Voortgang {{ view.activity|truncatechars:35 }}</a>
+                        <a href="." class="btn btn-default"><i class="fa fa-question-circle"></i>&nbsp;{{ view.description }}</a>
+                      </div>                                              
                     </div>
 
                         <div class="panel-body">            

@@ -97,7 +97,7 @@ $('a.delete-file').on('click', function(e) {
               <tr>
                 <td class="filename">{{ file.filename }} ({{ file.size }})</td>
                 <td class="download">
-                  <a href="{{ file.url }}" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Downloaden"><button type="button" class="upload btn btn-primary"><i class="fa fa-download"></i></button></a>
+                  <a href="{{ file.url }}" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Downloaden"><button type="button" class="btn btn-primary"><i class="fa fa-download"></i></button></a>
                 </td>
                 {% if view.user_is_manager %}
                 <td>

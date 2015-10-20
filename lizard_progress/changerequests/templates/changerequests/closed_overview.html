@@ -30,7 +30,12 @@
 
               <div class="panel panel-default">
                     <div class="panel-heading">
-                      <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > Gesloten aanvragen {{ view.project.name }}</h3>
+                      <!-- <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard/">Werkzaamheden</a> > Gesloten aanvragen {{ view.project.name }}</h3> -->
+                      <div class="btn-group btn-breadcrumb">
+                        <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+                        <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity.id %}" class="btn btn-default">{{ view.activity|truncatechars:35 }}</a>
+                        <a href="." class="btn btn-default"><i class="fa fa-question-circle"></i>&nbsp;Afgesloten aanvragen</a>
+                      </div>                                              
                     </div>
 
                         <div class="panel-body">                    

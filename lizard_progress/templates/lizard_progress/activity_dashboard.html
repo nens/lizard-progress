@@ -18,9 +18,13 @@
 
         <div class="panel panel-default">
           <div class="panel-heading clearfix">
-            <h3 class="panel-title pull-left" style="padding-top: 7.5px;">
+            <div class="btn-group btn-breadcrumb">
+                <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+                <a href="." class="btn btn-default">Voortgang {{ view.activity|truncatechars:35 }}</a>
+            </div>          
+<!--             <h3 class="panel-title pull-left" style="padding-top: 7.5px;">
               <i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard">{{ view.project.name }}</a> /  {{ view.activity.name }} ({{ view.activity.contractor }})
-            </h3>
+            </h3> -->
             <div class="btn-group pull-right">
             {% if view.show_planning_menu %}
             <a href="./planning/">
@@ -66,7 +70,9 @@
               <dd>{{ view.activity.measurement_type }}</dd>
               {% if view.user_is_manager %}
                 <dt>Planning:</dt>
-                <dd><a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}">inplannen</a></dd>
+                <dd>
+                
+                <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}"><button class="btn btn-default"><i class="fa fa-calendar"></i>&nbsp;inplannen</button></a></dd>
               {% endif %}
               <dt>Open aanvragen:</dt>
               <dd>{{ view.activity.open_requests.count }}</dd>

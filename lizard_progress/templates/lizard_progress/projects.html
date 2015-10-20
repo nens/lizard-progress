@@ -127,14 +127,12 @@ $( window ).resize(function() {
                                      margin-left:15px;"><div
                                         class="project-request-number request-sm">{{ numrequests }}</div><a href="{% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a></div>
                               {% endif %}
-                          </p>
+                              </p>
+                            <p class="project-age" title="{{ project.created_at }}">
 
-                        <p class="project-age" title="
-                        {{ project.created_at }}">
                             {{ project.created_at|timesince }} geleden
                             aangemaakt</p>
-
-                    </div>
+                            </div>
 
                           <p class="project-description"></p>
                         <div class="col-md-4 col-sm-4 col-xs4 stats">

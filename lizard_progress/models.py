@@ -527,6 +527,12 @@ class Project(ProjectActivityMixin, models.Model):
         # Note that self.project_type is nullable.
         return self.project_type and self.project_type.show_numbers_on_map
 
+    @property
+    def most_recent(self):
+        try:
+            return self.latest_log.when
+        except AttributeError:
+            return self.created_at
 
 class Location(models.Model):
     LOCATION_TYPE_POINT = 'point'

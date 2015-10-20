@@ -78,11 +78,28 @@ od3.update({{ view.num_open_requests }});
                       <div class="col-md-3">
                         <div class="panel panel-default">
                         <div class="panel-heading">
-                            <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
+                            <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">                            
                               <h4 class="panel-title" style="color:#777">Voortgang {{ activity.name }}</h4>
                             </a>
-                        </div>
                             {% if numrequests > 0 %}
+                            <div class="request-warning request-container" data-toggle="tooltip" data-placement="left" title="" data-original-title="Open aanvragen">
+                              <div class="project-request-number request-sm">
+                                {{ numrequests }}
+                              </div>
+                              <a href="../{{ activity.id }}/changerequests/"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a>
+                            </div>
+                          {% endif %}
+                        </div>
+                        <div class="panel-body">                        
+                          <div class="progress">
+                            <div class="progress-bar" role="progressbar" aria-valuenow="{{ activity.percentage_done }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ activity.percentage_done }}%;">
+                              {{ activity.percentage_done }}%
+                            </div>
+                          </div>                          
+                        </div>
+
+
+<!--                             {% if numrequests > 0 %}
                               <div class="request-warning request-container">
                                 <div class="project-request-number request-lg">
                                   {{ numrequests }}
@@ -93,8 +110,8 @@ od3.update({{ view.num_open_requests }});
                               </div>
                             {% endif %}
                             <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=activity.id %}">
-                          <div class="panel-body pie-lg {{ activity.pie }}"></div>
-                                </a>
+                              <div class="panel-body pie-lg {{ activity.pie }}"></div>
+                            </a> -->
                         </div>
                       </div>
                     {% endfor %}

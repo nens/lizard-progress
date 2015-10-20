@@ -60,7 +60,7 @@
             <div class="col-md-3">
               <div class="panel panel-default">
                 <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ view.activity.name }}</h4></div>
-                <div class="panel-body pie-lg {{ view.activity.pie }}"></div>
+                <div class="panel-body pie-lg {{ view.activity.pie }}" data-toggle="tooltip" data-placement="bottom" title="{{view.activity.percentage_done }}% gereed"></div>
               </div>
             </div>
             <dl style="float: left;">
@@ -72,10 +72,10 @@
                 <dt>Planning:</dt>
                 <dd>
                 
-                <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}"><button class="btn btn-default"><i class="fa fa-calendar"></i>&nbsp;inplannen</button></a></dd>
+                <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}"><button class="btn btn-sm btn-default"><i class="fa fa-calendar"></i>&nbsp;inplannen</button></a></dd>
               {% endif %}
               <dt>Open aanvragen:</dt>
-              <dd>{{ view.activity.open_requests.count }}</dd>
+              <dd><a href="./changerequests/">{{ view.activity.open_requests.count }} aanvr{{view.activity.open_requests.count|pluralize:'aag,agen'}}</a></dd>
             </dl>
 
           </div>

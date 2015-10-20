@@ -9168,6 +9168,11 @@ div.panel-heading > h3 {
   width: 50%;
 }
 
+/* line 281, ../sass/modules/_project_manager_home.scss */
+.progress {
+  background-color: #D6D6D6 !important;
+}
+
 /* line 1, ../sass/modules/_progress_pies.scss */
 .pie-xs {
   width: 20px;

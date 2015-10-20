@@ -64,12 +64,12 @@ class ProjectsMixin(object):
     project = None
     activity = None
     sortparams = {
-        "mostrecent": ("meest recent", ("most_recent", True)),
-        "leastrecent": ("minst recent", ("most_recent", False)),
+        "mostrecent": ("meest recent", ("created_at", True)),
+        "leastrecent": ("minst recent", ("created_at", False)),
         "mosturgent": ("meest gereed", ("percentage_done", True)),
         "leasturgent": ("minst gereed", ("percentage_done", False)),
-        "name": ("naam oplopend", ("name", False)),
-        "namereversed": ("naam aflopend", ("name", True)),
+        "name": ("naam", ("name", False)),
+        "namereversed": ("naam omgekeerd", ("name", True)),
         "changerequest": ("aanvragen", ("num_open_requests", True))
     }
 

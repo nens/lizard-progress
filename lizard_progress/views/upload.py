@@ -34,7 +34,6 @@ APP_LABEL = models.Project._meta.app_label
 
 logger = logging.getLogger(__name__)
 
-
 def json_response(obj):
     """Return a HttpResponse with obj serialized as JSON as content"""
     return HttpResponse(json.dumps(obj), mimetype="application/json")

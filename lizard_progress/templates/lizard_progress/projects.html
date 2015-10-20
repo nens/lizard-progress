@@ -41,7 +41,7 @@ $(document).ready(function() {
       top: 200
     }
   });
-  $('#myAffix').width($('.navbar').first().width());
+  $('#myAffix').width($('.navbar').first().width() + 11);
 });
 $( window ).resize(function() {
   $('#myAffix').width($('.navbar').first().width());
@@ -116,19 +116,19 @@ $( window ).resize(function() {
               <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
                   <div class="row">
                     <div class="col-md-8 col-sm-8 col-xs-8">
-                        <ul style="display:inline-block;">
-                            <li style="display:inline-block;">
-                              {% if numrequests > 0 %}
-                                <div class="request-warning request-container"><div class="project-request-number request-sm">{{ numrequests }}</div><a href="{% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a></div>
-                              {% endif %}
-                            </li>
-                        <li style="display:inline-block;">
-                          <p class="project-title">
+                        <p class="project-title" style="display:inline-block;">
                             <!-- <i class="fa fa-star-o"></i>&nbsp; -->
-                            <a href="{% url "lizard_progress_dashboardview" project.slug %}">{{ project.name }}</a>
+                            <a href="
+                            {% url "lizard_progress_dashboardview" project.slug %}" style="display:inline-block;">{{ project.name }}</a>
+                              {% if numrequests > 0 %}
+                                <div class="request-warning
+                                request-container"
+                                     style="display:inline-block;
+                                     margin-left:15px;"><div
+                                        class="project-request-number request-sm">{{ numrequests }}</div><a href="{% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a></div>
+                              {% endif %}
                           </p>
-                        </li>
-                        </ul>
+
                         <p class="project-age" title="
                         {{ project.created_at }}">
                             {{ project.created_at|timesince }} geleden

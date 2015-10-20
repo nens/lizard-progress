@@ -11,7 +11,8 @@ from django.conf.urls import include
 from django.conf.urls import patterns
 from django.conf.urls import url
 from django.contrib import admin
-from django.contrib.auth.decorators import login_required
+# from django.contrib.auth.decorators import login_required
+from lizard_progress.views import login_required
 
 from lizard_progress.views import ActivitiesView
 from lizard_progress.views import DashboardView
@@ -132,7 +133,7 @@ project_urls = [
 
     # Remove an uploaded file
     url('^upload/remove_uploaded_file/(?P<uploaded_file_id>\d+)/$',
-        login_required(views.remove_uploaded_file_view),
+        views.remove_uploaded_file_view,
         name='lizard_progress_remove_uploaded_file'),
 
     # Project uploads

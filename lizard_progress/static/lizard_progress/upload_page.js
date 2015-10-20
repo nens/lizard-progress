@@ -101,6 +101,7 @@ var upload_page_functions = upload_page_functions || (function () {
 
         $.post(url);
         row.remove();
+        console.log(row, url)
         setTimeout(refresh_uploaded_file_tables, 500);
 
         return false;

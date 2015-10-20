@@ -41,8 +41,8 @@
             </a> 
             {% endif %}
             <a href="./changerequests/">
-            <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Aanvragen">
-              <i class="fa fa-question-circle"></i>&nbsp;Aanvragen
+            <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Toon alle aanvragen">
+              <i class="fa fa-question-circle"></i>&nbsp;{{view.activity.open_requests.count}} aanvr{{view.activity.open_requests.count|pluralize:'aag,agen'}}
             </button>
             </a>     
             {% if view.user_is_uploader %}

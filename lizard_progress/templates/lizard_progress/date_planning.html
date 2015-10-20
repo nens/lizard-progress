@@ -8,12 +8,16 @@
 
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title"><i class="fa fa-tasks"></i>&nbsp;<a href="..">Werkzaamheden</a> > Weekplanning</h3>
+            <div class="btn-group btn-breadcrumb">
+                <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+                <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity.id %}" class="btn btn-default">Voortgang {{ view.activity|truncatechars:35 }}</a>
+                <a href="." class="btn btn-default">Weekplanning</a>
+            </div>                    
         </div>
 
         <div class="panel-body">
 
-          <p>Shapefiles met locaties kunt u vinden onder het "Download" menu. Bij de locaties kan ingevuld worden in welke week en eventueel op welke dag ze gedaan gaan worden. De ingevulde shapefiles kunnen hier weer ge&uuml;pload worden.</p>
+          <p>Shapefiles met locaties kunt u vinden onder het <a href="{% url "lizard_progress_downloadhomeview" view.project.slug %}">Download menu</a>. Bij de locaties kan ingevuld worden in welke week en eventueel op welke dag ze gedaan gaan worden. De ingevulde shapefiles kunnen hier weer ge&uuml;pload worden.</p>
 
           {% for location_type in view.location_types %}
             <div style="float: left;">

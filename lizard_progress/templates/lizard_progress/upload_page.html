@@ -32,7 +32,11 @@
         <div class="panel panel-default">
           <div class="panel-heading">
             <h3 class="panel-title">
-              <a href="..">{{ view.activity.name }}</a> / Upload bestanden
+                        <div class="btn-group btn-breadcrumb">
+                            <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
+                            <a href="{% url "lizard_progress_activity_dashboard" project_slug=view.project_slug activity_id=view.activity.id %}" class="btn btn-default">{{ view.activity|truncatechars:35 }}</a>
+                            <a href="." class="btn btn-default"><i class="fa fa-cloud-upload"></i>&nbsp;Uploaden</a>
+                        </div>    
             </h3>
           </div>
 
@@ -43,18 +47,18 @@
                 <button type="button" class="upload btn btn-large btn-primary"
                         data-upload-url="{{ view.upload_measurement_url }}"
                         title="Klik hier om ingewonnen metingen te uploaden."
-                        ><i class="icon-upload"></i> Upload {{ view.activity.measurement_type }}
+                        ><i class="fa fa-cloud-upload"></i> Upload {{ view.activity.measurement_type }}
                 </button>
                 {% if view.show_moedershapefile_button %}
                   <button type="button" class="upload btn btn-large btn-primary"
                           data-upload-url="{{ view.upload_shapefiles_url }}"
                           title="Klik hier om ingevulde moedershapefiles te uploaden."
-                          ><i class="icon-upload"></i> Upload moedershapefile</button>
+                          ><i class="fa fa-cloud-upload"></i> Upload moedershapefile</button>
                 {% endif %}
                 <button type="button" class="upload btn btn-large btn-primary"
                         data-upload-url="{{ view.upload_reports_url }}"
                         title="Klik hier om rapportages en overige bestanden (.doc, .pdf of .zip voor de rest) te uploaden."
-                        ><i class="icon-upload"></i> Upload eindrapportages</button>
+                        ><i class="fa fa-cloud-upload"></i> Upload eindrapportages</button>
               </p>
             </div>
 

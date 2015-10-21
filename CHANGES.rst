@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.5 (unreleased)
+2.6.5 (2015-10-21)
 ------------------
 
 - Make old change requests work on the map, and add all of them to the

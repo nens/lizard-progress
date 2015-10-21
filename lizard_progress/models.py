@@ -489,7 +489,7 @@ class Project(ProjectActivityMixin, models.Model):
             request_status=Request.REQUEST_STATUS_OPEN,
             activity__project=self).count()
 
-    def num_open_requests_for_user(self, organization):
+    def num_open_requests_for_contractor(self, organization):
         from lizard_progress.changerequests.models import Request
         return Request.objects.filter(
             request_status=Request.REQUEST_STATUS_OPEN,

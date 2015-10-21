@@ -908,9 +908,7 @@ class Activity(models.Model):
         if not self.measurement_type.can_be_displayed:
             return
 
-        from lizard_progress.changerequests.models import Request
-        for request in self.request_set.filter(
-                request_status=Request.REQUEST_STATUS_OPEN):
+        for request in self.request_set.all():
             yield request.map_layer()
 
         from lizard_progress.util.workspaces import MapLayer

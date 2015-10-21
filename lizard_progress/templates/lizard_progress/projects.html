@@ -70,9 +70,14 @@ $( window ).resize(function() {
         <div class="dropdown pull-right">
           <ul class="nav nav-pills" role="tablist">
             <li role="presentation" class="active">
-              <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                {{ view.orderby }}
-                <span class="caret"></span>
+              <a id="drop" href="#" class="dropdown-toggle"
+                 data-toggle="dropdown" role="button"
+                 aria-haspopup="true"
+                 aria-expanded="false">
+                  <div data-toggle="tooltip" title="sorteer projecten">
+                    {{ view.orderby }}
+                    <span class="caret"></span>
+                  </div>
               </a>
               <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
                 {% for queryname, choicename in view.orderchoices.items %}
@@ -94,7 +99,7 @@ $( window ).resize(function() {
             <div class="pull-right" style="margin: 3px 20px 0 0;">
               <a href="?orderby=changerequest">
                 <div class="requests-warning request-container" style="position:relative;
-               "><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg"></i></div>
+               "><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg" data-toggle="tooltip" title="{{ numrequests }} open aanvragen"></i></div>
               </a>
             </div>
           {% endif %}
@@ -125,7 +130,10 @@ $( window ).resize(function() {
                                 request-container"
                                      style="display:inline-block;
                                      margin-left:15px;"><div
-                                        class="project-request-number request-sm">{{ numrequests }}</div><a href="{% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a></div>
+                                        class="project-request-number
+                                        request-sm">{{ numrequests }}</div><a
+                                        href="
+                                        {% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm" data-toggle="tooltip" title="{{ numrequests }} open aanvragen"></i></a></div>
                               {% endif %}
                               </p>
                             <p class="project-age" title="{{ project.created_at }}">
@@ -139,7 +147,16 @@ $( window ).resize(function() {
                           <ul>
                             <li><span>Locaties compleet: {{ project.number_of_complete_locations }}x</span></li>
                             <li>
-                              <div class="hidden-xs hidden-sm pie-md {{ project.pie }}"></div>
+                              <div class="hidden-xs hidden-sm pie-md
+                              {{ project.pie }}" data-toggle="tooltip"
+                                   title="{{ project.percentage_done }}
+                                   {% if project.percentage_done != 'N/A' %}
+                                   % compleet: {{ project.number_of_complete_locations }}
+                                    locaties compleet
+                                    van {{ project.number_of_locations }}
+                                    locaties in totaal.
+                                   {% endif %}
+                                   "></div>
                               <div class="hidden-md hidden-lg pie-sm {{ project.pie }}"></div>
                             </li>
                           </ul>

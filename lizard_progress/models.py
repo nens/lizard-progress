@@ -625,7 +625,7 @@ class Location(models.Model):
 
         return Location.objects.filter(
             activity__project__organization=self.activity.project.organization,
-            location__the_geom__distance_lte=(
+            the_geom__distance_lte=(
                 self.the_geom, D(m=self.CLOSE_BY_DISTANCE)),
             complete=True)
 

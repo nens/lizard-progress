@@ -5,7 +5,7 @@ Changelog of lizard-progress
 2.6.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Remove extra 'location__' from filter.
 
 
 2.6.6 (2015-10-21)

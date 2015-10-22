@@ -225,7 +225,6 @@ class ProjectsMixin(object):
             mtypes = project.activity_set.all().distinct(
                 "measurement_type").values_list('measurement_type__name',
                                                 flat=True)
-            print(mtypes)
             yield project, self.num_project_requests(project), mtypes
 
     def num_project_requests(self, project):

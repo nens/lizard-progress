@@ -44,7 +44,6 @@ $(document).ready(function() {
   });
   $('#myAffix').width($('.navbar').first().width() + 11);
   var selectedMtypes = localStorage.getItem("selectedMeasurementTypes");
-  console.log(selectedMtypes);
   var selectPicker = $('.selectpicker');
   if (selectedMtypes == null) {
       selectPicker.selectpicker('selectAll');

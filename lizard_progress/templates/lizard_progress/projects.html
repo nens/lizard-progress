@@ -13,6 +13,7 @@
 {% endblock extra_css %}
 
 {% block extra_js %}
+<script src="{{ STATIC_URL }}lizard_progress/javascripts/bootstrap-select.js"></script>
 <script>
 $(document).ready(function() {
   $('.drilldown').focus();
@@ -42,11 +43,21 @@ $(document).ready(function() {
     }
   });
   $('#myAffix').width($('.navbar').first().width() + 11);
+  var selectedMtypes = localStorage.getItem("selectedMeasurementTypes");
+  console.log(selectedMtypes);
+  var selectPicker = $('.selectpicker');
+  if (selectedMtypes == null) {
+      selectPicker.selectpicker('selectAll');
+      localStorage.setItem('selectedMeasurementTypes', JSON.stringify($(".selectpicker").val()));
+  } else {
+      selectedMtypes = JSON.parse(selectedMtypes);
+      selectPicker.val(selectedMtypes);
+      selectPicker.selectpicker('render');
+  }
 });
 $( window ).resize(function() {
   $('#myAffix').width($('.navbar').first().width());
 });
-
 </script>
 {% endblock %}
 
@@ -106,19 +117,35 @@ $( window ).resize(function() {
         {% endwith %}
       </div>
       <div class="row" style="background:white;">
-        <input
-          class="form-control drilldown"
-          style="margin:20px 0 20px 20px;width:98%;"
-          id="focusedInput"
-          type="text"
-          value=""
-          placeholder="Filter projecten op naam"
-        />
+        <ul style="display:inline;">
+            <li style="display:inline-block;width:22%;">
+            <select class="selectpicker" multiple title="Kies metingtype..."
+                    data-style="btn-default"
+                    data-selected-text-format="count"
+                    data-width="100%">
+                {% for mtype in view.measurementtypes %}
+              <option>{{ mtype }}</option>
+                {% endfor %}
+            </select>
+          </li>
+          <li style="display:inline-block;width:76%;">
+            <input
+              class="form-control drilldown"
+              style="margin:20px 0 20px 20px;width:100%;"
+              id="focusedInput"
+              type="text"
+              value=""
+              placeholder="Filter projecten op naam"
+            />
+          </li>
+        </ul>
       </div>
     </div>
 
-          {% for project, numrequests in view.projects_requests %}
-              <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
+          {% for project, numrequests, mtype in view.projects_requests %}
+              <div class="row project" data-url="
+              {% url "lizard_progress_dashboardview" project.slug %}"
+                   data-mtype="{{ mtype|join:";" }}">
                   <div class="row">
                     <div class="col-md-8 col-sm-8 col-xs-8">
                         <p class="project-title" style="display:inline-block;">

@@ -47,10 +47,6 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         self.changerequest = models.Request.objects.get(
             pk=self.changerequest_id)
 
-        # We only work for open change requests.
-        if not self.changerequest.is_open:
-            self.changerequest = None
-
         super(ChangeRequestAdapter, self).__init__(*args, **kwargs)
 
     def layer_desc(self, color=COLOR_NEW):
@@ -148,7 +144,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         for color in (COLOR_NEW, COLOR_OLD):
             query = self.mapnik_query(color)
             if query:
-                img_file = "ball_{}.png".format(color)
+                img_file = self.get_image_file(color)
                 img = self.symbol_img(img_file)
                 layer_desc = self.layer_desc(color)
                 styles[layer_desc] = self.make_style(img)
@@ -160,6 +156,36 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
 
         logger.debug("layers, styles {} {}".format(layers, styles))
         return layers, styles
+
+    def get_image_file(self, color):
+        """Color is different for closed change requests."""
+        from lizard_progress.changerequests.models import Request
+
+        real_colors = {
+            Request.REQUEST_STATUS_OPEN: {
+                COLOR_NEW: COLOR_NEW,
+                COLOR_OLD: COLOR_OLD
+            },
+            Request.REQUEST_STATUS_ACCEPTED: {
+                COLOR_NEW: "turquoise",
+                COLOR_OLD: "turquoise_dark"
+            },
+            Request.REQUEST_STATUS_REFUSED: {
+                COLOR_NEW: "purple",
+                COLOR_OLD: "purple_dark"
+            },
+            Request.REQUEST_STATUS_WITHDRAWN: {
+                COLOR_NEW: "purple",
+                COLOR_OLD: "purple_dark"
+            },
+            Request.REQUEST_STATUS_INVALID: {
+                COLOR_NEW: "purple",
+                COLOR_OLD: "purple_dark"
+            },
+        }
+
+        return "ball_{}.png".format(
+            real_colors[self.changerequest.request_status][color])
 
     def search(self, x, y, radius=10):
         if not self.changerequest:

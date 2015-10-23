@@ -146,21 +146,21 @@ $().ready(function () {
         // Post to url
         $.post(post_to_url);
 
-        // Reload page after 1 sec
+        // Reload page after 10 seconds
         setTimeout(function () {
             location.reload();
-        }, 1000);
+        }, 10000);
     });
 });
 
 $().ready(function () {
     // If there is a table row with class "please-reload-me", reload
-    // the page after 1 second.
+    // the page after 10 seconds.
     if ($("tr.please-reload-me").length > 0) {
-        // Reload page after 1 sec
+        // Reload page after 10 seconds
         setTimeout(function () {
             location.reload();
-        }, 1000);
+        }, 10000);
     }
 });
 

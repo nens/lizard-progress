@@ -1058,17 +1058,19 @@ class EmailNotificationConfigurationView(ProjectsView):
         return redirect
 
 
-def multiproject_crosssection_graph(request, organization_id, location_code):
-    """Show a graph with all Dwarsprofielen of this code that have been
-    uploaded in this organization.
+def multiproject_crosssection_graph(request, organization_id, location_id):
+    """Show a graph with all Dwarsprofielen of this organization that are
+    closer than 10m to this location.
 
     """
     organization = get_object_or_404(models.Organization, id=organization_id)
     if models.Organization.get_by_user(request.user) != organization:
         raise PermissionDenied()
 
+    location = get_object_or_404(models.Location, id=location_id)
+
     canvas = crosssection_graph.location_code_graph(
-        organization, location_code)
+        organization, location)
 
     response = HttpResponse(content_type='image/png')
     canvas.print_png(response)

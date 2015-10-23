@@ -212,7 +212,8 @@ class UploadedFilesView(UploadHomeView):
                 uploaded_file.as_dict()
                 for uploaded_file in
                 models.UploadedFile.objects.filter(
-                    activity=self.activity)]),
+                    activity=self.activity).select_related(
+                    'activity', 'activity__project')]),
             content_type="application/json")
 
 

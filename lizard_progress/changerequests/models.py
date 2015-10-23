@@ -264,23 +264,27 @@ class Request(models.Model):
 
         # Save new status
         self.change_status(Request.REQUEST_STATUS_ACCEPTED)
-        # Send notification
-        notification_type = NotificationType.objects.get(
-            name='aanvraag geaccepteerd')
-        kwargs = {
-            'actor': pmodels.UserRole.objects.get(
-                code=pmodels.UserRole.ROLE_MANAGER),
-            'action_object': self,
-            'target': self.activity,
-            'extra': {'link':
-                      Site.objects.get_current().domain +
-                      self.get_absolute_url()}
-        }
-        self.activity.notify_contractors(notification_type, **kwargs)
+
+        if not self.created_by_manager:
+            # Send notification. Requests by the manager are
+            # auto-accepted, they don't want to receive mails in this
+            # case.
+            notification_type = NotificationType.objects.get(
+                name='aanvraag geaccepteerd')
+            kwargs = {
+                'actor': pmodels.UserRole.objects.get(
+                    code=pmodels.UserRole.ROLE_MANAGER),
+                'action_object': self,
+                'target': self.activity,
+                'extra': {'link':
+                          Site.objects.get_current().domain +
+                          self.get_absolute_url()}
+            }
+            self.activity.notify_contractors(notification_type, **kwargs)
 
         if self.possible_request:
-            # If all possible requests of all a file are accepted, it may
-            # be uploaded again
+            # If all possible requests of a file are accepted, it
+            # may be uploaded again
             self.possible_request.do_accept()
 
     def do_remove_code(self, location_code=None):
@@ -597,21 +601,18 @@ def message_request_created(sender, instance, created, **kwargs):
     notification_type = NotificationType.objects.get(name="aanvraag ingediend")
 
     if instance.created_by_manager:
-        role_code = pmodels.UserRole.ROLE_MANAGER
-    else:
-        role_code = pmodels.UserRole.ROLE_UPLOADER
+        return  # Don't send mail if request was created by manager.
 
-    actor = pmodels.UserRole.objects.get(code=role_code)
-    kwargs = {
-        'actor': actor,
-        'action_object': instance,
-        'target': instance.activity,
-        'extra': {'link':
-                  Site.objects.get_current().domain +
-                  instance.get_absolute_url()},
-    }
-    if created:
-        instance.activity.notify_managers(notification_type, **kwargs)
+    if not created:
+        # I don't know how this is possible, but let's check it...
+        return
+
+    actor = pmodels.UserRole.objects.get(code=pmodels.UserRole.ROLE_UPLOADER)
+    instance.activity.notify_managers(
+        notification_type, actor=actor, action_object=instance,
+        target=instance.activity, extra={
+            'link': Site.objects.get_current().domain +
+            instance.get_absolute_url()})
 
 
 @receiver(post_save, sender=RequestComment)

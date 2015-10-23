@@ -2,10 +2,68 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.1 (unreleased)
+2.6.9 (unreleased)
 ------------------
 
 - Nothing changed yet.
+
+
+2.6.8 (2015-10-23)
+------------------
+
+- Call crosssection_graph.graph correctly in mtype_specifics.
+
+
+2.6.7 (2015-10-22)
+------------------
+
+- Remove extra 'location__' from filter.
+
+
+2.6.6 (2015-10-21)
+------------------
+
+- Nothing changed yet.
+
+
+2.6.5 (2015-10-21)
+------------------
+
+- Make old change requests work on the map, and add all of them to the
+  list of layers.
+
+
+2.6.4 (2015-10-19)
+------------------
+
+- Do not send any mails if a change request was made by the manager and
+  auto-accepted.
+
+- The "multiple projects dwarsprofiel graph" now filters locations based
+  on their distance to one chosen location, not on location code.
+
+- Activity names are now part of export filenames.
+
+
+2.6.3 (2015-10-16)
+------------------
+
+- Fix bug where multiple ExpectedAttachments were returned by a filter()
+  over a M2M relation.
+
+
+2.6.2 (2015-10-12)
+------------------
+
+- Reloading the exported file page was very slow, and automatically
+  repeated every second. Fixed that.
+
+
+2.6.1 (2015-10-06)
+------------------
+
+- Add a extra field to Location to signal that this Location has at
+  least one measurement, to make the Publiekskaart SQL a lot simpler.
 
 
 2.6.0 (2015-09-09)

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.8 (unreleased)
+2.6.8 (2015-10-23)
 ------------------
 
 - Call crosssection_graph.graph correctly in mtype_specifics.

@@ -8992,7 +8992,7 @@ div.request-sm {
 }
 
 /* line 120, ../sass/modules/_project_manager_home.scss */
-div.request-warning.request-container.request-container-sm {
+.request-container.request-container-sm {
   height: auto;
 }
 

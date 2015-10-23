@@ -129,11 +129,12 @@
 
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="
+    {{ STATIC_URL }}lizard_progress/javascripts/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/holder/2.8.0/holder.js"></script>
+    <script src="{{ STATIC_URL }}lizard_progress/javascripts/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="{{ STATIC_URL }}lizard_progress/javascripts/ajax/libs/holder/2.8.0/holder.js"></script>
     
     <script src="{{ STATIC_URL }}jqueryui/jquery-ui.js"></script>
     <script src="{{ STATIC_URL }}lizard_progress/bower_components/sweetalert/dist/sweetalert.min.js"></script>

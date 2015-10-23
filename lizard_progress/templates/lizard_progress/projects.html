@@ -150,10 +150,11 @@ $( window ).resize(function() {
                         <p class="project-title" style="display:inline-block;">
                             <!-- <i class="fa fa-star-o"></i>&nbsp; -->
                             <a href="
-                            {% url "lizard_progress_dashboardview" project.slug %}" style="display:inline-block;">{{ project.name }}</a>
+                            {% url "lizard_progress_dashboardview" project.slug %}" style="display:inline-block;">{{ project.name }}</a></p>
                               {% if numrequests > 0 %}
                                 <div class="request-warning
-                                request-container"
+                                request-container
+                                request-container-sm"
                                      style="display:inline-block;
                                      margin-left:15px;"><div
                                         class="project-request-number
@@ -161,7 +162,7 @@ $( window ).resize(function() {
                                         href="
                                         {% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm" data-toggle="tooltip" title="{{ numrequests }} open aanvragen"></i></a></div>
                               {% endif %}
-                              </p>
+
                             <p class="project-age" title="{{ project.created_at }}">
 
                             {{ project.created_at|timesince }} geleden

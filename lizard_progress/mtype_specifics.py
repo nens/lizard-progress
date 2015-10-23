@@ -103,7 +103,7 @@ class MetfileSpecifics(GenericSpecifics):
         measurements = models.Measurement.objects.filter(
             location__in=locations)
 
-        canvas = crosssection_graph.graph(measurements)
+        canvas = crosssection_graph.graph(locations[0], measurements)
 
         response = response_object or HttpResponse(content_type='image/png')
         canvas.print_png(response)

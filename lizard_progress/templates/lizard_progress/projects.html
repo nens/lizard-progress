@@ -171,7 +171,9 @@ $( window ).resize(function() {
                           <p class="project-description"></p>
                         <div class="col-md-4 col-sm-4 col-xs4 stats">
                           <ul>
-                            <li><span>Locaties compleet: {{ project.number_of_complete_locations }}x</span></li>
+                            <li><span><span class="hidden-xs">Locaties
+                                compleet:</span>
+                                {{ project.number_of_complete_locations }}x</span></li>
                             <li>
                               <div class="hidden-xs hidden-sm pie-md
                               {{ project.pie }}" data-toggle="tooltip"

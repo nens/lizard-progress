@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.9 (unreleased)
+2.6.9 (2015-11-02)
 ------------------
 
 - Slightly improve the code that sets locations to complete in

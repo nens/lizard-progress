@@ -157,7 +157,8 @@ class RibxParser(ProgressParser):
         associated_files = getattr(item, 'media', ())
 
         try:
-            measurement.setup_expected_attachments(associated_files)
+            all_uploaded = measurement.setup_expected_attachments(
+                associated_files)
         except models.AlreadyUploadedError as e:
             self.record_error(
                 item.sourceline, 'ATTACHMENT_ALREADY_EXISTS',
@@ -165,7 +166,8 @@ class RibxParser(ProgressParser):
             return None
 
         # Update completeness of location
-        location.set_completeness()
+        location.complete = all_uploaded
+        location.save()
 
         return measurement
 

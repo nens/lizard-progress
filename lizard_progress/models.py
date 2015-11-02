@@ -1228,11 +1228,13 @@ class Measurement(models.Model):
         - Deletes ExpectedAttachments that aren't connected to any
           Measurements anymore due to the previous item.
 
+        Return a boolean that is True if all expected attachments were already
+        uploaded.
         """
         filenames = set(filenames)
 
         self.__drop_irrelevant_expected_attachments(filenames)
-        self.__attach_relevant_expected_attachments(filenames)
+        return self.__attach_relevant_expected_attachments(filenames)
 
     def __drop_irrelevant_expected_attachments(self, filenames):
         attachments_to_drop = self.expected_attachments.exclude(
@@ -1244,12 +1246,15 @@ class Measurement(models.Model):
     def __attach_relevant_expected_attachments(self, filenames):
         activity = self.location.activity
 
+        all_uploaded = True
+
         for filename in filenames:
             try:
                 # If the attachment already exists and is attached to this,
                 # then that is OK.
-                ExpectedAttachment.objects.get(
+                existing_attachment = ExpectedAttachment.objects.get(
                     filename=filename, measurements=self)
+                all_uploaded = all_uploaded and existing_attachment.uploaded
                 continue
             except ExpectedAttachment.DoesNotExist:
                 try:
@@ -1281,6 +1286,10 @@ class Measurement(models.Model):
                         filename=filename, uploaded=False)
                 # Attach it
                 self.expected_attachments.add(expected_attachment)
+                # This one isn't uploaded yet.
+                all_uploaded = False
+
+        return all_uploaded
 
     def missing_attachments(self):
         """Return a queryset of ExpectedAttachments connected to this

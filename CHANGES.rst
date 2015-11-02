@@ -5,7 +5,8 @@ Changelog of lizard-progress
 2.6.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Slightly improve the code that sets locations to complete in
+  ribx_parser (fewer queries, less dependence on transaction magic).
 
 
 2.6.8 (2015-10-23)

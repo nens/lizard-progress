@@ -5,7 +5,7 @@ Changelog of lizard-progress
 2.6.10 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix bug with creating deletion requests for linestrings.
 
 
 2.6.9 (2015-11-02)

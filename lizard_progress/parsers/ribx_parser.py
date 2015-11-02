@@ -116,7 +116,7 @@ class RibxParser(ProgressParser):
             location = self.activity.location_set.get(location_code=item.ref)
             Request.create_deletion_request(
                 location, motivation=item.work_impossible,
-                user_is_manager=False)
+                user_is_manager=False, geom=geom)
         except models.Location.DoesNotExist:
             # Already deleted?
             pass

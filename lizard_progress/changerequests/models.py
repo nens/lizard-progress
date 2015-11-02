@@ -437,7 +437,8 @@ class Request(models.Model):
         return (x, y, x, y)
 
     @classmethod
-    def create_deletion_request(cls, location, motivation, user_is_manager):
+    def create_deletion_request(
+            cls, location, motivation, user_is_manager, geom=None):
         request, created = cls.objects.get_or_create(
             activity=location.activity,
             request_type=cls.REQUEST_TYPE_REMOVE_CODE,
@@ -445,7 +446,8 @@ class Request(models.Model):
             location_code=location.location_code, defaults=dict(
                 created_by_manager=user_is_manager,
                 motivation=motivation,
-                the_geom=geo.osgeo_3d_point_to_2d_wkt(location.the_geom)))
+                the_geom=geo.osgeo_3d_point_to_2d_wkt(
+                    geom if geom is not None else location.the_geom)))
         return request
 
 

@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.11 (unreleased)
+2.6.11 (2015-11-10)
 -------------------
 
 - Add a field 'measured_date' to Location that is the latest of the 'date'

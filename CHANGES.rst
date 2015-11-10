@@ -5,7 +5,7 @@ Changelog of lizard-progress
 2.6.12 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Make export run path name longer (some exports went over the 300 limit).
 
 
 2.6.11 (2015-11-10)

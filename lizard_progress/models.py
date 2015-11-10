@@ -1577,7 +1577,7 @@ class ExportRun(models.Model):
 
     created_at = models.DateTimeField(null=True, blank=True, default=None)
     created_by = models.ForeignKey(User, null=True, blank=True, default=None)
-    file_path = models.CharField(max_length=300, null=True, default=None)
+    file_path = models.CharField(max_length=1000, null=True, default=None)
     ready_for_download = models.BooleanField(default=False)
     export_running = models.BooleanField(default=False)
 

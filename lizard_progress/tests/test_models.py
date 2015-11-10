@@ -357,6 +357,7 @@ class TestProject(FixturesTestCase):
 
 
 @attr('slow')
+@attr('location')
 class TestLocation(FixturesTestCase):
     """Tests for the Location model."""
     def test_unicode(self):
@@ -388,6 +389,29 @@ class TestLocation(FixturesTestCase):
     def test_has_absolute_url(self):
         location = LocationF()
         self.assertTrue(location.get_absolute_url())
+
+    def test_measured_date_works_if_one_measurement_has_date_null(self):
+        location = LocationF.create()
+        date = datetime.date.today()
+
+        MeasurementF.create(location=location, date=None)
+        MeasurementF.create(location=location, date=date)
+
+        self.assertEquals(location.latest_measurement_date().date(), date)
+
+    def test_measured_date_works_if_there_are_no_measurements(self):
+        location = LocationF.create()
+        self.assertEquals(location.latest_measurement_date(), None)
+
+    def test_measured_date_returns_latest_date(self):
+        location = LocationF.create()
+        date1 = datetime.datetime(2015, 11, 1, 0, 0)
+        date2 = datetime.datetime(2015, 11, 2, 0, 0)
+
+        MeasurementF.create(location=location, date=date1)
+        MeasurementF.create(location=location, date=date2)
+
+        self.assertEquals(location.latest_measurement_date(), date2)
 
 
 class TestMeasurement(FixturesTestCase):

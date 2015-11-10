@@ -512,6 +512,9 @@ class Location(models.Model):
     # Often unused, but some types of project can plan when a
     # location will be planned.
     planned_date = models.DateField(null=True, blank=True)
+    # This field is related -- it copies the most recent date of those
+    # measuremens that have a measurement_date.
+    measured_date = models.DateField(null=True, blank=True)
 
     # Geometry can be a point OR a line
     # All Locations of the same location_type must have the same geometry
@@ -565,10 +568,10 @@ class Location(models.Model):
         return u
 
     def latest_measurement_date(self):
-        measurements = list(self.measurement_set.filter(date__isnull=False))
-        if not measurements:
-            return None
-        return max(m.date for m in measurements)
+        max_date = (
+            self.measurement_set.filter(date__isnull=False)
+            .aggregate(models.Max('date')))
+        return max_date['date__max']
 
     def get_absolute_url(self):
         """Return an URL that goes to the Map page, zooming to this

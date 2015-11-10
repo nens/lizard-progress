@@ -9,6 +9,8 @@ Changelog of lizard-progress
   fields of its measurements. Measurements that have no 'date' are ignored.
   This is used in the publiekskaart.
 
+- Fix call to multidwarsprofiel graph.
+
 
 2.6.10 (2015-11-02)
 -------------------

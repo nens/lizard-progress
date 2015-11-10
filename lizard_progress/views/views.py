@@ -925,7 +925,7 @@ def multiproject_crosssection_graph(request, organization_id, location_id):
 
     location = get_object_or_404(models.Location, id=location_id)
 
-    canvas = crosssection_graph.location_code_graph(
+    canvas = crosssection_graph.locations_close_by_graph(
         organization, location)
 
     response = HttpResponse(content_type='image/png')

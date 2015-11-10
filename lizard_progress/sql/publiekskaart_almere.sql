@@ -3,16 +3,12 @@ CREATE VIEW publiekskaart_almere AS (
     SELECT
         location.id,
         location.location_code,
-        CASE
-            WHEN location.one_measurement_uploaded
-            THEN location.timestamp
-            ELSE location.planned_date
-        END AS inspection_date,
+        COALESCE(location.measured_date, location.planned_date) AS inspection_date,
         location.location_type,
         location.one_measurement_uploaded,
         location.the_geom,
         CASE
-            WHEN location.one_measurement_uploaded THEN 1 -- Done
+            WHEN location.measured_date IS NOT NULL THEN 1 -- Done
             WHEN location.planned_date IS NULL THEN 0 -- Not planned
             WHEN current_date + interval '1 day' <= location.planned_date THEN 2  -- Today or tomorrow
             WHEN current_date + interval '2 days' <= location.planned_date THEN 3 -- In 2 days

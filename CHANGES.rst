@@ -5,7 +5,11 @@ Changelog of lizard-progress
 2.6.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add a field 'measured_date' to Location that is the latest of the 'date'
+  fields of its measurements. Measurements that have no 'date' are ignored.
+  This is used in the publiekskaart.
+
+- Fix call to multidwarsprofiel graph.
 
 
 2.6.10 (2015-11-02)

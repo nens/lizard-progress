@@ -38,6 +38,6 @@ CREATE VIEW publiekskaart_almere AS (
              location.planned_date >= current_date - interval '30 days')
             OR
              (location.one_measurement_uploaded AND
-              location.timestamp <= current_date + interval '30 days'))
+              COALESCE(location.measured_date, location.planned_date) >= current_date - interval '30 days'))
         AND location.location_type IN ('drain', 'manhole', 'pipe')
 );

@@ -20,7 +20,9 @@ class Migration(DataMigration):
 
         for location in locations:
             # Find latest date.
-            latest = location.latest_measurement_date()
+            latest = (
+                location.measurement_set.filter(date__isnull=False)
+                .aggregate(models.Max('date')))['date__max']
             # If it's different, update it.
             if latest != location.measured_date:
                 location.measured_date = latest

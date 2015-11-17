@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-03 08:11-0600\n"
+"POT-Creation-Date: 2015-11-17 03:00-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,24 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
-# Location types
-msgid "point"
-msgstr "punt"
-
-msgid "pipe"
-msgstr "streng"
-
-msgid "manhole"
-msgstr "put"
-
-msgid "drain"
-msgstr "kolk"
-
-msgid "complete"
-msgstr "compleet"
-
-msgid "planned on"
-msgstr "gepland op"
 #: forms.py:43
 msgid "Incorrect file format."
 msgstr "Verkeerd bestandsformaat."
@@ -87,13 +69,30 @@ msgstr "Nieuw wachtwoord"
 msgid "New password confirmation"
 msgstr "Bevestiging nieuw wachtwoord"
 
-#: forms.py:246
+#: forms.py:247
 msgid "Description (optional)"
 msgstr "Omschrijving (niet verplicht)"
 
-#: forms.py:276
+#: forms.py:283
 msgid "Activity"
 msgstr "Werkzaamheid"
+
+#: models.py:160
+msgid ""
+"If this is True, multiple recent uploads to one location will be marked by "
+"numbers on the map page. Used to find frequently recurring problems."
+msgstr ""
+"Als deze optie gekozen is worden meerdere recente uploads op één locatie gemarkeerd "
+"met getallen op de kaartpagina. Dit kan gebruikt worden om frequent terugkerende problemen "
+"te vinden."
+
+#: models.py:564
+msgid "complete"
+msgstr "compleet"
+
+#: models.py:566
+msgid "planned on"
+msgstr "gepland op"
 
 #: changerequests/forms.py:80
 msgid "Location already exists."
@@ -111,6 +110,55 @@ msgstr "Er is al een open aanvraag voor deze locatie."
 msgid "Old location doesn't exist."
 msgstr "Oude locatie bestaat niet."
 
+#: email_notifications/models.py:43
+msgid ""
+"The description is used on the subscription pages to\n"
+"                    provide a more elaborate explanation of the "
+"notification\n"
+"                    type and to aid the user in their subscription choices."
+msgstr ""
+
+#: email_notifications/models.py:49 email_notifications/models.py:54
+msgid ""
+"Use Django's templating language.\n"
+"                    Available variables: actor, action_object, target and\n"
+"                    the items in extra."
+msgstr ""
+
+#: email_notifications/models.py:118
+msgid "[Uploadservice]"
+msgstr "[Uploadservice]"
+
+#: templates/lizard_map/tag_workspace_edit.html:18
+msgid ""
+"This is your workspace. Hover your mouse over the containing items to see "
+"options."
+msgstr ""
+
+#: templates/lizard_map/tag_workspace_edit.html:19
+msgid "Layers"
+msgstr ""
+
+#: templates/lizard_map/tag_workspace_edit.html:57
+msgid "Zoom to extent"
+msgstr ""
+
+#: templates/lizard_map/tag_workspace_edit.html:68
+msgid "No map layers selected."
+msgstr ""
+
+#: templates/lizard_progress/map_legend.html:12
+msgid "Legend"
+msgstr "Legenda"
+
+#: templates/lizard_progress/map_legend.html:14
+msgid "Uploads"
+msgstr "Uploads"
+
+#: templates/lizard_progress/map_legend.html:33
+msgid "Change requests"
+msgstr "Aanvragen"
+
 #: templates/lizard_progress/ui_base.html:101
 msgid "Back to homepage"
 msgstr "Terug naar de homepage"
@@ -127,14 +175,27 @@ msgstr "&lt; Back"
 msgid "Verder &gt;"
 msgstr "Continue &gt;"
 
-#: views/views.py:233
+#: views/views.py:229
 msgid "Your current organization"
 msgstr "Uw huidige organisatie"
 
-#: views/views.py:241
+#: views/views.py:237
 msgid "Download the manual"
 msgstr "Download de handleiding"
 
-#: views/views.py:645
+#: views/views.py:668
 msgid "Projects without project type"
 msgstr "Projecten zonder projecttype"
+
+# Location types
+#~ msgid "point"
+#~ msgstr "punt"
+
+#~ msgid "pipe"
+#~ msgstr "streng"
+
+#~ msgid "manhole"
+#~ msgstr "put"
+
+#~ msgid "drain"
+#~ msgstr "kolk"

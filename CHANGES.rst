@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.13 (unreleased)
+2.6.13 (2015-11-17)
 -------------------
 
 - Added graphical lines to the legend (instead of text like "a red line").

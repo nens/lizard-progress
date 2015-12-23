@@ -14,6 +14,7 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
 
     ERRORS = {
         'UNEXPECTED': 'Onverwacht bestand: %s',
+        'DUPLICATE': 'Meerdere activiteiten wijzen naar dezelfde %s',
     }
 
     def parse(self, check_only=False):
@@ -25,6 +26,8 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
                 filename__iexact=filename)
         except models.ExpectedAttachment.DoesNotExist:
             return self.error('UNEXPECTED', filename)
+        except models.ExpectedAttachment.MultipleObjectsReturned:
+            return self.error('DUPLICATE', filename)
 
         measurements = expected_attachment.register_uploading()
         return self._parser_result(measurements)

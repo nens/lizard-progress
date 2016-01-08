@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.14 (unreleased)
+2.6.14 (2016-01-08)
 -------------------
 
 - When a "move location" change request is shown as a map layer, make the

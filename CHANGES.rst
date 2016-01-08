@@ -5,7 +5,9 @@ Changelog of lizard-progress
 2.6.14 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- When a "move location" change request is shown as a map layer, make the
+  old location clickable as well. This results in the same popup (there is
+  one popup per change request).
 
 
 2.6.13 (2015-11-17)

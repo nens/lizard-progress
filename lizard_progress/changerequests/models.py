@@ -175,6 +175,11 @@ class Request(models.Model):
         except pmodels.Location.DoesNotExist:
             return None
 
+    def get_old_location(self):
+        if not self.old_location_code:
+            return None
+        return self.get_location(self.old_location_code)
+
     def set_invalid(self, reason):
         self.invalid_reason = reason
         self.request_status = Request.REQUEST_STATUS_INVALID
@@ -210,8 +215,7 @@ class Request(models.Model):
                 return self.set_invalid("Locatie bestaat al.")
 
             if self.old_location_code:
-                old_location = self.get_location(
-                    location_code=self.old_location_code)
+                old_location = self.get_old_location()
                 if not old_location:
                     return self.set_invalid("Oude locatie bestaat niet.")
                 if old_location.has_measurements():

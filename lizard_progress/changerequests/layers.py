@@ -201,6 +201,16 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
 
         distance = math.sqrt((rd_x - my_x) ** 2 + (rd_y - my_y) ** 2)
 
+        # If there is an old location (this is a move location request)
+        # then we may have clicked there.
+        old_location = self.changerequest.get_old_location()
+        if old_location:
+            my_x_old = old_location.the_geom.x,
+            my_y_old = old_location.the_geom.y
+            old_distance = math.sqrt(
+                (rd_x - my_x_old) ** 2 + (rd_y - my_y_old) ** 2)
+            distance = min(distance, old_distance)
+
         logger.debug("distance: {}".format(distance))
 
         if distance < radius:
@@ -270,16 +280,12 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         north = south = cr.the_geom.y
 
         if cr.old_location_code:
-            try:
-                old_location = pmodels.Location.objects.get(
-                    project=cr.contractor.project,
-                    location_code=cr.old_location_code)
+            old_location = cr.get_old_location()
+            if old_location:
                 west = min(west, old_location.the_geom.x)
                 east = max(east, old_location.the_geom.x)
                 north = max(north, old_location.the_geom.y)
                 south = min(south, old_location.the_geom.y)
-            except pmodels.Location.DoesNotExist:
-                pass
 
         gwest, gnorth = rd_to_google(west, north)
         geast, gsouth = rd_to_google(east, south)

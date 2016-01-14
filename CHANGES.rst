@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.15 (unreleased)
+2.6.15 (2016-01-14)
 -------------------
 
 - Show only old locations from change requests in the actual project we're

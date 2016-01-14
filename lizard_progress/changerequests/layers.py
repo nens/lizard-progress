@@ -114,8 +114,11 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             FROM
                 lizard_progress_location
             WHERE
-                location_code = '%s') data""" %
-             (self.changerequest.location_code,))
+                location_code = '%s' AND
+                activity_id = '%s'
+            ) data""" %
+             (self.changerequest.location_code,
+              self.changereuqest.activity_id))
         return q
 
     def mapnik_query_old_location(self):
@@ -201,15 +204,17 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
 
         distance = math.sqrt((rd_x - my_x) ** 2 + (rd_y - my_y) ** 2)
 
-        # If there is an old location (this is a move location request)
-        # then we may have clicked there.
-        old_location = self.changerequest.get_old_location()
-        if old_location:
-            my_x_old = old_location.the_geom.x,
-            my_y_old = old_location.the_geom.y
-            old_distance = math.sqrt(
-                (rd_x - my_x_old) ** 2 + (rd_y - my_y_old) ** 2)
-            distance = min(distance, old_distance)
+        # If this is a move request, the location may have a different
+        # the_geom, and we may have clicked there.
+        if (self.changerequest.request_type ==
+                models.Request.REQUEST_TYPE_MOVE_LOCATION):
+            location = self.changerequest.get_location()
+            if location and location.the_geom != self.changerequest.the_geom:
+                my_x_old = location.the_geom.x,
+                my_y_old = location.the_geom.y
+                old_distance = math.sqrt(
+                    (rd_x - my_x_old) ** 2 + (rd_y - my_y_old) ** 2)
+                distance = min(distance, old_distance)
 
         logger.debug("distance: {}".format(distance))
 

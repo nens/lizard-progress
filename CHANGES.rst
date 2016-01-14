@@ -5,7 +5,10 @@ Changelog of lizard-progress
 2.6.15 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Show only old locations from change requests in the actual project we're
+  looking at.
+
+- Fix clicking old location.
 
 
 2.6.14 (2016-01-08)

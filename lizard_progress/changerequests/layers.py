@@ -118,7 +118,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 activity_id = '%s'
             ) data""" %
              (self.changerequest.location_code,
-              self.changereuqest.activity_id))
+              self.changerequest.activity_id))
         return q
 
     def mapnik_query_old_location(self):

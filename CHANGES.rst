@@ -5,7 +5,7 @@ Changelog of lizard-progress
 2.6.16 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Typo...
 
 
 2.6.15 (2016-01-14)

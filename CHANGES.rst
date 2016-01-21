@@ -7,6 +7,11 @@ Changelog of lizard-progress
 
 - Typo...
 
+- Remove the item for "old location of accepted change request" from
+  the legend -- as this isn't stored in the database, and the location
+  has moved successfully, we can't actually show this information on
+  the map.
+
 
 2.6.15 (2016-01-14)
 -------------------

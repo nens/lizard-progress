@@ -9,10 +9,12 @@ from __future__ import division
 
 import itertools
 import json
-
-from PIL.ImageFile import ImageFile
 import logging
 import os
+import time
+
+from PIL.ImageFile import ImageFile
+import requests
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -30,6 +32,140 @@ from lizard_progress.specifics import UnSuccessfulParserResult
 
 logger = logging.getLogger(__name__)
 
+GWSW_API_USERNAME = ''
+GWSW_API_PASSWORD = ''
+GWSW_BASE_URL = 'http://www.rioned.name/?docurl=1&user=%s&code=%s' % (
+    GWSW_API_USERNAME, GWSW_API_PASSWORD)
+GWSW_UPLOAD_URL = GWSW_BASE_URL
+GWSW_GETIDS_URL = GWSW_BASE_URL + '&getids=1'
+# Note: accepts an argument, i.e., the id
+GWSW_GETLOG_URL = GWSW_BASE_URL + '&getlog=%s'
+
+
+def _get_record_id(filename):
+    # In this block we're trying to get the id of the file we just
+    # uploaded, which is kinda elaborate... First we need to get the
+    # list of all ids, then select the ids with the right filename,
+    # and then select the newest.
+    _id = None
+    r_getids = requests.get(GWSW_GETIDS_URL)
+    if r_getids.ok:
+        try:
+            d = json.loads(r_getids.text)
+            all_ids = d['ids']
+        except ValueError:
+            logger.exception("Could not get IDs because invalid JSON: %s",
+                             r_getids.url)
+        except KeyError:
+            logger.exception("No 'ids' key in the JSON at this url: %s",
+                             r_getids.url)
+        else:
+            possible_ids = [x for x in all_ids if
+                            x['filename'] == filename]
+            try:
+                # We assume the highest id is the newest, and the one we want.
+                newest = max(possible_ids, key=lambda x: x['id'])
+            except (ValueError, KeyError):
+                logger.exception("No ids or corrupt data: %s", possible_ids)
+            else:
+                _id = newest['id']
+    return _id
+
+
+def get_record_id(filename, retries=5):
+    tries = 1 + retries  # We try and retry, just like in life.
+    record_id = None
+    for i in range(tries):
+        logger.debug("get_record_id try number %s", i)
+        record_id = _get_record_id(filename)
+        if not record_id:
+            time.sleep(i**2 + 1)
+        else:
+            logger.debug("get_record_id succesful")
+            break
+    return record_id
+
+
+def _get_log_content(record_id):
+    r_getlog = requests.get(GWSW_GETLOG_URL % record_id)
+    log_content = None
+    if r_getlog.ok:
+        try:
+            j = json.loads(r_getlog.text)
+        except ValueError:
+            logger.exception("Invalid JSON, url: %s", r_getlog.url)
+        else:
+            try:
+                log_content = j['logcontent']
+            except KeyError:
+                logger.exception(
+                    "No 'logcontent' key in the JSON at this url: %s",
+                    r_getlog.url)
+    return log_content
+
+
+def get_log_content(filename, retries=5):
+    tries = 1 + retries  # We try and retry, just like in life.
+    log_content = None
+    for i in range(tries):
+        logger.debug("get_log_content try number %s", i)
+        log_content = _get_log_content(filename)
+        if not log_content or (len(log_content) == 1 and log_content[0] == ""):
+            time.sleep(i**3 + 1)
+        else:
+            logger.debug("get_log_content succesful")
+            break
+    logger.error(log_content)
+    return log_content
+
+
+def parse_log_content(log_content):
+    """Parse a log content, which is a list of strings.
+
+    Example line:
+    'Regel[93] - Fout*: verplicht <ABP> element voor deze <ZB_A> ontbreekt.'
+    """
+    errors = []
+    for line in log_content:
+        if line.lower().startswith('regel'):
+            try:
+                l, msg = line.split('-', 1)
+            except ValueError:
+                logger.exception("Can't split correctly: %s", line)
+            else:
+                line_no = None
+                try:
+                    line_no = int(l.strip()[6:-1])
+                except ValueError:
+                    logger.exception("Can't convert line number: %s", l)
+                else:
+                    error = {
+                        'line': line_no,
+                        'message': 'GWSW' + msg
+                        }
+                    errors.append(error)
+    return errors
+
+
+def parse_GWSW(file_obj):
+
+    fpath = os.path.abspath(file_obj.name)
+    with open(fpath, 'rb') as f:
+        r_upload = requests.post(GWSW_UPLOAD_URL,
+                                 files={file_obj.name: f})
+    logger.info("GWSW Upload response: %s", r_upload.text)
+    errors = []
+    if r_upload.ok:
+        filename = os.path.basename(file_obj.name)
+        record_id = get_record_id(filename, retries=5)
+        if record_id is not None:
+            log_content = get_log_content(record_id, retries=5)
+            if log_content:
+                errors = parse_log_content(log_content)
+    else:
+        logger.error("Can't make request to %s", r_upload.url)
+    return errors
+
 
 class RibxParser(ProgressParser):
     ERRORS = {
@@ -45,13 +181,19 @@ class RibxParser(ProgressParser):
         if isinstance(self.file_object, ImageFile):
             return UnSuccessfulParserResult()
 
-        ribx, errors = parsers.parse(
+        ribx, ribx_errors = parsers.parse(
             self.file_object, parsers.Mode.INSPECTION)
 
-        if errors:
-            for error in errors:
+        gwsw_errors = parse_GWSW(self.file_object)
+
+        if ribx_errors:
+            for error in ribx_errors:
                 self.record_error(error['line'], None, error['message'])
             return self._parser_result([])
+
+        if gwsw_errors:
+            for error in gwsw_errors:
+                self.record_error(error['line'], None, error['message'])
 
         measurements = self.get_measurements(ribx)
 

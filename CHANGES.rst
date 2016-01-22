@@ -5,6 +5,8 @@ Changelog of lizard-progress
 2.6.16 (unreleased)
 -------------------
 
+- Make an initial working version of the GWSW checker.
+
 - Typo...
 
 

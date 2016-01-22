@@ -7,6 +7,8 @@ Changelog of lizard-progress
 
 - Make an initial working version of the GWSW checker.
 
+- Add missing models to admin.
+
 - Typo...
 
 

@@ -42,6 +42,7 @@ def _get_record_id(filename):
     # TODO: this method is very error prone, and should be removed
     # as soon as the HTTP API is able to return the record id immediately.
     _id = None
+    all_ids = []
     r_getids = requests.get(settings.GWSW_GETIDS_URL)
     if r_getids.ok:
         try:
@@ -53,16 +54,14 @@ def _get_record_id(filename):
         except KeyError:
             logger.exception("No 'ids' key in the JSON at this url: %s",
                              r_getids.url)
-        else:
-            possible_ids = [x for x in all_ids if
-                            x['filename'] == filename]
-            try:
-                # We assume the highest id is the newest, and the one we want.
-                newest = max(possible_ids, key=lambda x: x['id'])
-            except (ValueError, KeyError):
-                logger.exception("No ids or corrupt data: %s", possible_ids)
-            else:
-                _id = newest['id']
+        possible_ids = [x for x in all_ids if
+                        x['filename'] == filename]
+        try:
+            # We assume the highest id is the newest, and the one we want.
+            newest = max(possible_ids, key=lambda x: x['id'])
+            _id = newest['id']
+        except (ValueError, KeyError):
+            logger.exception("No ids or corrupt data: %s", possible_ids)
     return _id
 
 
@@ -141,18 +140,17 @@ def parse_log_content(log_content):
                 l, msg = line.split('-', 1)
             except ValueError:
                 logger.exception("Can't split correctly: %s", line)
-            else:
-                line_no = None
-                try:
-                    line_no = int(l.strip()[6:-1])
-                except ValueError:
-                    logger.exception("Can't convert line number: %s", l)
-                else:
-                    error = {
-                        'line': line_no,
-                        'message': 'GWSW' + msg
-                        }
-                    errors.append(error)
+                continue
+            try:
+                line_no = int(l.strip()[6:-1])
+            except ValueError:
+                logger.exception("Can't convert line number: %s", l)
+                continue
+            error = {
+                'line': line_no,
+                'message': 'GWSW' + msg
+                }
+            errors.append(error)
     return errors
 
 

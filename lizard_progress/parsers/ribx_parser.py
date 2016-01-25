@@ -74,16 +74,15 @@ def get_record_id(filename, retries=10):
         retries: max number of retries to the HTTP API
     """
     tries = 1 + retries  # We try and retry, just like in life.
-    record_id = None
     for i in range(tries):
         logger.debug("get_record_id try number %s", i)
         record_id = _get_record_id(filename)
-        if not record_id:
-            time.sleep(i**2 + 1)
-        else:
+        if record_id:
             logger.debug("get_record_id succesful")
-            break
-    return record_id
+            return record_id
+        else:
+            time.sleep(i**2 + 1)
+    return None
 
 
 def _get_log_content(record_id):
@@ -112,19 +111,18 @@ def get_log_content(filename, retries=10):
         retries: max number of retries to the HTTP API
     """
     tries = 1 + retries  # We try and retry, just like in life.
-    log_content = None
     for i in range(tries):
         logger.debug("get_log_content try number %s", i)
         log_content = _get_log_content(filename)
         # If the ribx file has not yet been processed you will get a
-        # log_content with the value ['']. The join operation will check if it
-        # contains only blank values.
+        # log_content with the value ['']. This join operation is to guard
+        # against these blank values.
         if not log_content or not ''.join(log_content):
             time.sleep(2*i**2 + 1)
         else:
             logger.debug("get_log_content succesful")
-            break
-    return log_content
+            return log_content
+    return None
 
 
 def parse_log_content(log_content):

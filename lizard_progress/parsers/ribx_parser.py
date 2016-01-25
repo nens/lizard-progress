@@ -33,16 +33,6 @@ from lizard_progress.specifics import UnSuccessfulParserResult
 
 logger = logging.getLogger(__name__)
 
-# RIONED GWSW HTTP API urls and credentials:
-GWSW_API_USERNAME = ''
-GWSW_API_PASSWORD = ''
-GWSW_BASE_URL = 'http://www.rioned.name/?docurl=1&user=%s&code=%s' % (
-    GWSW_API_USERNAME, GWSW_API_PASSWORD)
-GWSW_UPLOAD_URL = GWSW_BASE_URL
-GWSW_GETIDS_URL = GWSW_BASE_URL + '&getids=1'
-# Note: accepts an argument, i.e., the id
-GWSW_GETLOG_URL = GWSW_BASE_URL + '&getlog=%s'
-
 
 def _get_record_id(filename):
     # In this block we're trying to get the id of the file we just
@@ -52,7 +42,7 @@ def _get_record_id(filename):
     # TODO: this method is very error prone, and should be removed
     # as soon as the HTTP API is able to return the record id immediately.
     _id = None
-    r_getids = requests.get(GWSW_GETIDS_URL)
+    r_getids = requests.get(settings.GWSW_GETIDS_URL)
     if r_getids.ok:
         try:
             d = json.loads(r_getids.text)
@@ -98,7 +88,7 @@ def get_record_id(filename, retries=10):
 
 
 def _get_log_content(record_id):
-    r_getlog = requests.get(GWSW_GETLOG_URL % record_id)
+    r_getlog = requests.get(settings.GWSW_GETLOG_URL % record_id)
     log_content = None
     if r_getlog.ok:
         try:
@@ -131,7 +121,7 @@ def get_log_content(filename, retries=10):
         # log_content with the value ['']. The join operation will check if it
         # contains only blank values.
         if not log_content or not ''.join(log_content):
-            time.sleep(i**3 + 1)
+            time.sleep(2*i**2 + 1)
         else:
             logger.debug("get_log_content succesful")
             break
@@ -188,7 +178,7 @@ def check_gwsw(file_obj):
     """
     with reopen_file(file_obj, 'rb') as f:
         logger.info("Uploading file to RIONED GWSW API...")
-        r_upload = requests.post(GWSW_UPLOAD_URL,
+        r_upload = requests.post(settings.GWSW_UPLOAD_URL,
                                  files={file_obj.name: f})
     logger.info("GWSW Upload response: %s", r_upload.text)
     errors = []

@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from contextlib import contextmanager
 import itertools
 import json
 import logging
@@ -32,6 +33,7 @@ from lizard_progress.specifics import UnSuccessfulParserResult
 
 logger = logging.getLogger(__name__)
 
+# RIONED GWSW HTTP API urls and credentials:
 GWSW_API_USERNAME = ''
 GWSW_API_PASSWORD = ''
 GWSW_BASE_URL = 'http://www.rioned.name/?docurl=1&user=%s&code=%s' % (
@@ -47,6 +49,8 @@ def _get_record_id(filename):
     # uploaded, which is kinda elaborate... First we need to get the
     # list of all ids, then select the ids with the right filename,
     # and then select the newest.
+    # TODO: this method is very error prone, and should be removed
+    # as soon as the HTTP API is able to return the record id immediately.
     _id = None
     r_getids = requests.get(GWSW_GETIDS_URL)
     if r_getids.ok:
@@ -72,7 +76,14 @@ def _get_record_id(filename):
     return _id
 
 
-def get_record_id(filename, retries=5):
+def get_record_id(filename, retries=10):
+    """Get the record id of the uploaded file, which is needed for retrieving
+    additional info about the file.
+
+    Args:
+        filename: filename of the uploaded file
+        retries: max number of retries to the HTTP API
+    """
     tries = 1 + retries  # We try and retry, just like in life.
     record_id = None
     for i in range(tries):
@@ -104,18 +115,26 @@ def _get_log_content(record_id):
     return log_content
 
 
-def get_log_content(filename, retries=5):
+def get_log_content(filename, retries=10):
+    """Get the log from an uploaded ribx file.
+
+    Args:
+        filename: name of the file
+        retries: max number of retries to the HTTP API
+    """
     tries = 1 + retries  # We try and retry, just like in life.
     log_content = None
     for i in range(tries):
         logger.debug("get_log_content try number %s", i)
         log_content = _get_log_content(filename)
-        if not log_content or (len(log_content) == 1 and log_content[0] == ""):
+        # If the ribx file has not yet been processed you will get a
+        # log_content with the value ['']. The join operation will check if it
+        # contains only blank values.
+        if not log_content or not ''.join(log_content):
             time.sleep(i**3 + 1)
         else:
             logger.debug("get_log_content succesful")
             break
-    logger.error(log_content)
     return log_content
 
 
@@ -147,19 +166,38 @@ def parse_log_content(log_content):
     return errors
 
 
-def parse_GWSW(file_obj):
+@contextmanager
+def reopen_file(file_obj, mode):
+    """Reopen a file object."""
+    filepath = os.path.abspath(file_obj.name)
+    try:
+        f = open(filepath, mode)
+        yield f
+    finally:
+        f.close()
 
-    fpath = os.path.abspath(file_obj.name)
-    with open(fpath, 'rb') as f:
+
+def check_gwsw(file_obj):
+    """Check the ribx file using the RIONED GWSW HTTP API.
+
+    What is a little weird is that we re-open the file object. For some reason
+    the opened file object is not usable; after re-opening it as 'rb' it
+    works though. The cause is probably that the file has already been read,
+    so the cursor is at the end of the file. file_obj.seek(0) is a possible
+    alternative fix, but less clear...
+    """
+    with reopen_file(file_obj, 'rb') as f:
+        logger.info("Uploading file to RIONED GWSW API...")
         r_upload = requests.post(GWSW_UPLOAD_URL,
                                  files={file_obj.name: f})
     logger.info("GWSW Upload response: %s", r_upload.text)
     errors = []
     if r_upload.ok:
-        filename = os.path.basename(file_obj.name)
-        record_id = get_record_id(filename, retries=5)
+        filepath = os.path.abspath(f.name)
+        filename = os.path.basename(filepath)
+        record_id = get_record_id(filename, retries=10)
         if record_id is not None:
-            log_content = get_log_content(record_id, retries=5)
+            log_content = get_log_content(record_id, retries=10)
             if log_content:
                 errors = parse_log_content(log_content)
     else:
@@ -184,16 +222,15 @@ class RibxParser(ProgressParser):
         ribx, ribx_errors = parsers.parse(
             self.file_object, parsers.Mode.INSPECTION)
 
-        gwsw_errors = parse_GWSW(self.file_object)
-
         if ribx_errors:
             for error in ribx_errors:
                 self.record_error(error['line'], None, error['message'])
+            # Return, because unusable XML.
             return self._parser_result([])
 
-        if gwsw_errors:
-            for error in gwsw_errors:
-                self.record_error(error['line'], None, error['message'])
+        gwsw_errors = check_gwsw(self.file_object)
+        for error in gwsw_errors:
+            self.record_error(error['line'], None, error['message'])
 
         measurements = self.get_measurements(ribx)
 

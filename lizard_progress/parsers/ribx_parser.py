@@ -61,7 +61,7 @@ def get_log_content(filename, retries=10):
         # If the ribx file has not yet been processed you will get a
         # log_content with the value ['']. This join operation is to guard
         # against these blank values.
-        if ''.join(log_content):
+        if ''.join(log_content) == '':
             time.sleep(2*i**2 + 1)
         else:
             logger.debug("get_log_content succesful")

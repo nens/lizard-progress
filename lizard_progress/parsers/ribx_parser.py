@@ -130,8 +130,8 @@ def check_gwsw(file_obj):
     if r_upload.ok:
         record_id = None
         try:
-            resp = json.loads(r_upload)
-            record_id = resp['id']
+            resp = json.loads(r_upload.text)
+            record_id = int(resp['id'])
         except (ValueError, KeyError):
             logger.exception("Can't get id from response: %s", r_upload)
         if record_id:

@@ -34,57 +34,6 @@ from lizard_progress.specifics import UnSuccessfulParserResult
 logger = logging.getLogger(__name__)
 
 
-def _get_record_id(filename):
-    # In this block we're trying to get the id of the file we just
-    # uploaded, which is kinda elaborate... First we need to get the
-    # list of all ids, then select the ids with the right filename,
-    # and then select the newest.
-    # TODO: this method is very error prone, and should be removed
-    # as soon as the HTTP API is able to return the record id immediately.
-    _id = None
-    all_ids = []
-    r_getids = requests.get(settings.GWSW_GETIDS_URL)
-    if r_getids.ok:
-        try:
-            d = json.loads(r_getids.text)
-            all_ids = d['ids']
-        except ValueError:
-            logger.exception("Could not get IDs because invalid JSON: %s",
-                             r_getids.url)
-        except KeyError:
-            logger.exception("No 'ids' key in the JSON at this url: %s",
-                             r_getids.url)
-        possible_ids = [x for x in all_ids if
-                        x['filename'] == filename]
-        try:
-            # We assume the highest id is the newest, and the one we want.
-            newest = max(possible_ids, key=lambda x: x['id'])
-            _id = newest['id']
-        except (ValueError, KeyError):
-            logger.exception("No ids or corrupt data: %s", possible_ids)
-    return _id
-
-
-def get_record_id(filename, retries=10):
-    """Get the record id of the uploaded file, which is needed for retrieving
-    additional info about the file.
-
-    Args:
-        filename: filename of the uploaded file
-        retries: max number of retries to the HTTP API
-    """
-    tries = 1 + retries  # We try and retry, just like in life.
-    for i in range(tries):
-        logger.debug("get_record_id try number %s", i)
-        record_id = _get_record_id(filename)
-        if record_id:
-            logger.debug("get_record_id succesful")
-            return record_id
-        else:
-            time.sleep(i**2 + 1)
-    return None
-
-
 def _get_log_content(record_id):
     r_getlog = requests.get(settings.GWSW_GETLOG_URL % record_id)
     log_content = None
@@ -179,10 +128,13 @@ def check_gwsw(file_obj):
     logger.info("GWSW Upload response: %s", r_upload.text)
     errors = []
     if r_upload.ok:
-        filepath = os.path.abspath(f.name)
-        filename = os.path.basename(filepath)
-        record_id = get_record_id(filename, retries=10)
-        if record_id is not None:
+        record_id = None
+        try:
+            resp = json.loads(r_upload)
+            record_id = resp['id']
+        except (ValueError, KeyError):
+            logger.exception("Can't get id from response: %s", r_upload)
+        if record_id:
             log_content = get_log_content(record_id, retries=10)
             if log_content:
                 errors = parse_log_content(log_content)

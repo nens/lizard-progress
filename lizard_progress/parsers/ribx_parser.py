@@ -47,14 +47,17 @@ def _get_log_content(record_id):
     return log_content
 
 
-def get_log_content(filename, retries=10):
+def get_log_content(filename, retries=10, initial_wait=2):
     """Get the log from an uploaded ribx file.
 
     Args:
         filename: name of the file
         retries: max number of retries to the HTTP API
+        initial_wait: a guess on how the external API takes to process the
+            ribx file
     """
     tries = 1 + retries  # We try and retry, just like in life.
+    time.sleep(initial_wait)
     for i in range(tries):
         logger.debug("get_log_content try number %s", i)
         log_content = _get_log_content(filename)

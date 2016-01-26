@@ -35,20 +35,15 @@ logger = logging.getLogger(__name__)
 
 
 def _get_log_content(record_id):
+    """Do a request to the GWSW API and get the response.
+
+    Raises:
+        ValueError: if the get response isn't proper JSON
+        KeyError: if the JSON doesn't contain the 'logcontent' key
+    """
     r_getlog = requests.get(settings.GWSW_GETLOG_URL % record_id)
-    log_content = None
-    if r_getlog.ok:
-        try:
-            j = json.loads(r_getlog.text)
-        except ValueError:
-            logger.exception("Invalid JSON, url: %s", r_getlog.url)
-        else:
-            try:
-                log_content = j['logcontent']
-            except KeyError:
-                logger.exception(
-                    "No 'logcontent' key in the JSON at this url: %s",
-                    r_getlog.url)
+    j = json.loads(r_getlog.text)
+    log_content = j['logcontent']
     return log_content
 
 
@@ -66,7 +61,7 @@ def get_log_content(filename, retries=10):
         # If the ribx file has not yet been processed you will get a
         # log_content with the value ['']. This join operation is to guard
         # against these blank values.
-        if not log_content or not ''.join(log_content):
+        if ''.join(log_content):
             time.sleep(2*i**2 + 1)
         else:
             logger.debug("get_log_content succesful")
@@ -120,6 +115,9 @@ def check_gwsw(file_obj):
     works though. The cause is probably that the file has already been read,
     so the cursor is at the end of the file. file_obj.seek(0) is a possible
     alternative fix, but less clear...
+
+    Raises:
+        ValueError, KeyError, requests.exceptins.HTTPError
     """
     with reopen_file(file_obj, 'rb') as f:
         logger.info("Uploading file to RIONED GWSW API...")
@@ -134,13 +132,18 @@ def check_gwsw(file_obj):
             record_id = int(resp['id'])
         except (ValueError, KeyError):
             logger.exception("Can't get id from response: %s", r_upload)
-        if record_id:
+            raise
+        try:
             log_content = get_log_content(record_id, retries=10)
-            if log_content:
-                errors = parse_log_content(log_content)
+            errors = parse_log_content(log_content)
+        except (ValueError, KeyError):
+            logger.exception("Incorrect getlog response for id: %s",
+                             record_id)
+            raise
+        return errors
     else:
         logger.error("Can't make request to %s", r_upload.url)
-    return errors
+        r_upload.raise_for_status()
 
 
 class RibxParser(ProgressParser):
@@ -166,9 +169,13 @@ class RibxParser(ProgressParser):
             # Return, because unusable XML.
             return self._parser_result([])
 
-        gwsw_errors = check_gwsw(self.file_object)
-        for error in gwsw_errors:
-            self.record_error(error['line'], None, error['message'])
+        try:
+            gwsw_errors = check_gwsw(self.file_object)
+        except (ValueError, KeyError, requests.exceptions.HTTPError):
+            logger.exception("There is an error with (handling) the API")
+        else:
+            for error in gwsw_errors:
+                self.record_error(error['line'], None, error['message'])
 
         measurements = self.get_measurements(ribx)
 

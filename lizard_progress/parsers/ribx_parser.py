@@ -7,12 +7,15 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from contextlib import contextmanager
 import itertools
 import json
-
-from PIL.ImageFile import ImageFile
 import logging
 import os
+import time
+
+from PIL.ImageFile import ImageFile
+import requests
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -31,6 +34,121 @@ from lizard_progress.specifics import UnSuccessfulParserResult
 logger = logging.getLogger(__name__)
 
 
+def _get_log_content(record_id):
+    """Do a request to the GWSW API and get the response.
+
+    Raises:
+        ValueError: if the get response isn't proper JSON
+        KeyError: if the JSON doesn't contain the 'logcontent' key
+    """
+    r_getlog = requests.get(settings.GWSW_GETLOG_URL % record_id)
+    j = json.loads(r_getlog.text)
+    log_content = j['logcontent']
+    return log_content
+
+
+def get_log_content(filename, retries=10, initial_wait=2):
+    """Get the log from an uploaded ribx file.
+
+    Args:
+        filename: name of the file
+        retries: max number of retries to the HTTP API
+        initial_wait: a guess on how the external API takes to process the
+            ribx file
+    """
+    tries = 1 + retries  # We try and retry, just like in life.
+    time.sleep(initial_wait)
+    for i in range(tries):
+        logger.debug("get_log_content try number %s", i)
+        log_content = _get_log_content(filename)
+        # If the ribx file has not yet been processed you will get a
+        # log_content with the value ['']. This join operation is to guard
+        # against these blank values.
+        if ''.join(log_content) == '':
+            time.sleep(2*i**2 + 1)
+        else:
+            logger.debug("get_log_content succesful")
+            return log_content
+    return None
+
+
+def parse_log_content(log_content):
+    """Parse a log content, which is a list of strings.
+
+    Example line:
+    'Regel[93] - Fout*: verplicht <ABP> element voor deze <ZB_A> ontbreekt.'
+    """
+    errors = []
+    for line in log_content:
+        if line.lower().startswith('regel'):
+            try:
+                l, msg = line.split('-', 1)
+            except ValueError:
+                logger.exception("Can't split correctly: %s", line)
+                continue
+            try:
+                line_no = int(l.strip()[6:-1])
+            except ValueError:
+                logger.exception("Can't convert line number: %s", l)
+                continue
+            error = {
+                'line': line_no,
+                'message': 'GWSW' + msg
+                }
+            errors.append(error)
+    return errors
+
+
+@contextmanager
+def reopen_file(file_obj, mode):
+    """Reopen a file object."""
+    filepath = os.path.abspath(file_obj.name)
+    try:
+        f = open(filepath, mode)
+        yield f
+    finally:
+        f.close()
+
+
+def check_gwsw(file_obj):
+    """Check the ribx file using the RIONED GWSW HTTP API.
+
+    What is a little weird is that we re-open the file object. For some reason
+    the opened file object is not usable; after re-opening it as 'rb' it
+    works though. The cause is probably that the file has already been read,
+    so the cursor is at the end of the file. file_obj.seek(0) is a possible
+    alternative fix, but less clear...
+
+    Raises:
+        ValueError, KeyError, requests.exceptins.HTTPError
+    """
+    with reopen_file(file_obj, 'rb') as f:
+        logger.info("Uploading file to RIONED GWSW API...")
+        r_upload = requests.post(settings.GWSW_UPLOAD_URL,
+                                 files={file_obj.name: f})
+    logger.info("GWSW Upload response: %s", r_upload.text)
+    errors = []
+    if r_upload.ok:
+        record_id = None
+        try:
+            resp = json.loads(r_upload.text)
+            record_id = int(resp['id'])
+        except (ValueError, KeyError):
+            logger.exception("Can't get id from response: %s", r_upload)
+            raise
+        try:
+            log_content = get_log_content(record_id, retries=10)
+            errors = parse_log_content(log_content)
+        except (ValueError, KeyError):
+            logger.exception("Incorrect getlog response for id: %s",
+                             record_id)
+            raise
+        return errors
+    else:
+        logger.error("Can't make request to %s", r_upload.url)
+        r_upload.raise_for_status()
+
+
 class RibxParser(ProgressParser):
     ERRORS = {
         'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
@@ -45,13 +163,22 @@ class RibxParser(ProgressParser):
         if isinstance(self.file_object, ImageFile):
             return UnSuccessfulParserResult()
 
-        ribx, errors = parsers.parse(
+        ribx, ribx_errors = parsers.parse(
             self.file_object, parsers.Mode.INSPECTION)
 
-        if errors:
-            for error in errors:
+        if ribx_errors:
+            for error in ribx_errors:
                 self.record_error(error['line'], None, error['message'])
+            # Return, because unusable XML.
             return self._parser_result([])
+
+        try:
+            gwsw_errors = check_gwsw(self.file_object)
+        except (ValueError, KeyError, requests.exceptions.HTTPError):
+            logger.exception("There is an error with (handling) the API")
+        else:
+            for error in gwsw_errors:
+                self.record_error(error['line'], None, error['message'])
 
         measurements = self.get_measurements(ribx)
 

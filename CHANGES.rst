@@ -11,6 +11,10 @@ Changelog of lizard-progress
 2.6.16 (2016-01-21)
 -------------------
 
+- Make an initial working version of the GWSW checker.
+
+- Add missing models to admin.
+
 - Typo...
 
 - Remove the item for "old location of accepted change request" from

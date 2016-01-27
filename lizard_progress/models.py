@@ -496,7 +496,8 @@ class Project(models.Model):
             location__activity__measurement_type__delete_on_archive=True)
         logger.debug("Deleting measurements: %s", measurements)
         for m in measurements:
-            m.delete(notify=False, deleted_by_contractor=False)
+            m.delete(notify=False, deleted_by_contractor=False,
+                     set_completeness=False)
         self.is_archived = True
         self.save()
 
@@ -1173,7 +1174,8 @@ class Measurement(models.Model):
     def base_filename(self):
         return self.filename and os.path.basename(self.filename)
 
-    def delete(self, notify=True, deleted_by_contractor=True):
+    def delete(self, notify=True, deleted_by_contractor=True,
+               set_completeness=True):
         """Delete this measurement. If this is done by a user of the
         contractor organization, this is cancellation (for instance to
         fix errors), if this is done by a user of the project owning
@@ -1223,7 +1225,8 @@ class Measurement(models.Model):
                 self.location.activity, self.filename)
 
         # Let our location determine its completeness
-        self.location.set_completeness()
+        if set_completeness:
+            self.location.set_completeness()
 
     def send_deletion_notification(self, deleted_by_contractor):
         notification_type = NotificationType.objects.get(

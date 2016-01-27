@@ -5,7 +5,11 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Implement deletion of 'attachment' Measurements when Project is archived.
+  This should only be done for sewerage projects; to enable deletion of a
+  specific measurement type the delete_on_archive must thus be set.
+
+- Add delete_on_archive field to AvailableMeasurentType.
 
 
 2.6.16 (2016-01-21)

@@ -476,6 +476,32 @@ class Project(models.Model):
         # Note that self.project_type is nullable.
         return self.project_type and self.project_type.show_numbers_on_map
 
+    def archive(self):
+        """Archive a project.
+
+        This has a side effect for sewerage projects: all measurements
+        of the project that belong to a ribx (which are attachments and
+        have a parent != null), will be deleted, including the files.
+        """
+        logger.info("Archiving project %s", self)
+        # This query returns all Measurements that (1) belong to a Project,
+        # (2) that have a parent Measurement, which entails that it is an
+        # attachment (e.g., media files belonging to a Ribx), and (3) have
+        # a measurement type that can be deleted.
+        measurements = Measurement.objects.filter(
+            location__activity__project=self,
+            parent__isnull=False,
+            location__activity__measurement_type__delete_on_archive=True)
+        logger.debug("Deleting measurements: %s", measurements)
+        for m in measurements:
+            m.delete()
+        self.is_archived = True
+        self.save()
+
+    def activate(self):
+        self.is_archived = False
+        self.save()
+
 
 class Location(models.Model):
     LOCATION_TYPE_POINT = 'point'
@@ -698,6 +724,9 @@ class AvailableMeasurementType(models.Model):
     # For some measurement types, we keep all versions of uploaded data that
     # have been uploaded. For most, we only keep that last uploaded version.
     keep_updated_measurements = models.BooleanField(default=False)
+
+    # Some measurements need to be deleted when the Project is archived.
+    delete_on_archive = models.BooleanField(default=False)
 
     @property
     def implementation_slug(self):

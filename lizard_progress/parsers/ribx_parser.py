@@ -172,13 +172,14 @@ class RibxParser(ProgressParser):
             # Return, because unusable XML.
             return self._parser_result([])
 
-        try:
-            gwsw_errors = check_gwsw(self.file_object)
-        except (ValueError, KeyError, requests.exceptions.HTTPError):
-            logger.exception("There is an error with (handling) the API")
-        else:
-            for error in gwsw_errors:
-                self.record_error(error['line'], None, error['message'])
+        if settings.GWSW_API_ENABLED:
+            try:
+                gwsw_errors = check_gwsw(self.file_object)
+            except (ValueError, KeyError, requests.exceptions.HTTPError):
+                logger.exception("There is an error with (handling) the API")
+            else:
+                for error in gwsw_errors:
+                    self.record_error(error['line'], None, error['message'])
 
         measurements = self.get_measurements(ribx)
 

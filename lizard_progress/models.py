@@ -479,9 +479,11 @@ class Project(models.Model):
     def archive(self):
         """Archive a project.
 
-        This has a side effect for sewerage projects: all measurements
-        of the project that belong to a ribx (which are attachments and
-        have a parent != null), will be deleted, including the files.
+        This has a side effect for Projects with measurements with measurement
+        types that have the delete_on_archive field set: those measurements
+        will be deleted, both in db and on disk. The motivation for this is
+        that we want to remove 'attachment' measurement files, e.g., all media
+        files belonging to a ribx, but not the ribx itself.
         """
         logger.info("Archiving project %s", self)
         # This query returns all Measurements that (1) belong to a Project,

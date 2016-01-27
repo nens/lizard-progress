@@ -494,7 +494,7 @@ class Project(models.Model):
             location__activity__measurement_type__delete_on_archive=True)
         logger.debug("Deleting measurements: %s", measurements)
         for m in measurements:
-            m.delete()
+            m.delete(notify=False, deleted_by_contractor=False)
         self.is_archived = True
         self.save()
 

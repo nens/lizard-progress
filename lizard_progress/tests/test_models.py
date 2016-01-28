@@ -355,6 +355,61 @@ class TestProject(FixturesTestCase):
         location = LocationF(complete=True)
         self.assertTrue(location.activity.project.is_complete())
 
+    def test_archive_project_no_deletion_normally(self):
+        """Test that archiving a project will not delete measurements
+        normally.
+        """
+        self.assertEquals(len(models.Measurement.objects.all()), 0)
+        measurement = MeasurementF()
+        project = measurement.location.activity.project
+        project.archive()
+        self.assertEquals(len(models.Measurement.objects.all()), 1)
+
+    def test_archive_project_with_deletion(self):
+        """Test that archiving a project will delete all measurements that
+        (1) belong to the project, (2) has the 'delete_on_archive' field set,
+        (3) has a parent measurement
+        """
+        measurement1 = MeasurementF(
+            location__activity__measurement_type__delete_on_archive=True)
+        location = measurement1.location
+        project = measurement1.location.activity.project
+        MeasurementF(
+            parent=measurement1,
+            location=location)
+
+        self.assertEquals(len(models.Measurement.objects.all()), 2)
+        project.archive()
+        self.assertEquals(len(models.Measurement.objects.all()), 1)
+
+    def test_archive_project_no_deletion_without_flag(self):
+        """Almost the same as 'test_archive_project_with_deletion', but
+        'delete_on_archive' is False
+        """
+        measurement1 = MeasurementF(
+            location__activity__measurement_type__delete_on_archive=False)
+        location = measurement1.location
+        project = measurement1.location.activity.project
+        MeasurementF(
+            parent=measurement1,
+            location=location)
+
+        self.assertEquals(len(models.Measurement.objects.all()), 2)
+        project.archive()
+        self.assertEquals(len(models.Measurement.objects.all()), 2)
+
+    def test_archive_project_no_deletion_without_parent(self):
+        """Almost the same as 'test_archive_project_with_deletion', but no
+        parent.
+        """
+        measurement1 = MeasurementF(
+            location__activity__measurement_type__delete_on_archive=True)
+        project = measurement1.location.activity.project
+
+        self.assertEquals(len(models.Measurement.objects.all()), 1)
+        project.archive()
+        self.assertEquals(len(models.Measurement.objects.all()), 1)
+
 
 @attr('slow')
 @attr('location')

@@ -5,6 +5,8 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Add archiving tests.
+
 - Bump lizard_map to 4.51.1 which contains a fix for JSONFields.
 
 - Implement deletion of 'attachment' Measurements when Project is archived.

@@ -676,16 +676,13 @@ class ArchiveProjectsView(ProjectsView):
     template_name = 'lizard_progress/dashboard.html'
 
     def archive(self, project_slug):
-        is_archived = False
         if self.user_is_manager():
             try:
-                is_archived = True
                 project = Project.objects.get(slug=project_slug)
-                project.is_archived = is_archived
-                project.save()
+                project.archive()
                 msg = "Project '{}' is gearchiveerd."
             except:
-                msg = ("Er is een fout opgetreden. Project '{}' " +
+                msg = ("Er is een fout opgetreden. Project '{}' "
                        "is NIET gearchiveerd.")
             messages.success(self.request, msg.format(project))
         else:
@@ -694,8 +691,7 @@ class ArchiveProjectsView(ProjectsView):
 
     def activate(self, project_slug):
         project = Project.objects.get(slug=project_slug)
-        project.is_archived = False
-        project.save()
+        project.activate()
         messages.success(
             self.request, "Project '{}' is geactiveerd.".format(project))
 

@@ -95,6 +95,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 LANGUAGE_CODE = 'nl-NL'
 
 # RIONED GWSW HTTP API urls and credentials:
+GWSW_API_ENABLED = True
 GWSW_UPLOAD_URL = 'TODO (site setting)'
 GWSW_GETIDS_URL = 'TODO (site setting)'
 GWSW_GETLOG_URL = 'TODO (site setting)'

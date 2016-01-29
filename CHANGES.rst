@@ -5,7 +5,16 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add archiving tests.
+
+- Bump lizard_map to 4.51.1 which contains a fix for JSONFields.
+
+- Implement deletion of 'attachment' Measurements when Project is archived.
+  This should only be done for sewerage projects; to enable deletion of a
+  specific measurement type the delete_on_archive field must thus be set. The
+  measurement types fixture is updated to reflect this change.
+
+- Add delete_on_archive field to AvailableMeasurentType.
 
 
 2.6.16 (2016-01-21)

@@ -476,6 +476,35 @@ class Project(models.Model):
         # Note that self.project_type is nullable.
         return self.project_type and self.project_type.show_numbers_on_map
 
+    def archive(self):
+        """Archive a project.
+
+        This has a side effect for Projects with measurements with measurement
+        types that have the delete_on_archive field set: those measurements
+        will be deleted, both in db and on disk. The motivation for this is
+        that we want to remove 'attachment' measurement files, e.g., all media
+        files belonging to a ribx, but not the ribx itself.
+        """
+        logger.info("Archiving project %s", self)
+        # This query returns all Measurements that (1) belong to a Project,
+        # (2) that have a parent Measurement, which entails that it is an
+        # attachment (e.g., media files belonging to a Ribx), and (3) have
+        # a measurement type that can be deleted.
+        measurements = Measurement.objects.filter(
+            location__activity__project=self,
+            parent__isnull=False,
+            location__activity__measurement_type__delete_on_archive=True)
+        logger.debug("Deleting measurements: %s", measurements)
+        for m in measurements:
+            m.delete(notify=False, deleted_by_contractor=False,
+                     set_completeness=False)
+        self.is_archived = True
+        self.save()
+
+    def activate(self):
+        self.is_archived = False
+        self.save()
+
 
 class Location(models.Model):
     LOCATION_TYPE_POINT = 'point'
@@ -698,6 +727,9 @@ class AvailableMeasurementType(models.Model):
     # For some measurement types, we keep all versions of uploaded data that
     # have been uploaded. For most, we only keep that last uploaded version.
     keep_updated_measurements = models.BooleanField(default=False)
+
+    # Some measurements need to be deleted when the Project is archived.
+    delete_on_archive = models.BooleanField(default=False)
 
     @property
     def implementation_slug(self):
@@ -1142,7 +1174,8 @@ class Measurement(models.Model):
     def base_filename(self):
         return self.filename and os.path.basename(self.filename)
 
-    def delete(self, notify=True, deleted_by_contractor=True):
+    def delete(self, notify=True, deleted_by_contractor=True,
+               set_completeness=True):
         """Delete this measurement. If this is done by a user of the
         contractor organization, this is cancellation (for instance to
         fix errors), if this is done by a user of the project owning
@@ -1192,7 +1225,8 @@ class Measurement(models.Model):
                 self.location.activity, self.filename)
 
         # Let our location determine its completeness
-        self.location.set_completeness()
+        if set_completeness:
+            self.location.set_completeness()
 
     def send_deletion_notification(self, deleted_by_contractor):
         notification_type = NotificationType.objects.get(

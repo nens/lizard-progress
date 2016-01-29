@@ -36,3 +36,6 @@ src
 
 # Ignore generated apache config files
 etc/*.apache.conf
+
+# Local testsettings
+local_testsettings.py

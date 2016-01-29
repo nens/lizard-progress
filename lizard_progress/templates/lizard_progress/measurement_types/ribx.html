@@ -9,9 +9,19 @@
      <h3>Onbekend rioleringselement {{ location.location_code }}</h3>
   {% endif %}
   {% if location.complete %}
+    {% if location.work_impossible %}
+     <h3>Compleet (niet gedaan, maar automatisch goedgekeurd {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
+     {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
+     )</h3>
+    {% elif location.new %}
+     <h3>Compleet (nieuw {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
+     {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
+     )</h3>
+    {% else %}
      <h3>Compleet (gedaan {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
      {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
      )</h3>
+    {% endif %}
   {% endif %}
   {% if location.not_part_of_project %}
     <strong>Dit object is geen eigendom van {{ location.activity.project.organization }} en hoort niet bij de

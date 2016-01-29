@@ -16,6 +16,7 @@ import time
 
 from PIL.ImageFile import ImageFile
 import requests
+import ogr
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -202,18 +203,9 @@ class RibxParser(ProgressParser):
                 ribx.drains):
             error = self.check_coordinates(item)
             if not error:
-                if item.work_impossible:
-                    # This is not a measurement, but a claim that the
-                    # assigned work couldn't be done. Open a deletion
-                    # request instead of recording a measurement.
-                    # Creating the request also automatically
-                    # sends an email notification.
-                    self.create_deletion_request(item)
-                else:
-                    measurement = self.save_measurement(item)
-                    if measurement is not None:
-                        measurements.append(measurement)
-
+                measurement = self.save_measurement(item)
+                if measurement is not None:
+                    measurements.append(measurement)
         return measurements
 
     def check_coordinates(self, item):
@@ -251,18 +243,32 @@ class RibxParser(ProgressParser):
 
     def save_measurement(self, item):
         """item is a pipe, drain or manhole object that has properties
-        'ref', 'inspection_date', 'geom' and optionally 'media'."""
+        'ref', 'inspection_date', 'geom' and optionally 'media'.
+
+        Note: the behavior of this method changes depending on the attributes
+        of the item (i.e.: 'work_impossible', 'new')
+        """
         try:
             location = self.activity.location_set.get(
                 location_code=item.ref)
         except models.Location.DoesNotExist:
-            if not item.new:
+            if item.work_impossible:
+                return None
+            elif not item.new:
                 self.record_error(
                     item.sourceline, 'LOCATION_NOT_FOUND',
                     self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
                 return None
             else:
                 location = self.create_new(item)
+
+        # hacky spaghetti
+        if item.work_impossible:
+            location.work_impossible = True
+            location.save()
+        if item.new:
+            location.new = True
+            location.save()
 
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement
@@ -323,12 +329,26 @@ class RibxParser(ProgressParser):
             # Huh?
             location_type = models.Location.LOCATION_TYPE_POINT
 
+        if is_point:
+            # Biggest BS ever: The item.geom is a Point which contains x, y,
+            # and z values. However, the GeometryField in the Location model
+            # doesn't accept z-values (maybe only for points?). So we need to
+            # do this elaborate conversion to just get a Point with ONLY x and
+            # y values! Perhaps a better way to do this is is correctly
+            # parsing the Points as 2D in the ribxlib...
+            point_2d = ogr.Geometry(ogr.wkbPoint)
+            point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
+            geom = point_2d
+        else:
+            geom = item.geom
+
         location = models.Location.objects.create(
             activity=self.activity,
             location_code=item.ref,
             location_type=location_type,
-            the_geom=item.geom.ExportToWkt(),
+            the_geom=geom.ExportToWkt(),
             is_point=is_point,
+            new=True,
             information=json.dumps({
                 "remark": "Added automatically by {}".format(
                     self.file_object.name)}))

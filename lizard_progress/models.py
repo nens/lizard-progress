@@ -561,6 +561,14 @@ class Location(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
     complete = models.BooleanField(default=False)
 
+    # Inspection/cleaning wasn't possible, maybe. Corresponds to the ?XD
+    # ribx tag.
+    work_impossible = models.BooleanField(default=False)
+
+    # This was a newly found element (unplanned). Corresponds to the ?XC ribx
+    # tag.
+    new = models.BooleanField(default=False)
+
     objects = models.GeoManager()
 
     @property

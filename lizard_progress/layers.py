@@ -48,6 +48,7 @@ def build_location_query(
             set to None it will not be taken into account in the query.
             The default is False because we don't want to take these locations
             into account in all our other queries.
+        new: see 'work_impossible'
     """
     if is_point and numbers:
         q = """(SELECT

@@ -333,9 +333,9 @@ class RibxParser(ProgressParser):
             # Biggest BS ever: The item.geom is a Point which contains x, y,
             # and z values. However, the GeometryField in the Location model
             # doesn't accept z-values (maybe only for points?). So we need to
-            # do this elaborate conversion to just get a Point with ONLY x and
-            # y values! Perhaps a better way to do this is is correctly
-            # parsing the Points as 2D in the ribxlib...
+            # do this elaborate conversion just to get a Point with ONLY x and
+            # y values! Perhaps a better way to do this is is to correctly
+            # parse the Points as 2D in the ribxlib...
             point_2d = ogr.Geometry(ogr.wkbPoint)
             point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
             geom = point_2d

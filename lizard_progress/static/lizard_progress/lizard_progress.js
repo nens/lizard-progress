@@ -212,9 +212,9 @@ $("button.redirect").click(function (event) {
 $("#bt-archive").click(function (event) {
     var msg = "";
     if (this.name == "archive"){
-	msg = "Project wordt gearchiveerd. Weet u het zeker?";
+	msg = "Waarschuwing! Project wordt gearchiveerd, voor rioleringsprojecten worden hiermee alle mediabestanden verwijderd. Weet u het zeker?";
     } else {
-	msg = "Project wordt geactiveerd. Weet u het zeker?";
+	msg = "Waarschuwing! Project wordt gearchiveerd, voor rioleringsprojecten worden hiermee alle mediabestanden verwijderd. Weet u het zeker?";
     }
 
     if (confirm(msg)){

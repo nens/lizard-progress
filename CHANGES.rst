@@ -5,6 +5,8 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Update legend and update translations.
+
 - Fix a problem with the create_new method: geoms with a Z-value are not
   accepted, thus points are now converted to 2D.
 

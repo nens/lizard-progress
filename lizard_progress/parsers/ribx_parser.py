@@ -275,14 +275,6 @@ class RibxParser(ProgressParser):
             else:
                 location = self.create_new(item)
 
-        # Mark the locations with these flags for visualization.
-        if item.work_impossible:
-            location.work_impossible = True
-            location.save()
-        if item.new:
-            location.new = True
-            location.save()
-
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement
         # instance for it. Details (like the associated files) may still have
@@ -391,7 +383,9 @@ class RibxReinigingKolkenParser(RibxParser):
 
     The reason for this parser is that we do not want to create Requests
     for work_impossible entries. Normally we do want that, but for drains
-    we do not. That's basically the only difference.
+    we do not. Additionally, if applicable, we set the
+    Location.work_impossible, and Location.new flags so that they can be
+    visualized.
     """
     # TODO: for more robustness, we should check the ?XD tag to see if it's
     # 'EXD'. This requires that the prefix of the XD is parsed, which isn't
@@ -413,5 +407,13 @@ class RibxReinigingKolkenParser(RibxParser):
             if not error:
                 measurement = self.save_measurement(item)
                 if measurement is not None:
+                    # Mark the locations with these flags for visualization.
+                    location = measurement.location
+                    if item.work_impossible:
+                        location.work_impossible = True
+                        location.save()
+                    if item.new:
+                        location.new = True
+                        location.save()
                     measurements.append(measurement)
         return measurements

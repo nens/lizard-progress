@@ -353,7 +353,6 @@ class RibxParser(ProgressParser):
             location_type=location_type,
             the_geom=geom.ExportToWkt(),
             is_point=is_point,
-            new=True,
             information=json.dumps({
                 "remark": "Added automatically by {}".format(
                     self.file_object.name)}))

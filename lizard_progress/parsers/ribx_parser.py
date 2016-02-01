@@ -203,9 +203,18 @@ class RibxParser(ProgressParser):
                 ribx.drains):
             error = self.check_coordinates(item)
             if not error:
-                measurement = self.save_measurement(item)
-                if measurement is not None:
-                    measurements.append(measurement)
+                if item.work_impossible:
+                    # This is not a measurement, but a claim that (1) the
+                    # assigned work couldn't be done OR (2) that the location
+                    # of the object wasn't found (don't ask). Open a deletion
+                    # request instead of recording a measurement.
+                    # Creating the request also automatically
+                    # sends an email notification.
+                    self.create_deletion_request(item)
+                else:
+                    measurement = self.save_measurement(item)
+                    if measurement is not None:
+                        measurements.append(measurement)
         return measurements
 
     def check_coordinates(self, item):
@@ -252,6 +261,10 @@ class RibxParser(ProgressParser):
             location = self.activity.location_set.get(
                 location_code=item.ref)
         except models.Location.DoesNotExist:
+            # The reason for this check is because of the altered
+            # get_measurements in the RibxReinigingKolkenParser. Via the
+            # RibxParser you can't get here. It probably doesn't do much
+            # though.
             if item.work_impossible:
                 return None
             elif not item.new:
@@ -262,7 +275,7 @@ class RibxParser(ProgressParser):
             else:
                 location = self.create_new(item)
 
-        # hacky spaghetti
+        # Mark the locations with these flags for visualization.
         if item.work_impossible:
             location.work_impossible = True
             location.save()
@@ -371,3 +384,34 @@ class RibxParser(ProgressParser):
             extra={'link': location_link})
 
         return location
+
+
+class RibxReinigingKolkenParser(RibxParser):
+    """Special parser for drains.
+
+    The reason for this parser is that we do not want to create Requests
+    for work_impossible entries. Normally we do want that, but for drains
+    we do not. That's basically the only difference.
+    """
+    # TODO: for more robustness, we should check the ?XD tag to see if it's
+    # 'EXD'. This requires that the prefix of the XD is parsed, which isn't
+    # the case as of yet (should be done in the ribxlib).
+
+    def get_measurements(self, ribx):
+        # Use these to check whether locations are inside extent
+        self.min_x = self.activity.config_value('minimum_x_coordinate')
+        self.max_x = self.activity.config_value('maximum_x_coordinate')
+        self.min_y = self.activity.config_value('minimum_y_coordinate')
+        self.max_y = self.activity.config_value('maximum_y_coordinate')
+
+        measurements = []
+        for item in itertools.chain(
+                ribx.inspection_pipes, ribx.cleaning_pipes,
+                ribx.inspection_manholes, ribx.cleaning_manholes,
+                ribx.drains):
+            error = self.check_coordinates(item)
+            if not error:
+                measurement = self.save_measurement(item)
+                if measurement is not None:
+                    measurements.append(measurement)
+        return measurements

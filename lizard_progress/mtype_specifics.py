@@ -259,6 +259,7 @@ class RibxReinigingRioolSpecifics(GenericSpecifics):
 
 class RibxReinigingKolkenSpecifics(RibxReinigingRioolSpecifics):
     location_types = [models.Location.LOCATION_TYPE_DRAIN]
+    parser = lizard_progress.parsers.ribx_parser.RibxReinigingKolkenParser
 
 
 class RibxReinigingInspectieRioolSpecifics(RibxReinigingRioolSpecifics):

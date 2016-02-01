@@ -214,7 +214,7 @@ $("#bt-archive").click(function (event) {
     if (this.name == "archive"){
 	msg = "Waarschuwing! Project wordt gearchiveerd, voor rioleringsprojecten worden hiermee alle mediabestanden verwijderd. Weet u het zeker?";
     } else {
-	msg = "Waarschuwing! Project wordt gearchiveerd, voor rioleringsprojecten worden hiermee alle mediabestanden verwijderd. Weet u het zeker?";
+	msg = "Project wordt geactiveerd. Weet u het zeker?";
     }
 
     if (confirm(msg)){

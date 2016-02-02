@@ -16,7 +16,7 @@ import time
 
 from PIL.ImageFile import ImageFile
 import requests
-import ogr
+from osgeo import ogr
 
 from django.conf import settings
 from django.contrib.sites.models import Site

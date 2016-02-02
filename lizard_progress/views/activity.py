@@ -58,6 +58,10 @@ class WrongGeometryTypeException(Exception):
     pass
 
 
+class UploadException(Exception):
+    pass
+
+
 class ActivityMixin(object):
     def dispatch(self, request, *args, **kwargs):
         if 'activity_id' in kwargs:
@@ -616,7 +620,14 @@ class UploadDateShapefiles(PlanningView):
                 shp = self.__save_uploaded_files(request, dirname)
                 location_type = kwargs['location_type']
                 info = self.save_planned_dates(shp, location_type)
-
+            except UploadException:
+                messages.add_message(
+                    request, messages.ERROR,
+                    "Uploaden is mislukt! De planning bevat een locatie die "
+                    "is opgegeven voor deze of volgende week, maar waarbij "
+                    "geen dag is gespecificeerd. Pas de planning aan en "
+                    "probeer opnieuw.")
+            else:
                 if info.planned:
                     messages.add_message(
                         request, messages.INFO,
@@ -632,19 +643,11 @@ class UploadDateShapefiles(PlanningView):
                         '{} locaties overgeslagen omdat er geen '
                         'weeknummer ingevuld was.'.format(
                             info.skipped_weeknumber))
-                if info.skipped_day:
-                    messages.add_message(
-                        request, messages.INFO,
-                        '{} locaties overgeslagen omdat er geen '
-                        'dag ingevuld was voor een weeknummer die binnen twee '
-                        'weken valt.'
-                        .format(info.skipped_day))
                 if info.notfound:
                     messages.add_message(
                         request, messages.INFO,
                         '{} locaties overgeslagen vanwege onbekende code.'
                         .format(info.planned))
-
             finally:
                 shutil.rmtree(dirname)
 
@@ -671,10 +674,15 @@ class UploadDateShapefiles(PlanningView):
         return (shapefilepath + '.shp').encode('utf8')
 
     def save_planned_dates(self, shapefilepath, location_type):
+        """Register schedule data from the shapefile.
+
+        Raises:
+            UploadException: if you have a week scheduled within two weeks from
+            the current week that does not have a day specified.
+        """
         Info = namedtuple('Info', ['planned',
                                    'already_planned',
                                    'skipped_weeknumber',
-                                   'skipped_day',
                                    'notfound'])
         shapefile = osgeo.ogr.Open(shapefilepath)
 
@@ -683,7 +691,6 @@ class UploadDateShapefiles(PlanningView):
         planned = 0
         already_planned = 0
         skipped_weeknumber = 0
-        skipped_day = 0
         notfound = 0
 
         # This code tries to minimize the number of necessary queries.
@@ -747,8 +754,9 @@ class UploadDateShapefiles(PlanningView):
                 # gotta check if the day is filled in.
                 this_week = datetime.datetime.today().isocalendar()[1]
                 if 0 <= week - this_week < MINIMUM_WEEKS_DAY_CHECK:
-                    skipped_day += 1
-                    continue
+                    raise UploadException(
+                        "The day MUST be present for a week scheduled within "
+                        "two weeks.")
                 else:
                     # If no day is planned, use DAY 7 as the default -- that
                     # way the work is not late as long as it is done inside
@@ -772,5 +780,4 @@ class UploadDateShapefiles(PlanningView):
         return Info(planned=planned,
                     already_planned=already_planned,
                     skipped_weeknumber=skipped_weeknumber,
-                    skipped_day=skipped_day,
                     notfound=notfound)

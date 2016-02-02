@@ -6,7 +6,8 @@ Changelog of lizard-progress
 -------------------
 
 - Add a new check for the uploaded shapefile schedule: if the week number is
-  within two weeks the day is mandatory.
+  in the current or next week the day is mandatory. An error will be raised
+  if that's not the case.
 
 - Update legend and update translations.
 

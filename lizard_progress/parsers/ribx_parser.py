@@ -16,6 +16,7 @@ import time
 
 from PIL.ImageFile import ImageFile
 import requests
+import ogr
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -203,8 +204,9 @@ class RibxParser(ProgressParser):
             error = self.check_coordinates(item)
             if not error:
                 if item.work_impossible:
-                    # This is not a measurement, but a claim that the
-                    # assigned work couldn't be done. Open a deletion
+                    # This is not a measurement, but a claim that (1) the
+                    # assigned work couldn't be done OR (2) that the location
+                    # of the object wasn't found (don't ask). Open a deletion
                     # request instead of recording a measurement.
                     # Creating the request also automatically
                     # sends an email notification.
@@ -213,7 +215,6 @@ class RibxParser(ProgressParser):
                     measurement = self.save_measurement(item)
                     if measurement is not None:
                         measurements.append(measurement)
-
         return measurements
 
     def check_coordinates(self, item):
@@ -251,12 +252,22 @@ class RibxParser(ProgressParser):
 
     def save_measurement(self, item):
         """item is a pipe, drain or manhole object that has properties
-        'ref', 'inspection_date', 'geom' and optionally 'media'."""
+        'ref', 'inspection_date', 'geom' and optionally 'media'.
+
+        Note: the behavior of this method changes depending on the attributes
+        of the item (i.e.: 'work_impossible', 'new')
+        """
         try:
             location = self.activity.location_set.get(
                 location_code=item.ref)
         except models.Location.DoesNotExist:
-            if not item.new:
+            # The reason for this check is because of the altered
+            # get_measurements in the RibxReinigingKolkenParser. Via the
+            # RibxParser you can't get here. It probably doesn't do much
+            # though.
+            if item.work_impossible:
+                return None
+            elif not item.new:
                 self.record_error(
                     item.sourceline, 'LOCATION_NOT_FOUND',
                     self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
@@ -323,11 +334,24 @@ class RibxParser(ProgressParser):
             # Huh?
             location_type = models.Location.LOCATION_TYPE_POINT
 
+        if is_point:
+            # Biggest BS ever: The item.geom is a Point which contains x, y,
+            # and z values. However, the GeometryField in the Location model
+            # doesn't accept z-values (maybe only for points?). So we need to
+            # do this elaborate conversion just to get a Point with ONLY x and
+            # y values! Perhaps a better way to do this is is to correctly
+            # parse the Points as 2D in the ribxlib...
+            point_2d = ogr.Geometry(ogr.wkbPoint)
+            point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
+            geom = point_2d
+        else:
+            geom = item.geom
+
         location = models.Location.objects.create(
             activity=self.activity,
             location_code=item.ref,
             location_type=location_type,
-            the_geom=item.geom.ExportToWkt(),
+            the_geom=geom.ExportToWkt(),
             is_point=is_point,
             information=json.dumps({
                 "remark": "Added automatically by {}".format(
@@ -351,3 +375,44 @@ class RibxParser(ProgressParser):
             extra={'link': location_link})
 
         return location
+
+
+class RibxReinigingKolkenParser(RibxParser):
+    """Special parser for drains.
+
+    The reason for this parser is that we do not want to create Requests
+    for work_impossible entries. Normally we do want that, but for drains
+    we do not. Additionally, if applicable, we set the
+    Location.work_impossible, and Location.new flags so that they can be
+    visualized.
+    """
+    # TODO: for more robustness, we should check the ?XD tag to see if it's
+    # 'EXD'. This requires that the prefix of the XD is parsed, which isn't
+    # the case as of yet (should be done in the ribxlib).
+
+    def get_measurements(self, ribx):
+        # Use these to check whether locations are inside extent
+        self.min_x = self.activity.config_value('minimum_x_coordinate')
+        self.max_x = self.activity.config_value('maximum_x_coordinate')
+        self.min_y = self.activity.config_value('minimum_y_coordinate')
+        self.max_y = self.activity.config_value('maximum_y_coordinate')
+
+        measurements = []
+        for item in itertools.chain(
+                ribx.inspection_pipes, ribx.cleaning_pipes,
+                ribx.inspection_manholes, ribx.cleaning_manholes,
+                ribx.drains):
+            error = self.check_coordinates(item)
+            if not error:
+                measurement = self.save_measurement(item)
+                if measurement is not None:
+                    # Mark the locations with these flags for visualization.
+                    location = measurement.location
+                    if item.work_impossible:
+                        location.work_impossible = True
+                        location.save()
+                    if item.new:
+                        location.new = True
+                        location.save()
+                    measurements.append(measurement)
+        return measurements

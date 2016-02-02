@@ -5,6 +5,15 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Update legend and update translations.
+
+- Fix a problem with the create_new method: geoms with a Z-value are not
+  accepted, thus points are now converted to 2D.
+
+- Disable the automatic Request generation for 'work_impossible' drains, now
+  they are automatically completed and given a new color. Furthermore, newly
+  created/unplanned drains are also given a new color.
+
 - Add archiving tests.
 
 - Bump lizard_map to 4.51.1 which contains a fix for JSONFields.

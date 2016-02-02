@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-17 03:00-0600\n"
+"POT-Creation-Date: 2016-02-01 03:29-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -82,15 +82,15 @@ msgid ""
 "If this is True, multiple recent uploads to one location will be marked by "
 "numbers on the map page. Used to find frequently recurring problems."
 msgstr ""
-"Als deze optie gekozen is worden meerdere recente uploads op één locatie gemarkeerd "
-"met getallen op de kaartpagina. Dit kan gebruikt worden om frequent terugkerende problemen "
-"te vinden."
+"Als deze optie gekozen is worden meerdere recente uploads op één locatie "
+"gemarkeerd met getallen op de kaartpagina. Dit kan gebruikt worden om "
+"frequent terugkerende problemen te vinden."
 
-#: models.py:564
+#: models.py:601
 msgid "complete"
 msgstr "compleet"
 
-#: models.py:566
+#: models.py:603
 msgid "planned on"
 msgstr "gepland op"
 
@@ -156,6 +156,10 @@ msgid "Uploads"
 msgstr "Uploads"
 
 #: templates/lizard_progress/map_legend.html:33
+msgid "Automatically processed"
+msgstr "Automatisch verwerkt"
+
+#: templates/lizard_progress/map_legend.html:42
 msgid "Change requests"
 msgstr "Aanvragen"
 

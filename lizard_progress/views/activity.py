@@ -45,6 +45,10 @@ from lizard_progress.util import directories
 
 logger = logging.getLogger(__name__)
 
+# For the schedule check when checking if the day is specified and the
+# schedule is less than this number of weeks ahead of the current week.
+MINIMUM_WEEKS_DAY_CHECK = 2
+
 
 class NoSuchFieldException(Exception):
     pass
@@ -742,7 +746,7 @@ class UploadDateShapefiles(PlanningView):
                 # If the week is within two weeks from the current week we
                 # gotta check if the day is filled in.
                 this_week = datetime.datetime.today().isocalendar()[1]
-                if 0 <= week - this_week <= 1:
+                if 0 <= week - this_week < MINIMUM_WEEKS_DAY_CHECK:
                     skipped_day += 1
                     continue
                 else:

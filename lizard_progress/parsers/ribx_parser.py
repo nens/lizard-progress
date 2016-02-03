@@ -386,9 +386,9 @@ class RibxReinigingKolkenParser(RibxParser):
     Location.work_impossible, and Location.new flags so that they can be
     visualized.
     """
-    # TODO: for more robustness, we should check the ?XD tag to see if it's
-    # 'EXD'. This requires that the prefix of the XD is parsed, which isn't
-    # the case as of yet (should be done in the ribxlib).
+    # TODO: for more robustness, we should check the ?XD/?XC tag to see if it's
+    # 'EXD'/'EXC'. This requires that the prefix of the XD, XC is parsed,
+    # which isn't the case as of yet (should be done in the ribxlib).
 
     def get_measurements(self, ribx):
         # Use these to check whether locations are inside extent

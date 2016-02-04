@@ -309,6 +309,7 @@ class Request(models.Model):
         old_location_geom = location.the_geom
         location.the_geom = self.the_geom
         location.save()
+
         self.old_location = Request.objects.create(
             activity=self.activity,
             request_type=self.REQUEST_TYPE_ORIGINAL_LOCATION,
@@ -316,7 +317,7 @@ class Request(models.Model):
             created_by_manager=self.created_by_manager,
             location_code=self.location_code,
             motivation=self.motivation,
-            the_geom=old_location_geom.wkt,
+            the_geom=old_location_geom,
             )
         self.save()
 

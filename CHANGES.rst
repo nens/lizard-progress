@@ -5,6 +5,8 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Re-add turquouise_dark ball for old Move Requests in map legend.
+
 - Fix a bug when clicking on Requests.
 
 - Visualize old location of Move Requests by using the another Request object

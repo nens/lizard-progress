@@ -95,7 +95,8 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             if color == COLOR_NEW:
                 return self.mapnik_query_the_geom()
             if color == COLOR_OLD:
-                return self.mapnik_query_location()
+                # return self.mapnik_query_location()
+                return self.mapnik_query_old_geom()
 
     def mapnik_query_the_geom(self):
         return ("""(
@@ -105,6 +106,20 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 changerequests_request
             WHERE
                 id = %d) data"""
+                % (self.changerequest.id,))
+
+    def mapnik_query_old_geom(self):
+        return ("""(
+            SELECT
+                old_location_geom
+            AS
+                the_geom
+            FROM
+                changerequests_request
+            WHERE
+                id = %d
+            AND the_geom IS NOT NULL
+                ) data"""
                 % (self.changerequest.id,))
 
     def mapnik_query_location(self):

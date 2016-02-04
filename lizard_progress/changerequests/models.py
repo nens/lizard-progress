@@ -87,6 +87,9 @@ class Request(models.Model):
     # optional old location will be removed.
     old_location_code = models.CharField(max_length=50, null=True, blank=True)
 
+    # Old location for move requests.
+    old_location_geom = models.PointField(null=True, srid=pmodels.SRID)
+
     # Note - a motivation is mandatory
     motivation = models.TextField()
     motivation_changed = models.DateTimeField(auto_now_add=True)
@@ -297,6 +300,10 @@ class Request(models.Model):
 
     def do_move_location(self):
         location = self.get_location()
+        old_geom = location.the_geom
+        self.old_location_geom = old_geom
+        self.save()
+
         location.the_geom = self.the_geom
         location.save()
 

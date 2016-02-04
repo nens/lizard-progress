@@ -5,6 +5,10 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Add a new check for the uploaded shapefile schedule: if the week number is
+  in the current or next week the day is mandatory. An error will be raised
+  if that's not the case.
+
 - Update legend and update translations.
 
 - Fix a problem with the create_new method: geoms with a Z-value are not

@@ -10,7 +10,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import datetime
 import json
 import logging
@@ -45,12 +45,20 @@ from lizard_progress.util import directories
 
 logger = logging.getLogger(__name__)
 
+# For the schedule check when checking if the day is specified and the
+# schedule is less than this number of weeks ahead of the current week.
+MINIMUM_WEEKS_DAY_CHECK = 2
+
 
 class NoSuchFieldException(Exception):
     pass
 
 
 class WrongGeometryTypeException(Exception):
+    pass
+
+
+class UploadException(Exception):
     pass
 
 
@@ -611,29 +619,35 @@ class UploadDateShapefiles(PlanningView):
             try:
                 shp = self.__save_uploaded_files(request, dirname)
                 location_type = kwargs['location_type']
-                (planned, already_planned, skipped, notfound
-                 ) = self.save_planned_dates(shp, location_type)
-
-                if planned:
+                info = self.save_planned_dates(shp, location_type)
+            except UploadException:
+                messages.add_message(
+                    request, messages.ERROR,
+                    "Uploaden is mislukt! De planning bevat een locatie die "
+                    "is opgegeven voor deze of volgende week, maar waarbij "
+                    "geen dag is gespecificeerd. Pas de planning aan en "
+                    "probeer opnieuw.")
+            else:
+                if info.planned:
                     messages.add_message(
                         request, messages.INFO,
-                        '{} locaties ingepland.'.format(planned))
-                if already_planned:
+                        '{} locaties ingepland.'.format(info.planned))
+                if info.already_planned:
                     messages.add_message(
                         request, messages.INFO,
                         '{} niet ingepland omdat ze al volledig zijn.'.format(
-                            already_planned))
-                if skipped:
+                            info.already_planned))
+                if info.skipped_weeknumber:
                     messages.add_message(
                         request, messages.INFO,
                         '{} locaties overgeslagen omdat er geen '
-                        'weeknummer ingevuld was.'.format(skipped))
-                if notfound:
+                        'weeknummer ingevuld was.'.format(
+                            info.skipped_weeknumber))
+                if info.notfound:
                     messages.add_message(
                         request, messages.INFO,
                         '{} locaties overgeslagen vanwege onbekende code.'
-                        .format(planned))
-
+                        .format(info.planned))
             finally:
                 shutil.rmtree(dirname)
 
@@ -660,13 +674,23 @@ class UploadDateShapefiles(PlanningView):
         return (shapefilepath + '.shp').encode('utf8')
 
     def save_planned_dates(self, shapefilepath, location_type):
+        """Register schedule data from the shapefile.
+
+        Raises:
+            UploadException: if you have a week scheduled within two weeks from
+            the current week that does not have a day specified.
+        """
+        Info = namedtuple('Info', ['planned',
+                                   'already_planned',
+                                   'skipped_weeknumber',
+                                   'notfound'])
         shapefile = osgeo.ogr.Open(shapefilepath)
 
         layer = shapefile.GetLayer(0)
 
         planned = 0
         already_planned = 0
-        skipped = 0
+        skipped_weeknumber = 0
         notfound = 0
 
         # This code tries to minimize the number of necessary queries.
@@ -700,24 +724,44 @@ class UploadDateShapefiles(PlanningView):
                 for key, value in feature.items().items()
             }
 
-            logger.debug(fields)
-            if not fields.get(b'WEEKNUMMER'):
-                # Not planned yet, OK
-                skipped += 1
-                continue
-
             location = locations.get(ref)
             if location is None:
                 # What to do...
                 notfound += 1
                 continue
 
-            year = int(fields.get(b'JAAR') or datetime.datetime.today().year)
-            week = int(fields.get(b'WEEKNUMMER'))
+            logger.debug(fields)
+            try:
+                week = int(fields.get(b'WEEKNUMMER'))
+            except (ValueError, TypeError):
+                week = None
+            try:
+                day = int(fields.get(b'DAGNUMMER'))
+            except (ValueError, TypeError):
+                day = None
+            try:
+                year = int(fields.get(b'JAAR'))
+            except (ValueError, TypeError):
+                year = datetime.datetime.today().year
 
-            # If no day is planned, use DAY 7 as the default -- that way
-            # the work is not late as long as it is done inside that week.
-            day = int(fields.get(b'DAGNUMMER') or '7')
+            if not week:
+                # Not planned yet, OK
+                skipped_weeknumber += 1
+                continue
+
+            if not day:
+                # If the week is within two weeks from the current week we
+                # gotta check if the day is filled in.
+                this_week = datetime.datetime.today().isocalendar()[1]
+                if 0 <= week - this_week < MINIMUM_WEEKS_DAY_CHECK:
+                    raise UploadException(
+                        "The day MUST be present for a week scheduled within "
+                        "two weeks.")
+                else:
+                    # If no day is planned, use DAY 7 as the default -- that
+                    # way the work is not late as long as it is done inside
+                    # that week.
+                    day = 7
 
             date = dates.weeknumber_to_date(year, week, day)
 
@@ -733,4 +777,7 @@ class UploadDateShapefiles(PlanningView):
             models.Location.objects.filter(
                 id__in=ids).update(planned_date=date)
 
-        return (planned, already_planned, skipped, notfound)
+        return Info(planned=planned,
+                    already_planned=already_planned,
+                    skipped_weeknumber=skipped_weeknumber,
+                    notfound=notfound)

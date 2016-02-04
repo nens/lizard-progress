@@ -5,6 +5,9 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Visualize old location of Move Requests by using the another Request object
+  (kinda ugly because that generates a new Request in the GUI).
+
 - Add a new check for the uploaded shapefile schedule: if the week number is
   in the current or next week the day is mandatory. An error will be raised
   if that's not the case.

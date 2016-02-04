@@ -95,9 +95,16 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             if color == COLOR_NEW:
                 return self.mapnik_query_the_geom()
             if color == COLOR_OLD:
-                return self.mapnik_query_location()
+                if (self.changerequest.request_status ==
+                        models.Request.REQUEST_STATUS_ACCEPTED):
+                    return self.mapnik_query_old_geom()
+                else:
+                    # Unsure, left it like this because that was the original
+                    # situation for incomplete Requests.
+                    return self.mapnik_query_location()
 
     def mapnik_query_the_geom(self):
+        """Returns a query for the geometry field of a Request"""
         return ("""(
             SELECT
                 changerequests_request.the_geom
@@ -106,6 +113,22 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             WHERE
                 id = %d) data"""
                 % (self.changerequest.id,))
+
+    def mapnik_query_old_geom(self):
+        """Returns a query for the old_location geometry of a Request (for
+        visualizing the old location of move requests).
+        """
+        return ("""(
+            SELECT
+                changerequests_request.the_geom
+            FROM
+                changerequests_request
+            WHERE
+                id = %d
+            AND
+                old_location_id IS NULL) data
+                """
+                % (self.changerequest.old_location.id,))
 
     def mapnik_query_location(self):
         q = ("""(

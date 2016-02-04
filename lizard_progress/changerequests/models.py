@@ -46,11 +46,16 @@ class Request(models.Model):
     REQUEST_TYPE_REMOVE_CODE = 1
     REQUEST_TYPE_MOVE_LOCATION = 2
     REQUEST_TYPE_NEW_LOCATION = 3
+    # This request type is actually not a real Request but (ab)used for
+    # storing the old location of a move Request.
+    REQUEST_TYPE_ORIGINAL_LOCATION = 4
 
     TYPES = {
         REQUEST_TYPE_REMOVE_CODE: "Locatiecode verwijderen",
         REQUEST_TYPE_MOVE_LOCATION: "Locatie verplaatsen",
-        REQUEST_TYPE_NEW_LOCATION: "Nieuwe locatiecode"
+        REQUEST_TYPE_NEW_LOCATION: "Nieuwe locatiecode",
+        REQUEST_TYPE_ORIGINAL_LOCATION:
+            "Originele locatie vóór verplaatsingsaanvraag",
     }
 
     REQUEST_STATUS_OPEN = 1
@@ -86,6 +91,10 @@ class Request(models.Model):
     # Only used if this request is of type new location, in case an
     # optional old location will be removed.
     old_location_code = models.CharField(max_length=50, null=True, blank=True)
+
+    # Original location before the move request. We abuse the Request model for
+    # keeping track of that location.
+    old_location = models.ForeignKey("self", null=True)
 
     # Note - a motivation is mandatory
     motivation = models.TextField()
@@ -297,8 +306,20 @@ class Request(models.Model):
 
     def do_move_location(self):
         location = self.get_location()
+        old_location_geom = location.the_geom
         location.the_geom = self.the_geom
         location.save()
+
+        self.old_location = Request.objects.create(
+            activity=self.activity,
+            request_type=self.REQUEST_TYPE_ORIGINAL_LOCATION,
+            request_status=self.REQUEST_STATUS_ACCEPTED,
+            created_by_manager=self.created_by_manager,
+            location_code=self.location_code,
+            motivation=self.motivation,
+            the_geom=old_location_geom,
+            )
+        self.save()
 
     def do_add_location(self):
         location, created = pmodels.Location.objects.get_or_create(

@@ -96,7 +96,8 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 return self.mapnik_query_the_geom()
             if color == COLOR_OLD:
                 if (self.changerequest.request_status ==
-                        models.Request.REQUEST_STATUS_ACCEPTED):
+                        models.Request.REQUEST_STATUS_ACCEPTED and
+                        self.changerequest.old_location is not None):
                     return self.mapnik_query_old_geom()
                 else:
                     # Unsure, left it like this because that was the original

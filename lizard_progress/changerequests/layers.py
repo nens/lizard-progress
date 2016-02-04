@@ -234,7 +234,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 models.Request.REQUEST_TYPE_MOVE_LOCATION):
             location = self.changerequest.get_location()
             if location and location.the_geom != self.changerequest.the_geom:
-                my_x_old = location.the_geom.x,
+                my_x_old = location.the_geom.x
                 my_y_old = location.the_geom.y
                 old_distance = math.sqrt(
                     (rd_x - my_x_old) ** 2 + (rd_y - my_y_old) ** 2)

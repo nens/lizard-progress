@@ -5,6 +5,8 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Fix a bug when clicking on Requests.
+
 - Visualize old location of Move Requests by using the another Request object
   (kinda ugly because that generates a new Request in the GUI).
 

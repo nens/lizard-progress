@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Request.old_location'
         db.add_column(u'changerequests_request', 'old_location',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['changerequests.Request'], null=True),
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['changerequests.Request'], null=True, blank=True),
                       keep_default=False)
 
 
@@ -78,7 +78,7 @@ class Migration(SchemaMigration):
             'location_code': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'motivation': ('django.db.models.fields.TextField', [], {}),
             'motivation_changed': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'old_location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['changerequests.Request']", 'null': 'True'}),
+            'old_location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['changerequests.Request']", 'null': 'True', 'blank': 'True'}),
             'old_location_code': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
             'possible_request': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['changerequests.PossibleRequest']", 'null': 'True', 'on_delete': 'models.SET_NULL', 'blank': 'True'}),
             'refusal_reason': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),

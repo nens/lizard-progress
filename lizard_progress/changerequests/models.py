@@ -94,7 +94,7 @@ class Request(models.Model):
 
     # Original location before the move request. We abuse the Request model for
     # keeping track of that location.
-    old_location = models.ForeignKey("self", null=True)
+    old_location = models.ForeignKey("self", null=True, blank=True)
 
     # Note - a motivation is mandatory
     motivation = models.TextField()

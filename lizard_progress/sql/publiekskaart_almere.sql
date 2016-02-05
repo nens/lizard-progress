@@ -31,6 +31,7 @@ CREATE VIEW publiekskaart_almere AS (
     WHERE
         project.organization_id = 6 -- Gemeente Almere is 3 on staging, 6 on production
         AND project.project_type_id = 31 -- on Production check id = 31 (Planmatig)
+        AND activity.measurement_type_id = 14  -- corresponds to "ribx_reiniging_riool" on production
         AND NOT project.is_archived
         AND (
              (NOT location.one_measurement_uploaded AND

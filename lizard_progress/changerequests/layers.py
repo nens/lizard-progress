@@ -92,16 +92,17 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 return self.mapnik_query_location()
         if request_type == models.Request.REQUEST_TYPE_MOVE_LOCATION:
             # New location in green, old location in red
-            if color == COLOR_NEW:
-                return self.mapnik_query_the_geom()
-            if color == COLOR_OLD:
-                if (self.changerequest.request_status ==
-                        models.Request.REQUEST_STATUS_ACCEPTED and
-                        self.changerequest.old_location is not None):
-                    return self.mapnik_query_old_geom()
-                else:
-                    # Unsure, left it like this because that was the original
-                    # situation for incomplete Requests.
+
+            if (self.changerequest.request_status ==
+                    models.Request.REQUEST_STATUS_ACCEPTED):
+                if color == COLOR_NEW:
+                    return self.mapnik_query_location()
+                if color == COLOR_OLD:
+                    return self.mapnik_query_the_geom()
+            else:
+                if color == COLOR_NEW:
+                    return self.mapnik_query_the_geom()
+                if color == COLOR_OLD:
                     return self.mapnik_query_location()
 
     def mapnik_query_the_geom(self):

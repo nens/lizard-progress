@@ -5,6 +5,8 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Update publiekskaart SQL script.
+
 - Re-add turquouise_dark ball for old Move Requests in map legend.
 
 - Fix a bug when clicking on Requests.

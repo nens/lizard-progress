@@ -45,6 +45,7 @@ from lizard_progress import configuration
 from lizard_progress import models
 from lizard_progress.models import Location
 from lizard_progress.models import Project
+from lizard_progress.models import MeasurementTypeAllowed
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
 from lizard_progress.util import workspaces
@@ -188,12 +189,14 @@ class ProjectsMixin(object):
         if self.user_has_manager_role():
             return Request.objects.filter(
                 request_status=Request.REQUEST_STATUS_OPEN,
-                activity__project__organization=self.profile.organization
+                activity__project__organization=self.profile.organization,
+                activity__project__is_archived=False
             ).count()
         else:
             return Request.objects.filter(
                 request_status=Request.REQUEST_STATUS_OPEN,
-                activity__contractor=self.profile.organization
+                activity__contractor=self.profile.organization,
+                activity__project__is_archived=False
             ).count()
 
     def total_activity_requests(self, activity):
@@ -219,13 +222,16 @@ class ProjectsMixin(object):
     @property
     def projects_requests(self):
         for project in self.projects():
-            yield project, self.num_project_requests(project)
+            mtypes = project.activity_set.all().distinct(
+                "measurement_type").values_list('measurement_type__name',
+                                                flat=True)
+            yield project, self.num_project_requests(project), mtypes
 
     def num_project_requests(self, project):
         if self.user_is_manager():
             return project.num_open_requests
         else:
-            return project.num_open_requests_for_user(self.profile.organization)
+            return project.num_open_requests_for_contractor(self.profile.organization)
 
     def user_is_manager(self):
         """User is a manager if his organization owns this projects
@@ -269,6 +275,14 @@ class ProjectsMixin(object):
 
         return crumbs
 
+    @property
+    def measurementtypes(self):
+        mtypes = list(MeasurementTypeAllowed.objects.filter(
+            organization=self.profile.organization
+        ))
+        user_mtypes = sorted(list(set([str(x.mtype) for x in
+                                          mtypes])))
+        return user_mtypes
 
 class KickOutMixin(object):
     """Checks that the current user is logged in and has an

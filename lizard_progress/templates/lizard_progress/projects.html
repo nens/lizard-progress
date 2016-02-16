@@ -13,6 +13,7 @@
 {% endblock extra_css %}
 
 {% block extra_js %}
+<script src="{{ STATIC_URL }}lizard_progress/javascripts/bootstrap-select.js"></script>
 <script>
 $(document).ready(function() {
   $('.drilldown').focus();
@@ -42,11 +43,20 @@ $(document).ready(function() {
     }
   });
   $('#myAffix').width($('.navbar').first().width() + 11);
+  var selectedMtypes = localStorage.getItem("selectedMeasurementTypes");
+  var selectPicker = $('.selectpicker');
+  if (selectedMtypes == null) {
+      selectPicker.selectpicker('selectAll');
+      localStorage.setItem('selectedMeasurementTypes', JSON.stringify($(".selectpicker").val()));
+  } else {
+      selectedMtypes = JSON.parse(selectedMtypes);
+      selectPicker.val(selectedMtypes);
+      selectPicker.selectpicker('render');
+  }
 });
 $( window ).resize(function() {
   $('#myAffix').width($('.navbar').first().width());
 });
-
 </script>
 {% endblock %}
 
@@ -70,9 +80,14 @@ $( window ).resize(function() {
         <div class="dropdown pull-right">
           <ul class="nav nav-pills" role="tablist">
             <li role="presentation" class="active">
-              <a id="drop" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                {{ view.orderby }}
-                <span class="caret"></span>
+              <a id="drop" href="#" class="dropdown-toggle"
+                 data-toggle="dropdown" role="button"
+                 aria-haspopup="true"
+                 aria-expanded="false">
+                  <div data-toggle="tooltip" title="sorteer projecten">
+                    {{ view.orderby }}
+                    <span class="caret"></span>
+                  </div>
               </a>
               <ul id="sort" class="dropdown-menu" aria-labelledby="drop">
                 {% for queryname, choicename in view.orderchoices.items %}
@@ -94,40 +109,60 @@ $( window ).resize(function() {
             <div class="pull-right" style="margin: 3px 20px 0 0;">
               <a href="?orderby=changerequest">
                 <div class="requests-warning request-container" style="position:relative;
-               "><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg"></i></div>
+               "><div class="project-request-number request-lg">{{ numrequests }}</div><i class="fa fa-exclamation-triangle exclamation-lg" data-toggle="tooltip" title="{{ numrequests }} open aanvragen"></i></div>
               </a>
             </div>
           {% endif %}
         {% endwith %}
       </div>
       <div class="row" style="background:white;">
-        <input
-          class="form-control drilldown"
-          style="margin:20px 0 20px 20px;width:98%;"
-          id="focusedInput"
-          type="text"
-          value=""
-          placeholder="Filter projecten op naam"
-        />
+        <ul style="display:inline;">
+            <li style="display:inline-flex;width:22%;">
+            <select class="selectpicker" multiple title="Kies metingtype..."
+                    data-style="btn-default"
+                    data-selected-text-format="count"
+                    data-width="100%">
+                {% for mtype in view.measurementtypes %}
+              <option>{{ mtype }}</option>
+                {% endfor %}
+            </select>
+          </li>
+          <li style="display:inline-flex;width:76%;">
+            <input
+              class="form-control drilldown"
+              style="margin:20px 0 20px 20px;width:100%;"
+              id="focusedInput"
+              type="text"
+              value=""
+              placeholder="Filter projecten op naam"
+            />
+          </li>
+        </ul>
       </div>
     </div>
 
-          {% for project, numrequests in view.projects_requests %}
-              <div class="row project" data-url="{% url "lizard_progress_dashboardview" project.slug %}">
+          {% for project, numrequests, mtype in view.projects_requests %}
+              <div class="row project" data-url="
+              {% url "lizard_progress_dashboardview" project.slug %}"
+                   data-mtype="{{ mtype|join:";" }}">
                   <div class="row">
                     <div class="col-md-8 col-sm-8 col-xs-8">
                         <p class="project-title" style="display:inline-block;">
                             <!-- <i class="fa fa-star-o"></i>&nbsp; -->
                             <a href="
-                            {% url "lizard_progress_dashboardview" project.slug %}" style="display:inline-block;">{{ project.name }}</a>
+                            {% url "lizard_progress_dashboardview" project.slug %}" style="display:inline-block;">{{ project.name }}</a></p>
                               {% if numrequests > 0 %}
                                 <div class="request-warning
-                                request-container"
+                                request-container
+                                request-container-sm"
                                      style="display:inline-block;
                                      margin-left:15px;"><div
-                                        class="project-request-number request-sm">{{ numrequests }}</div><a href="{% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm"></i></a></div>
+                                        class="project-request-number
+                                        request-sm">{{ numrequests }}</div><a
+                                        href="
+                                        {% url "lizard_progress_dashboardview" project.slug %}"><i class="fa fa-exclamation-triangle exclamation-sm" data-toggle="tooltip" title="{{ numrequests }} open aanvragen"></i></a></div>
                               {% endif %}
-                              </p>
+
                             <p class="project-age" title="{{ project.created_at }}">
 
                             {{ project.created_at|timesince }} geleden
@@ -137,9 +172,20 @@ $( window ).resize(function() {
                           <p class="project-description"></p>
                         <div class="col-md-4 col-sm-4 col-xs4 stats">
                           <ul>
-                            <li><span>Locaties compleet: {{ project.number_of_complete_locations }}x</span></li>
+                            <li><span><span class="hidden-xs">Locaties
+                                compleet:</span>
+                                {{ project.number_of_complete_locations }}x</span></li>
                             <li>
-                              <div class="hidden-xs hidden-sm pie-md {{ project.pie }}"></div>
+                              <div class="hidden-xs hidden-sm pie-md
+                              {{ project.pie }}" data-toggle="tooltip"
+                                   title="{{ project.percentage_done }}
+                                   {% if project.percentage_done != 'N/A' %}
+                                   % compleet: {{ project.number_of_complete_locations }}
+                                    locaties compleet
+                                    van {{ project.number_of_locations }}
+                                    locaties in totaal.
+                                   {% endif %}
+                                   "></div>
                               <div class="hidden-md hidden-lg pie-sm {{ project.pie }}"></div>
                             </li>
                           </ul>

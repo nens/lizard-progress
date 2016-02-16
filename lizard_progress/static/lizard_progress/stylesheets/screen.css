@@ -8886,10 +8886,15 @@ h4.panel-title {
 }
 
 /* line 28, ../sass/modules/_project_manager_home.scss */
+.bootstrap-select {
+  top: 12px;
+}
+
+/* line 32, ../sass/modules/_project_manager_home.scss */
 #organisation {
   margin: 20px;
 }
-/* line 31, ../sass/modules/_project_manager_home.scss */
+/* line 35, ../sass/modules/_project_manager_home.scss */
 #organisation .organisation-title {
   position: absolute;
   top: 0;
@@ -8898,7 +8903,7 @@ h4.panel-title {
   font-weight: bold;
   color: #027377;
 }
-/* line 40, ../sass/modules/_project_manager_home.scss */
+/* line 44, ../sass/modules/_project_manager_home.scss */
 #organisation .details {
   position: absolute;
   top: 35px;
@@ -8906,16 +8911,16 @@ h4.panel-title {
   line-height: 20px;
   padding: 10px 0 5px 0;
 }
-/* line 47, ../sass/modules/_project_manager_home.scss */
+/* line 51, ../sass/modules/_project_manager_home.scss */
 #organisation .details ul li {
   font-size: .85em;
 }
-/* line 50, ../sass/modules/_project_manager_home.scss */
+/* line 54, ../sass/modules/_project_manager_home.scss */
 #organisation .details ul li a {
   color: #027377;
 }
 
-/* line 55, ../sass/modules/_project_manager_home.scss */
+/* line 59, ../sass/modules/_project_manager_home.scss */
 .projectswitcher {
   display: none;
   position: absolute;
@@ -8931,34 +8936,34 @@ h4.panel-title {
   box-shadow: 6px 6px 29px -12px rgba(0, 0, 0, 0.75);
 }
 
-/* line 70, ../sass/modules/_project_manager_home.scss */
+/* line 74, ../sass/modules/_project_manager_home.scss */
 .inline-pipe {
   border-left: 1px solid #ccc;
   padding-left: 13px;
 }
 
-/* line 75, ../sass/modules/_project_manager_home.scss */
+/* line 79, ../sass/modules/_project_manager_home.scss */
 i.exclamation-lg {
   color: #027377;
   z-index: 1;
   font-size: 2.5em;
 }
 
-/* line 81, ../sass/modules/_project_manager_home.scss */
+/* line 85, ../sass/modules/_project_manager_home.scss */
 i.exclamation-sm {
   color: #027377;
   z-index: 1;
   font-size: 1em;
 }
 
-/* line 87, ../sass/modules/_project_manager_home.scss */
+/* line 91, ../sass/modules/_project_manager_home.scss */
 div.request-container {
   position: relative;
   width: 30px;
   height: 35px;
 }
 
-/* line 93, ../sass/modules/_project_manager_home.scss */
+/* line 97, ../sass/modules/_project_manager_home.scss */
 div.project-request-number {
   width: 50px;
   height: 50px;
@@ -8971,7 +8976,7 @@ div.project-request-number {
   float: right;
 }
 
-/* line 104, ../sass/modules/_project_manager_home.scss */
+/* line 108, ../sass/modules/_project_manager_home.scss */
 div.request-lg {
   position: absolute;
   top: -10px;
@@ -8980,39 +8985,46 @@ div.request-lg {
   font-size: 1.8em;
 }
 
-/* line 111, ../sass/modules/_project_manager_home.scss */
+/* line 115, ../sass/modules/_project_manager_home.scss */
 div.request-sm {
   position: absolute;
+  margin-bottom: 0px;
   top: -5px;
   right: 28px;
   text-align: right;
   font-size: 0.8em;
+  height: 0px;
 }
 
-/* line 121, ../sass/modules/_project_manager_home.scss */
+/* line 124, ../sass/modules/_project_manager_home.scss */
+.request-container.request-container-sm {
+  height: auto;
+}
+
+/* line 129, ../sass/modules/_project_manager_home.scss */
 #projects .project {
   margin: 0 0 0 0;
 }
-/* line 123, ../sass/modules/_project_manager_home.scss */
+/* line 131, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title {
   margin: 20px 0 0 0;
 }
-/* line 125, ../sass/modules/_project_manager_home.scss */
+/* line 133, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title .fa {
   font-size: 1.4em;
   margin: 0 5px 0 0;
 }
-/* line 130, ../sass/modules/_project_manager_home.scss */
+/* line 138, ../sass/modules/_project_manager_home.scss */
 #projects .project ul li.project-latest {
   font-size: 0.9em;
   color: #ced0d0;
 }
-/* line 134, ../sass/modules/_project_manager_home.scss */
+/* line 142, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-no-latest {
   font-size: 0.9em;
   color: #ced0d0;
 }
-/* line 138, ../sass/modules/_project_manager_home.scss */
+/* line 146, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a {
   line-height: 2em;
   font-size: 1.5em;
@@ -9020,106 +9032,106 @@ div.request-sm {
   font-weight: 500;
   text-decoration: none;
 }
-/* line 145, ../sass/modules/_project_manager_home.scss */
+/* line 153, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-title a:hover {
   text-decoration: underline;
 }
-/* line 148, ../sass/modules/_project_manager_home.scss */
+/* line 156, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-description {
   font-size: 0.8em;
   color: #7f8c8d;
 }
-/* line 152, ../sass/modules/_project_manager_home.scss */
+/* line 160, ../sass/modules/_project_manager_home.scss */
 #projects .project p.project-age {
-  margin: -10px 0 10px 0;
+  margin: 0px 0 10px 0;
   font-size: 1.1em;
   font-style: italic;
   color: #bdc3c7;
 }
-/* line 159, ../sass/modules/_project_manager_home.scss */
+/* line 167, ../sass/modules/_project_manager_home.scss */
 #projects .stats {
   color: #027377;
   vertical-align: middle;
 }
-/* line 162, ../sass/modules/_project_manager_home.scss */
+/* line 170, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul {
   position: absolute;
   top: 5px;
   right: 0px;
   display: inline-flex;
 }
-/* line 167, ../sass/modules/_project_manager_home.scss */
+/* line 175, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul li {
   display: inline-flex;
   margin: 5px;
   font-weight: bold;
 }
-/* line 171, ../sass/modules/_project_manager_home.scss */
+/* line 179, ../sass/modules/_project_manager_home.scss */
 #projects .stats ul li span {
   padding-top: 27px;
 }
-/* line 181, ../sass/modules/_project_manager_home.scss */
+/* line 189, ../sass/modules/_project_manager_home.scss */
 #projects .project:not(:first-child) {
   border-top: 1px solid #ecf0f1;
   margin-top: 20px;
   padding-top: 20px;
 }
-/* line 186, ../sass/modules/_project_manager_home.scss */
+/* line 194, ../sass/modules/_project_manager_home.scss */
 #projects .project:last-child {
   margin: 20px 0 50px 0;
   padding: 20px 0 30px 0;
   border-bottom: 1px solid #ecf0f1;
 }
 
-/* line 194, ../sass/modules/_project_manager_home.scss */
+/* line 202, ../sass/modules/_project_manager_home.scss */
 #project-slug {
   border-bottom: 1px solid #ecf0f1;
   margin-bottom: 25px;
   padding: 20px 0 20px 0;
 }
-/* line 198, ../sass/modules/_project_manager_home.scss */
+/* line 206, ../sass/modules/_project_manager_home.scss */
 #project-slug .title {
   padding: 0 0 0 20px;
   font-size: 2em;
   color: #ced0d0;
 }
-/* line 202, ../sass/modules/_project_manager_home.scss */
+/* line 210, ../sass/modules/_project_manager_home.scss */
 #project-slug .title .org a {
   color: #ced0d0;
 }
-/* line 205, ../sass/modules/_project_manager_home.scss */
+/* line 213, ../sass/modules/_project_manager_home.scss */
 #project-slug .title .project a {
   color: #027377;
 }
 
-/* line 213, ../sass/modules/_project_manager_home.scss */
+/* line 221, ../sass/modules/_project_manager_home.scss */
 #project-details .quickbar {
   border: 1px solid #bdc3c7;
   margin: 20px;
 }
-/* line 217, ../sass/modules/_project_manager_home.scss */
+/* line 225, ../sass/modules/_project_manager_home.scss */
 #project-details p.description {
   font-size: 1.1em;
   color: #95a5a6;
   padding: 20px 0 0 10px;
 }
-/* line 222, ../sass/modules/_project_manager_home.scss */
+/* line 230, ../sass/modules/_project_manager_home.scss */
 #project-details p.age {
   padding: 0 0 0 10px;
   font-style: italic;
   color: #bdc3c7;
 }
-/* line 228, ../sass/modules/_project_manager_home.scss */
+/* line 236, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar.affix {
   position: fixed;
   top: 20px;
 }
-/* line 232, ../sass/modules/_project_manager_home.scss */
+/* line 240, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar.affix .sidenav, #project-details .sidebar.affix-bottom .sidenav {
   margin-top: 0;
   margin-bottom: 0;
 }
-/* line 236, ../sass/modules/_project_manager_home.scss */
+/* line 244, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav > li {
   padding-left: 18px;
   font-weight: 700;
@@ -9128,7 +9140,7 @@ div.request-sm {
   padding: 0 0 10px 0;
   border-left: 1px solid #ecf0f1;
 }
-/* line 244, ../sass/modules/_project_manager_home.scss */
+/* line 252, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav > li > a {
   display: block;
   padding: 15px 20px;
@@ -9136,31 +9148,31 @@ div.request-sm {
   font-weight: 500;
   color: #767676;
 }
-/* line 251, ../sass/modules/_project_manager_home.scss */
+/* line 259, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar .nav .nav {
   display: none;
   padding-bottom: 10px;
 }
-/* line 255, ../sass/modules/_project_manager_home.scss */
+/* line 263, ../sass/modules/_project_manager_home.scss */
 #project-details .sidebar a.active {
   background-color: #ecf0f1;
 }
-/* line 258, ../sass/modules/_project_manager_home.scss */
+/* line 266, ../sass/modules/_project_manager_home.scss */
 #project-details .details-tabs {
   margin: 0;
 }
 
-/* line 265, ../sass/modules/_project_manager_home.scss */
+/* line 273, ../sass/modules/_project_manager_home.scss */
 table tr.clickable {
   cursor: pointer;
 }
 
-/* line 269, ../sass/modules/_project_manager_home.scss */
+/* line 277, ../sass/modules/_project_manager_home.scss */
 .ui-widget-overlay {
   display: none !important;
 }
 
-/* line 273, ../sass/modules/_project_manager_home.scss */
+/* line 281, ../sass/modules/_project_manager_home.scss */
 div.panel-heading > h3 {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -9168,7 +9180,7 @@ div.panel-heading > h3 {
   width: 50%;
 }
 
-/* line 281, ../sass/modules/_project_manager_home.scss */
+/* line 289, ../sass/modules/_project_manager_home.scss */
 .progress {
   background-color: #D6D6D6 !important;
 }
@@ -9322,3 +9334,370 @@ div.panel-heading > h3 {
 .btn-breadcrumb .btn.btn-default:hover:not(:last-child):before {
   border-left: 10px solid #adadad;
 }
+
+/*!
+ * Bootstrap-select v1.7.2 (http://silviomoreto.github.io/bootstrap-select)
+ *
+ * Copyright 2013-2015 bootstrap-select
+ * Licensed under MIT (https://github.com/silviomoreto/bootstrap-select/blob/master/LICENSE)
+ */
+/* line 8, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select {
+  width: 220px \0;
+  /*IE9 and below*/
+}
+
+/* line 12, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select > .dropdown-toggle {
+  width: 100%;
+  padding-right: 25px;
+}
+
+/* line 16, ../sass/modules/_bootstrap-select.scss */
+.has-error .bootstrap-select .dropdown-toggle,
+.error .bootstrap-select .dropdown-toggle {
+  border-color: #b94a48;
+}
+
+/* line 20, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.fit-width {
+  width: auto !important;
+}
+
+/* line 23, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select:not([class*="col-"]):not([class*="form-control"]):not(.input-group-btn) {
+  width: 220px;
+}
+
+/* line 26, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select .dropdown-toggle:focus {
+  outline: thin dotted #333333 !important;
+  outline: 5px auto -webkit-focus-ring-color !important;
+  outline-offset: -2px;
+}
+
+/* line 31, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.form-control {
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+}
+
+/* line 36, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.form-control:not([class*="col-"]) {
+  width: 100%;
+}
+
+/* line 39, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.form-control.input-group-btn {
+  z-index: auto;
+}
+
+/* line 42, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group:not(.input-group-btn),
+.bootstrap-select.btn-group[class*="col-"] {
+  float: none;
+  display: inline-block;
+  margin-left: 0;
+}
+
+/* line 48, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group.dropdown-menu-right,
+.bootstrap-select.btn-group[class*="col-"].dropdown-menu-right,
+.row .bootstrap-select.btn-group[class*="col-"].dropdown-menu-right {
+  float: right;
+}
+
+/* line 53, ../sass/modules/_bootstrap-select.scss */
+.form-inline .bootstrap-select.btn-group,
+.form-horizontal .bootstrap-select.btn-group,
+.form-group .bootstrap-select.btn-group {
+  margin-bottom: 0;
+}
+
+/* line 58, ../sass/modules/_bootstrap-select.scss */
+.form-group-lg .bootstrap-select.btn-group.form-control,
+.form-group-sm .bootstrap-select.btn-group.form-control {
+  padding: 0;
+}
+
+/* line 62, ../sass/modules/_bootstrap-select.scss */
+.form-inline .bootstrap-select.btn-group .form-control {
+  width: 100%;
+}
+
+/* line 65, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group.disabled,
+.bootstrap-select.btn-group > .disabled {
+  cursor: not-allowed;
+}
+
+/* line 69, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group.disabled:focus,
+.bootstrap-select.btn-group > .disabled:focus {
+  outline: none !important;
+}
+
+/* line 73, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-toggle .filter-option {
+  display: inline-block;
+  overflow: hidden;
+  width: 100%;
+  text-align: left;
+}
+
+/* line 79, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-toggle .caret {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  margin-top: -2px;
+  vertical-align: middle;
+}
+
+/* line 86, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group[class*="col-"] .dropdown-toggle {
+  width: 100%;
+}
+
+/* line 89, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu {
+  min-width: 100%;
+  z-index: 1035;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* line 96, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu.inner {
+  position: static;
+  float: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+/* line 106, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu li {
+  position: relative;
+}
+
+/* line 109, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu li.active small {
+  color: #fff;
+}
+
+/* line 112, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu li.disabled a {
+  cursor: not-allowed;
+}
+
+/* line 115, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu li a {
+  cursor: pointer;
+}
+
+/* line 118, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu li a.opt {
+  position: relative;
+  padding-left: 2.25em;
+}
+
+/* line 122, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu li a span.check-mark {
+  display: none;
+}
+
+/* line 125, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu li a span.text {
+  display: inline-block;
+}
+
+/* line 128, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu li small {
+  padding-left: 0.5em;
+}
+
+/* line 131, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .dropdown-menu .notify {
+  position: absolute;
+  bottom: 5px;
+  width: 96%;
+  margin: 0 2%;
+  min-height: 26px;
+  padding: 3px 5px;
+  background: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+  opacity: 0.9;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* line 148, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group .no-results {
+  padding: 3px;
+  background: #f5f5f5;
+  margin: 0 5px;
+  white-space: nowrap;
+}
+
+/* line 154, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group.fit-width .dropdown-toggle .filter-option {
+  position: static;
+}
+
+/* line 157, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group.fit-width .dropdown-toggle .caret {
+  position: static;
+  top: auto;
+  margin-top: -1px;
+}
+
+/* line 162, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group.show-tick .dropdown-menu li.selected a span.check-mark {
+  position: absolute;
+  display: inline-block;
+  right: 15px;
+  margin-top: 5px;
+}
+
+/* line 168, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.btn-group.show-tick .dropdown-menu li a span.text {
+  margin-right: 34px;
+}
+
+/* line 171, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.show-menu-arrow.open > .dropdown-toggle {
+  z-index: 1036;
+}
+
+/* line 174, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.show-menu-arrow .dropdown-toggle:before {
+  content: '';
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 7px solid rgba(204, 204, 204, 0.2);
+  position: absolute;
+  bottom: -4px;
+  left: 9px;
+  display: none;
+}
+
+/* line 184, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.show-menu-arrow .dropdown-toggle:after {
+  content: '';
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid white;
+  position: absolute;
+  bottom: -4px;
+  left: 10px;
+  display: none;
+}
+
+/* line 194, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.show-menu-arrow.dropup .dropdown-toggle:before {
+  bottom: auto;
+  top: -3px;
+  border-top: 7px solid rgba(204, 204, 204, 0.2);
+  border-bottom: 0;
+}
+
+/* line 200, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.show-menu-arrow.dropup .dropdown-toggle:after {
+  bottom: auto;
+  top: -3px;
+  border-top: 6px solid white;
+  border-bottom: 0;
+}
+
+/* line 206, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.show-menu-arrow.pull-right .dropdown-toggle:before {
+  right: 12px;
+  left: auto;
+}
+
+/* line 210, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.show-menu-arrow.pull-right .dropdown-toggle:after {
+  right: 13px;
+  left: auto;
+}
+
+/* line 214, ../sass/modules/_bootstrap-select.scss */
+.bootstrap-select.show-menu-arrow.open > .dropdown-toggle:before,
+.bootstrap-select.show-menu-arrow.open > .dropdown-toggle:after {
+  display: block;
+}
+
+/* line 218, ../sass/modules/_bootstrap-select.scss */
+.bs-searchbox,
+.bs-actionsbox,
+.bs-donebutton {
+  padding: 4px 8px;
+}
+
+/* line 223, ../sass/modules/_bootstrap-select.scss */
+.bs-actionsbox {
+  float: left;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* line 230, ../sass/modules/_bootstrap-select.scss */
+.bs-actionsbox .btn-group button {
+  width: 50%;
+}
+
+/* line 233, ../sass/modules/_bootstrap-select.scss */
+.bs-donebutton {
+  float: left;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* line 240, ../sass/modules/_bootstrap-select.scss */
+.bs-donebutton .btn-group button {
+  width: 100%;
+}
+
+/* line 243, ../sass/modules/_bootstrap-select.scss */
+.bs-searchbox + .bs-actionsbox {
+  padding: 0 8px 4px;
+}
+
+/* line 246, ../sass/modules/_bootstrap-select.scss */
+.bs-searchbox .form-control {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+/* line 250, ../sass/modules/_bootstrap-select.scss */
+select.bs-select-hidden,
+select.selectpicker {
+  display: none !important;
+}
+
+/* line 254, ../sass/modules/_bootstrap-select.scss */
+select.mobile-device {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  display: block !important;
+  width: 100%;
+  height: 100% !important;
+  opacity: 0;
+}
+
+/*# sourceMappingURL=bootstrap-select.css.map */

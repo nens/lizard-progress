@@ -148,10 +148,14 @@ def try_parser(uploaded_file, parser):
 
                 shutil.move(uploaded_file.path, target_path)
 
-                # Update measurements.
+                # Update measurements and locations.
                 for m in parseresult.measurements:
                     m.filename = target_path
                     m.save()
+                    location = m.location
+                    location.one_measurement_uploaded = True
+                    location.measured_date = location.latest_measurement_date()
+                    location.save()
 
                 # Log success
                 uploaded_file.log_success(parseresult.measurements)

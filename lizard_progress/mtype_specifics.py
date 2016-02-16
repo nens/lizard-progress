@@ -103,7 +103,7 @@ class MetfileSpecifics(GenericSpecifics):
         measurements = models.Measurement.objects.filter(
             location__in=locations)
 
-        canvas = crosssection_graph.graph(measurements)
+        canvas = crosssection_graph.graph(locations[0], measurements)
 
         response = response_object or HttpResponse(content_type='image/png')
         canvas.print_png(response)
@@ -111,18 +111,15 @@ class MetfileSpecifics(GenericSpecifics):
 
     def html_handler(self, html_default, locations,
                      identifiers, layout_options):
-        location_code = locations[0].location_code
-        organization = locations[0].activity.project.organization
+        location = locations[0]
+        organization = location.activity.project.organization
 
         multiple_projects_graph_url = None
-        if models.Location.objects.filter(
-                activity__project__organization=organization,
-                location_code=location_code,
-                complete=True).count() > 1:
+        if location.close_by_locations_of_same_organisation().count() > 1:
             multiple_projects_graph_url = reverse(
                 'crosssection_graph', kwargs=dict(
                     organization_id=organization.id,
-                    location_code=location_code))
+                    location_id=location.id))
 
         return html_default(
             identifiers=identifiers,
@@ -262,6 +259,7 @@ class RibxReinigingRioolSpecifics(GenericSpecifics):
 
 class RibxReinigingKolkenSpecifics(RibxReinigingRioolSpecifics):
     location_types = [models.Location.LOCATION_TYPE_DRAIN]
+    parser = lizard_progress.parsers.ribx_parser.RibxReinigingKolkenParser
 
 
 class RibxReinigingInspectieRioolSpecifics(RibxReinigingRioolSpecifics):

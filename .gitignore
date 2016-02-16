@@ -38,3 +38,6 @@ etc/*.apache.conf
 
 # Pycharm
 /.idea
+
+# Local testsettings
+local_testsettings.py

@@ -46,11 +46,16 @@ class Request(models.Model):
     REQUEST_TYPE_REMOVE_CODE = 1
     REQUEST_TYPE_MOVE_LOCATION = 2
     REQUEST_TYPE_NEW_LOCATION = 3
+    # This request type is actually not a real Request but (ab)used for
+    # storing the old location of a move Request.
+    REQUEST_TYPE_ORIGINAL_LOCATION = 4
 
     TYPES = {
         REQUEST_TYPE_REMOVE_CODE: "Locatiecode verwijderen",
         REQUEST_TYPE_MOVE_LOCATION: "Locatie verplaatsen",
-        REQUEST_TYPE_NEW_LOCATION: "Nieuwe locatiecode"
+        REQUEST_TYPE_NEW_LOCATION: "Nieuwe locatiecode",
+        REQUEST_TYPE_ORIGINAL_LOCATION:
+            "Originele locatie vóór verplaatsingsaanvraag",
     }
 
     REQUEST_STATUS_OPEN = 1
@@ -86,6 +91,10 @@ class Request(models.Model):
     # Only used if this request is of type new location, in case an
     # optional old location will be removed.
     old_location_code = models.CharField(max_length=50, null=True, blank=True)
+
+    # Original location before the move request. We abuse the Request model for
+    # keeping track of that location.
+    old_location = models.ForeignKey("self", null=True, blank=True)
 
     # Note - a motivation is mandatory
     motivation = models.TextField()
@@ -175,6 +184,11 @@ class Request(models.Model):
         except pmodels.Location.DoesNotExist:
             return None
 
+    def get_old_location(self):
+        if not self.old_location_code:
+            return None
+        return self.get_location(self.old_location_code)
+
     def set_invalid(self, reason):
         self.invalid_reason = reason
         self.request_status = Request.REQUEST_STATUS_INVALID
@@ -210,8 +224,7 @@ class Request(models.Model):
                 return self.set_invalid("Locatie bestaat al.")
 
             if self.old_location_code:
-                old_location = self.get_location(
-                    location_code=self.old_location_code)
+                old_location = self.get_old_location()
                 if not old_location:
                     return self.set_invalid("Oude locatie bestaat niet.")
                 if old_location.has_measurements():
@@ -264,23 +277,27 @@ class Request(models.Model):
 
         # Save new status
         self.change_status(Request.REQUEST_STATUS_ACCEPTED)
-        # Send notification
-        notification_type = NotificationType.objects.get(
-            name='aanvraag geaccepteerd')
-        kwargs = {
-            'actor': pmodels.UserRole.objects.get(
-                code=pmodels.UserRole.ROLE_MANAGER),
-            'action_object': self,
-            'target': self.activity,
-            'extra': {'link':
-                      Site.objects.get_current().domain +
-                      self.get_absolute_url()}
-        }
-        self.activity.notify_contractors(notification_type, **kwargs)
+
+        if not self.created_by_manager:
+            # Send notification. Requests by the manager are
+            # auto-accepted, they don't want to receive mails in this
+            # case.
+            notification_type = NotificationType.objects.get(
+                name='aanvraag geaccepteerd')
+            kwargs = {
+                'actor': pmodels.UserRole.objects.get(
+                    code=pmodels.UserRole.ROLE_MANAGER),
+                'action_object': self,
+                'target': self.activity,
+                'extra': {'link':
+                          Site.objects.get_current().domain +
+                          self.get_absolute_url()}
+            }
+            self.activity.notify_contractors(notification_type, **kwargs)
 
         if self.possible_request:
-            # If all possible requests of all a file are accepted, it may
-            # be uploaded again
+            # If all possible requests of a file are accepted, it
+            # may be uploaded again
             self.possible_request.do_accept()
 
     def do_remove_code(self, location_code=None):
@@ -289,8 +306,20 @@ class Request(models.Model):
 
     def do_move_location(self):
         location = self.get_location()
+        old_location_geom = location.the_geom
         location.the_geom = self.the_geom
         location.save()
+
+        self.old_location = Request.objects.create(
+            activity=self.activity,
+            request_type=self.REQUEST_TYPE_ORIGINAL_LOCATION,
+            request_status=self.REQUEST_STATUS_ACCEPTED,
+            created_by_manager=self.created_by_manager,
+            location_code=self.location_code,
+            motivation=self.motivation,
+            the_geom=old_location_geom,
+            )
+        self.save()
 
     def do_add_location(self):
         location, created = pmodels.Location.objects.get_or_create(
@@ -433,7 +462,8 @@ class Request(models.Model):
         return (x, y, x, y)
 
     @classmethod
-    def create_deletion_request(cls, location, motivation, user_is_manager):
+    def create_deletion_request(
+            cls, location, motivation, user_is_manager, geom=None):
         request, created = cls.objects.get_or_create(
             activity=location.activity,
             request_type=cls.REQUEST_TYPE_REMOVE_CODE,
@@ -441,7 +471,8 @@ class Request(models.Model):
             location_code=location.location_code, defaults=dict(
                 created_by_manager=user_is_manager,
                 motivation=motivation,
-                the_geom=geo.osgeo_3d_point_to_2d_wkt(location.the_geom)))
+                the_geom=geo.osgeo_3d_point_to_2d_wkt(
+                    geom if geom is not None else location.the_geom)))
         return request
 
 
@@ -597,21 +628,18 @@ def message_request_created(sender, instance, created, **kwargs):
     notification_type = NotificationType.objects.get(name="aanvraag ingediend")
 
     if instance.created_by_manager:
-        role_code = pmodels.UserRole.ROLE_MANAGER
-    else:
-        role_code = pmodels.UserRole.ROLE_UPLOADER
+        return  # Don't send mail if request was created by manager.
 
-    actor = pmodels.UserRole.objects.get(code=role_code)
-    kwargs = {
-        'actor': actor,
-        'action_object': instance,
-        'target': instance.activity,
-        'extra': {'link':
-                  Site.objects.get_current().domain +
-                  instance.get_absolute_url()},
-    }
-    if created:
-        instance.activity.notify_managers(notification_type, **kwargs)
+    if not created:
+        # I don't know how this is possible, but let's check it...
+        return
+
+    actor = pmodels.UserRole.objects.get(code=pmodels.UserRole.ROLE_UPLOADER)
+    instance.activity.notify_managers(
+        notification_type, actor=actor, action_object=instance,
+        target=instance.activity, extra={
+            'link': Site.objects.get_current().domain +
+            instance.get_absolute_url()})
 
 
 @receiver(post_save, sender=RequestComment)

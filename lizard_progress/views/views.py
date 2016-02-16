@@ -806,16 +806,13 @@ class ArchiveProjectsView(ProjectsView):
     template_name = 'lizard_progress/dashboard.html'
 
     def archive(self, project_slug):
-        is_archived = False
         if self.user_is_manager():
             try:
-                is_archived = True
                 project = Project.objects.get(slug=project_slug)
-                project.is_archived = is_archived
-                project.save()
+                project.archive()
                 msg = "Project '{}' is gearchiveerd."
             except:
-                msg = ("Er is een fout opgetreden. Project '{}' " +
+                msg = ("Er is een fout opgetreden. Project '{}' "
                        "is NIET gearchiveerd.")
             messages.success(self.request, msg.format(project))
         else:
@@ -824,8 +821,7 @@ class ArchiveProjectsView(ProjectsView):
 
     def activate(self, project_slug):
         project = Project.objects.get(slug=project_slug)
-        project.is_archived = False
-        project.save()
+        project.activate()
         messages.success(
             self.request, "Project '{}' is geactiveerd.".format(project))
 
@@ -1044,17 +1040,19 @@ class EmailNotificationConfigurationView(ProjectsView):
         return redirect
 
 
-def multiproject_crosssection_graph(request, organization_id, location_code):
-    """Show a graph with all Dwarsprofielen of this code that have been
-    uploaded in this organization.
+def multiproject_crosssection_graph(request, organization_id, location_id):
+    """Show a graph with all Dwarsprofielen of this organization that are
+    closer than 10m to this location.
 
     """
     organization = get_object_or_404(models.Organization, id=organization_id)
     if models.Organization.get_by_user(request.user) != organization:
         raise PermissionDenied()
 
-    canvas = crosssection_graph.location_code_graph(
-        organization, location_code)
+    location = get_object_or_404(models.Location, id=location_id)
+
+    canvas = crosssection_graph.locations_close_by_graph(
+        organization, location)
 
     response = HttpResponse(content_type='image/png')
     canvas.print_png(response)

@@ -15,8 +15,6 @@ import factory
 import os
 import tempfile
 
-from osgeo import ogr
-
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import User
 
@@ -357,8 +355,64 @@ class TestProject(FixturesTestCase):
         location = LocationF(complete=True)
         self.assertTrue(location.activity.project.is_complete())
 
+    def test_archive_project_no_deletion_normally(self):
+        """Test that archiving a project will not delete measurements
+        normally.
+        """
+        self.assertEquals(len(models.Measurement.objects.all()), 0)
+        measurement = MeasurementF()
+        project = measurement.location.activity.project
+        project.archive()
+        self.assertEquals(len(models.Measurement.objects.all()), 1)
+
+    def test_archive_project_with_deletion(self):
+        """Test that archiving a project will delete all measurements that
+        (1) belong to the project, (2) has the 'delete_on_archive' field set,
+        (3) has a parent measurement
+        """
+        measurement1 = MeasurementF(
+            location__activity__measurement_type__delete_on_archive=True)
+        location = measurement1.location
+        project = measurement1.location.activity.project
+        MeasurementF(
+            parent=measurement1,
+            location=location)
+
+        self.assertEquals(len(models.Measurement.objects.all()), 2)
+        project.archive()
+        self.assertEquals(len(models.Measurement.objects.all()), 1)
+
+    def test_archive_project_no_deletion_without_flag(self):
+        """Almost the same as 'test_archive_project_with_deletion', but
+        'delete_on_archive' is False
+        """
+        measurement1 = MeasurementF(
+            location__activity__measurement_type__delete_on_archive=False)
+        location = measurement1.location
+        project = measurement1.location.activity.project
+        MeasurementF(
+            parent=measurement1,
+            location=location)
+
+        self.assertEquals(len(models.Measurement.objects.all()), 2)
+        project.archive()
+        self.assertEquals(len(models.Measurement.objects.all()), 2)
+
+    def test_archive_project_no_deletion_without_parent(self):
+        """Almost the same as 'test_archive_project_with_deletion', but no
+        parent.
+        """
+        measurement1 = MeasurementF(
+            location__activity__measurement_type__delete_on_archive=True)
+        project = measurement1.location.activity.project
+
+        self.assertEquals(len(models.Measurement.objects.all()), 1)
+        project.archive()
+        self.assertEquals(len(models.Measurement.objects.all()), 1)
+
 
 @attr('slow')
+@attr('location')
 class TestLocation(FixturesTestCase):
     """Tests for the Location model."""
     def test_unicode(self):
@@ -390,6 +444,29 @@ class TestLocation(FixturesTestCase):
     def test_has_absolute_url(self):
         location = LocationF()
         self.assertTrue(location.get_absolute_url())
+
+    def test_measured_date_works_if_one_measurement_has_date_null(self):
+        location = LocationF.create()
+        date = datetime.date.today()
+
+        MeasurementF.create(location=location, date=None)
+        MeasurementF.create(location=location, date=date)
+
+        self.assertEquals(location.latest_measurement_date().date(), date)
+
+    def test_measured_date_works_if_there_are_no_measurements(self):
+        location = LocationF.create()
+        self.assertEquals(location.latest_measurement_date(), None)
+
+    def test_measured_date_returns_latest_date(self):
+        location = LocationF.create()
+        date1 = datetime.datetime(2015, 11, 1, 0, 0)
+        date2 = datetime.datetime(2015, 11, 2, 0, 0)
+
+        MeasurementF.create(location=location, date=date1)
+        MeasurementF.create(location=location, date=date2)
+
+        self.assertEquals(location.latest_measurement_date(), date2)
 
 
 class TestMeasurement(FixturesTestCase):
@@ -475,6 +552,30 @@ class TestMeasurement(FixturesTestCase):
         self.assertRaises(
             models.AlreadyUploadedError,
             lambda: measurement2.setup_expected_attachments(['1.jpg']))
+
+    def test_expected_attachment_with_two_measurements_is_found(self):
+        # Beware! When using filters over M2M relations, distinct()
+        # may be necessary.
+
+        activity = ActivityF.create()
+        measurement1 = MeasurementF.create(location__activity=activity)
+        measurement2 = MeasurementF.create(location__activity=activity)
+        expected_attachment = ExpectedAttachmentF.create(
+            filename='test.txt')
+
+        measurement1.expected_attachments.add(expected_attachment)
+        measurement2.expected_attachments.add(expected_attachment)
+
+        self.assertRaises(
+            models.ExpectedAttachment.MultipleObjectsReturned,
+            lambda: models.ExpectedAttachment.objects.get(
+                measurements__location__activity=activity,
+                filename='test.txt'))
+
+        self.assertTrue(
+            models.ExpectedAttachment.objects.distinct().get(
+                measurements__location__activity=activity,
+                filename='test.txt'))
 
     # From here, test Measurement.delete
 

@@ -2,10 +2,168 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.1 (unreleased)
+2.6.17 (unreleased)
+-------------------
+
+- Update publiekskaart SQL script.
+
+- Re-add turquouise_dark ball for old Move Requests in map legend.
+
+- Fix a bug when clicking on Requests.
+
+- Visualize old location of Move Requests by using the another Request object
+  (kinda ugly because that generates a new Request in the GUI).
+
+- Add a new check for the uploaded shapefile schedule: if the week number is
+  in the current or next week the day is mandatory. An error will be raised
+  if that's not the case.
+
+- Update legend and update translations.
+
+- Fix a problem with the create_new method: geoms with a Z-value are not
+  accepted, thus points are now converted to 2D.
+
+- Disable the automatic Request generation for 'work_impossible' drains, now
+  they are automatically completed and given a new color. Furthermore, newly
+  created/unplanned drains are also given a new color.
+
+- Add archiving tests.
+
+- Bump lizard_map to 4.51.1 which contains a fix for JSONFields.
+
+- Implement deletion of 'attachment' Measurements when Project is archived.
+  This should only be done for sewerage projects; to enable deletion of a
+  specific measurement type the delete_on_archive field must thus be set. The
+  measurement types fixture is updated to reflect this change.
+
+- Add delete_on_archive field to AvailableMeasurentType.
+
+
+2.6.16 (2016-01-21)
+-------------------
+
+- Make an initial working version of the GWSW checker.
+
+- Add missing models to admin.
+
+- Typo...
+
+- Remove the item for "old location of accepted change request" from
+  the legend -- as this isn't stored in the database, and the location
+  has moved successfully, we can't actually show this information on
+  the map.
+
+
+2.6.15 (2016-01-14)
+-------------------
+
+- Show only old locations from change requests in the actual project we're
+  looking at.
+
+- Fix clicking old location.
+
+
+2.6.14 (2016-01-08)
+-------------------
+
+- When a "move location" change request is shown as a map layer, make the
+  old location clickable as well. This results in the same popup (there is
+  one popup per change request).
+
+
+2.6.13 (2015-11-17)
+-------------------
+
+- Added graphical lines to the legend (instead of text like "a red line").
+
+- Add change requests to the legend.
+
+
+2.6.12 (2015-11-10)
+-------------------
+
+- Make export run path name longer (some exports went over the 300 limit).
+
+
+2.6.11 (2015-11-10)
+-------------------
+
+- Add a field 'measured_date' to Location that is the latest of the 'date'
+  fields of its measurements. Measurements that have no 'date' are ignored.
+  This is used in the publiekskaart.
+
+- Fix call to multidwarsprofiel graph.
+
+
+2.6.10 (2015-11-02)
+-------------------
+
+- Fix bug with creating deletion requests for linestrings.
+
+
+2.6.9 (2015-11-02)
+------------------
+
+- Slightly improve the code that sets locations to complete in
+  ribx_parser (fewer queries, less dependence on transaction magic).
+
+
+2.6.8 (2015-10-23)
+------------------
+
+- Call crosssection_graph.graph correctly in mtype_specifics.
+
+
+2.6.7 (2015-10-22)
+------------------
+
+- Remove extra 'location__' from filter.
+
+
+2.6.6 (2015-10-21)
 ------------------
 
 - Nothing changed yet.
+
+
+2.6.5 (2015-10-21)
+------------------
+
+- Make old change requests work on the map, and add all of them to the
+  list of layers.
+
+
+2.6.4 (2015-10-19)
+------------------
+
+- Do not send any mails if a change request was made by the manager and
+  auto-accepted.
+
+- The "multiple projects dwarsprofiel graph" now filters locations based
+  on their distance to one chosen location, not on location code.
+
+- Activity names are now part of export filenames.
+
+
+2.6.3 (2015-10-16)
+------------------
+
+- Fix bug where multiple ExpectedAttachments were returned by a filter()
+  over a M2M relation.
+
+
+2.6.2 (2015-10-12)
+------------------
+
+- Reloading the exported file page was very slow, and automatically
+  repeated every second. Fixed that.
+
+
+2.6.1 (2015-10-06)
+------------------
+
+- Add a extra field to Location to signal that this Location has at
+  least one measurement, to make the Publiekskaart SQL a lot simpler.
 
 
 2.6.0 (2015-09-09)

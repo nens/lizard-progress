@@ -36,3 +36,23 @@ class TestRequest(FixturesTestCase):
             location, 'This is a test', False)
 
         self.assertTrue(request)
+
+    def test_get_old_location(self):
+        activity = progresstestmodels.ActivityF.create()
+        location1 = progresstestmodels.LocationF.create(
+            activity=activity,
+            location_code='LOCATION1')
+        location2 = progresstestmodels.LocationF.create(
+            activity=activity,
+            location_code='LOCATION2')
+
+        request = RequestF.create(
+            activity=activity,
+            request_type=models.Request.REQUEST_TYPE_MOVE_LOCATION,
+            location_code=location1.location_code,
+            old_location_code=location2.location_code,
+            the_geom=location1.the_geom)
+
+        old_location = request.get_old_location()
+
+        self.assertEquals(old_location.pk, location2.pk)

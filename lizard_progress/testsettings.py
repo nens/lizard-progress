@@ -94,6 +94,13 @@ EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 # For translating things in Celery tasks, mostly.
 LANGUAGE_CODE = 'nl-NL'
 
+# RIONED GWSW HTTP API urls and credentials:
+GWSW_API_ENABLED = True
+GWSW_UPLOAD_URL = 'TODO (site setting)'
+GWSW_GETIDS_URL = 'TODO (site setting)'
+GWSW_GETLOG_URL = 'TODO (site setting)'
+
+
 try:
     # Import local settings that aren't stored in svn/git.
     from lizard_progress.local_testsettings import *

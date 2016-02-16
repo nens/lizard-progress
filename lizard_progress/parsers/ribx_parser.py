@@ -7,12 +7,16 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from contextlib import contextmanager
 import itertools
 import json
-
-from PIL.ImageFile import ImageFile
 import logging
 import os
+import time
+
+from PIL.ImageFile import ImageFile
+import requests
+from osgeo import ogr
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -31,6 +35,121 @@ from lizard_progress.specifics import UnSuccessfulParserResult
 logger = logging.getLogger(__name__)
 
 
+def _get_log_content(record_id):
+    """Do a request to the GWSW API and get the response.
+
+    Raises:
+        ValueError: if the get response isn't proper JSON
+        KeyError: if the JSON doesn't contain the 'logcontent' key
+    """
+    r_getlog = requests.get(settings.GWSW_GETLOG_URL % record_id)
+    j = json.loads(r_getlog.text)
+    log_content = j['logcontent']
+    return log_content
+
+
+def get_log_content(filename, retries=10, initial_wait=2):
+    """Get the log from an uploaded ribx file.
+
+    Args:
+        filename: name of the file
+        retries: max number of retries to the HTTP API
+        initial_wait: a guess on how the external API takes to process the
+            ribx file
+    """
+    tries = 1 + retries  # We try and retry, just like in life.
+    time.sleep(initial_wait)
+    for i in range(tries):
+        logger.debug("get_log_content try number %s", i)
+        log_content = _get_log_content(filename)
+        # If the ribx file has not yet been processed you will get a
+        # log_content with the value ['']. This join operation is to guard
+        # against these blank values.
+        if ''.join(log_content) == '':
+            time.sleep(2*i**2 + 1)
+        else:
+            logger.debug("get_log_content succesful")
+            return log_content
+    return None
+
+
+def parse_log_content(log_content):
+    """Parse a log content, which is a list of strings.
+
+    Example line:
+    'Regel[93] - Fout*: verplicht <ABP> element voor deze <ZB_A> ontbreekt.'
+    """
+    errors = []
+    for line in log_content:
+        if line.lower().startswith('regel'):
+            try:
+                l, msg = line.split('-', 1)
+            except ValueError:
+                logger.exception("Can't split correctly: %s", line)
+                continue
+            try:
+                line_no = int(l.strip()[6:-1])
+            except ValueError:
+                logger.exception("Can't convert line number: %s", l)
+                continue
+            error = {
+                'line': line_no,
+                'message': 'GWSW' + msg
+                }
+            errors.append(error)
+    return errors
+
+
+@contextmanager
+def reopen_file(file_obj, mode):
+    """Reopen a file object."""
+    filepath = os.path.abspath(file_obj.name)
+    try:
+        f = open(filepath, mode)
+        yield f
+    finally:
+        f.close()
+
+
+def check_gwsw(file_obj):
+    """Check the ribx file using the RIONED GWSW HTTP API.
+
+    What is a little weird is that we re-open the file object. For some reason
+    the opened file object is not usable; after re-opening it as 'rb' it
+    works though. The cause is probably that the file has already been read,
+    so the cursor is at the end of the file. file_obj.seek(0) is a possible
+    alternative fix, but less clear...
+
+    Raises:
+        ValueError, KeyError, requests.exceptins.HTTPError
+    """
+    with reopen_file(file_obj, 'rb') as f:
+        logger.info("Uploading file to RIONED GWSW API...")
+        r_upload = requests.post(settings.GWSW_UPLOAD_URL,
+                                 files={file_obj.name: f})
+    logger.info("GWSW Upload response: %s", r_upload.text)
+    errors = []
+    if r_upload.ok:
+        record_id = None
+        try:
+            resp = json.loads(r_upload.text)
+            record_id = int(resp['id'])
+        except (ValueError, KeyError):
+            logger.exception("Can't get id from response: %s", r_upload)
+            raise
+        try:
+            log_content = get_log_content(record_id, retries=10)
+            errors = parse_log_content(log_content)
+        except (ValueError, KeyError):
+            logger.exception("Incorrect getlog response for id: %s",
+                             record_id)
+            raise
+        return errors
+    else:
+        logger.error("Can't make request to %s", r_upload.url)
+        r_upload.raise_for_status()
+
+
 class RibxParser(ProgressParser):
     ERRORS = {
         'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
@@ -45,13 +164,23 @@ class RibxParser(ProgressParser):
         if isinstance(self.file_object, ImageFile):
             return UnSuccessfulParserResult()
 
-        ribx, errors = parsers.parse(
+        ribx, ribx_errors = parsers.parse(
             self.file_object, parsers.Mode.INSPECTION)
 
-        if errors:
-            for error in errors:
+        if ribx_errors:
+            for error in ribx_errors:
                 self.record_error(error['line'], None, error['message'])
+            # Return, because unusable XML.
             return self._parser_result([])
+
+        if settings.GWSW_API_ENABLED:
+            try:
+                gwsw_errors = check_gwsw(self.file_object)
+            except (ValueError, KeyError, requests.exceptions.HTTPError):
+                logger.exception("There is an error with (handling) the API")
+            else:
+                for error in gwsw_errors:
+                    self.record_error(error['line'], None, error['message'])
 
         measurements = self.get_measurements(ribx)
 
@@ -75,8 +204,9 @@ class RibxParser(ProgressParser):
             error = self.check_coordinates(item)
             if not error:
                 if item.work_impossible:
-                    # This is not a measurement, but a claim that the
-                    # assigned work couldn't be done. Open a deletion
+                    # This is not a measurement, but a claim that (1) the
+                    # assigned work couldn't be done OR (2) that the location
+                    # of the object wasn't found (don't ask). Open a deletion
                     # request instead of recording a measurement.
                     # Creating the request also automatically
                     # sends an email notification.
@@ -85,7 +215,6 @@ class RibxParser(ProgressParser):
                     measurement = self.save_measurement(item)
                     if measurement is not None:
                         measurements.append(measurement)
-
         return measurements
 
     def check_coordinates(self, item):
@@ -116,19 +245,29 @@ class RibxParser(ProgressParser):
             location = self.activity.location_set.get(location_code=item.ref)
             Request.create_deletion_request(
                 location, motivation=item.work_impossible,
-                user_is_manager=False)
+                user_is_manager=False, geom=geom)
         except models.Location.DoesNotExist:
             # Already deleted?
             pass
 
     def save_measurement(self, item):
         """item is a pipe, drain or manhole object that has properties
-        'ref', 'inspection_date', 'geom' and optionally 'media'."""
+        'ref', 'inspection_date', 'geom' and optionally 'media'.
+
+        Note: the behavior of this method changes depending on the attributes
+        of the item (i.e.: 'work_impossible', 'new')
+        """
         try:
             location = self.activity.location_set.get(
                 location_code=item.ref)
         except models.Location.DoesNotExist:
-            if not item.new:
+            # The reason for this check is because of the altered
+            # get_measurements in the RibxReinigingKolkenParser. Via the
+            # RibxParser you can't get here. It probably doesn't do much
+            # though.
+            if item.work_impossible:
+                return None
+            elif not item.new:
                 self.record_error(
                     item.sourceline, 'LOCATION_NOT_FOUND',
                     self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
@@ -157,7 +296,8 @@ class RibxParser(ProgressParser):
         associated_files = getattr(item, 'media', ())
 
         try:
-            measurement.setup_expected_attachments(associated_files)
+            all_uploaded = measurement.setup_expected_attachments(
+                associated_files)
         except models.AlreadyUploadedError as e:
             self.record_error(
                 item.sourceline, 'ATTACHMENT_ALREADY_EXISTS',
@@ -165,7 +305,8 @@ class RibxParser(ProgressParser):
             return None
 
         # Update completeness of location
-        location.set_completeness()
+        location.complete = all_uploaded
+        location.save()
 
         return measurement
 
@@ -193,11 +334,24 @@ class RibxParser(ProgressParser):
             # Huh?
             location_type = models.Location.LOCATION_TYPE_POINT
 
+        if is_point:
+            # Biggest BS ever: The item.geom is a Point which contains x, y,
+            # and z values. However, the GeometryField in the Location model
+            # doesn't accept z-values (maybe only for points?). So we need to
+            # do this elaborate conversion just to get a Point with ONLY x and
+            # y values! Perhaps a better way to do this is is to correctly
+            # parse the Points as 2D in the ribxlib...
+            point_2d = ogr.Geometry(ogr.wkbPoint)
+            point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
+            geom = point_2d
+        else:
+            geom = item.geom
+
         location = models.Location.objects.create(
             activity=self.activity,
             location_code=item.ref,
             location_type=location_type,
-            the_geom=item.geom.ExportToWkt(),
+            the_geom=geom.ExportToWkt(),
             is_point=is_point,
             information=json.dumps({
                 "remark": "Added automatically by {}".format(
@@ -221,3 +375,44 @@ class RibxParser(ProgressParser):
             extra={'link': location_link})
 
         return location
+
+
+class RibxReinigingKolkenParser(RibxParser):
+    """Special parser for drains.
+
+    The reason for this parser is that we do not want to create Requests
+    for work_impossible entries. Normally we do want that, but for drains
+    we do not. Additionally, if applicable, we set the
+    Location.work_impossible, and Location.new flags so that they can be
+    visualized.
+    """
+    # TODO: for more robustness, we should check the ?XD/?XC tag to see if it's
+    # 'EXD'/'EXC'. This requires that the prefix of the XD, XC is parsed,
+    # which isn't the case as of yet (should be done in the ribxlib).
+
+    def get_measurements(self, ribx):
+        # Use these to check whether locations are inside extent
+        self.min_x = self.activity.config_value('minimum_x_coordinate')
+        self.max_x = self.activity.config_value('maximum_x_coordinate')
+        self.min_y = self.activity.config_value('minimum_y_coordinate')
+        self.max_y = self.activity.config_value('maximum_y_coordinate')
+
+        measurements = []
+        for item in itertools.chain(
+                ribx.inspection_pipes, ribx.cleaning_pipes,
+                ribx.inspection_manholes, ribx.cleaning_manholes,
+                ribx.drains):
+            error = self.check_coordinates(item)
+            if not error:
+                measurement = self.save_measurement(item)
+                if measurement is not None:
+                    # Mark the locations with these flags for visualization.
+                    location = measurement.location
+                    if item.work_impossible:
+                        location.work_impossible = True
+                        location.save()
+                    if item.new:
+                        location.new = True
+                        location.save()
+                    measurements.append(measurement)
+        return measurements

@@ -1,17 +1,56 @@
 {# Legend, in the right sidebar #}
 {% load i18n %}
 
+<style>
+{# CSS for the colored lines in the legend below. #}
+span.colored-line {
+    display: inline-block;
+    height: 3px;
+    width: 30px;
+}
+</style>
 <h2>{% trans "Legend" %}</h2>
 
+<h3>{% trans "Uploads" %}:</h3>
 <dl>
-  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_green.png"> of groene lijn</dt>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_green.png"> of
+  <span class="colored-line" style="background-color: #00ff00;"></span></dt>
   <dd>Compleet aanwezig</dd>
-  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_black.png"> of zwarte lijn</dt>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_black.png"> of
+  <span class="colored-line" style="background-color: #000000;"></span></dt>
   <dd>Gepland, nog niet compleet (alleen bij datumplanning)</dd>
-  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_yellow.png"> of gele lijn</dt>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_yellow.png"> of
+    <span class="colored-line" style="background-color: #ffff00;"></span></dt>
   <dd>Gepland, nog niet compleet en planningsdatum verstreken (alleen bij datumplanning)</dd>
-  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_red.png"> of rode lijn</dt>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_red.png"> of
+  <span class="colored-line" style="background-color: #ff0000;"></span></dt>
   <dd>Nog niet geheel aanwezig, en (bij datumplanning) nog niet gepland</dd>
-  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_grey.png"> of grijze lijn</dt>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_grey.png"> of
+  <span class="colored-line" style="background-color: #808080;"></span></dt>
   <dd>Geen onderdeel van de werkzaamheden</dd>
+</dl>
+
+<h3>{% trans "Automatically processed" %}:</h3>
+<dl>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_new.png"></dt>
+  <dd>Nieuw toegevoegd object</dd>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_work_impossible.png"></dt>
+  <dd>Niet behandeld</dd>
+</dl>
+
+
+<h3>{% trans "Change requests" %}:</h3>
+<dl>
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_blue.png">,
+  <img src="{{ STATIC_URL }}lizard_progress/ball_black.png"></dt>
+  <dd>Open aanvraag. Nieuwe, en eventueel oude locatie.</dd>
+
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_turquoise.png">,
+  <img src="{{ STATIC_URL }}lizard_progress/ball_turquoise_dark.png"></dt>
+  <dd>Geaccepteerde aanvraag. Nieuwe, en eventueel oude locatie.</dd>
+
+  <dt><img src="{{ STATIC_URL }}lizard_progress/ball_purple.png">,
+  <img src="{{ STATIC_URL }}lizard_progress/ball_purple_dark.png"></dt>
+  <dd>Geweigerde, ingetrokken of niet meer relevante aanvraag. Nieuwe
+  en eventueel oude locatie.</dd>
 </dl>

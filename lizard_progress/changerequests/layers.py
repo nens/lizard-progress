@@ -47,10 +47,6 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         self.changerequest = models.Request.objects.get(
             pk=self.changerequest_id)
 
-        # We only work for open change requests.
-        if not self.changerequest.is_open:
-            self.changerequest = None
-
         super(ChangeRequestAdapter, self).__init__(*args, **kwargs)
 
     def layer_desc(self, color=COLOR_NEW):
@@ -99,9 +95,17 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             if color == COLOR_NEW:
                 return self.mapnik_query_the_geom()
             if color == COLOR_OLD:
-                return self.mapnik_query_location()
+                if (self.changerequest.request_status ==
+                        models.Request.REQUEST_STATUS_ACCEPTED and
+                        self.changerequest.old_location is not None):
+                    return self.mapnik_query_old_geom()
+                else:
+                    # Unsure, left it like this because that was the original
+                    # situation for incomplete Requests.
+                    return self.mapnik_query_location()
 
     def mapnik_query_the_geom(self):
+        """Returns a query for the geometry field of a Request"""
         return ("""(
             SELECT
                 changerequests_request.the_geom
@@ -111,6 +115,22 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 id = %d) data"""
                 % (self.changerequest.id,))
 
+    def mapnik_query_old_geom(self):
+        """Returns a query for the old_location geometry of a Request (for
+        visualizing the old location of move requests).
+        """
+        return ("""(
+            SELECT
+                changerequests_request.the_geom
+            FROM
+                changerequests_request
+            WHERE
+                id = %d
+            AND
+                old_location_id IS NULL) data
+                """
+                % (self.changerequest.old_location.id,))
+
     def mapnik_query_location(self):
         q = ("""(
             SELECT
@@ -118,8 +138,11 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             FROM
                 lizard_progress_location
             WHERE
-                location_code = '%s') data""" %
-             (self.changerequest.location_code,))
+                location_code = '%s' AND
+                activity_id = '%s'
+            ) data""" %
+             (self.changerequest.location_code,
+              self.changerequest.activity_id))
         return q
 
     def mapnik_query_old_location(self):
@@ -148,7 +171,7 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         for color in (COLOR_NEW, COLOR_OLD):
             query = self.mapnik_query(color)
             if query:
-                img_file = "ball_{}.png".format(color)
+                img_file = self.get_image_file(color)
                 img = self.symbol_img(img_file)
                 layer_desc = self.layer_desc(color)
                 styles[layer_desc] = self.make_style(img)
@@ -160,6 +183,36 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
 
         logger.debug("layers, styles {} {}".format(layers, styles))
         return layers, styles
+
+    def get_image_file(self, color):
+        """Color is different for closed change requests."""
+        from lizard_progress.changerequests.models import Request
+
+        real_colors = {
+            Request.REQUEST_STATUS_OPEN: {
+                COLOR_NEW: COLOR_NEW,
+                COLOR_OLD: COLOR_OLD
+            },
+            Request.REQUEST_STATUS_ACCEPTED: {
+                COLOR_NEW: "turquoise",
+                COLOR_OLD: "turquoise_dark"
+            },
+            Request.REQUEST_STATUS_REFUSED: {
+                COLOR_NEW: "purple",
+                COLOR_OLD: "purple_dark"
+            },
+            Request.REQUEST_STATUS_WITHDRAWN: {
+                COLOR_NEW: "purple",
+                COLOR_OLD: "purple_dark"
+            },
+            Request.REQUEST_STATUS_INVALID: {
+                COLOR_NEW: "purple",
+                COLOR_OLD: "purple_dark"
+            },
+        }
+
+        return "ball_{}.png".format(
+            real_colors[self.changerequest.request_status][color])
 
     def search(self, x, y, radius=10):
         if not self.changerequest:
@@ -174,6 +227,18 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             self.changerequest.the_geom.y)
 
         distance = math.sqrt((rd_x - my_x) ** 2 + (rd_y - my_y) ** 2)
+
+        # If this is a move request, the location may have a different
+        # the_geom, and we may have clicked there.
+        if (self.changerequest.request_type ==
+                models.Request.REQUEST_TYPE_MOVE_LOCATION):
+            location = self.changerequest.get_location()
+            if location and location.the_geom != self.changerequest.the_geom:
+                my_x_old = location.the_geom.x
+                my_y_old = location.the_geom.y
+                old_distance = math.sqrt(
+                    (rd_x - my_x_old) ** 2 + (rd_y - my_y_old) ** 2)
+                distance = min(distance, old_distance)
 
         logger.debug("distance: {}".format(distance))
 
@@ -244,16 +309,12 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         north = south = cr.the_geom.y
 
         if cr.old_location_code:
-            try:
-                old_location = pmodels.Location.objects.get(
-                    project=cr.contractor.project,
-                    location_code=cr.old_location_code)
+            old_location = cr.get_old_location()
+            if old_location:
                 west = min(west, old_location.the_geom.x)
                 east = max(east, old_location.the_geom.x)
                 north = max(north, old_location.the_geom.y)
                 south = min(south, old_location.the_geom.y)
-            except pmodels.Location.DoesNotExist:
-                pass
 
         gwest, gnorth = rd_to_google(west, north)
         geast, gsouth = rd_to_google(east, south)

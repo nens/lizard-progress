@@ -18,6 +18,13 @@ BASE_DIR = getattr(
     os.path.join(settings.BUILDOUT_DIR, 'var', 'lizard_progress'))
 
 
+def clean(s):
+    """Remove characters that aren't allowed in filenames."""
+    for char in """*."/\\[]:;|=,\x00""":
+        s = s.replace(char, '')
+    return s
+
+
 def mk(directory):
     """Create directory if it doesn't exist yet, then return it."""
     if not os.path.exists(directory):
@@ -59,13 +66,13 @@ def exports_dir(activity, base_dir=BASE_DIR):
     accessible by the FTP server, therefore in a slightly different
     structure from the other files:
 
-    BASE_DIR/<Organization>/ftp_readonly/<Project>/<Activity>/
+    BASE_DIR/<Organization>/ftp_readonly/<Project>/<Activity id and name>/
 
     """
     export_dir = os.path.join(
         base_dir, activity.project.organization.name,
         'ftp_readonly', activity.project.slug,
-        '{} - {}'.format(activity.id, activity.name))
+        '{} - {}'.format(activity.id, clean(activity.name)))
 
     if base_dir.startswith(settings.BUILDOUT_DIR):
         export_dir = mk(export_dir)

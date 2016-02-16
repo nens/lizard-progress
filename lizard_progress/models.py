@@ -7,42 +7,40 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-import datetime
-import functools
-import json
-import logging
-import os
-import random
-import shutil
-import string
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db import models
+from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import MultiLineString
 from django.contrib.gis.geos import fromstr
-from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.measure import D
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
-from django.db.models.signals import post_save
 from django.core.urlresolvers import reverse
 from django.db import connection
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.http import HttpRequest
 from django.template.defaultfilters import slugify
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
-
 from jsonfield import JSONField
-
-import lizard_progress.specifics
 from lizard_progress.email_notifications import notify
-from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.email_notifications.models import NotificationSubscription
+from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
+import datetime
+import functools
+import json
+import lizard_progress.specifics
+import logging
+import os
+import random
+import shutil
+import string
 
 RDNEW = 28992
 SRID = RDNEW
@@ -534,6 +532,36 @@ class Project(ProjectActivityMixin, models.Model):
         except AttributeError:
             return self.created_at
 
+    def archive(self):
+        """Archive a project.
+
+        This has a side effect for Projects with measurements with measurement
+        types that have the delete_on_archive field set: those measurements
+        will be deleted, both in db and on disk. The motivation for this is
+        that we want to remove 'attachment' measurement files, e.g., all media
+        files belonging to a ribx, but not the ribx itself.
+        """
+        logger.info("Archiving project %s", self)
+        # This query returns all Measurements that (1) belong to a Project,
+        # (2) that have a parent Measurement, which entails that it is an
+        # attachment (e.g., media files belonging to a Ribx), and (3) have
+        # a measurement type that can be deleted.
+        measurements = Measurement.objects.filter(
+            location__activity__project=self,
+            parent__isnull=False,
+            location__activity__measurement_type__delete_on_archive=True)
+        logger.debug("Deleting measurements: %s", measurements)
+        for m in measurements:
+            m.delete(notify=False, deleted_by_contractor=False,
+                     set_completeness=False)
+        self.is_archived = True
+        self.save()
+
+    def activate(self):
+        self.is_archived = False
+        self.save()
+
+
 class Location(models.Model):
     LOCATION_TYPE_POINT = 'point'
     LOCATION_TYPE_PIPE = 'pipe'
@@ -546,6 +574,8 @@ class Location(models.Model):
         (LOCATION_TYPE_MANHOLE, ) * 2,
         (LOCATION_TYPE_DRAIN, ) * 2,
     )
+
+    CLOSE_BY_DISTANCE = 10  # m. For the multiple projects graph.
 
     # A location / scheduled measurement in an activity
     activity = models.ForeignKey('Activity', null=True)
@@ -567,6 +597,9 @@ class Location(models.Model):
     # Often unused, but some types of project can plan when a
     # location will be planned.
     planned_date = models.DateField(null=True, blank=True)
+    # This field is related -- it copies the most recent date of those
+    # measuremens that have a measurement_date.
+    measured_date = models.DateField(null=True, blank=True)
 
     # Geometry can be a point OR a line
     # All Locations of the same location_type must have the same geometry
@@ -574,11 +607,23 @@ class Location(models.Model):
     the_geom = models.GeometryField(null=True, srid=SRID)
     is_point = models.BooleanField(default=True)
 
+    # This slight denormalisation is necessary for the Geoserver views,
+    # otherwise they become insance.
+    one_measurement_uploaded = models.BooleanField(default=False)
+
     # Any extra known information about the location
     information = JSONField(null=True, blank=True)
 
     timestamp = models.DateTimeField(auto_now=True)
     complete = models.BooleanField(default=False)
+
+    # Inspection/cleaning wasn't possible, maybe. Corresponds to the ?XD
+    # ribx tag.
+    work_impossible = models.BooleanField(default=False)
+
+    # This was a newly found element (unplanned). Corresponds to the ?XC ribx
+    # tag.
+    new = models.BooleanField(default=False)
 
     objects = models.GeoManager()
 
@@ -616,10 +661,10 @@ class Location(models.Model):
         return u
 
     def latest_measurement_date(self):
-        measurements = list(self.measurement_set.filter(date__isnull=False))
-        if not measurements:
-            return None
-        return max(m.date for m in measurements)
+        max_date = (
+            self.measurement_set.filter(date__isnull=False)
+            .aggregate(models.Max('date')))
+        return max_date['date__max']
 
     def get_absolute_url(self):
         """Return an URL that goes to the Map page, zooming to this
@@ -665,6 +710,20 @@ class Location(models.Model):
     @property
     def all_expected_attachments_present(self):
         return not self.missing_attachments().exists()
+
+    def close_by_locations_of_same_organisation(self):
+        """Return a queryset of complete locations close to this one from the
+        same organisation.
+
+        """
+        if not self.the_geom:
+            return Location.objects.empty()
+
+        return Location.objects.filter(
+            activity__project__organization=self.activity.project.organization,
+            the_geom__distance_lte=(
+                self.the_geom, D(m=self.CLOSE_BY_DISTANCE)),
+            complete=True)
 
     def set_completeness(self):
         self.complete = (
@@ -732,6 +791,9 @@ class AvailableMeasurementType(models.Model):
     # For some measurement types, we keep all versions of uploaded data that
     # have been uploaded. For most, we only keep that last uploaded version.
     keep_updated_measurements = models.BooleanField(default=False)
+
+    # Some measurements need to be deleted when the Project is archived.
+    delete_on_archive = models.BooleanField(default=False)
 
     @property
     def implementation_slug(self):
@@ -937,9 +999,7 @@ class Activity(ProjectActivityMixin, models.Model):
         if not self.measurement_type.can_be_displayed:
             return
 
-        from lizard_progress.changerequests.models import Request
-        for request in self.request_set.filter(
-                request_status=Request.REQUEST_STATUS_OPEN):
+        for request in self.request_set.all():
             yield request.map_layer()
 
         from lizard_progress.util.workspaces import MapLayer
@@ -1065,7 +1125,7 @@ class ExpectedAttachment(models.Model):
         filename = os.path.basename(path)
 
         try:
-            expected_attachment = cls.objects.get(
+            expected_attachment = cls.objects.distinct().get(
                 measurements__location__activity=activity,
                 filename__iexact=filename)
         except cls.DoesNotExist:
@@ -1178,7 +1238,8 @@ class Measurement(models.Model):
     def base_filename(self):
         return self.filename and os.path.basename(self.filename)
 
-    def delete(self, notify=True, deleted_by_contractor=True):
+    def delete(self, notify=True, deleted_by_contractor=True,
+               set_completeness=True):
         """Delete this measurement. If this is done by a user of the
         contractor organization, this is cancellation (for instance to
         fix errors), if this is done by a user of the project owning
@@ -1228,7 +1289,8 @@ class Measurement(models.Model):
                 self.location.activity, self.filename)
 
         # Let our location determine its completeness
-        self.location.set_completeness()
+        if set_completeness:
+            self.location.set_completeness()
 
     def send_deletion_notification(self, deleted_by_contractor):
         notification_type = NotificationType.objects.get(
@@ -1267,15 +1329,13 @@ class Measurement(models.Model):
         - Deletes ExpectedAttachments that aren't connected to any
           Measurements anymore due to the previous item.
 
-        Return a boolean that is True if all expected attachments for
-        this measurement have been uploaded, or False if there are
-        still expected attachments that weren't.
-
+        Return a boolean that is True if all expected attachments were already
+        uploaded.
         """
         filenames = set(filenames)
 
         self.__drop_irrelevant_expected_attachments(filenames)
-        self.__attach_relevant_expected_attachments(filenames)
+        return self.__attach_relevant_expected_attachments(filenames)
 
     def __drop_irrelevant_expected_attachments(self, filenames):
         attachments_to_drop = self.expected_attachments.exclude(
@@ -1287,12 +1347,16 @@ class Measurement(models.Model):
     def __attach_relevant_expected_attachments(self, filenames):
         activity = self.location.activity
 
+        all_uploaded = True
+
         for filename in filenames:
             try:
                 # If the attachment already exists and is attached to this,
                 # then that is OK.
-                expected_attachment = ExpectedAttachment.objects.get(
+                existing_attachment = ExpectedAttachment.objects.get(
                     filename=filename, measurements=self)
+                all_uploaded = all_uploaded and existing_attachment.uploaded
+                continue
             except ExpectedAttachment.DoesNotExist:
                 try:
                     # If an attachment with the same filename is
@@ -1310,9 +1374,10 @@ class Measurement(models.Model):
                     # this is probably unintended by the user anyway,
                     # he just gave two files on two different dates the
                     # same name). So then we raise an exception.
-                    expected_attachment = ExpectedAttachment.objects.get(
-                        filename=filename,
-                        measurements__location__activity=activity)
+                    expected_attachment = (
+                        ExpectedAttachment.objects.distinct().get(
+                            filename=filename,
+                            measurements__location__activity=activity))
                     if expected_attachment.uploaded:
                         raise AlreadyUploadedError(filename)
 
@@ -1322,6 +1387,10 @@ class Measurement(models.Model):
                         filename=filename, uploaded=False)
                 # Attach it
                 self.expected_attachments.add(expected_attachment)
+                # This one isn't uploaded yet.
+                all_uploaded = False
+
+        return all_uploaded
 
     def missing_attachments(self):
         """Return a queryset of ExpectedAttachments connected to this
@@ -1527,8 +1596,8 @@ class UploadedFile(models.Model):
         """This will be turned into JSON to send to the UI."""
         return {
             'id': self.id,
-            'project_id': self.activity.project.id,
-            'activity_id': self.activity.id,
+            'project_id': self.activity.project_id,
+            'activity_id': self.activity_id,
             'uploaded_by': self.get_uploaded_by_name(),
             'uploaded_at': self.uploaded_at.strftime("%d/%m/%y %H:%M"),
             'filename': os.path.basename(self.path),
@@ -1606,7 +1675,7 @@ class ExportRun(models.Model):
 
     created_at = models.DateTimeField(null=True, blank=True, default=None)
     created_by = models.ForeignKey(User, null=True, blank=True, default=None)
-    file_path = models.CharField(max_length=300, null=True, default=None)
+    file_path = models.CharField(max_length=1000, null=True, default=None)
     ready_for_download = models.BooleanField(default=False)
     export_running = models.BooleanField(default=False)
 
@@ -1728,9 +1797,11 @@ class ExportRun(models.Model):
         directory = directories.exports_dir(self.activity)
         return os.path.join(
             directory,
-            "{project}-{activityid}-{exporttype}.{extension}").format(
+            "{project}-{activityid}-{activity}-{exporttype}.{extension}"
+        ).format(
             project=self.activity.project.slug,
             activityid=self.activity.id,
+            activity=directories.clean(self.activity.name),
             exporttype=self.exporttype,
             extension=extension).encode('utf8')
 

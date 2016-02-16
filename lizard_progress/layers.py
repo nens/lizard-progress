@@ -38,7 +38,18 @@ def mapnik_datasource(query):
 
 def build_location_query(
         activity_id, is_point=None, complete=None, not_part_of_project=None,
-        dates_matter=False, planned=None, ontime=None, numbers=False):
+        dates_matter=False, planned=None, ontime=None, numbers=False,
+        work_impossible=False, new=False):
+    """
+
+    Args:
+        work_impossible: if set to False or True locations marked as
+            work_impossible will be excluded or included in the SQL query. If
+            set to None it will not be taken into account in the query.
+            The default is False because we don't want to take these locations
+            into account in all our other queries.
+        new: see 'work_impossible'
+    """
     if is_point and numbers:
         q = """(SELECT
                     loc.the_geom AS the_geom,
@@ -60,6 +71,8 @@ def build_location_query(
                     {complete_clause}
                     {not_part_of_project_clause}
                     {date_clause}
+                    {work_impossible_clause}
+                    {new_clause}
                     loc.the_geom IS NOT NULL
                 GROUP BY
                     loc.the_geom
@@ -76,6 +89,8 @@ def build_location_query(
                     {complete_clause}
                     {not_part_of_project_clause}
                     {date_clause}
+                    {work_impossible_clause}
+                    {new_clause}
                     loc.the_geom IS NOT NULL
                 GROUP BY
                     loc.the_geom
@@ -99,6 +114,18 @@ def build_location_query(
         not_part_of_project_clause = "loc.not_part_of_project = {} AND".format(
             'true' if not_part_of_project else 'false')
 
+    if work_impossible is None:
+        work_impossible_clause = ""
+    else:
+        work_impossible_clause = "loc.work_impossible = {} AND".format(
+            'true' if work_impossible else 'false')
+
+    if new is None:
+        new_clause = ""
+    else:
+        new_clause = "loc.new = {} AND".format(
+            'true' if new else 'false')
+
     if not dates_matter or complete:
         date_clause = ''
     else:
@@ -118,7 +145,9 @@ def build_location_query(
         is_point_clause=is_point_clause,
         complete_clause=complete_clause,
         not_part_of_project_clause=not_part_of_project_clause,
-        date_clause=date_clause)
+        date_clause=date_clause,
+        work_impossible_clause=work_impossible_clause,
+        new_clause=new_clause)
 
 
 def make_point_style(img):
@@ -198,6 +227,16 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
             self.activity_id, is_point=True, not_part_of_project=True,
             numbers=self.show_numbers_on_map)
 
+    def mapnik_query_locations_work_impossible(self):
+        return build_location_query(
+            self.activity_id, is_point=True, work_impossible=True,
+            numbers=self.show_numbers_on_map)
+
+    def mapnik_query_locations_new(self):
+        return build_location_query(
+            self.activity_id, is_point=True, new=True,
+            numbers=self.show_numbers_on_map)
+
     def mapnik_query_date(self, is_point, planned, ontime, complete):
         return build_location_query(
             self.activity_id, is_point=is_point, complete=complete,
@@ -228,6 +267,12 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         # Show an extra layer for point locations that are not
         # part of the project
         self.add_layer_for_locations_not_in_project(layers, styles)
+
+        # Points that are impossible.
+        self.add_layer_for_locations_work_impossible(layers, styles)
+
+        # Unplanned locations that were found by the contractor.
+        self.add_layer_for_locations_new(layers, styles)
 
         return layers, styles
 
@@ -308,6 +353,26 @@ class ProgressAdapter(WorkspaceItemAdapter):  # pylint: disable=W0223
         styles[layer_desc] = make_point_style(self.symbol_img("ball_grey.png"))
         layer.datasource = mapnik_datasource(
             self.mapnik_query_locations_not_in_project())
+        layer.styles.append(layer_desc)
+        layers.append(layer)
+
+    def add_layer_for_locations_work_impossible(self, layers, styles):
+        layer_desc = '{} work impossible'.format(self.activity_id)
+        layer = mapnik.Layer(layer_desc, RD)
+        styles[layer_desc] = make_point_style(
+            self.symbol_img("ball_work_impossible.png"))
+        layer.datasource = mapnik_datasource(
+            self.mapnik_query_locations_work_impossible())
+        layer.styles.append(layer_desc)
+        layers.append(layer)
+
+    def add_layer_for_locations_new(self, layers, styles):
+        layer_desc = '{} new'.format(self.activity_id)
+        layer = mapnik.Layer(layer_desc, RD)
+        styles[layer_desc] = make_point_style(
+            self.symbol_img("ball_new.png"))
+        layer.datasource = mapnik_datasource(
+            self.mapnik_query_locations_new())
         layer.styles.append(layer_desc)
         layers.append(layer)
 

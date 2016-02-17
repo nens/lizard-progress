@@ -1,11 +1,18 @@
 {% extends "lizard_progress/progressbase2.html" %}{% load i18n %}
 
 {% block extra_js %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.9.4/css/bootstrap-select.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.9.4/js/bootstrap-select.min.js"></script>
 <script>
 $(document).on('ready', function() {
   $('input.form-control').first().focus();
 });
 </script>
+<style>
+.bootstrap-select.btn-group {
+    margin-bottom: 20px !important;
+}
+</style>
 {% endblock extra_js %}
 
 {% block content %}

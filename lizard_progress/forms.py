@@ -75,7 +75,12 @@ class NewProjectForm(forms.Form):
 
         for i in range(1, 1 + self.NUM_ACTIVITIES):
             self.fields['contractor' + str(i)] = forms.ModelChoiceField(
-                widget=forms.Select(attrs={'class' : 'form-control'}),
+                widget=forms.Select(
+                    attrs={
+                        'class' : 'form-control selectpicker',
+                        'data-live-search': 'true'
+                    }
+                ),
                 label=_("Contractor") + " " + str(i),
                 queryset=models.Organization.objects.all(),
                 required=False

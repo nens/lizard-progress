@@ -2,22 +2,22 @@
 
 {% block extra_js %}
 <script type="text/javascript">
-  $('.delete-form').on('submit', function(e) {
-  e.preventDefault();
-  var redirectUrl = $(e.target).attr('action');
-  swal({
-    title: "Weet u het zeker?",
-    text: "U staat op het punt om deze werkzaamheid te Verwijderen.",
-    type: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#DD6B55",
-    cancelButtonText: "Nee",
-    confirmButtonText: "Ja, verwijder",
-    closeOnConfirm: false
-  }, function() {
-    window.location.href = redirectUrl;
-  });
-});
+//   $('.delete-form').on('submit', function(e) {
+//   e.preventDefault();
+//   var redirectUrl = $(e.target).attr('action');
+//   swal({
+//     title: "Weet u het zeker?",
+//     text: "U staat op het punt om deze werkzaamheid te Verwijderen.",
+//     type: "warning",
+//     showCancelButton: true,
+//     confirmButtonColor: "#DD6B55",
+//     cancelButtonText: "Nee",
+//     confirmButtonText: "Ja, verwijder",
+//     closeOnConfirm: false
+//   }, function() {
+//     window.location.href = redirectUrl;
+//   });
+// });
 </script>
 {% endblock extra_js %}
 
@@ -33,7 +33,6 @@
               <div class="panel-heading">
                         <div class="btn-group btn-breadcrumb">
                             <a href="{% url "lizard_progress_activitiesView" view.project.slug %}" class="btn btn-default"><i class="fa fa-tasks"></i></a>
-                            
                             <a href="." class="btn btn-default"><i class="fa fa-cog"></i>&nbsp;Beheer werkzaamheden</a>
                         </div>    
               </div>

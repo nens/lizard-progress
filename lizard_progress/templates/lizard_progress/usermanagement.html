@@ -72,7 +72,7 @@ $('a.delete-user').on('click', function(e) {
             </thead>
             {% for profile in view.users %}
             <tr>
-              <td><a href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}">{{ profile.user.username }}</a></td>
+              <td><a style="text-decoration:underline !important;color:#000 !important" href="{% url "lizard_progress_single_user_management" user_id=profile.user.id %}">{{ profile.user.username }}</a></td>
               <td>{{ profile.user.get_full_name }}</td>
               <td>{{ profile.user.email }}</td>
               <td>{{ profile.roles_description }}</td>

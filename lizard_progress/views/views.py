@@ -69,8 +69,8 @@ class ProjectsMixin(object):
         "leastrecent": ("minst recent", ("created_at", False)),
         "mosturgent": ("meest gereed", ("percentage_done", True)),
         "leasturgent": ("minst gereed", ("percentage_done", False)),
-        "name": ("naam", ("name", False)),
-        "namereversed": ("naam omgekeerd", ("name", True)),
+        "name": ("naam A-Z", ("name", False)),
+        "namereversed": ("naam Z-A", ("name", True)),
         "changerequest": ("aanvragen", ("num_open_requests", True))
     }
 
@@ -976,6 +976,7 @@ class DeleteActivity(ProjectsView):
             raise PermissionDenied()
 
         activity = get_object_or_404(models.Activity, pk=activity_id)
+        print('activity',activity)
 
         if activity.project.slug != project_slug:
             raise PermissionDenied()

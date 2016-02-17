@@ -113,6 +113,7 @@
                         <thead>
                           <th>Opdrachtnemer</th>
                           <th>Soort meting</th>
+                          <th>Werkzaamheid</th>
                           <th>Soort file</th>
                           <th>Gegenereerd</th>
                           <th>Up to date</th>
@@ -124,6 +125,7 @@
                             <tr {% if not export_run.present and export_run.export_running %}class="please-reload-me"{% endif %}>
                               <td>{{ export_run.activity.contractor }}</td>
                               <td>{{ export_run.activity.measurement_type }}</td>
+                              <td>{{ export_run.activity.name }}</td>
                               <td>
                                 {% if export_run.exporttype == "allfiles" %}ZIP bestand
                                 {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties

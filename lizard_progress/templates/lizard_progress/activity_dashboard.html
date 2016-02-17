@@ -72,7 +72,7 @@
                 <dt>Planning:</dt>
                 <dd>
                 
-                <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}"><button class="btn btn-sm btn-default"><i class="fa fa-calendar"></i>&nbsp;inplannen</button></a></dd>
+                <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}"><button class="btn btn-sm btn-default"><i class="fa fa-calendar"></i>&nbsp;Locaties inplannen</button></a></dd>
               {% endif %}
               <dt>Open aanvragen:</dt>
               <dd><a href="./changerequests/">{{ view.activity.open_requests.count }} aanvr{{view.activity.open_requests.count|pluralize:'aag,agen'}}</a></dd>

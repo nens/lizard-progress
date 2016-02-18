@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.17 (unreleased)
+2.6.17 (2016-02-18)
 -------------------
 
 - Update publiekskaart SQL script.

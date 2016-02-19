@@ -5,6 +5,8 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Changed Location.work_impossible and Location.new into NullBooleanField.
+
 - Update publiekskaart SQL script.
 
 - Re-add turquouise_dark ball for old Move Requests in map legend.

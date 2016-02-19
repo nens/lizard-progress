@@ -93,6 +93,12 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
         if request_type == models.Request.REQUEST_TYPE_MOVE_LOCATION:
             # New location in green, old location in red
 
+            # So the situation is that if a Move Request becomes accepted,
+            # the geom of the Location and Request are swapped. This is
+            # because we want to show both the old and new location of a moved
+            # Location, which I solved by saving the old geom in the old
+            # Request object. That's why we need to swap the mapnik queries
+            # when the Request becomes accepted.
             if (self.changerequest.request_status ==
                     models.Request.REQUEST_STATUS_ACCEPTED):
                 if color == COLOR_NEW:

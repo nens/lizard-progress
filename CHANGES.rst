@@ -5,6 +5,9 @@ Changelog of lizard-progress
 2.6.17 (unreleased)
 -------------------
 
+- Implement a better solution for visualizing old and new locations of
+  Move Changerequests.
+
 - Changed Location.work_impossible and Location.new into NullBooleanField.
 
 - Update publiekskaart SQL script.

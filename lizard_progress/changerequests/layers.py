@@ -116,22 +116,6 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 id = %d) data"""
                 % (self.changerequest.id,))
 
-    def mapnik_query_old_geom(self):
-        """Returns a query for the old_location geometry of a Request (for
-        visualizing the old location of move requests).
-        """
-        return ("""(
-            SELECT
-                changerequests_request.the_geom
-            FROM
-                changerequests_request
-            WHERE
-                id = %d
-            AND
-                old_location_id IS NULL) data
-                """
-                % (self.changerequest.old_location.id,))
-
     def mapnik_query_location(self):
         q = ("""(
             SELECT

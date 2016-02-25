@@ -92,16 +92,23 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
                 return self.mapnik_query_location()
         if request_type == models.Request.REQUEST_TYPE_MOVE_LOCATION:
             # New location in green, old location in red
-            if color == COLOR_NEW:
-                return self.mapnik_query_the_geom()
-            if color == COLOR_OLD:
-                if (self.changerequest.request_status ==
-                        models.Request.REQUEST_STATUS_ACCEPTED and
-                        self.changerequest.old_location is not None):
-                    return self.mapnik_query_old_geom()
-                else:
-                    # Unsure, left it like this because that was the original
-                    # situation for incomplete Requests.
+
+            # So the situation is that if a Move Request becomes accepted,
+            # the geom of the Location and Request are swapped. This is
+            # because we want to show both the old and new location of a moved
+            # Location, which I solved by saving the old geom in the old
+            # Request object. That's why we need to swap the mapnik queries
+            # when the Request becomes accepted.
+            if (self.changerequest.request_status ==
+                    models.Request.REQUEST_STATUS_ACCEPTED):
+                if color == COLOR_NEW:
+                    return self.mapnik_query_location()
+                if color == COLOR_OLD:
+                    return self.mapnik_query_the_geom()
+            else:
+                if color == COLOR_NEW:
+                    return self.mapnik_query_the_geom()
+                if color == COLOR_OLD:
                     return self.mapnik_query_location()
 
     def mapnik_query_the_geom(self):
@@ -114,22 +121,6 @@ class ChangeRequestAdapter(WorkspaceItemAdapter):
             WHERE
                 id = %d) data"""
                 % (self.changerequest.id,))
-
-    def mapnik_query_old_geom(self):
-        """Returns a query for the old_location geometry of a Request (for
-        visualizing the old location of move requests).
-        """
-        return ("""(
-            SELECT
-                changerequests_request.the_geom
-            FROM
-                changerequests_request
-            WHERE
-                id = %d
-            AND
-                old_location_id IS NULL) data
-                """
-                % (self.changerequest.old_location.id,))
 
     def mapnik_query_location(self):
         q = ("""(

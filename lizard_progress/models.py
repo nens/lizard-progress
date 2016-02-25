@@ -619,11 +619,12 @@ class Location(models.Model):
 
     # Inspection/cleaning wasn't possible, maybe. Corresponds to the ?XD
     # ribx tag.
-    work_impossible = models.BooleanField(default=False)
+    work_impossible = models.NullBooleanField(default=False, null=True,
+                                              blank=True)
 
     # This was a newly found element (unplanned). Corresponds to the ?XC ribx
     # tag.
-    new = models.BooleanField(default=False)
+    new = models.NullBooleanField(default=False, null=True, blank=True)
 
     objects = models.GeoManager()
 

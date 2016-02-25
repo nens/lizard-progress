@@ -11,6 +11,11 @@ Changelog of lizard-progress
 2.6.17 (2016-02-18)
 -------------------
 
+- Implement a better solution for visualizing old and new locations of
+  Move Changerequests.
+
+- Changed Location.work_impossible and Location.new into NullBooleanField.
+
 - Update publiekskaart SQL script.
 
 - Re-add turquouise_dark ball for old Move Requests in map legend.

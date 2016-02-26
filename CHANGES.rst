@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.6.17 (unreleased)
--------------------
+2.7 (2016-02-26)
+----------------
 
 - Implement a better solution for visualizing old and new locations of
   Move Changerequests.

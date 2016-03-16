@@ -5,7 +5,8 @@ Changelog of lizard-progress
 2.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added explicit error message when multiple ExpectedAttachments are found
+  where only one is expected (``.get()``).
 
 
 2.7 (2016-02-26)

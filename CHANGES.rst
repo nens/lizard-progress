@@ -5,7 +5,8 @@ Changelog of lizard-progress
 2.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixed sql script that creates a 'publiekskaart' view.
+- Changed sql script into migration.
 
 
 2.7 (2016-02-26)

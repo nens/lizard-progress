@@ -1,15 +1,27 @@
 Changelog of lizard-progress
 ===================================================
 
-
-2.6.18 (unreleased)
--------------------
+2.9 (unreleased)
+----------------
 
 - Nothing changed yet.
 
 
-2.6.17 (2016-02-18)
--------------------
+2.8.1 (2016-03-17)
+------------------
+
+- Bugfix of raw-sql migration.
+
+
+2.8 (2016-03-17)
+----------------
+
+- Fixed sql script that creates a 'publiekskaart' view.
+- Changed sql script into migration.
+
+
+2.7 (2016-02-26)
+----------------
 
 - Implement a better solution for visualizing old and new locations of
   Move Changerequests.

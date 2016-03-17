@@ -2,8 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.8.1 (unreleased)
-----------------
+2.8.1 (2016-03-17)
+------------------
 
 - Bugfix of raw-sql migration.
 

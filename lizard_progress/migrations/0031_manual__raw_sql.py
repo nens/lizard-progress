@@ -32,58 +32,64 @@ class Migration(SchemaMigration):
                              'contains too many of this element, respectively '
                              'with value: "Gemeente Almere", "Planmatig" and '
                              '"ribx_reiniging_riool"')
-        cursor.execute('''
-            DROP VIEW IF EXISTS publiekskaart_almere;
-            CREATE VIEW publiekskaart_almere AS (
-                SELECT
-                    location.id,
-                    location.location_code,
-                    COALESCE(location.measured_date, location.planned_date) AS inspection_date,
-                    location.location_type,
-                    location.one_measurement_uploaded,
-                    location.the_geom,
-                    CASE
-                        WHEN location.measured_date IS NOT NULL THEN 1 -- Done
-                        WHEN location.planned_date IS NULL THEN 0 -- Not planned
-                        WHEN current_date > location.planned_date THEN 0 -- planned date has past
-                        WHEN current_date + integer '1' >= location.planned_date THEN 2 -- Today or tomorrow
-                        WHEN current_date + integer '2' >= location.planned_date THEN 3 -- In 2 days
-                        WHEN current_date + integer '7' >= location.planned_date THEN 4 -- Within 7 days
-                        ELSE 5 -- further in the future
-                        -- The below are for week numbers
-                        --           WHEN EXTRACT(WEEK FROM location.planned_date) = EXTRACT(WEEK FROM current_date) THEN 2
-                        --            WHEN EXTRACT(WEEK FROM location.planned_date) = EXTRACT(WEEK FROM current_date) + 1 THEN 3
-                    END AS color_code
-                FROM
-                    lizard_progress_location location
-                INNER JOIN
-                    lizard_progress_activity activity
-                ON
-                    location.activity_id = activity.id
-                INNER JOIN
-                    lizard_progress_project project
-                ON
-                    activity.project_id = project.id
-                WHERE
-                    project.organization_id = {organization_id}
-                    AND project.project_type_id = {project_type_id}
-                    AND activity.measurement_type_id = {measurement_type_id}
-                    AND NOT project.is_archived
-                    AND (
-                         (NOT location.one_measurement_uploaded AND
-                         location.planned_date IS NOT NULL AND
-                         location.planned_date >= current_date - interval '30 days')
-                        OR
-                         (location.one_measurement_uploaded AND
-                          COALESCE(location.measured_date, location.planned_date) >= current_date - interval '30 days'))
-                    AND location.location_type IN ('drain', 'manhole', 'pipe')
-            );
-            '''.format(
-            organization_id=organization[0].id,
-            project_type_id=project_type[0].id,
-            measurement_type_id=measurement_type[0].id
-        ))
-
+        try:
+            cursor.execute('''
+                DROP VIEW IF EXISTS publiekskaart_almere;
+                CREATE VIEW publiekskaart_almere AS (
+                    SELECT
+                        location.id,
+                        location.location_code,
+                        COALESCE(location.measured_date, location.planned_date) AS inspection_date,
+                        location.location_type,
+                        location.one_measurement_uploaded,
+                        location.the_geom,
+                        CASE
+                            WHEN location.measured_date IS NOT NULL THEN 1 -- Done
+                            WHEN location.planned_date IS NULL THEN 0 -- Not planned
+                            WHEN current_date > location.planned_date THEN 0 -- planned date has past
+                            WHEN current_date + integer '1' >= location.planned_date THEN 2 -- Today or tomorrow
+                            WHEN current_date + integer '2' >= location.planned_date THEN 3 -- In 2 days
+                            WHEN current_date + integer '7' >= location.planned_date THEN 4 -- Within 7 days
+                            ELSE 5 -- further in the future
+                            -- The below are for week numbers
+                            --           WHEN EXTRACT(WEEK FROM location.planned_date) = EXTRACT(WEEK FROM current_date) THEN 2
+                            --            WHEN EXTRACT(WEEK FROM location.planned_date) = EXTRACT(WEEK FROM current_date) + 1 THEN 3
+                        END AS color_code
+                    FROM
+                        lizard_progress_location location
+                    INNER JOIN
+                        lizard_progress_activity activity
+                    ON
+                        location.activity_id = activity.id
+                    INNER JOIN
+                        lizard_progress_project project
+                    ON
+                        activity.project_id = project.id
+                    WHERE
+                        project.organization_id = {organization_id}
+                        AND project.project_type_id = {project_type_id}
+                        AND activity.measurement_type_id = {measurement_type_id}
+                        AND NOT project.is_archived
+                        AND (
+                             (NOT location.one_measurement_uploaded AND
+                             location.planned_date IS NOT NULL AND
+                             location.planned_date >= current_date - interval '30 days')
+                            OR
+                             (location.one_measurement_uploaded AND
+                              COALESCE(location.measured_date, location.planned_date) >= current_date - interval '30 days'))
+                        AND location.location_type IN ('drain', 'manhole', 'pipe')
+                );
+                '''.format(
+                organization_id=organization[0].id,
+                project_type_id=project_type[0].id,
+                measurement_type_id=measurement_type[0].id
+            ))
+        except IndexError:
+            print("WARNING!: The 'publiekskaart_almere' view has not been "
+                  "created in the database, since either organization, "
+                  "project_type, or measurement_type does not contain a "
+                  "value for respectively 'Gemeente Almere', 'Planmatig' and "
+                  "'ribx_reiniging_riool")
 
 
     def backwards(self, orm):

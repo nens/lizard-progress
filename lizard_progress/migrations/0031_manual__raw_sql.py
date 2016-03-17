@@ -4,7 +4,7 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 from django.db import connection
-
+import lizard_progress.models
 
 cursor = connection.cursor()
 
@@ -12,6 +12,26 @@ cursor = connection.cursor()
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # 6 -- Gemeente Almere is 3 on staging, 6 on production
+        # 31 -- on Production check id = 31 (Planmatig)
+        # 14  -- corresponds to "ribx_reiniging_riool" on production
+        organization = lizard_progress.models.Organization.objects.filter(
+            name='Gemeente Almere'
+        )
+        project_type = lizard_progress.models.ProjectType.objects.filter(
+            organization=organization[0],
+            name='Planmatig'
+        )
+        measurement_type = \
+            lizard_progress.models.AvailableMeasurementType.objects.filter(
+                slug='ribx_reiniging_riool'
+            )
+        if len(organization) > 1 or len(project_type) > 1 or \
+                        len(measurement_type) > 1:
+            raise IndexError('organisation, project_type, or measurement_type '
+                             'contains too many of this element, respectively '
+                             'with value: "Gemeente Almere", "Planmatig" and '
+                             '"ribx_reiniging_riool"')
         cursor.execute('''
             DROP VIEW IF EXISTS publiekskaart_almere;
             CREATE VIEW publiekskaart_almere AS (
@@ -45,9 +65,9 @@ class Migration(SchemaMigration):
                 ON
                     activity.project_id = project.id
                 WHERE
-                    project.organization_id = 6 -- Gemeente Almere is 3 on staging, 6 on production
-                    AND project.project_type_id = 31 -- on Production check id = 31 (Planmatig)
-                    AND activity.measurement_type_id = 14  -- corresponds to "ribx_reiniging_riool" on production
+                    project.organization_id = {organization_id}
+                    AND project.project_type_id = {project_type_id}
+                    AND activity.measurement_type_id = {measurement_type_id}
                     AND NOT project.is_archived
                     AND (
                          (NOT location.one_measurement_uploaded AND
@@ -58,7 +78,13 @@ class Migration(SchemaMigration):
                           COALESCE(location.measured_date, location.planned_date) >= current_date - interval '30 days'))
                     AND location.location_type IN ('drain', 'manhole', 'pipe')
             );
-            ''')
+            '''.format(
+            organization_id=organization[0].id,
+            project_type_id=project_type[0].id,
+            measurement_type_id=measurement_type[0].id
+        ))
+
+
 
     def backwards(self, orm):
         cursor.execute('''DROP VIEW IF EXISTS publiekskaart_almere;''')

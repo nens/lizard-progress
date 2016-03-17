@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.8 (unreleased)
+2.8 (2016-03-17)
 ----------------
 
 - Fixed sql script that creates a 'publiekskaart' view.

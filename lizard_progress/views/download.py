@@ -30,6 +30,26 @@ logger = logging.getLogger(__name__)
 
 
 APP_LABEL = Project._meta.app_label
+BASE_DIR = 'lizard_progress'
+
+def nginx_serve(request, path, directory, filename):
+    if settings.DEBUG or '+' in path:
+        # Nginx fails to serve files with a '+' in their name. Encoding
+        # the '+' doesn't work, because there is an Nginx issue that says
+        # it doesn't decode X-Accel-Redirect paths.
+        # In short, we just do these ourselves...
+        return serve(request, path, '/')
+    directory = directory.split('var/')[-1]
+
+    response = HttpResponse()
+    response['X-Accel-Redirect'] = (
+        '/protected/{directory}/{filename}'
+        .format(directory=directory, filename=filename))
+    response['Content-Disposition'] = (
+            'attachment; filename="{filename}"'.format(filename=filename))
+    # content-type is set in nginx.
+    response['Content-Type'] = ''
+    return response
 
 
 class DownloadOrganizationDocumentView(View):
@@ -46,7 +66,7 @@ class DownloadOrganizationDocumentView(View):
         if not os.path.exists(path):
             raise http.Http404()
 
-        return serve(request, path, '/')
+        return nginx_serve(request, path, directory, filename)
 
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def delete(self, request, organization_id, filename):
@@ -324,7 +344,8 @@ class DownloadView(View):
         if not os.path.exists(path):
             raise http.Http404()
 
-        return serve(request, path, '/')
+        return nginx_serve(request, path, directory, filename)
+
 
     def delete(self, request, filetype, project_slug, filename):
         """Delete a downloadable file. For now, only for files without

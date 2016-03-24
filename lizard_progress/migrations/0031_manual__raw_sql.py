@@ -15,23 +15,30 @@ class Migration(SchemaMigration):
         # 6 -- Gemeente Almere is 3 on staging, 6 on production
         # 31 -- on Production check id = 31 (Planmatig)
         # 14  -- corresponds to "ribx_reiniging_riool" on production
-        organization = lizard_progress.models.Organization.objects.filter(
-            name='Gemeente Almere'
-        )
-        project_type = lizard_progress.models.ProjectType.objects.filter(
-            organization=organization[0],
-            name='Planmatig'
-        )
-        measurement_type = \
-            lizard_progress.models.AvailableMeasurementType.objects.filter(
-                slug='ribx_reiniging_riool'
+        try:
+            organization = lizard_progress.models.Organization.objects.filter(
+                name='Gemeente Almere'
             )
+            project_type = lizard_progress.models.ProjectType.objects.filter(
+                organization=organization[0],
+                name='Planmatig'
+            )
+            measurement_type = \
+                lizard_progress.models.AvailableMeasurementType.objects.filter(
+                    slug='ribx_reiniging_riool'
+                )
+        except Exception as e:
+            print("MIGRATION ERROR!!!! %s" % e)
+            return
+
         if len(organization) > 1 or len(project_type) > 1 or \
                         len(measurement_type) > 1:
-            raise IndexError('organisation, project_type, or measurement_type '
-                             'contains too many of this element, respectively '
-                             'with value: "Gemeente Almere", "Planmatig" and '
-                             '"ribx_reiniging_riool"')
+            print('ERROR!!! organisation, project_type, or measurement_type '
+                  'contains too many of this element, respectively '
+                  'with value: "Gemeente Almere", "Planmatig" and '
+                  '"ribx_reiniging_riool"')
+            return
+
         try:
             cursor.execute('''
                 DROP VIEW IF EXISTS publiekskaart_almere;

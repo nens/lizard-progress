@@ -28,12 +28,12 @@ class Migration(SchemaMigration):
                     slug='ribx_reiniging_riool'
                 )
         except Exception as e:
-            print(e)
+            print("MIGRATION ERROR!!!! %s" % e)
             return
 
         if len(organization) > 1 or len(project_type) > 1 or \
                         len(measurement_type) > 1:
-            print('organisation, project_type, or measurement_type '
+            print('ERROR!!! organisation, project_type, or measurement_type '
                   'contains too many of this element, respectively '
                   'with value: "Gemeente Almere", "Planmatig" and '
                   '"ribx_reiniging_riool"')

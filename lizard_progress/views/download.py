@@ -33,7 +33,7 @@ APP_LABEL = Project._meta.app_label
 BASE_DIR = 'lizard_progress'
 
 
-def nginx_serve(request, path, filename):
+def nginx_serve(request, path, filename, activity=None):
     if settings.DEBUG or '+' in path:
         # Nginx fails to serve files with a '+' in their name. Encoding
         # the '+' doesn't work, because there is an Nginx issue that says
@@ -42,9 +42,12 @@ def nginx_serve(request, path, filename):
         return serve(request, path, '/')
 
     response = HttpResponse()
-    response['X-Accel-Redirect'] = (
-        '/protected/{path}'
-        .format(path=path.split('var/')[-1]))
+    if activity:
+        response['X-Accel-Redirect'] = directories.make_nginx_file_path(
+            activity=activity, full_path=path)
+    else:
+        response['X-Accel-Redirect'] = path.replace(
+            directories.BASE_DIR, '/protected')
     response['Content-Disposition'] = (
             'attachment; filename="{filename}"'.format(filename=filename))
     # content-type is set in nginx.
@@ -344,7 +347,7 @@ class DownloadView(View):
         if not os.path.exists(path):
             raise http.Http404()
 
-        return nginx_serve(request, path, filename)
+        return nginx_serve(request, path, filename, activity)
 
 
     def delete(self, request, filetype, project_slug, filename):

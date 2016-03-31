@@ -49,11 +49,11 @@ def upload_dir(activity):
     return mk(os.path.join(activity_dir(activity), 'uploads'))
 
 
-def make_nginx_file_path(activity, full_path):
+def make_nginx_file_path(full_path):
     """Gives an Nginx internal path to an uploaded file."""
 
-    if full_path and full_path.startswith(upload_dir(activity)):
-        return full_path.replace(BASE_DIR, '/protected')
+    if full_path:
+        return full_path.replace(BASE_DIR, '/protected/lizard-progress')
 
 
 def results_dir(activity):

@@ -8,9 +8,11 @@ import platform
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.contrib.auth.decorators import login_required
 from django import http
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
 from django.views.static import serve
@@ -26,6 +28,7 @@ from lizard_progress.models import has_access
 from lizard_progress.models import Organization
 from lizard_progress.views.views import ProjectsView
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,25 +36,47 @@ APP_LABEL = Project._meta.app_label
 BASE_DIR = 'lizard_progress'
 
 
-def nginx_serve(request, path, filename, activity=None):
-    if settings.DEBUG or '+' in path:
-        # Nginx fails to serve files with a '+' in their name. Encoding
-        # the '+' doesn't work, because there is an Nginx issue that says
-        # it doesn't decode X-Accel-Redirect paths.
-        # In short, we just do these ourselves...
+def file_download(request, path):
+    """
+    We need our own file_download view because contractors can only see their
+    own files, and the URLs of other contractor's files are easy to guess.
+
+    Copied and adapted from deltaportaal, which has a more generic
+    example, in case you're looking for one. It is for Apache.
+
+    The one below works for both Apache (untested) and Nginx.  I used
+    the docs at http://wiki.nginx.org/XSendfile for the Nginx
+    configuration.  Basically, Nginx serves /protected/ from the
+    document root at BUILDOUT_DIR+'var', and we x-accel-redirect
+    there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
+    """
+
+    # Only works for Apache and Nginx, under Linux right now
+    if settings.DEBUG or not platform.system() == 'Linux' or not "+" in \
+            path:
+        logger.debug(
+            "With DEBUG off, we'd serve the programfile via webserver.")
+        logger.debug(
+            "Instead, we let Django serve {}.\n".format(path))
         return serve(request, path, '/')
 
+    nginx_path = directories.make_nginx_file_path(path)
+    try:
+        filename = os.path.split(path)[1]
+    except IndexError:
+        filename = ''
+
+    # This is where the magic takes place.
     response = HttpResponse()
-    if activity:
-        response['X-Accel-Redirect'] = directories.make_nginx_file_path(
-            activity=activity, full_path=path)
-    else:
-        response['X-Accel-Redirect'] = path.replace(
-            directories.BASE_DIR, '/protected')
+    response['X-Sendfile'] = path  # Apache
+    response['X-Accel-Redirect'] = nginx_path  # Nginx
     response['Content-Disposition'] = (
             'attachment; filename="{filename}"'.format(filename=filename))
-    # content-type is set in nginx.
+
+    # Unset the Content-Type as to allow for the webserver
+    # to determine it.
     response['Content-Type'] = ''
+
     return response
 
 
@@ -69,14 +94,12 @@ class DownloadOrganizationDocumentView(View):
         if not os.path.exists(path):
             raise http.Http404()
 
-        return nginx_serve(request, path, filename)
+        return file_download(request, path)
 
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def delete(self, request, organization_id, filename):
         """Delete a downloadable file."""
-        organization = get_object_or_404(Organization,
-                                         id=organization_id)
-
+        organization = get_object_or_404(Organization, id=organization_id)
         directory = directories.organization_files_dir(
             organization)
         path = os.path.join(directory, filename)
@@ -347,7 +370,7 @@ class DownloadView(View):
         if not os.path.exists(path):
             raise http.Http404()
 
-        return nginx_serve(request, path, filename, activity)
+        return file_download(request, path)
 
 
     def delete(self, request, filetype, project_slug, filename):
@@ -404,9 +427,8 @@ def start_export_run_view(request, project_slug, export_run_id):
     return HttpResponse()
 
 
-def protected_download_export_run(request, project_slug, export_run_id):
+def download_export_run(request, project_slug, export_run_id):
     """
-    Copied from views.protected_file_download, see there.
     No Apache support, only Nginx.
     """
 
@@ -426,15 +448,55 @@ def protected_download_export_run(request, project_slug, export_run_id):
     file_path = export_run.file_path
     logger.debug("File path: " + file_path)
 
-    # This is where the magic takes place.
-    response = HttpResponse()
-    response['X-Accel-Redirect'] = export_run.nginx_path  # Nginx
+    return file_download(request, file_path)
 
-    # Unset the Content-Type as to allow for the webserver
-    # to determine it.
-    response['Content-Type'] = ''
 
-    # Only works for Apache and Nginx, under Linux right now
-    if settings.DEBUG or not platform.system() == 'Linux':
-        return serve(request, file_path, '/')
-    return response
+def delete_measurement(request, activity, measurement):
+    """Delete the measurement. This undos everything releted to this
+    particular measurement. If the uploaded file contained several
+    measurements, the others are unaffected and the uploaded file is
+    still there.
+    """
+    # We need write access in this project.
+    if not models.has_write_access(
+            request.user,
+            project=activity.project,
+            contractor=activity.contractor):
+        http.HttpResponseForbidden()
+
+    # Actually delete it.
+    measurement.delete(
+        notify=True,
+        deleted_by_contractor=activity.contractor.contains_user(request.user))
+
+    # Just return success -- this view is called from Javascript.
+    return http.HttpResponse()
+
+
+@login_required
+def measurement_download_or_delete(
+        request, project_slug, activity_id, measurement_id, filename):
+    project = get_object_or_404(models.Project, slug=project_slug)
+    activity = get_object_or_404(models.Activity, pk=activity_id)
+    measurement = get_object_or_404(
+        models.Measurement, pk=measurement_id, location__activity=activity)
+
+    if activity.project != project:
+        return http.HttpResponseForbidden()
+    if filename != measurement.base_filename:
+        raise Http404()
+
+    logger.debug("Incoming programfile request for %s", filename)
+
+    if not has_access(request.user, project, activity.contractor):
+        logger.warn("Not allowed to access %s", filename)
+        return http.HttpResponseForbidden()
+
+    if request.method == 'GET':
+        return file_download(request, measurement.filename)
+
+    if request.method == 'DELETE':
+        return delete_measurement(request, activity, measurement)
+
+    # This gives a somewhat documented 405 error
+    return http.HttpResponseNotAllowed(('GET', 'DELETE'))

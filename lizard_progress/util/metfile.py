@@ -6,7 +6,7 @@ from __future__ import print_function, absolute_import
 DWARSPROFIEL_MTYPE_SLUG = 'dwarsprofiel'
 
 from lizard_progress import models
-
+from lizard_progress.util import directories
 
 def generate_metfile(project, contractor, open_file):
     """We generate a metfile by:
@@ -57,7 +57,7 @@ def write_trivial_reeks(open_file, measurement):
 
 
 def copy_measurement(open_file, measurement):
-    metfile = measurement.filename
+    metfile = directories.absolute(measurement.filename)
     location_code = measurement.scheduled.location.location_code
 
     open_file.write(get_profiel_from_metfile(location_code, metfile))

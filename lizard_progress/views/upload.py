@@ -242,7 +242,7 @@ class UploadedFileErrorsView(ViewContextMixin, TemplateView):
                     error.error_message)
 
         lines = []
-        path = self.uploaded_file.path
+        path = directories.absolute(self.uploaded_file.path)
         good_lines = 0
         if errordict and os.path.exists(path):
             for line_minus_one, line in enumerate(open(path)):

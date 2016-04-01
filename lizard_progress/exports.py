@@ -138,7 +138,7 @@ def export_as_metfile(export_run):
     ).wants_sorted_measurements()
 
     metfile = retrieve_profile.recreate_metfile([
-        (measurement.filename,
+        (directories.absolute(measurement.filename),
          measurement.location.location_code)
         for measurement in measurements])
 
@@ -182,7 +182,7 @@ def export_as_dxf(export_run):
 
 def create_dxf(measurement, temp):
     retrieved_profile = retrieve_profile.retrieve(
-        measurement.filename,
+        directories.absolute(measurement.filename),
         measurement.location.location_code)
 
     if retrieved_profile is None:
@@ -233,7 +233,7 @@ def export_as_csv(export_run):
 def create_csv(measurement, temp):
     location_code = measurement.location.location_code
     series_id, series_name, profile = retrieve_profile.retrieve(
-        measurement.filename,
+        directories.absolute(measurement.filename),
         location_code)
 
     base_line = profile.line

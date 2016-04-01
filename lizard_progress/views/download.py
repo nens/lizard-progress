@@ -50,7 +50,6 @@ def file_download(request, path):
     document root at BUILDOUT_DIR+'var', and we x-accel-redirect
     there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
     """
-
     # Only works for Apache and Nginx, under Linux right now
     if settings.DEBUG or not platform.system() == 'Linux' or not "+" in \
             path:
@@ -65,7 +64,8 @@ def file_download(request, path):
     # This is where the magic takes place.
     response = HttpResponse()
     response['X-Sendfile'] = directories.absolute(path)  # Apache
-    response['X-Accel-Redirect'] = path  # Nginx
+    response['X-Accel-Redirect'] = os.path.join(
+        '/protected/lizard_progress', path)  # Nginx
     response['Content-Disposition'] = (
             'attachment; filename="{filename}"'.format(filename=filename))
 
@@ -363,7 +363,7 @@ class DownloadView(View):
 
         path = os.path.join(directory, filename)
 
-        if not os.path.exists(path):
+        if not os.path.exists(directories.absolute(path)):
             raise http.Http404()
 
         return file_download(request, path)

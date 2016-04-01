@@ -168,7 +168,7 @@ class UploadReportsView(UploadView):
             return json_response({'error': {'details': msg}})
 
         # The destination directory.
-        dst = directories.reports_dir(self.activity)
+        dst = directories.absolute(directories.reports_dir(self.activity))
 
         # Copy the report.
         shutil.copy(path, dst)
@@ -189,7 +189,7 @@ class UploadShapefilesView(UploadView):
         # the shapefile to its permanent location?
 
         # The destination directory.
-        dst = directories.shapefile_dir(self.activity)
+        dst = directories.absolute(directories.shapefile_dir(self.activity))
 
         # Copy the report.
         shutil.copy(path, dst)
@@ -273,7 +273,8 @@ class UploadOrganizationFileView(ProjectsView):
         filename = request.POST.get('filename', uploaded_file.name)
 
         with open(os.path.join(
-                directories.organization_files_dir(organization),
+                directories.absolute(
+                    directories.organization_files_dir(organization)),
                 filename), "wb") as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
@@ -294,14 +295,14 @@ class UploadProjectFileView(ProjectsView):
         filename = request.POST.get('filename', uploaded_file.name)
 
         with open(os.path.join(
-                directories.project_files_dir(project),
+                directories.absolute(directories.project_files_dir(project)),
                 filename), "wb") as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
 
         # Put shapefile parts into zip files
         tasks.shapefile_vacuum.delay(
-            directories.project_files_dir(project))
+            directories.absolute(directories.project_files_dir(project)))
 
         return json_response({})
 
@@ -328,7 +329,8 @@ class UploadHydrovakkenView(ProjectsView):
         # Remove old files before we move the new ones
         models.Hydrovak.remove_hydrovakken_files(self.project)
 
-        hydrovakken_dir = directories.hydrovakken_dir(self.project)
+        hydrovakken_dir = directories.absolute(
+            directories.hydrovakken_dir(self.project))
 
         # Save uploaded files
         for ext in ['shp', 'dbf', 'shx']:

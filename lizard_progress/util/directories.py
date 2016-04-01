@@ -27,33 +27,33 @@ def clean(s):
 
 def mk(directory):
     """Create directory if it doesn't exist yet, then return it."""
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    full_path = absolute(directory)
+    if not os.path.exists(full_path):
+        os.makedirs(full_path)
     return directory
+
+
+def absolute(path):
+    return os.path.join(BASE_DIR, path)
+
+
+def relative(path):
+    return path.replace(BASE_DIR + '/', '')
 
 
 def project_dir(project):
     """Return base directory for this project."""
     return mk(os.path.join(
-        BASE_DIR,
         project.organization.name,
         project.slug))
 
 
 def activity_dir(activity):
-    return mk(os.path.join(
-        project_dir(activity.project), str(activity.id)))
+    return mk(os.path.join(project_dir(activity.project), str(activity.id)))
 
 
 def upload_dir(activity):
     return mk(os.path.join(activity_dir(activity), 'uploads'))
-
-
-def make_nginx_file_path(full_path):
-    """Gives an Nginx internal path to an uploaded file."""
-
-    if full_path:
-        return full_path.replace(BASE_DIR, '/protected/lizard-progress')
 
 
 def results_dir(activity):
@@ -66,11 +66,10 @@ def exports_dir(activity, base_dir=BASE_DIR):
     accessible by the FTP server, therefore in a slightly different
     structure from the other files:
 
-    BASE_DIR/<Organization>/ftp_readonly/<Project>/<Activity id and name>/
-
+    <Organization>/ftp_readonly/<Project>/<Activity id and name>/
     """
     export_dir = os.path.join(
-        base_dir, activity.project.organization.name,
+        activity.project.organization.name,
         'ftp_readonly', activity.project.slug,
         '{} - {}'.format(activity.id, clean(activity.name)))
 
@@ -97,8 +96,7 @@ def location_shapefile_dir(activity):
 
 def location_shapefile_path(activity):
     return os.path.join(
-        location_shapefile_dir(activity),
-        b'meetlocaties-{activityid}'.format(
+        location_shapefile_dir(activity), b'meetlocaties-{activityid}'.format(
             activityid=activity.id))
 
 
@@ -108,29 +106,30 @@ def hydrovakken_dir(project):
 
 
 def project_files_dir(project):
-    return mk(os.path.join(
-        project_dir(project), 'files'))
+    return mk(os.path.join(project_dir(project), 'files'))
 
 
 def organization_files_dir(organization):
-    return mk(os.path.join(BASE_DIR, organization.name, 'files'))
+    return mk(os.path.join(organization.name, 'files'))
 
 
 def files_in(d):
-    for f in os.listdir(d):
-        if os.path.isfile(os.path.join(d, f)):
-            yield os.path.join(d, f)
+    abs_d = absolute(d)
+    for f in os.listdir(abs_d):
+        if os.path.isfile(os.path.join(abs_d, f)):
+            yield os.path.join(abs_d, f)
 
 
 def all_files_in(path, extension=None):
-    for directory, dirnames, filenames in os.walk(path):
+    abs_path = absolute(path)
+    for directory, dirnames, filenames in os.walk(abs_path):
         for filename in filenames:
             if extension is None or filename.endswith(extension):
                 yield os.path.join(directory, filename)
 
 
 def newest_file_in(path, extension=None):
-    mtime = lambda fn: os.stat(os.path.join(path, fn)).st_mtime
+    mtime = lambda fn: os.stat(os.path.join(absolute(path), fn)).st_mtime
     filenames = sorted(all_files_in(path, extension), key=mtime)
     if filenames:
         return filenames[-1].encode('utf8')
@@ -139,7 +138,7 @@ def newest_file_in(path, extension=None):
 
 
 def human_size(path):
-    size = os.stat(path).st_size
+    size = os.stat(absolute(path)).st_size
 
     if size < 1000:
         return "{0} bytes".format(size)

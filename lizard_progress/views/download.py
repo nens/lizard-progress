@@ -58,18 +58,14 @@ def file_download(request, path):
             "With DEBUG off, we'd serve the programfile via webserver.")
         logger.debug(
             "Instead, we let Django serve {}.\n".format(path))
-        return serve(request, path, '/')
+        return serve(request, directories.absolute(path), '/')
 
-    nginx_path = directories.make_nginx_file_path(path)
-    try:
-        filename = os.path.split(path)[1]
-    except IndexError:
-        filename = ''
+    filename = os.path.basename(path)
 
     # This is where the magic takes place.
     response = HttpResponse()
-    response['X-Sendfile'] = path  # Apache
-    response['X-Accel-Redirect'] = nginx_path  # Nginx
+    response['X-Sendfile'] = directories.absolute(path)  # Apache
+    response['X-Accel-Redirect'] = path  # Nginx
     response['Content-Disposition'] = (
             'attachment; filename="{filename}"'.format(filename=filename))
 
@@ -350,7 +346,7 @@ class DownloadView(View):
             directory = directories.hydrovakken_dir(project)
             for path in directories.all_files_in(directory):
                 if os.path.basename(path) == filename:
-                    directory = os.path.dirname(path)
+                    directory = directories.relative(os.path.dirname(path))
                     break
             else:
                 raise http.Http404()
@@ -358,7 +354,7 @@ class DownloadView(View):
             directory = directories.shapefile_dir(activity)
             for path in directories.all_files_in(directory):
                 if os.path.basename(path) == filename:
-                    directory = os.path.dirname(path)
+                    directory = directories.relative(os.path.dirname(path))
                     break
             else:
                 raise http.Http404()
@@ -385,7 +381,8 @@ class DownloadView(View):
         if not project.is_manager(request.user):
             return HttpResponseForbidden()
 
-        directory = directories.project_files_dir(project)
+        directory = directories.absolute(
+            directories.project_files_dir(project))
         path = os.path.join(directory, filename)
         if os.path.exists(path) and os.path.isfile(path):
             os.remove(path)

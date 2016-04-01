@@ -55,7 +55,8 @@ class Command(BaseCommand):
             activity = measurements[0].location.activity
 
             # Sanity check
-            if not dirname.startswith(directories.activity_dir(activity)):
+            if not dirname.startswith(
+                    directories.absolute(directories.activity_dir(activity))):
                 print("Skipping {}".format(dirname))
                 continue
 
@@ -72,5 +73,5 @@ class Command(BaseCommand):
 
             # Update all measurement records that relate to this file
             for measurement in measurements:
-                measurement.filename = new_path
+                measurement.filename = directories.relative(new_path)
                 measurement.save()

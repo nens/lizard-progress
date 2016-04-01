@@ -40,7 +40,7 @@ from lizard_progress import models
 from lizard_progress import lizard_export
 from lizard_progress import configuration
 from lizard_progress.util.send_exception_mail import send_email_on_exception
-
+from lizard_progress.util import directories
 
 def open_zipfile(zipfile_path):
     """Function to open a Zip file, so that we do it the same way each time."""
@@ -96,7 +96,8 @@ def export_all_files(export_run):
     """Collect all the most recent (non-updated) files, and put them
     in a .zip file."""
 
-    zipfile_path = export_run.export_filename(extension="zip")
+    zipfile_path = directories.absolute(
+        export_run.export_filename(extension="zip"))
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
@@ -105,7 +106,7 @@ def export_all_files(export_run):
         for file_path in sorted(export_run.files_to_export()):
             z.write(file_path, os.path.basename(file_path))
 
-    export_run.file_path = zipfile_path
+    export_run.file_path = directories.relative(zipfile_path)
     export_run.save()
 
 
@@ -121,7 +122,8 @@ def export_as_metfile(export_run):
     error. If it does, we assume they want to sort its measurements
     before exporting them."""
 
-    metfile_path = export_run.export_filename(extension="met")
+    metfile_path = directories.absolute(
+        export_run.export_filename(extension="met"))
 
     if not os.path.isdir(os.path.dirname(metfile_path)):
         os.makedirs(os.path.dirname(metfile_path))
@@ -144,7 +146,7 @@ def export_as_metfile(export_run):
     with open(metfile_path, "w") as f:
         f.write(exporter.export_metfile(metfile))
 
-    export_run.file_path = metfile_path
+    export_run.file_path = directories.relative(metfile_path)
     export_run.save()
 
 
@@ -159,7 +161,7 @@ def export_as_dxf(export_run):
         if file_path is not None:
             files.add(file_path)
 
-    zipfile_path = export_run.export_filename(extension="dxf.zip")
+    zipfile_path = directories.absolute(export_run.export_filename(extension="dxf.zip"))
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
@@ -173,7 +175,7 @@ def export_as_dxf(export_run):
 
     os.rmdir(temp)
 
-    export_run.file_path = zipfile_path
+    export_run.file_path = directories.relative(zipfile_path)
     export_run.save()
 
 
@@ -209,7 +211,7 @@ def export_as_csv(export_run):
         if file_path is not None:
             files.add(file_path)
 
-    zipfile_path = export_run.export_filename(extension="csv.zip")
+    zipfile_path = directories.absolute(export_run.export_filename(extension="csv.zip"))
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
@@ -223,7 +225,7 @@ def export_as_csv(export_run):
 
     os.rmdir(temp)
 
-    export_run.file_path = zipfile_path
+    export_run.file_path = directories.relative(zipfile_path)
     export_run.save()
 
 
@@ -238,9 +240,6 @@ def create_csv(measurement, temp):
     if base_line is None or midpoint is None:
         # No base line. Skip!
         return
-
-    # Get a tmp dir
-    temp = tempfile.mkdtemp()
 
     filename = "{id}.csv".format(id=location_code)
     filepath = os.path.join(temp, filename)
@@ -334,9 +333,9 @@ def export_as_shapefile(export_run, location_type):
     add_planning = export_run.activity.specifics().allow_planning_dates
 
     temp_dir = tempfile.mkdtemp()
-    filename = export_run.export_filename(extension="")[:-1]  # Remove '.'
 
-    zipfile_path = export_run.export_filename(extension="zip")
+    zipfile_path = directories.absolute(
+        export_run.export_filename(extension="zip"))
 
     filename = os.path.basename(zipfile_path)[:-4]  # Remove '.zip'
 
@@ -349,7 +348,7 @@ def export_as_shapefile(export_run, location_type):
             export_run, temp_dir, filename, zipfile_path, locations, fieldname,
             add_planning)
 
-    export_run.file_path = zipfile_path
+    export_run.file_path = directories.relative(zipfile_path)
     export_run.save()
 
 

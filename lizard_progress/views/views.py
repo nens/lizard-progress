@@ -661,9 +661,10 @@ class NewProjectView(ProjectsView):
                 measurement_type=mtype,
                 contractor=contractor)
 
-        org_files_dir = directories.organization_files_dir(
-            self.profile.organization)
-        project_files_dir = directories.project_files_dir(project)
+        org_files_dir = directories.absolute(directories.organization_files_dir(
+            self.profile.organization))
+        project_files_dir = directories.absolute(
+            directories.project_files_dir(project))
         for filename in os.listdir(org_files_dir):
             shutil.copy(os.path.join(org_files_dir, filename),
                         os.path.join(project_files_dir, filename))
@@ -671,8 +672,6 @@ class NewProjectView(ProjectsView):
         return HttpResponseRedirect(
             reverse('lizard_progress_dashboardview',
                     kwargs={'project_slug': project.slug}))
-
-        return activity
 
     def grouped_form_fields(self):
         listed_fields = list(self.form)

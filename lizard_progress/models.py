@@ -1368,7 +1368,8 @@ class Hydrovak(models.Model):
 
     @classmethod
     def remove_hydrovakken_files(cls, project):
-        hydrovakken_dir = directories.hydrovakken_dir(project)
+        hydrovakken_dir = directories.absolute(
+            directories.hydrovakken_dir(project))
         shutil.rmtree(hydrovakken_dir)
         os.mkdir(hydrovakken_dir)
 
@@ -1502,7 +1503,7 @@ class UploadedFile(models.Model):
         tries_so_far = 0
         while tries_so_far < tries:
             try:
-                open(self.path)
+                open(directories.absolute(self.path))
                 return
             except IOError:
                 # We're probably trying too soon, it's not there yet
@@ -1526,12 +1527,12 @@ class UploadedFile(models.Model):
 
     def delete_self(self):
         try:
-            if os.path.exists(self.path) and UploadedFile.objects.filter(
+            if os.path.exists(directories.absolute(self.path)) and UploadedFile.objects.filter(
                     path=self.path).count() == 1:
                 # File exists and only we refer to it
-                os.remove(self.path)
+                os.remove(directories.absolute(self.path))
             # Try to remove empty directory
-            os.rmdir(os.path.dirname(self.path))
+            os.rmdir(os.path.dirname(directories.absolute(self.path)))
         except (IOError, OSError):
             pass
 
@@ -1755,8 +1756,10 @@ class ExportRun(models.Model):
         """Path to this export run's file, using '/protected/' as the
         path to the base dir (for Nginx X-Accel-Redirect)."""
         return '{}/{}'.format(
-            directories.exports_dir(self.activity, base_dir='/protected'),
-            self.filename)
+            directories.exports_dir(
+                self.activity, base_dir='/protected/lizard-progress'),
+            self.filename
+        )
 
     def fail(self, error_message):
         self.ready_for_download = False

@@ -10,18 +10,16 @@ from __future__ import absolute_import
 from __future__ import division
 
 import contextlib
-import sys
-import traceback
-import StringIO
+import logging
 
 
-from django.core import mail
+logger = logging.getLogger(__name__)
 
 
-def send_exception_mail(where, exc_info):
-    message = StringIO.StringIO()
 
-    message.write("""\
+def send_exception_mail(where):
+
+    message = ("""
 Er is een Exception opgetreden op de Uploadservice, op een plek waar dat
 niet hoort en waar een gebruiker er direct last van had. Dit is een
 programmeerfout.
@@ -31,13 +29,7 @@ Waar: {}
 Traceback:
 """.format(where))
 
-    traceback.print_exception(*exc_info, limit=None, file=message)
-
-    mail.send_mail(
-        "Foutmelding van de Uploadservice",
-        message.getvalue(),
-        "servicedesk@nelen-schuurmans.nl",
-        ["remco.gerlich@nelen-schuurmans.nl"])
+    logger.exception(message)
 
 
 @contextlib.contextmanager
@@ -45,7 +37,7 @@ def send_email_on_exception(where, reraise=True):
     try:
         yield
     except:
-        send_exception_mail(where, sys.exc_info())
+        send_exception_mail(where)
 
         if reraise:
             # Also re-raise, because the calling code probably also

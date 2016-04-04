@@ -12,6 +12,9 @@ from lizard_progress import process_uploaded_file
 from lizard_progress import exports
 from lizard_progress.util import shapevac
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 @task
 def add(x, y):
@@ -22,16 +25,28 @@ def add(x, y):
 @task
 def process_uploaded_file_task(uploaded_file_id):
     """Call the process_uploaded_file function."""
-    process_uploaded_file.process_uploaded_file(uploaded_file_id)
+    try:
+        process_uploaded_file.process_uploaded_file(uploaded_file_id)
+    except:
+        logger.exception("Error in task 'process_uploaded_file_task'.")
+        raise
 
 
 @task
 def start_export_run(export_run_id, user):
     """Start the given export run."""
-    exports.start_run(export_run_id, user)
+    try:
+        exports.start_run(export_run_id, user)
+    except:
+        logger.exception("Error in task 'start_export_run'.")
+        raise
 
 
 @task
 def shapefile_vacuum(directory):
     """Put shapefile parts into zip files in directory."""
-    shapevac.shapefile_vacuum_directory(directory)
+    try:
+        shapevac.shapefile_vacuum_directory(directory)
+    except:
+        logger.exception("Error in task 'shapefile_vacuum'.")
+        raise

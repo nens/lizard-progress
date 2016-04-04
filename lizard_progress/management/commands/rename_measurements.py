@@ -39,10 +39,11 @@ class Command(BaseCommand):
         """Run the command."""
 
         all_filenames = models.Measurement.objects.order_by(
-            'filename').distinct('filename').values_list('filename', flat=True)
-
+            'filename').distinct('rel_file_path').values_list('rel_file_path',
+                                                              flat=True)
         for path in all_filenames:
             dirname, filename = os.path.split(path)
+            dirname = directories.absolute(dirname)
 
             if not re.match('\d{8}-\d{6}-\d-', filename):
                 # Not in YYYYMMDD-HHMMSS-0- format
@@ -55,8 +56,8 @@ class Command(BaseCommand):
             activity = measurements[0].location.activity
 
             # Sanity check
-            if not dirname.startswith(
-                    directories.absolute(directories.rel_activity_dir(activity))):
+            if not dirname.startswith(directories.absolute(
+                        directories.rel_activity_dir(activity))):
                 print("Skipping {}".format(dirname))
                 continue
 

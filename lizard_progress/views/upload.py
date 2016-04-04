@@ -150,7 +150,7 @@ class UploadMeasurementsView(UploadView):
             activity=self.activity,
             uploaded_by=self.user,
             uploaded_at=datetime.datetime.now(),
-            path=path)
+            rel_file_path=path)
 
         uploaded_file.schedule_processing()
 

@@ -42,6 +42,11 @@ from lizard_progress import configuration
 from lizard_progress.util.send_exception_mail import send_email_on_exception
 from lizard_progress.util import directories
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def open_zipfile(zipfile_path):
     """Function to open a Zip file, so that we do it the same way each time."""
 
@@ -101,8 +106,11 @@ def export_all_files(export_run):
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
 
+    logger.debug(zipfile_path)
+
     with open_zipfile(zipfile_path) as z:
         for file_path in sorted(export_run.abs_files_to_export()):
+            logger.debug("Files to add to zipfile: " + str(file_path))
             z.write(file_path, os.path.basename(file_path))
 
     export_run.rel_file_path = zipfile_path

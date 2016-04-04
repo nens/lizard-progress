@@ -3,58 +3,37 @@ from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-import lizard_progress.models
-from lizard_progress.util import directories
-
-
-# Absolute paths (with "lizard_progress/") in the database:
-#
-# TABLE                                 | COL
-# -----------------------------------------------------------------------------
-# lizard_progress_exportrun             | file_path
-# lizard_progress_uploadedfile          | path
-# lizard_progress_measurement           | filename
-# lizard_progress_uploadedfileerror     | error_message
-
-
-def relative(path):
-    try:
-        return path.split('lizard_progress/')[1]
-    except IndexError:
-        return directories.relative(path)
-    except AttributeError:
-        return
 
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        exportruns = lizard_progress.models.ExportRun.objects.all()
-        for exportrun in exportruns:
-            exportrun.file_path = relative(export.file_path)
-            exportrun.save()
-        uploadedfiles = lizard_progress.models.UploadedFile.objects.all()
-        for uploadedfile in uploadedfiles:
-            uploadedfile.path = relative(uploadedfile.path)
-            uploadedfile.save()
-        measurements = lizard_progress.models.Measurement.objects.all()
-        for measurement in measurements:
-            measurement.filename = relative(measurement.filename)
-            measurement.save()
+        # Renaming field 'UploadedFile.path'
+        db.rename_column(
+            u'lizard_progress_uploadedfile', 'path', 'rel_file_path')
+
+        # Renaming field 'ExportRun.file_path'
+        db.rename_column(
+            u'lizard_progress_exportrun', 'file_path', 'rel_file_path')
+
+        # Renaming field 'Measurement.filename'
+        db.rename_column(
+            u'lizard_progress_measurement', 'filename', 'rel_file_path')
+
 
     def backwards(self, orm):
-        exportrun = lizard_progress.models.ExportRun.objects.all()
-        for export in exportrun:
-            export.file_path = directories.absolute(export.file_path)
-            export.save()
-        uploadedfiles = lizard_progress.models.UploadedFile.objects.all()
-        for uploadedfile in uploadedfiles:
-            uploadedfile.path = directories.absolute(uploadedfile.path)
-            uploadedfile.save()
-        measurements = lizard_progress.models.Measurement.objects.all()
-        for measurement in measurements:
-            measurement.filename = directories.absolute(measurement.filename)
-            measurement.save()
+        # Renaming field 'UploadedFile.path'
+        db.rename_column(
+            u'lizard_progress_uploadedfile', 'rel_file_path', 'path')
+
+        # Renaming field 'ExportRun.file_path'
+        db.rename_column(
+            u'lizard_progress_exportrun', 'rel_file_path', 'file_path')
+
+        # Renaming field 'Measurement.filename'
+        db.rename_column(
+            u'lizard_progress_measurement', 'rel_file_path', 'filename')
+
 
     models = {
         u'auth.group': {
@@ -146,10 +125,10 @@ class Migration(SchemaMigration):
             'error_message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'export_running': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'exporttype': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
-            'file_path': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '1000', 'null': 'True'}),
             'generates_file': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'ready_for_download': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+            'ready_for_download': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'rel_file_path': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '1000', 'null': 'True'})
         },
         u'lizard_progress.hydrovak': {
             'Meta': {'unique_together': "((u'project', u'br_ident'),)", 'object_name': 'Hydrovak'},
@@ -190,11 +169,11 @@ class Migration(SchemaMigration):
             'data': ('jsonfield.fields.JSONField', [], {'null': 'True'}),
             'date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'expected_attachments': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'measurements'", 'symmetrical': 'False', 'to': u"orm['lizard_progress.ExpectedAttachment']"}),
-            'filename': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_point': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Location']", 'null': 'True'}),
             'parent': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Measurement']", 'null': 'True'}),
+            'rel_file_path': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             'the_geom': ('django.contrib.gis.db.models.fields.GeometryField', [], {'srid': '28992', 'null': 'True', 'blank': 'True'}),
             'timestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
@@ -254,8 +233,8 @@ class Migration(SchemaMigration):
             'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'linelike': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'ready': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'rel_file_path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'success': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'uploaded_at': ('django.db.models.fields.DateTimeField', [], {}),
             'uploaded_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})

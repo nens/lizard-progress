@@ -335,16 +335,6 @@ def all_measurements(project, organization):
         location__activity__contractor=organization)
 
 
-def current_files(measurements):
-    """Given an iterable of measurements, return a set of all
-    filenames used to create them.
-
-    One file can contain many measurements, so if we didn't use a set
-    we could end up with many duplicates."""
-
-    return set(measurement.filename for measurement in measurements)
-
-
 class Project(models.Model):
     name = models.CharField(max_length=50, unique=False,
                             verbose_name='projectnaam')
@@ -428,8 +418,8 @@ class Project(models.Model):
         If there is more than one, return an error message. Otherwise
         refresh the database with the shapefile's contents and return
         any error message from that."""
-        shapefiles = list(directories.all_files_in(
-            directories.hydrovakken_dir(self), extension='.shp'))
+        shapefiles = list(directories.all_abs_files_in(
+            directories.abs_hydrovakken_dir(self), extension='.shp'))
 
         if len(shapefiles) == 0:
             # No shapefiles is not an error, it's the default.
@@ -838,9 +828,9 @@ class Activity(models.Model):
                 complete=False).prefetch_related('measurement_set'):
             self.copy_location(location)
 
-    def upload_directory(self):
+    def abs_upload_directory(self):
         """Directory where the files for this activity will be stored."""
-        return directories.upload_dir(self)
+        return directories.abs_upload_dir(self)
 
     def can_upload(self, user):
         """User can upload if he is with the contractor, or if user is a
@@ -1136,7 +1126,7 @@ class Measurement(models.Model):
 
     # This is the filename of the uploaded file after it was moved
     # into lizard-progress' archive. Set by process_uploaded_file.
-    filename = models.CharField(max_length=1000)
+    rel_file_path = models.CharField(max_length=1000)
 
     # Expected Attachments that belong to this Measurement. When they
     # are uploaded, they will get their own Measurement instance, that
@@ -1177,11 +1167,11 @@ class Measurement(models.Model):
             'project_slug': activity.project.slug,
             'activity_id': activity.id,
             'measurement_id': self.id,
-            'filename': os.path.basename(self.filename)})
+            'filename': os.path.basename(self.rel_file_path)})
 
     @property
     def base_filename(self):
-        return self.filename and os.path.basename(self.filename)
+        return self.rel_file_path and os.path.basename(self.rel_file_path)
 
     def delete(self, notify=True, deleted_by_contractor=True,
                set_completeness=True):
@@ -1224,14 +1214,15 @@ class Measurement(models.Model):
         super(Measurement, self).delete()
 
         # If no other measurements relate to our filename, delete it
-        if (not Measurement.objects.filter(filename=self.filename).exists()):
-            if os.path.exists(self.filename):
-                os.remove(self.filename)
+        if (not Measurement.objects.filter(
+                rel_file_path=self.rel_file_path).exists()):
+            if os.path.exists(self.rel_file_path):
+                os.remove(self.rel_file_path)
 
             # If that happens, and the filename was uploaded as an expected
             # attachment, that attachment should be set uploaded=False again.
             ExpectedAttachment.register_deletion(
-                self.location.activity, self.filename)
+                self.location.activity, self.rel_file_path)
 
         # Let our location determine its completeness
         if set_completeness:
@@ -1346,9 +1337,20 @@ class Measurement(models.Model):
         """Return a queryset of Measurements that have this one as parent."""
         return Measurement.objects.filter(parent=self)
 
+    @cached_property
+    def abs_file_path(self):
+        return directories.absolute(self.rel_file_path)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.rel_file_path.startswith('/'):
+            self.rel_file_path = self.rel_file_path.replace(
+                directories.BASE_DIR + '/', '')
+        super(Measurement, self).save(force_insert, force_update, using, update_fields)
+
     def __unicode__(self):
         return 'Measurement {} from {}, expects {} attachments'.format(
-            self.id, self.filename, self.expected_attachments.count())
+            self.id, self.rel_file_path, self.expected_attachments.count())
 
 
 class Hydrovak(models.Model):
@@ -1368,23 +1370,22 @@ class Hydrovak(models.Model):
 
     @classmethod
     def remove_hydrovakken_files(cls, project):
-        hydrovakken_dir = directories.absolute(
-            directories.hydrovakken_dir(project))
-        shutil.rmtree(hydrovakken_dir)
-        os.mkdir(hydrovakken_dir)
+        abs_hydrovakken_dir = directories.abs_hydrovakken_dir(project)
+        shutil.rmtree(abs_hydrovakken_dir)
+        os.mkdir(abs_hydrovakken_dir)
 
     @classmethod
     def remove_hydrovakken_data(cls, project):
         cls.objects.filter(project=project).delete()
 
     @classmethod
-    def reload_from(cls, project, shapefile_path):
+    def reload_from(cls, project, abs_shapefile_path):
         cls.remove_hydrovakken_data(project)
 
-        if isinstance(shapefile_path, unicode):
-            shapefile_path = shapefile_path.encode('utf8')
+        if isinstance(abs_shapefile_path, unicode):
+            abs_shapefile_path = abs_shapefile_path.encode('utf8')
 
-        datasource = DataSource(shapefile_path)
+        datasource = DataSource(abs_shapefile_path)
 
         # We only import configuration here, because it imports this module
         # for the OrganizationConfig and ProjectConfig models.
@@ -1448,7 +1449,7 @@ class UploadedFile(models.Model):
     uploaded_by = models.ForeignKey(User)
     uploaded_at = models.DateTimeField()
 
-    path = models.CharField(max_length=255)
+    rel_file_path = models.CharField(max_length=255)
 
     # If ready is True but success is False, uploading was unsuccessful.
     # In that case, there should be error messages in the UploadedFileError
@@ -1475,7 +1476,8 @@ class UploadedFile(models.Model):
         new_uf = UploadedFile.objects.create(
             activity=self.activity,
             uploaded_by=self.uploaded_by, uploaded_at=datetime.datetime.now(),
-            path=self.path, ready=False, linelike=self.linelike)
+            rel_file_path=self.rel_file_path, ready=False,
+            linelike=self.linelike)
 
         new_uf.schedule_processing()
 
@@ -1495,7 +1497,7 @@ class UploadedFile(models.Model):
 
     @property
     def filename(self):
-        return os.path.basename(self.path)
+        return os.path.basename(self.rel_file_path)
 
     def wait_until_path_exists(self, tries=10):
         """Do NOT call from web code! Sleeps up to 10 seconds. Use in
@@ -1503,7 +1505,7 @@ class UploadedFile(models.Model):
         tries_so_far = 0
         while tries_so_far < tries:
             try:
-                open(directories.absolute(self.path))
+                open(self.abs_file_path)
                 return
             except IOError:
                 # We're probably trying too soon, it's not there yet
@@ -1527,12 +1529,13 @@ class UploadedFile(models.Model):
 
     def delete_self(self):
         try:
-            if os.path.exists(directories.absolute(self.path)) and UploadedFile.objects.filter(
-                    path=self.path).count() == 1:
+            if os.path.exists(self.abs_file_path) \
+                    and UploadedFile.objects.filter(
+                        rel_file_path=self.rel_file_path).count() == 1:
                 # File exists and only we refer to it
-                os.remove(directories.absolute(self.path))
+                os.remove(self.abs_file_path)
             # Try to remove empty directory
-            os.rmdir(os.path.dirname(directories.absolute(self.path)))
+            os.rmdir(os.path.dirname(self.abs_file_path))
         except (IOError, OSError):
             pass
 
@@ -1546,7 +1549,7 @@ class UploadedFile(models.Model):
             'activity_id': self.activity_id,
             'uploaded_by': self.get_uploaded_by_name(),
             'uploaded_at': self.uploaded_at.strftime("%d/%m/%y %H:%M"),
-            'filename': os.path.basename(self.path),
+            'filename': os.path.basename(self.rel_file_path),
             'ready': self.ready,
             'success': self.success,
             'error_url': reverse(
@@ -1589,6 +1592,17 @@ class UploadedFile(models.Model):
             self.uploadedfileerror_set.count() ==
             self.possiblerequest_set.count())
 
+    @cached_property
+    def abs_file_path(self):
+        return directories.absolute(self.rel_file_path)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.rel_file_path.startswith('/'):
+            self.rel_file_path = self.rel_file_path.replace(
+                directories.BASE_DIR + '/', '')
+        super(UploadedFile, self).save(force_insert, force_update, using, update_fields)
+
 
 class UploadedFileError(models.Model):
     uploaded_file = models.ForeignKey(UploadedFile)
@@ -1599,7 +1613,7 @@ class UploadedFileError(models.Model):
     def __unicode__(self):
         return (
             "{file} {line}: {error_code} {error_message}".
-            format(file=os.path.basename(self.uploaded_file.path),
+            format(file=os.path.basename(self.uploaded_file.rel_file_path),
                    line=self.line,
                    error_code=self.error_code,
                    error_message=self.error_message))
@@ -1621,7 +1635,7 @@ class ExportRun(models.Model):
 
     created_at = models.DateTimeField(null=True, blank=True, default=None)
     created_by = models.ForeignKey(User, null=True, blank=True, default=None)
-    file_path = models.CharField(max_length=1000, null=True, default=None)
+    rel_file_path = models.CharField(max_length=1000, null=True, default=None)
     ready_for_download = models.BooleanField(default=False)
     export_running = models.BooleanField(default=False)
 
@@ -1635,7 +1649,7 @@ class ExportRun(models.Model):
 
     @property
     def filename(self):
-        return self.file_path and os.path.basename(self.file_path)
+        return self.rel_file_path and os.path.basename(self.rel_file_path)
 
     @classmethod
     def get_or_create(cls, activity, exporttype):
@@ -1684,21 +1698,21 @@ class ExportRun(models.Model):
     def present(self):
         """Check if a file generated by the export run is present. Always false
         if this export run doesn't generate files."""
-        return bool(self.file_path and self.ready_for_download and
-                    os.path.exists(self.file_path))
+        return bool(self.rel_file_path and self.ready_for_download and
+                    os.path.exists(self.abs_file_path))
 
     def delete(self):
         """Also delete the file."""
         if self.present:
-            os.remove(self.file_path)
+            os.remove(self.abs_file_path)
         return super(ExportRun, self).delete()
 
     def clear(self):
         """Make current data unavailable."""
         self.ready_for_download = False
-        if self.file_path and os.path.exists(self.file_path):
-            os.remove(self.file_path)
-        self.file_path = None
+        if self.rel_file_path and os.path.exists(self.abs_file_path):
+            os.remove(self.abs_file_path)
+        self.rel_file_path = None
         self.save()
 
     def record_start(self, user):
@@ -1710,7 +1724,7 @@ class ExportRun(models.Model):
 
     def set_ready_for_download(self):
         self.ready_for_download = bool(
-            self.file_path and os.path.exists(self.file_path))
+            self.rel_file_path and os.path.exists(self.abs_file_path))
         self.export_running = False
         self.save()
 
@@ -1733,14 +1747,14 @@ class ExportRun(models.Model):
             location__activity=self.activity,
             location__complete=True).select_related()
 
-    def files_to_export(self):
+    def abs_files_to_export(self):
         return set(
-            measurement.filename
+            measurement.abs_file_path
             for measurement in self.measurements_to_export())
 
-    def export_filename(self, extension="zip"):
+    def abs_export_filename(self, extension="zip"):
         """Return the filename that the result file should use."""
-        directory = directories.exports_dir(self.activity)
+        directory = directories.abs_exports_dir(self.activity)
         return os.path.join(
             directory,
             "{project}-{activityid}-{activity}-{exporttype}.{extension}"
@@ -1751,21 +1765,23 @@ class ExportRun(models.Model):
             exporttype=self.exporttype,
             extension=extension).encode('utf8')
 
-    @property
-    def nginx_path(self):
-        """Path to this export run's file, using '/protected/' as the
-        path to the base dir (for Nginx X-Accel-Redirect)."""
-        return '{}/{}'.format(
-            directories.exports_dir(
-                self.activity, base_dir='/protected/lizard-progress'),
-            self.filename
-        )
-
     def fail(self, error_message):
         self.ready_for_download = False
         self.export_running = False
         self.error_message = error_message
         self.save()
+
+    @cached_property
+    def abs_file_path(self):
+        return directories.absolute(self.rel_file_path)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.rel_file_path is not None and \
+                self.rel_file_path.startswith('/'):
+            self.rel_file_path = self.rel_file_path.replace(
+                directories.BASE_DIR + '/', '')
+        super(ExportRun, self).save(force_insert, force_update, using, update_fields)
 
 
 class UploadLog(models.Model):

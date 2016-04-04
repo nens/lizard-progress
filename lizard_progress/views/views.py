@@ -434,7 +434,7 @@ class DashboardCsvView(ProjectsView):
             row = [location.location_code]
             if location.complete:
                 # Nice sorted list of filenames and dates.
-                filenames = [self.clean_filename(measurement.filename)
+                filenames = [self.clean_filename(measurement.rel_file_path)
                              for measurement in
                              location.measurement_set.all()]
 
@@ -661,13 +661,12 @@ class NewProjectView(ProjectsView):
                 measurement_type=mtype,
                 contractor=contractor)
 
-        org_files_dir = directories.absolute(directories.organization_files_dir(
-            self.profile.organization))
-        project_files_dir = directories.absolute(
-            directories.project_files_dir(project))
+        org_files_dir = directories.abs_organization_files_dir(
+            self.profile.organization)
+        abs_project_files_dir = directories.abs_project_files_dir(project)
         for filename in os.listdir(org_files_dir):
             shutil.copy(os.path.join(org_files_dir, filename),
-                        os.path.join(project_files_dir, filename))
+                        os.path.join(abs_project_files_dir, filename))
 
         return HttpResponseRedirect(
             reverse('lizard_progress_dashboardview',

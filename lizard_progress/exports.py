@@ -96,18 +96,17 @@ def export_all_files(export_run):
     """Collect all the most recent (non-updated) files, and put them
     in a .zip file."""
 
-    zipfile_path = directories.absolute(
-        export_run.export_filename(extension="zip"))
+    zipfile_path = export_run.abs_export_filename(extension="zip")
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
 
     with open_zipfile(zipfile_path) as z:
-        for file_path in sorted(export_run.files_to_export()):
-            z.write(
-                directories.absolute(file_path), os.path.basename(file_path))
+        for file_path in sorted(export_run.abs_files_to_export()):
+            z.write(file_path, os.path.basename(file_path))
 
-    export_run.file_path = directories.relative(zipfile_path)
+    export_run.rel_file_path = zipfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 
@@ -123,8 +122,7 @@ def export_as_metfile(export_run):
     error. If it does, we assume they want to sort its measurements
     before exporting them."""
 
-    metfile_path = directories.absolute(
-        export_run.export_filename(extension="met"))
+    metfile_path = export_run.abs_export_filename(extension="met")
 
     if not os.path.isdir(os.path.dirname(metfile_path)):
         os.makedirs(os.path.dirname(metfile_path))
@@ -138,16 +136,17 @@ def export_as_metfile(export_run):
     ).wants_sorted_measurements()
 
     metfile = retrieve_profile.recreate_metfile([
-        (directories.absolute(measurement.filename),
-         measurement.location.location_code)
-        for measurement in measurements])
+        (measurement.abs_filepath, measurement.location.location_code)
+        for measurement in measurements
+    ])
 
     exporter = exporters.MetfileExporter(want_sorted_measurements)
 
     with open(metfile_path, "w") as f:
         f.write(exporter.export_metfile(metfile))
 
-    export_run.file_path = directories.relative(metfile_path)
+    export_run.rel_file_path = metfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 
@@ -162,7 +161,7 @@ def export_as_dxf(export_run):
         if file_path is not None:
             files.add(file_path)
 
-    zipfile_path = directories.absolute(export_run.export_filename(extension="dxf.zip"))
+    zipfile_path = export_run.abs_export_filename(extension="dxf.zip")
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
@@ -176,19 +175,20 @@ def export_as_dxf(export_run):
 
     os.rmdir(temp)
 
-    export_run.file_path = directories.relative(zipfile_path)
+    export_run.rel_file_path = zipfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 
 def create_dxf(measurement, temp):
     retrieved_profile = retrieve_profile.retrieve(
-        directories.absolute(measurement.filename),
-        measurement.location.location_code)
+        measurement.abs_file_path, measurement.location.location_code
+    )
 
     if retrieved_profile is None:
         raise ValueError("Profile {} not found in file {}".format(
             measurement.location.location_code,
-            measurement.filename))
+            measurement.abs_file_path))
 
     series_id, series_name, profile = retrieved_profile
 
@@ -212,7 +212,7 @@ def export_as_csv(export_run):
         if file_path is not None:
             files.add(file_path)
 
-    zipfile_path = directories.absolute(export_run.export_filename(extension="csv.zip"))
+    zipfile_path = export_run.abs_export_filename(extension="csv.zip")
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
@@ -226,15 +226,16 @@ def export_as_csv(export_run):
 
     os.rmdir(temp)
 
-    export_run.file_path = directories.relative(zipfile_path)
+    export_run.rel_file_path = zipfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 
 def create_csv(measurement, temp):
     location_code = measurement.location.location_code
     series_id, series_name, profile = retrieve_profile.retrieve(
-        directories.absolute(measurement.filename),
-        location_code)
+        measurement.abs_file_path, location_code
+    )
 
     base_line = profile.line
     midpoint = profile.midpoint
@@ -335,8 +336,7 @@ def export_as_shapefile(export_run, location_type):
 
     temp_dir = tempfile.mkdtemp()
 
-    zipfile_path = directories.absolute(
-        export_run.export_filename(extension="zip"))
+    zipfile_path = export_run.abs_export_filename(extension="zip")
 
     filename = os.path.basename(zipfile_path)[:-4]  # Remove '.zip'
 
@@ -349,7 +349,8 @@ def export_as_shapefile(export_run, location_type):
             export_run, temp_dir, filename, zipfile_path, locations, fieldname,
             add_planning)
 
-    export_run.file_path = directories.relative(zipfile_path)
+    export_run.rel_file_path = zipfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 

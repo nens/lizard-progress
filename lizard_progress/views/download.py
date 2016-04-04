@@ -82,7 +82,7 @@ class DownloadOrganizationDocumentView(View):
         organization = get_object_or_404(Organization,
                                          id=organization_id)
 
-        directory = directories.organization_files_dir(
+        directory = directories.abs_organization_files_dir(
             organization)
 
         path = os.path.join(directory, filename)
@@ -96,7 +96,7 @@ class DownloadOrganizationDocumentView(View):
     def delete(self, request, organization_id, filename):
         """Delete a downloadable file."""
         organization = get_object_or_404(Organization, id=organization_id)
-        directory = directories.organization_files_dir(
+        directory = directories.abs_organization_files_dir(
             organization)
         path = os.path.join(directory, filename)
 
@@ -119,8 +119,8 @@ class DownloadDocumentsView(ProjectsView):
                        })
 
     def _organization_files(self):
-        for path in directories.files_in(
-                directories.organization_files_dir(self.organization)):
+        for path in directories.abs_files_in(
+                directories.abs_organization_files_dir(self.organization)):
             yield {
                 'type': 'Handleidingen e.d.',
                 'filename': os.path.basename(path),
@@ -170,8 +170,8 @@ class DownloadHomeView(ProjectsView):
             })
 
     def _project_files(self):
-        for path in directories.files_in(
-                directories.project_files_dir(self.project)):
+        for path in directories.abs_files_in(
+                directories.abs_project_files_dir(self.project)):
             yield {
                 'type': 'Handleidingen e.d.',
                 'filename': os.path.basename(path),
@@ -185,8 +185,8 @@ class DownloadHomeView(ProjectsView):
     def _reports_files(self):
         for activity in self.project.activity_set.all():
             if has_access(self.user, self.project, activity.contractor):
-                for path in directories.files_in(
-                        directories.reports_dir(activity)):
+                for path in directories.abs_files_in(
+                        directories.abs_reports_dir(activity)):
                     yield {
                         'type': 'Rapporten {}'.format(activity),
                         'filename': os.path.basename(path),
@@ -200,8 +200,8 @@ class DownloadHomeView(ProjectsView):
     def _results_files(self):
         for activity in self.project.activity_set.all():
             if has_access(self.user, self.project, activity.contractor):
-                for path in directories.files_in(
-                        directories.results_dir(activity)):
+                for path in directories.abs_files_in(
+                        directories.abs_results_dir(activity)):
                     yield {
                         'type': 'Resultaten {}'.format(activity),
                         'filename': os.path.basename(path),
@@ -214,8 +214,8 @@ class DownloadHomeView(ProjectsView):
     def _shapefile_files(self):
         for activity in self.project.activity_set.all():
             if has_access(self.user, self.project, activity.contractor):
-                for path in directories.all_files_in(
-                        directories.shapefile_dir(activity)):
+                for path in directories.all_abs_files_in(
+                        directories.abs_shapefile_dir(activity)):
                     yield {
                         'type': 'Ingevulde monstervakken shapefile {}'
                         .format(activity.contractor.name),
@@ -228,8 +228,8 @@ class DownloadHomeView(ProjectsView):
 
     def _monstervakken_files(self):
         if has_access(self.user, self.project):
-            for path in directories.all_files_in(
-                directories.hydrovakken_dir(self.project),
+            for path in directories.all_abs_files_in(
+                directories.abs_hydrovakken_dir(self.project),
                     extension=".shp"):
                 yield {
                     'description':
@@ -337,36 +337,36 @@ class DownloadView(View):
             return HttpResponseForbidden()
 
         if filetype == 'reports':
-            directory = directories.reports_dir(activity)
+            directory = directories.abs_reports_dir(activity)
         elif filetype == 'results':
-            directory = directories.reports_dir(activity)
+            directory = directories.abs_reports_dir(activity)
         elif filetype == 'organization':
-            directory = directories.project_files_dir(project)
+            directory = directories.abs_project_files_dir(project)
         elif filetype == 'monstervakken':
-            directory = directories.hydrovakken_dir(project)
-            for path in directories.all_files_in(directory):
-                if os.path.basename(path) == filename:
-                    directory = directories.relative(os.path.dirname(path))
+            directory = directories.abs_hydrovakken_dir(project)
+            for abs_path in directories.all_abs_files_in(directory):
+                if os.path.basename(abs_path) == filename:
+                    directory = os.path.dirname(abs_path)
                     break
             else:
                 raise http.Http404()
         elif filetype == 'contractor_monstervakken':
-            directory = directories.shapefile_dir(activity)
-            for path in directories.all_files_in(directory):
-                if os.path.basename(path) == filename:
-                    directory = directories.relative(os.path.dirname(path))
+            directory = directories.abs_shapefile_dir(activity)
+            for abs_path in directories.all_abs_files_in(directory):
+                if os.path.basename(abs_path) == filename:
+                    directory = os.path.dirname(abs_path)
                     break
             else:
                 raise http.Http404()
         else:
             return HttpResponseForbidden()
 
-        path = os.path.join(directory, filename)
+        abs_path = os.path.join(directory, filename)
 
-        if not os.path.exists(directories.absolute(path)):
+        if not os.path.exists(abs_path):
             raise http.Http404()
 
-        return file_download(request, path)
+        return file_download(request, directories.relative(abs_path))
 
 
     def delete(self, request, filetype, project_slug, filename):
@@ -381,8 +381,7 @@ class DownloadView(View):
         if not project.is_manager(request.user):
             return HttpResponseForbidden()
 
-        directory = directories.absolute(
-            directories.project_files_dir(project))
+        directory = directories.abs_project_files_dir(project)
         path = os.path.join(directory, filename)
         if os.path.exists(path) and os.path.isfile(path):
             os.remove(path)
@@ -442,7 +441,7 @@ def download_export_run(request, project_slug, export_run_id):
             export_run.activity.contractor):
         return HttpResponseForbidden()
 
-    file_path = export_run.file_path
+    file_path = export_run.rel_file_path
     logger.debug("File path: " + file_path)
 
     return file_download(request, file_path)
@@ -490,7 +489,7 @@ def measurement_download_or_delete(
         return http.HttpResponseForbidden()
 
     if request.method == 'GET':
-        return file_download(request, measurement.filename)
+        return file_download(request, measurement.rel_file_path)
 
     if request.method == 'DELETE':
         return delete_measurement(request, activity, measurement)

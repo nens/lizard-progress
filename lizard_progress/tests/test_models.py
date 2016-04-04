@@ -650,7 +650,7 @@ class TestMeasurement(FixturesTestCase):
         expected_attachment = models.ExpectedAttachment.objects.get(
             filename='1.mpg')
         new_measurement = expected_attachment.register_uploading()[0]
-        new_measurement.filename = '/some/path/ending/in/1.mpg'
+        new_measurement.rel_file_path = '/some/path/ending/in/1.mpg'
         new_measurement.save()
 
         # Everything is uploaded
@@ -687,29 +687,31 @@ class TestExportRun(FixturesTestCase):
             generates_file=True)
         self.assertFalse(run.available)
 
-    def test_nginx_path_is_correct(self):
-        measurement_type = AvailableMeasurementTypeF.create()
-        projectorg = OrganizationF.create(name="ProjectOrg")
-        contractor = OrganizationF.create(name="Contractor")
-        project = ProjectF.create(
-            organization=projectorg,
-            slug="testslug")
-
-        activity = ActivityF.create(
-            measurement_type=measurement_type,
-            contractor=contractor,
-            project=project
-        )
-
-        run = ExportRunF.create(
-            activity=activity,
-            file_path="/some/nonexisting/path",
-            generates_file=True)
-
-        self.assertEquals(
-            run.nginx_path,
-            '/protected/ProjectOrg/ftp_readonly/testslug/{} - {}/path'.format(
-                activity.id, activity.name))
+    # TODO: write test for file_download, code below is outdated. Everything
+    # TODO: should be served by nginx except in a development environment.
+    # def test_nginx_path_is_correct(self):
+    #     measurement_type = AvailableMeasurementTypeF.create()
+    #     projectorg = OrganizationF.create(name="ProjectOrg")
+    #     contractor = OrganizationF.create(name="Contractor")
+    #     project = ProjectF.create(
+    #         organization=projectorg,
+    #         slug="testslug")
+    #
+    #     activity = ActivityF.create(
+    #         measurement_type=measurement_type,
+    #         contractor=contractor,
+    #         project=project
+    #     )
+    #
+    #     run = ExportRunF.create(
+    #         activity=activity,
+    #         file_path="/some/nonexisting/path",
+    #         generates_file=True)
+    #
+    #     self.assertEquals(
+    #         run.nginx_path,
+    #         '/protected/ProjectOrg/ftp_readonly/testslug/{} - {}/path'.format(
+    #             activity.id, activity.name))
 
     def test_exportrun_has_run_doesnt_generate_file_is_available(self):
         measurement_type = AvailableMeasurementTypeF.build()

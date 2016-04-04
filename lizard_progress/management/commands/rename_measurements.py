@@ -50,13 +50,13 @@ class Command(BaseCommand):
 
             # All measurements that came out of this file
             measurements = list(models.Measurement.objects.filter(
-                filename=path).select_related())
+                rel_file_path=directories.relative(path)).select_related())
 
             activity = measurements[0].location.activity
 
             # Sanity check
             if not dirname.startswith(
-                    directories.absolute(directories.activity_dir(activity))):
+                    directories.absolute(directories.rel_activity_dir(activity))):
                 print("Skipping {}".format(dirname))
                 continue
 
@@ -73,5 +73,5 @@ class Command(BaseCommand):
 
             # Update all measurement records that relate to this file
             for measurement in measurements:
-                measurement.filename = directories.relative(new_path)
+                measurement.rel_file_path = new_path
                 measurement.save()

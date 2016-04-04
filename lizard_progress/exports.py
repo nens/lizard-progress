@@ -136,7 +136,7 @@ def export_as_metfile(export_run):
     ).wants_sorted_measurements()
 
     metfile = retrieve_profile.recreate_metfile([
-        (measurement.abs_filepath, measurement.location.location_code)
+        (measurement.abs_file_path, measurement.location.location_code)
         for measurement in measurements
     ])
 

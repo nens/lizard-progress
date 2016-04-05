@@ -39,8 +39,6 @@ from lizard_progress import errors
 from lizard_progress import models
 from lizard_progress import lizard_export
 from lizard_progress import configuration
-from lizard_progress.util.send_exception_mail import send_email_on_exception
-from lizard_progress.util import directories
 
 import logging
 
@@ -61,6 +59,7 @@ def start_run(export_run_id, user):
     try:
         export_run = models.ExportRun.objects.get(pk=export_run_id)
     except models.ExportRun.DoesNotExist:
+        logger.error('This point should have never been reached.')
         # Huh?
         return
 
@@ -68,27 +67,26 @@ def start_run(export_run_id, user):
     export_run.record_start(user)
 
     try:
-        with send_email_on_exception(
-                "Start export run, id={}".format(export_run.id)):
-            if export_run.exporttype == "met":
-                export_as_metfile(export_run)
-            elif export_run.exporttype == "dxf":
-                export_as_dxf(export_run)
-            elif export_run.exporttype == "csv":
-                export_as_csv(export_run)
-            elif export_run.exporttype == "pointshape":
-                export_as_shapefile(export_run, 'point')
-            elif export_run.exporttype == "drainshape":
-                export_as_shapefile(export_run, 'drain')
-            elif export_run.exporttype == "manholeshape":
-                export_as_shapefile(export_run, 'manhole')
-            elif export_run.exporttype == "pipeshape":
-                export_as_shapefile(export_run, 'pipe')
-            elif export_run.exporttype == "lizard":
-                export_to_lizard(export_run)
-            else:
-                export_all_files(export_run)
+        if export_run.exporttype == "met":
+            export_as_metfile(export_run)
+        elif export_run.exporttype == "dxf":
+            export_as_dxf(export_run)
+        elif export_run.exporttype == "csv":
+            export_as_csv(export_run)
+        elif export_run.exporttype == "pointshape":
+            export_as_shapefile(export_run, 'point')
+        elif export_run.exporttype == "drainshape":
+            export_as_shapefile(export_run, 'drain')
+        elif export_run.exporttype == "manholeshape":
+            export_as_shapefile(export_run, 'manhole')
+        elif export_run.exporttype == "pipeshape":
+            export_as_shapefile(export_run, 'pipe')
+        elif export_run.exporttype == "lizard":
+            export_to_lizard(export_run)
+        else:
+            export_all_files(export_run)
     except:
+        logger.exception('Fout in export run met id: %s', str(export_run.id))
         # Catch-all except, because this is meant to catch all the
         # exceptions we don't know about yet. The mail is also sent.
         export_run.fail("Onbekende fout, export mislukt")

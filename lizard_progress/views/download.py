@@ -418,7 +418,11 @@ def start_export_run_view(request, project_slug, export_run_id):
     export_run.save()
 
     # Start the Celery task
-    tasks.start_export_run.delay(export_run.id, request.user)
+    try:
+        task_result = tasks.start_export_run.delay(export_run.id, request.user)
+        logger.info(str(task_result))
+    except:
+        logger.exception('taak export run gefaald %s', export_run.id)
 
     return HttpResponse()
 

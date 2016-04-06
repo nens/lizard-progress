@@ -429,7 +429,7 @@ def start_export_run_view(request, project_slug, export_run_id):
 
 def download_export_run(request, project_slug, export_run_id):
     """
-    Apache and only Nginx support.
+    Apache and Nginx support.
     """
 
     try:

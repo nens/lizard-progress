@@ -6,7 +6,7 @@ from __future__ import print_function, absolute_import
 DWARSPROFIEL_MTYPE_SLUG = 'dwarsprofiel'
 
 from lizard_progress import models
-from lizard_progress.util import directories
+
 
 def generate_metfile(project, contractor, open_file):
     """We generate a metfile by:

@@ -1216,8 +1216,8 @@ class Measurement(models.Model):
         # If no other measurements relate to our filename, delete it
         if (not Measurement.objects.filter(
                 rel_file_path=self.rel_file_path).exists()):
-            if os.path.exists(self.rel_file_path):
-                os.remove(self.rel_file_path)
+            if os.path.exists(self.abs_file_path):
+                os.remove(self.abs_file_path)
 
             # If that happens, and the filename was uploaded as an expected
             # attachment, that attachment should be set uploaded=False again.
@@ -1337,12 +1337,11 @@ class Measurement(models.Model):
         """Return a queryset of Measurements that have this one as parent."""
         return Measurement.objects.filter(parent=self)
 
-    @cached_property
+    @property
     def abs_file_path(self):
         return directories.absolute(self.rel_file_path)
 
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
+    def save(self, *args, **kwargs):
         if self.rel_file_path.startswith('/'):
             self.rel_file_path = self.rel_file_path.replace(
                 directories.BASE_DIR + '/', '')
@@ -1592,12 +1591,11 @@ class UploadedFile(models.Model):
             self.uploadedfileerror_set.count() ==
             self.possiblerequest_set.count())
 
-    @cached_property
+    @property
     def abs_file_path(self):
         return directories.absolute(self.rel_file_path)
 
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
+    def save(self, *args, **kwargs):
         if self.rel_file_path.startswith('/'):
             self.rel_file_path = self.rel_file_path.replace(
                 directories.BASE_DIR + '/', '')
@@ -1771,12 +1769,11 @@ class ExportRun(models.Model):
         self.error_message = error_message
         self.save()
 
-    @cached_property
+    @property
     def abs_file_path(self):
         return directories.absolute(self.rel_file_path)
 
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
+    def save(self, *args, **kwargs):
         if self.rel_file_path is not None and \
                 self.rel_file_path.startswith('/'):
             self.rel_file_path = self.rel_file_path.replace(

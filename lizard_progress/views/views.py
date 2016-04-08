@@ -37,6 +37,7 @@ from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
 from lizard_map.views import MAP_LOCATION as EXTENT_SESSION_KEY
 from lizard_ui.layout import Action
+from lizard_ui.views import UiView  # Don't delete, it is imported by ``views/activity.py``
 
 from lizard_progress import configuration
 from lizard_progress import models

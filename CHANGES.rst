@@ -2,7 +2,7 @@ Changelog of lizard-progress
 ===================================================
 
 
-2.9 (unreleased)
+2.9 (2016-04-08)
 ----------------
 
 - Remco isn't (hardcoded!) mailed anymore upon task exceptions.

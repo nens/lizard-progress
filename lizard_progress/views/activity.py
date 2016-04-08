@@ -290,8 +290,10 @@ class PlanningView(ActivityView):
             models.Location.objects.bulk_create(new_locations)
 
             # Move RIBX file to project files
-            newribxpath = os.path.join(directories.project_files_dir(
-                self.activity.project), os.path.basename(ribxpath))
+            newribxpath = os.path.join(
+                directories.abs_project_files_dir(self.activity.project),
+                os.path.basename(ribxpath)
+            )
             if os.path.exists(newribxpath):
                 os.remove(newribxpath)
             shutil.move(ribxpath, newribxpath)
@@ -366,8 +368,7 @@ class PlanningView(ActivityView):
                     'project_slug': self.project.slug}))
 
     def __save_uploaded_files(self, request):
-        shapefilepath = directories.location_shapefile_path(
-            self.activity)
+        shapefilepath = directories.abs_location_shapefile_path(self.activity)
 
         with open(shapefilepath + '.shp', 'wb+') as dest:
             for chunk in request.FILES['shp'].chunks():
@@ -383,8 +384,10 @@ class PlanningView(ActivityView):
 
     def __save_uploaded_ribx(self, request):
         ribxpath = os.path.join(
-            directories.project_dir(self.activity.project),
-            request.FILES['ribx'].name)
+            directories.absolute(
+                directories.rel_project_dir(self.activity.project)),
+            request.FILES['ribx'].name
+        )
 
         with open(ribxpath, 'wb+') as dest:
             for chunk in request.FILES['ribx'].chunks():

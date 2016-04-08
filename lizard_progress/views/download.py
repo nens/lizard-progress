@@ -8,9 +8,11 @@ import platform
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.contrib.auth.decorators import login_required
 from django import http
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
 from django.views.static import serve
@@ -26,6 +28,7 @@ from lizard_progress.models import has_access
 from lizard_progress.models import Organization
 from lizard_progress.views.views import ProjectsView
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,22 +36,43 @@ APP_LABEL = Project._meta.app_label
 BASE_DIR = 'lizard_progress'
 
 
-def nginx_serve(request, path, filename):
-    if settings.DEBUG or '+' in path:
-        # Nginx fails to serve files with a '+' in their name. Encoding
-        # the '+' doesn't work, because there is an Nginx issue that says
-        # it doesn't decode X-Accel-Redirect paths.
-        # In short, we just do these ourselves...
-        return serve(request, path, '/')
+def file_download(request, path):
+    """
+    We need our own file_download view because contractors can only see their
+    own files, and the URLs of other contractor's files are easy to guess.
 
+    Copied and adapted from deltaportaal, which has a more generic
+    example, in case you're looking for one. It is for Apache.
+
+    The one below works for both Apache (untested) and Nginx.  I used
+    the docs at http://wiki.nginx.org/XSendfile for the Nginx
+    configuration.  Basically, Nginx serves /protected/ from the
+    document root at BUILDOUT_DIR+'var', and we x-accel-redirect
+    there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
+    """
+    # Only works for Apache and Nginx, under Linux right now
+    if settings.DEBUG or not platform.system() == 'Linux' or not "+" in \
+            path:
+        logger.debug(
+            "With DEBUG off, we'd serve the programfile via webserver.")
+        logger.debug(
+            "Instead, we let Django serve {}.\n".format(path))
+        return serve(request, directories.absolute(path), '/')
+
+    filename = os.path.basename(path)
+
+    # This is where the magic takes place.
     response = HttpResponse()
-    response['X-Accel-Redirect'] = (
-        '/protected/{path}'
-        .format(path=path.split('var/')[-1]))
+    response['X-Sendfile'] = directories.absolute(path)  # Apache
+    response['X-Accel-Redirect'] = os.path.join(
+        '/protected/lizard_progress', path)  # Nginx
     response['Content-Disposition'] = (
             'attachment; filename="{filename}"'.format(filename=filename))
-    # content-type is set in nginx.
+
+    # Unset the Content-Type as to allow for the webserver
+    # to determine it.
     response['Content-Type'] = ''
+
     return response
 
 
@@ -58,7 +82,7 @@ class DownloadOrganizationDocumentView(View):
         organization = get_object_or_404(Organization,
                                          id=organization_id)
 
-        directory = directories.organization_files_dir(
+        directory = directories.abs_organization_files_dir(
             organization)
 
         path = os.path.join(directory, filename)
@@ -66,15 +90,13 @@ class DownloadOrganizationDocumentView(View):
         if not os.path.exists(path):
             raise http.Http404()
 
-        return nginx_serve(request, path, filename)
+        return file_download(request, path)
 
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def delete(self, request, organization_id, filename):
         """Delete a downloadable file."""
-        organization = get_object_or_404(Organization,
-                                         id=organization_id)
-
-        directory = directories.organization_files_dir(
+        organization = get_object_or_404(Organization, id=organization_id)
+        directory = directories.abs_organization_files_dir(
             organization)
         path = os.path.join(directory, filename)
 
@@ -97,8 +119,8 @@ class DownloadDocumentsView(ProjectsView):
                        })
 
     def _organization_files(self):
-        for path in directories.files_in(
-                directories.organization_files_dir(self.organization)):
+        for path in directories.abs_files_in(
+                directories.abs_organization_files_dir(self.organization)):
             yield {
                 'type': 'Handleidingen e.d.',
                 'filename': os.path.basename(path),
@@ -148,8 +170,8 @@ class DownloadHomeView(ProjectsView):
             })
 
     def _project_files(self):
-        for path in directories.files_in(
-                directories.project_files_dir(self.project)):
+        for path in directories.abs_files_in(
+                directories.abs_project_files_dir(self.project)):
             yield {
                 'type': 'Handleidingen e.d.',
                 'filename': os.path.basename(path),
@@ -163,8 +185,8 @@ class DownloadHomeView(ProjectsView):
     def _reports_files(self):
         for activity in self.project.activity_set.all():
             if has_access(self.user, self.project, activity.contractor):
-                for path in directories.files_in(
-                        directories.reports_dir(activity)):
+                for path in directories.abs_files_in(
+                        directories.abs_reports_dir(activity)):
                     yield {
                         'type': 'Rapporten {}'.format(activity),
                         'filename': os.path.basename(path),
@@ -178,8 +200,8 @@ class DownloadHomeView(ProjectsView):
     def _results_files(self):
         for activity in self.project.activity_set.all():
             if has_access(self.user, self.project, activity.contractor):
-                for path in directories.files_in(
-                        directories.results_dir(activity)):
+                for path in directories.abs_files_in(
+                        directories.abs_results_dir(activity)):
                     yield {
                         'type': 'Resultaten {}'.format(activity),
                         'filename': os.path.basename(path),
@@ -192,8 +214,8 @@ class DownloadHomeView(ProjectsView):
     def _shapefile_files(self):
         for activity in self.project.activity_set.all():
             if has_access(self.user, self.project, activity.contractor):
-                for path in directories.all_files_in(
-                        directories.shapefile_dir(activity)):
+                for path in directories.all_abs_files_in(
+                        directories.abs_shapefile_dir(activity)):
                     yield {
                         'type': 'Ingevulde monstervakken shapefile {}'
                         .format(activity.contractor.name),
@@ -206,8 +228,8 @@ class DownloadHomeView(ProjectsView):
 
     def _monstervakken_files(self):
         if has_access(self.user, self.project):
-            for path in directories.all_files_in(
-                directories.hydrovakken_dir(self.project),
+            for path in directories.all_abs_files_in(
+                directories.abs_hydrovakken_dir(self.project),
                     extension=".shp"):
                 yield {
                     'description':
@@ -315,36 +337,36 @@ class DownloadView(View):
             return HttpResponseForbidden()
 
         if filetype == 'reports':
-            directory = directories.reports_dir(activity)
+            directory = directories.abs_reports_dir(activity)
         elif filetype == 'results':
-            directory = directories.reports_dir(activity)
+            directory = directories.abs_reports_dir(activity)
         elif filetype == 'organization':
-            directory = directories.project_files_dir(project)
+            directory = directories.abs_project_files_dir(project)
         elif filetype == 'monstervakken':
-            directory = directories.hydrovakken_dir(project)
-            for path in directories.all_files_in(directory):
-                if os.path.basename(path) == filename:
-                    directory = os.path.dirname(path)
+            directory = directories.abs_hydrovakken_dir(project)
+            for abs_path in directories.all_abs_files_in(directory):
+                if os.path.basename(abs_path) == filename:
+                    directory = os.path.dirname(abs_path)
                     break
             else:
                 raise http.Http404()
         elif filetype == 'contractor_monstervakken':
-            directory = directories.shapefile_dir(activity)
-            for path in directories.all_files_in(directory):
-                if os.path.basename(path) == filename:
-                    directory = os.path.dirname(path)
+            directory = directories.abs_shapefile_dir(activity)
+            for abs_path in directories.all_abs_files_in(directory):
+                if os.path.basename(abs_path) == filename:
+                    directory = os.path.dirname(abs_path)
                     break
             else:
                 raise http.Http404()
         else:
             return HttpResponseForbidden()
 
-        path = os.path.join(directory, filename)
+        abs_path = os.path.join(directory, filename)
 
-        if not os.path.exists(path):
+        if not os.path.exists(abs_path):
             raise http.Http404()
 
-        return nginx_serve(request, path, filename)
+        return file_download(request, directories.relative(abs_path))
 
 
     def delete(self, request, filetype, project_slug, filename):
@@ -359,7 +381,7 @@ class DownloadView(View):
         if not project.is_manager(request.user):
             return HttpResponseForbidden()
 
-        directory = directories.project_files_dir(project)
+        directory = directories.abs_project_files_dir(project)
         path = os.path.join(directory, filename)
         if os.path.exists(path) and os.path.isfile(path):
             os.remove(path)
@@ -396,15 +418,18 @@ def start_export_run_view(request, project_slug, export_run_id):
     export_run.save()
 
     # Start the Celery task
-    tasks.start_export_run.delay(export_run.id, request.user)
+    try:
+        task_result = tasks.start_export_run.delay(export_run.id, request.user)
+        logger.info(str(task_result))
+    except:
+        logger.exception('taak export run gefaald %s', export_run.id)
 
     return HttpResponse()
 
 
-def protected_download_export_run(request, project_slug, export_run_id):
+def download_export_run(request, project_slug, export_run_id):
     """
-    Copied from views.protected_file_download, see there.
-    No Apache support, only Nginx.
+    Apache and Nginx support.
     """
 
     try:
@@ -420,18 +445,58 @@ def protected_download_export_run(request, project_slug, export_run_id):
             export_run.activity.contractor):
         return HttpResponseForbidden()
 
-    file_path = export_run.file_path
+    file_path = export_run.rel_file_path
     logger.debug("File path: " + file_path)
 
-    # This is where the magic takes place.
-    response = HttpResponse()
-    response['X-Accel-Redirect'] = export_run.nginx_path  # Nginx
+    return file_download(request, file_path)
 
-    # Unset the Content-Type as to allow for the webserver
-    # to determine it.
-    response['Content-Type'] = ''
 
-    # Only works for Apache and Nginx, under Linux right now
-    if settings.DEBUG or not platform.system() == 'Linux':
-        return serve(request, file_path, '/')
-    return response
+def delete_measurement(request, activity, measurement):
+    """Delete the measurement. This undos everything releted to this
+    particular measurement. If the uploaded file contained several
+    measurements, the others are unaffected and the uploaded file is
+    still there.
+    """
+    # We need write access in this project.
+    if not models.has_write_access(
+            request.user,
+            project=activity.project,
+            contractor=activity.contractor):
+        http.HttpResponseForbidden()
+
+    # Actually delete it.
+    measurement.delete(
+        notify=True,
+        deleted_by_contractor=activity.contractor.contains_user(request.user))
+
+    # Just return success -- this view is called from Javascript.
+    return http.HttpResponse()
+
+
+@login_required
+def measurement_download_or_delete(
+        request, project_slug, activity_id, measurement_id, filename):
+    project = get_object_or_404(models.Project, slug=project_slug)
+    activity = get_object_or_404(models.Activity, pk=activity_id)
+    measurement = get_object_or_404(
+        models.Measurement, pk=measurement_id, location__activity=activity)
+
+    if activity.project != project:
+        return http.HttpResponseForbidden()
+    if filename != measurement.base_filename:
+        raise Http404()
+
+    logger.debug("Incoming programfile request for %s", filename)
+
+    if not has_access(request.user, project, activity.contractor):
+        logger.warn("Not allowed to access %s", filename)
+        return http.HttpResponseForbidden()
+
+    if request.method == 'GET':
+        return file_download(request, measurement.rel_file_path)
+
+    if request.method == 'DELETE':
+        return delete_measurement(request, activity, measurement)
+
+    # This gives a somewhat documented 405 error
+    return http.HttpResponseNotAllowed(('GET', 'DELETE'))

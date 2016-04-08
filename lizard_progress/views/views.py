@@ -12,7 +12,6 @@ protected_file_download - to download some uploaded files
 import csv
 import logging
 import os
-import platform
 import shutil
 
 from matplotlib import figure
@@ -30,7 +29,6 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
 from django.utils.functional import cached_property
-from django.views.static import serve
 from django import http
 from django.contrib import auth
 
@@ -436,7 +434,7 @@ class DashboardCsvView(ProjectsView):
             row = [location.location_code]
             if location.complete:
                 # Nice sorted list of filenames and dates.
-                filenames = [self.clean_filename(measurement.filename)
+                filenames = [self.clean_filename(measurement.rel_file_path)
                              for measurement in
                              location.measurement_set.all()]
 
@@ -539,95 +537,6 @@ def dashboard_graph(
     canvas = FigureCanvas(fig)
     canvas.print_png(response)
     return response
-
-
-@login_required
-def measurement_download_or_delete(
-        request, project_slug, activity_id, measurement_id, filename):
-    project = get_object_or_404(models.Project, slug=project_slug)
-    activity = get_object_or_404(models.Activity, pk=activity_id)
-    measurement = get_object_or_404(
-        models.Measurement, pk=measurement_id, location__activity=activity)
-
-    if activity.project != project:
-        return http.HttpResponseForbidden()
-    if filename != measurement.base_filename:
-        raise Http404()
-
-    logger.debug("Incoming programfile request for %s", filename)
-
-    if not has_access(request.user, project, activity.contractor):
-        logger.warn("Not allowed to access %s", filename)
-        return http.HttpResponseForbidden()
-
-    if request.method == 'GET':
-        return protected_file_download(request, activity, measurement)
-
-    if request.method == 'DELETE':
-        return delete_measurement(request, activity, measurement)
-
-    # This gives a somewhat documented 405 error
-    return http.HttpResponseNotAllowed(('GET', 'DELETE'))
-
-
-def protected_file_download(request, activity, measurement):
-    """
-    We need our own file_download view because contractors can only see their
-    own files, and the URLs of other contractor's files are easy to guess.
-
-    Copied and adapted from deltaportaal, which has a more generic
-    example, in case you're looking for one. It is for Apache.
-
-    The one below works for both Apache (untested) and Nginx.  I used
-    the docs at http://wiki.nginx.org/XSendfile for the Nginx
-    configuration.  Basically, Nginx serves /protected/ from the
-    document root at BUILDOUT_DIR+'var', and we x-accel-redirect
-    there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
-    """
-
-    nginx_path = directories.make_nginx_file_path(
-        activity, measurement.filename)
-
-    # This is where the magic takes place.
-    response = http.HttpResponse()
-    response['X-Sendfile'] = measurement.filename  # Apache
-    response['X-Accel-Redirect'] = nginx_path  # Nginx
-
-    # Unset the Content-Type as to allow for the webserver
-    # to determine it.
-    response['Content-Type'] = ''
-
-    # Only works for Apache and Nginx, under Linux right now
-    if settings.DEBUG or not platform.system() == 'Linux':
-        logger.debug(
-            "With DEBUG off, we'd serve the programfile via webserver: \n%s",
-            response)
-        logger.debug(
-            "Instead, we let Django serve {}.\n".format(measurement.filename))
-        return serve(request, measurement.filename, '/')
-    return response
-
-
-def delete_measurement(request, activity, measurement):
-    """Delete the measurement. This undos everything releted to this
-    particular measurement. If the uploaded file contained several
-    measurements, the others are unaffected and the uploaded file is
-    still there.
-    """
-    # We need write access in this project.
-    if not models.has_write_access(
-            request.user,
-            project=activity.project,
-            contractor=activity.contractor):
-        http.HttpResponseForbidden()
-
-    # Actually delete it.
-    measurement.delete(
-        notify=True,
-        deleted_by_contractor=activity.contractor.contains_user(request.user))
-
-    # Just return success -- this view is called from Javascript.
-    return http.HttpResponse()
 
 
 class ArchiveProjectsOverview(ProjectsView):
@@ -752,18 +661,16 @@ class NewProjectView(ProjectsView):
                 measurement_type=mtype,
                 contractor=contractor)
 
-        org_files_dir = directories.organization_files_dir(
+        org_files_dir = directories.abs_organization_files_dir(
             self.profile.organization)
-        project_files_dir = directories.project_files_dir(project)
+        abs_project_files_dir = directories.abs_project_files_dir(project)
         for filename in os.listdir(org_files_dir):
             shutil.copy(os.path.join(org_files_dir, filename),
-                        os.path.join(project_files_dir, filename))
+                        os.path.join(abs_project_files_dir, filename))
 
         return HttpResponseRedirect(
             reverse('lizard_progress_dashboardview',
                     kwargs={'project_slug': project.slug}))
-
-        return activity
 
     def grouped_form_fields(self):
         listed_fields = list(self.form)

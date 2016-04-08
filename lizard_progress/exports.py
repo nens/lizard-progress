@@ -39,7 +39,10 @@ from lizard_progress import errors
 from lizard_progress import models
 from lizard_progress import lizard_export
 from lizard_progress import configuration
-from lizard_progress.util.send_exception_mail import send_email_on_exception
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def open_zipfile(zipfile_path):
@@ -56,6 +59,7 @@ def start_run(export_run_id, user):
     try:
         export_run = models.ExportRun.objects.get(pk=export_run_id)
     except models.ExportRun.DoesNotExist:
+        logger.error('This point should have never been reached.')
         # Huh?
         return
 
@@ -63,27 +67,26 @@ def start_run(export_run_id, user):
     export_run.record_start(user)
 
     try:
-        with send_email_on_exception(
-                "Start export run, id={}".format(export_run.id)):
-            if export_run.exporttype == "met":
-                export_as_metfile(export_run)
-            elif export_run.exporttype == "dxf":
-                export_as_dxf(export_run)
-            elif export_run.exporttype == "csv":
-                export_as_csv(export_run)
-            elif export_run.exporttype == "pointshape":
-                export_as_shapefile(export_run, 'point')
-            elif export_run.exporttype == "drainshape":
-                export_as_shapefile(export_run, 'drain')
-            elif export_run.exporttype == "manholeshape":
-                export_as_shapefile(export_run, 'manhole')
-            elif export_run.exporttype == "pipeshape":
-                export_as_shapefile(export_run, 'pipe')
-            elif export_run.exporttype == "lizard":
-                export_to_lizard(export_run)
-            else:
-                export_all_files(export_run)
+        if export_run.exporttype == "met":
+            export_as_metfile(export_run)
+        elif export_run.exporttype == "dxf":
+            export_as_dxf(export_run)
+        elif export_run.exporttype == "csv":
+            export_as_csv(export_run)
+        elif export_run.exporttype == "pointshape":
+            export_as_shapefile(export_run, 'point')
+        elif export_run.exporttype == "drainshape":
+            export_as_shapefile(export_run, 'drain')
+        elif export_run.exporttype == "manholeshape":
+            export_as_shapefile(export_run, 'manhole')
+        elif export_run.exporttype == "pipeshape":
+            export_as_shapefile(export_run, 'pipe')
+        elif export_run.exporttype == "lizard":
+            export_to_lizard(export_run)
+        else:
+            export_all_files(export_run)
     except:
+        logger.exception('Fout in export run met id: %s', str(export_run.id))
         # Catch-all except, because this is meant to catch all the
         # exceptions we don't know about yet. The mail is also sent.
         export_run.fail("Onbekende fout, export mislukt")
@@ -96,16 +99,20 @@ def export_all_files(export_run):
     """Collect all the most recent (non-updated) files, and put them
     in a .zip file."""
 
-    zipfile_path = export_run.export_filename(extension="zip")
+    zipfile_path = export_run.abs_export_filename(extension="zip")
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
 
+    logger.debug(zipfile_path)
+
     with open_zipfile(zipfile_path) as z:
-        for file_path in sorted(export_run.files_to_export()):
+        for file_path in sorted(export_run.abs_files_to_export()):
+            logger.debug("Files to add to zipfile: " + str(file_path))
             z.write(file_path, os.path.basename(file_path))
 
-    export_run.file_path = zipfile_path
+    export_run.rel_file_path = zipfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 
@@ -121,7 +128,7 @@ def export_as_metfile(export_run):
     error. If it does, we assume they want to sort its measurements
     before exporting them."""
 
-    metfile_path = export_run.export_filename(extension="met")
+    metfile_path = export_run.abs_export_filename(extension="met")
 
     if not os.path.isdir(os.path.dirname(metfile_path)):
         os.makedirs(os.path.dirname(metfile_path))
@@ -135,16 +142,17 @@ def export_as_metfile(export_run):
     ).wants_sorted_measurements()
 
     metfile = retrieve_profile.recreate_metfile([
-        (measurement.filename,
-         measurement.location.location_code)
-        for measurement in measurements])
+        (measurement.abs_file_path, measurement.location.location_code)
+        for measurement in measurements
+    ])
 
     exporter = exporters.MetfileExporter(want_sorted_measurements)
 
     with open(metfile_path, "w") as f:
         f.write(exporter.export_metfile(metfile))
 
-    export_run.file_path = metfile_path
+    export_run.rel_file_path = metfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 
@@ -159,7 +167,7 @@ def export_as_dxf(export_run):
         if file_path is not None:
             files.add(file_path)
 
-    zipfile_path = export_run.export_filename(extension="dxf.zip")
+    zipfile_path = export_run.abs_export_filename(extension="dxf.zip")
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
@@ -173,19 +181,20 @@ def export_as_dxf(export_run):
 
     os.rmdir(temp)
 
-    export_run.file_path = zipfile_path
+    export_run.rel_file_path = zipfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 
 def create_dxf(measurement, temp):
     retrieved_profile = retrieve_profile.retrieve(
-        measurement.filename,
-        measurement.location.location_code)
+        measurement.abs_file_path, measurement.location.location_code
+    )
 
     if retrieved_profile is None:
         raise ValueError("Profile {} not found in file {}".format(
             measurement.location.location_code,
-            measurement.filename))
+            measurement.abs_file_path))
 
     series_id, series_name, profile = retrieved_profile
 
@@ -209,7 +218,7 @@ def export_as_csv(export_run):
         if file_path is not None:
             files.add(file_path)
 
-    zipfile_path = export_run.export_filename(extension="csv.zip")
+    zipfile_path = export_run.abs_export_filename(extension="csv.zip")
 
     if not os.path.isdir(os.path.dirname(zipfile_path)):
         os.makedirs(os.path.dirname(zipfile_path))
@@ -223,24 +232,22 @@ def export_as_csv(export_run):
 
     os.rmdir(temp)
 
-    export_run.file_path = zipfile_path
+    export_run.rel_file_path = zipfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 
 def create_csv(measurement, temp):
     location_code = measurement.location.location_code
     series_id, series_name, profile = retrieve_profile.retrieve(
-        measurement.filename,
-        location_code)
+        measurement.abs_file_path, location_code
+    )
 
     base_line = profile.line
     midpoint = profile.midpoint
     if base_line is None or midpoint is None:
         # No base line. Skip!
         return
-
-    # Get a tmp dir
-    temp = tempfile.mkdtemp()
 
     filename = "{id}.csv".format(id=location_code)
     filepath = os.path.join(temp, filename)
@@ -334,9 +341,8 @@ def export_as_shapefile(export_run, location_type):
     add_planning = export_run.activity.specifics().allow_planning_dates
 
     temp_dir = tempfile.mkdtemp()
-    filename = export_run.export_filename(extension="")[:-1]  # Remove '.'
 
-    zipfile_path = export_run.export_filename(extension="zip")
+    zipfile_path = export_run.abs_export_filename(extension="zip")
 
     filename = os.path.basename(zipfile_path)[:-4]  # Remove '.zip'
 
@@ -349,7 +355,8 @@ def export_as_shapefile(export_run, location_type):
             export_run, temp_dir, filename, zipfile_path, locations, fieldname,
             add_planning)
 
-    export_run.file_path = zipfile_path
+    export_run.rel_file_path = zipfile_path
+      # ^^ absolute path is convert to relative path in the model's save method
     export_run.save()
 
 

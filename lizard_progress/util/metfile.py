@@ -57,7 +57,7 @@ def write_trivial_reeks(open_file, measurement):
 
 
 def copy_measurement(open_file, measurement):
-    metfile = measurement.filename
+    metfile = measurement.abs_file_path
     location_code = measurement.scheduled.location.location_code
 
     open_file.write(get_profiel_from_metfile(location_code, metfile))

@@ -1345,7 +1345,7 @@ class Measurement(models.Model):
         if self.rel_file_path.startswith('/'):
             self.rel_file_path = self.rel_file_path.replace(
                 directories.BASE_DIR + '/', '')
-        super(Measurement, self).save(force_insert, force_update, using, update_fields)
+        super(Measurement, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return 'Measurement {} from {}, expects {} attachments'.format(
@@ -1599,7 +1599,7 @@ class UploadedFile(models.Model):
         if self.rel_file_path.startswith('/'):
             self.rel_file_path = self.rel_file_path.replace(
                 directories.BASE_DIR + '/', '')
-        super(UploadedFile, self).save(force_insert, force_update, using, update_fields)
+        super(UploadedFile, self).save(*args, **kwargs)
 
 
 class UploadedFileError(models.Model):
@@ -1778,7 +1778,7 @@ class ExportRun(models.Model):
                 self.rel_file_path.startswith('/'):
             self.rel_file_path = self.rel_file_path.replace(
                 directories.BASE_DIR + '/', '')
-        super(ExportRun, self).save(force_insert, force_update, using, update_fields)
+        super(ExportRun, self).save(*args, **kwargs)
 
 
 class UploadLog(models.Model):

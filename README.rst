@@ -28,7 +28,7 @@ specific to your project:
   be placed in progress.py in your project).
 
 - Setup.py in your project should have entry points that allow lizard-progress
-  to find your Specifics objects; e.g. for HDSR:
+  to find your Specifics objects; e.g. for HDSR::
 
       entry_points={
           'console_scripts': [],
@@ -39,7 +39,7 @@ specific to your project:
 
 - Nginx.conf.in in your project's etc directory should have a few
   lines that allow lizard-progress to serve back uploaded files (like
-  photos that you want to show in popups):
+  photos that you want to show in popups)::
 
     location /protected/ {
        internal;

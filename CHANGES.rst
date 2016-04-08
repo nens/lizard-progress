@@ -5,7 +5,11 @@ Changelog of lizard-progress
 2.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Remco isn't (hardcoded!) mailed anymore upon task exceptions.
+
+- Nginx is used to serve large files.
+
+- Relative paths are used instead of absolute ones.
 
 
 2.8.1 (2016-03-17)

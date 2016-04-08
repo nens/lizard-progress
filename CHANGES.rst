@@ -1,10 +1,20 @@
 Changelog of lizard-progress
 ===================================================
 
-2.9 (unreleased)
-----------------
+2.10 (unreleased)
+-----------------
 
 - Nothing changed yet.
+
+
+2.9 (2016-04-08)
+----------------
+
+- Remco isn't (hardcoded!) mailed anymore upon task exceptions.
+
+- Nginx is used to serve large files.
+
+- Relative paths are used instead of absolute ones.
 
 
 2.8.1 (2016-03-17)
@@ -140,7 +150,7 @@ Changelog of lizard-progress
 2.6.7 (2015-10-22)
 ------------------
 
-- Remove extra 'location__' from filter.
+- Remove extra ``location__`` from filter.
 
 
 2.6.6 (2015-10-21)
@@ -206,7 +216,7 @@ Changelog of lizard-progress
   they can be served over FTP.
 
 - Reworked expected attachments. The data model was changed: expected
-  attachments now have a many two many field to the _measurements_
+  attachments now have a many two many field to the ``_measurements_``
   that said that those attachments were going to be sent, and they
   don't have a foreign key to Activity anymore (normalization).
 
@@ -289,7 +299,7 @@ Changelog of lizard-progress
 - A variable that should have been removed had one instance left, which
   caused the map page to crash.
 
-- Added four __unicode__ methods in models to help with debugging on
+- Added four ``__unicode__`` methods in models to help with debugging on
   the command line.
 
 - Use allowZip64=True in export zipfiles, so that they can become
@@ -462,7 +472,7 @@ New features for the Almere / HDSR project:
 
 - Declared migration bankruptcy. If you are upgrading an existing
   database, first checkout lizard-progress 2.3.2 and run its
-  migrations.  Then run
+  migrations.  Then run::
 
     DELETE FROM south_migrationhistory WHERE app_name = 'lizard_progress'"
 
@@ -476,7 +486,7 @@ New features for the Almere / HDSR project:
 
 - Support RIBX and RIBXA formats for sewerage data, using ribxlib.
 
-- Support _date planning_; shapefiles can be uploaded that describe when
+- Support *date planning*; shapefiles can be uploaded that describe when
   certain locations will be inspected. Map colors use this.
 
 - Add a little wrinkle to MET files checks for HHNK: they check if a
@@ -502,7 +512,7 @@ New features for the Almere / HDSR project:
 
 - Projects now have one or more Activities, which have a single
   MeasurementType and a single Organisation working as contractor.
-  This led to changes _everywhere_.
+  This led to changes *everywhere*.
 
 - Speedups (mostly cache result of has_access).
 
@@ -642,7 +652,7 @@ New features for the Almere / HDSR project:
 - Auto-accept requests made by a project manager
 
 - Fix bug with zooming onto a single point with Mapnik (it's not a
-  _nice_ fix, but it works)
+  *nice* fix, but it works)
 
 - Add extent to changerequest map layers
 
@@ -869,8 +879,8 @@ New features for the Almere / HDSR project:
 1.22 (2013-04-23)
 -----------------
 
-- Added a check to see if Z1/Z2 aren't too low _compared to the
-  waterlevel_ instead of NAP (MET_Z_TOO_LOW_BELOW_WATER).
+- Added a check to see if Z1/Z2 aren't too low *compared to the
+  waterlevel* instead of NAP (MET_Z_TOO_LOW_BELOW_WATER).
 
 - Added a check to see if a measurement point is not too far away from
   the line between the 22 codes (MET_DISTANCE_TO_MIDLINE).
@@ -1042,6 +1052,7 @@ New features for the Almere / HDSR project:
 - Fixed showing Organization everywhere.
 
 - Improvements to dwarsprofiel graphs:
+
   - Sort data points based on their projection on the baseline
   - Show distances to the midpoint on the X axis
   - Show the water level
@@ -1096,8 +1107,8 @@ New features for the Almere / HDSR project:
 1.7 (2013-03-25)
 ----------------
 
-- Dwarsprofielen is a measurement type that doesn't _need_ predefined
-  locations. But it _can_ still use them, and give error messages if
+- Dwarsprofielen is a measurement type that doesn't *need* predefined
+  locations. But it *can* still use them, and give error messages if
   an uploaded profile doesn't correspond with a predefined location.
 
   Therefore, it's got "likes_predefined_locations" True. It is then up
@@ -1131,7 +1142,7 @@ New features for the Almere / HDSR project:
   (difference between consecutive Z1 values, ordering of X values,
   etc).
 
-- Add checks that work on _sorted_ measurement rows, for Almere, where rows
+- Add checks that work on *sorted* measurement rows, for Almere, where rows
   are not in the right order.
 
 - Data is now saved sorted in the database, so graphs should come out right in
@@ -1263,15 +1274,18 @@ the newest file.
 -----------------
 
 Reworked the model a bit:
+
 - Added an AvailableMeasurementType model
+
 - Changed the MeasurementType model so that it functions as if it were
   the "through" table in a many-to-many relationship between Project
   and AvailableMeasurementType.
 
-- Location's primary key is now a normal AutoField (took six
-migrations to do that, see
-http://stackoverflow.com/questions/2055784/what-is-the-best-approach-to-change-primary-keys-in-an-existing-django-app/12247601#12247601
-)
+- Location's primary key is now a normal AutoField (took six migrations to do
+  that, see
+  http://stackoverflow.com/questions/2055784/what-is-the-best-approach-to-change-primary-keys-in-an-existing-django-app/12247601#12247601
+  )
+
 - Location's "unique_id" is renamed to "location_code", because it's
   not necessarily unique anymore.
 
@@ -1406,8 +1420,7 @@ Added a screen to compare measurements taken by different contractors.
 
 - More measurements per scheduled measurement.
 
-- Parsers now receive file objects instead of files, for easier
-testing.
+- Parsers now receive file objects instead of files, for easier testing.
 
 0.3.1 (2012-02-16)
 ------------------

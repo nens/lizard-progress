@@ -81,7 +81,7 @@ def upload_zipfile(stdout, project, contractor, path):
                 contractor=contractor,
                 uploaded_by=user,
                 uploaded_at=datetime.datetime.now(),
-                path=fullpath)
+                rel_file_path=fullpath)
             tasks.process_uploaded_file_task.delay(uploaded_file.id)
             stdout.write("{} uploaded.\n".format(filename))
 

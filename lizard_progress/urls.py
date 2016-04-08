@@ -156,7 +156,7 @@ project_urls = [
         login_required(views.start_export_run_view),
         name="lizard_progress_start_export_run_view"),
     url('^export_run/(?P<export_run_id>[\d]+)/download/',
-        login_required(views.protected_download_export_run),
+        login_required(views.download_export_run),
         name="lizard_progress_download_export_run_view"),
 
     # Configuration

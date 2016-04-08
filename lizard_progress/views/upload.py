@@ -149,7 +149,7 @@ class UploadMeasurementsView(UploadView):
             activity=self.activity,
             uploaded_by=self.user,
             uploaded_at=datetime.datetime.now(),
-            path=path)
+            rel_file_path=path)
 
         uploaded_file.schedule_processing()
 
@@ -167,7 +167,7 @@ class UploadReportsView(UploadView):
             return json_response({'error': {'details': msg}})
 
         # The destination directory.
-        dst = directories.reports_dir(self.activity)
+        dst = directories.abs_reports_dir(self.activity)
 
         # Copy the report.
         shutil.copy(path, dst)
@@ -188,7 +188,7 @@ class UploadShapefilesView(UploadView):
         # the shapefile to its permanent location?
 
         # The destination directory.
-        dst = directories.shapefile_dir(self.activity)
+        dst = directories.abs_shapefile_dir(self.activity)
 
         # Copy the report.
         shutil.copy(path, dst)
@@ -241,10 +241,10 @@ class UploadedFileErrorsView(ViewContextMixin, TemplateView):
                     error.error_message)
 
         lines = []
-        path = self.uploaded_file.path
+        abs_path = self.uploaded_file.abs_file_path
         good_lines = 0
-        if errordict and os.path.exists(path):
-            for line_minus_one, line in enumerate(open(path)):
+        if errordict and os.path.exists(abs_path):
+            for line_minus_one, line in enumerate(open(abs_path)):
                 line_number = line_minus_one + 1
                 if line_number not in errordict:
                     # For speed reasons, if the file is really big,
@@ -272,14 +272,14 @@ class UploadOrganizationFileView(ProjectsView):
         filename = request.POST.get('filename', uploaded_file.name)
 
         with open(os.path.join(
-                directories.organization_files_dir(organization),
+                directories.abs_organization_files_dir(organization),
                 filename), "wb") as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
 
         # Put shapefile parts into zip files
         tasks.shapefile_vacuum.delay(
-            directories.organization_files_dir(organization))
+            directories.abs_organization_files_dir(organization))
 
         return json_response({})
 
@@ -293,14 +293,13 @@ class UploadProjectFileView(ProjectsView):
         filename = request.POST.get('filename', uploaded_file.name)
 
         with open(os.path.join(
-                directories.project_files_dir(project),
+                directories.abs_project_files_dir(project),
                 filename), "wb") as f:
             for chunk in uploaded_file.chunks():
                 f.write(chunk)
 
         # Put shapefile parts into zip files
-        tasks.shapefile_vacuum.delay(
-            directories.project_files_dir(project))
+        tasks.shapefile_vacuum.delay(directories.abs_project_files_dir(project))
 
         return json_response({})
 
@@ -327,18 +326,18 @@ class UploadHydrovakkenView(ProjectsView):
         # Remove old files before we move the new ones
         models.Hydrovak.remove_hydrovakken_files(self.project)
 
-        hydrovakken_dir = directories.hydrovakken_dir(self.project)
+        abs_hydrovakken_dir = directories.abs_hydrovakken_dir(self.project)
 
         # Save uploaded files
         for ext in ['shp', 'dbf', 'shx']:
             uploaded_file = request.FILES[ext]
             with open(
-                    os.path.join(hydrovakken_dir, uploaded_file.name),
+                    os.path.join(abs_hydrovakken_dir, uploaded_file.name),
                     'wb+') as f:
                 for chunk in uploaded_file.chunks():
                     f.write(chunk)
 
-        filepath = os.path.join(hydrovakken_dir, request.FILES['shp'].name)
+        filepath = os.path.join(abs_hydrovakken_dir, request.FILES['shp'].name)
 
         error_message = models.Hydrovak.reload_from(
             self.project, filepath)

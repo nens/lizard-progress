@@ -1,4 +1,24 @@
-# Include docs in the root.
-include *.rst
-# Include everything in our project directory.
+exclude *.doc
+exclude .coveragerc
+exclude testdata
 graft lizard_progress
+include *.py
+include *.rst
+include *.sql
+include buildout.cfg
+recursive-exclude testdata *
+recursive-include doc *.doc
+recursive-include doc *.py
+recursive-include doc *.rst
+recursive-include doc *.txt
+recursive-include hdsr_controle *.dbf
+recursive-include hdsr_controle *.met
+recursive-include hdsr_controle *.pdf
+recursive-include hdsr_controle *.prj
+recursive-include hdsr_controle *.py
+recursive-include hdsr_controle *.sbn
+recursive-include hdsr_controle *.sbx
+recursive-include hdsr_controle *.shp
+recursive-include hdsr_controle *.shx
+recursive-include hdsr_controle *.txt
+recursive-include hdsr_controle *.zip

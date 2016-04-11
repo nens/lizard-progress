@@ -4,7 +4,7 @@ Changelog of lizard-progress
 2.10 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fixed nginx download.
 
 
 2.9 (2016-04-08)

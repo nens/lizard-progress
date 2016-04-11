@@ -51,7 +51,7 @@ def file_download(request, path):
     there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
     """
     # Only works for Apache and Nginx, under Linux right now
-    if settings.DEBUG or not platform.system() == 'Linux' or not "+" in \
+    if settings.DEBUG or not platform.system() == 'Linux' or "+" in \
             path:
         logger.debug(
             "With DEBUG off, we'd serve the programfile via webserver.")
@@ -65,7 +65,7 @@ def file_download(request, path):
     response = HttpResponse()
     response['X-Sendfile'] = directories.absolute(path)  # Apache
     response['X-Accel-Redirect'] = os.path.join(
-        '/protected/lizard_progress', path)  # Nginx
+        '/protected', path)  # Nginx
     response['Content-Disposition'] = (
             'attachment; filename="{filename}"'.format(filename=filename))
 

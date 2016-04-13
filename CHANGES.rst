@@ -1,8 +1,8 @@
 Changelog of lizard-progress
 ===================================================
 
-2.11 (unreleased)
------------------
+3.0 (2016-04-13)
+----------------
 
 - Merged whole redesign branch.
 

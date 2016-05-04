@@ -26,7 +26,8 @@ $('.archive').on('click', function(e) {
   swal({
     title: "Weet u het zeker?",
     text: "Let op! U staat op het punt om dit project te archiveren. U kunt het later weer heractiveren. " +
-          "Voor rioleringsprojecten worden hiermee alle mediabestanden permanent verwijderd, dit is niet herstelbaar via heractivatie.",
+          "Voor rioleringsprojecten worden hiermee alle mediabestanden permanent verwijderd, " +
+          "dit is niet herstelbaar via heractivatie.",
     type: "warning",
     showCancelButton: true,
     confirmButtonColor: "#DD6B55",
@@ -36,7 +37,8 @@ $('.archive').on('click', function(e) {
     swal({
       title: "Wordt gearchiveerd...",
       text: "Project wordt gearchiveerd. Voor grote projecten kan dit enige tijd duren. " +
-            "Als uw email is ingesteld krijgt u een email bij voltooiing.",
+            "U kunt op een later moment terugkijken voor de status; bij voltooiing zal het " +
+            "archiefsymbool verschijnen.",
       type: "info"
     }, function() {
         window.location.href = redirectUrl;

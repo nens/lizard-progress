@@ -733,8 +733,7 @@ class ArchiveProjectsView(ProjectsView):
             try:
                 project = Project.objects.get(slug=project_slug)
                 project.archive()
-                msg = ("Project '{}' wordt gearchiveerd. U krijgt een email "
-                       "bij voltooiing.")
+                msg = "Bericht van de server: project '{}' wordt gearchiveerd."
             except:
                 msg = ("Er is een fout opgetreden. Project '{}' "
                        "wordt NIET gearchiveerd.")

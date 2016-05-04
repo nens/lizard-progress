@@ -534,29 +534,9 @@ class Project(ProjectActivityMixin, models.Model):
             return self.created_at
 
     def archive(self):
-        """Archive a project.
-
-        This has a side effect for Projects with measurements with measurement
-        types that have the delete_on_archive field set: those measurements
-        will be deleted, both in db and on disk. The motivation for this is
-        that we want to remove 'attachment' measurement files, e.g., all media
-        files belonging to a ribx, but not the ribx itself.
-        """
-        logger.info("Archiving project %s", self)
-        # This query returns all Measurements that (1) belong to a Project,
-        # (2) that have a parent Measurement, which entails that it is an
-        # attachment (e.g., media files belonging to a Ribx), and (3) have
-        # a measurement type that can be deleted.
-        measurements = Measurement.objects.filter(
-            location__activity__project=self,
-            parent__isnull=False,
-            location__activity__measurement_type__delete_on_archive=True)
-        logger.debug("Deleting measurements: %s", measurements)
-        for m in measurements:
-            m.delete(notify=False, deleted_by_contractor=False,
-                     set_completeness=False)
-        self.is_archived = True
-        self.save()
+        """Archive the project using a Celery task."""
+        from . import tasks
+        tasks.archive_task.delay(self.id)
 
     def activate(self):
         self.is_archived = False

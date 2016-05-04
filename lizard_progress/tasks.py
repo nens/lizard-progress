@@ -55,7 +55,7 @@ def shapefile_vacuum(directory):
 
 @task
 def archive_task(project_id):
-    """Call the process_uploaded_file function."""
+    """Call the archive function."""
     try:
         archive.archive(project_id)
     except:

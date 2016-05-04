@@ -29,6 +29,7 @@ def archive(project_id):
         project = Project.objects.get(pk=project_id)
     except Project.DoesNotExist:
         logger.warn("project_id not found in task: %s", project_id)
+        return
     logger.info("Archiving project %s", project)
     # This query returns all Measurements that (1) belong to a Project,
     # (2) that have a parent Measurement, which entails that it is an

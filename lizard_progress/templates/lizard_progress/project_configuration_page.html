@@ -33,10 +33,14 @@ $('.archive').on('click', function(e) {
     confirmButtonText: "Ja, archiveer dit project",
     closeOnConfirm: false
   }, function() {
-    swal("Wordt gearchiveerd...",
-      "Project wordt gearchiveerd. Voor grote projecten kan dit enige tijd duren. " +
-        "Als uw email is ingesteld krijgt u een email bij voltooiing.",
-      "success");
+    swal({
+      title: "Wordt gearchiveerd...",
+      text: "Project wordt gearchiveerd. Voor grote projecten kan dit enige tijd duren. " +
+            "Als uw email is ingesteld krijgt u een email bij voltooiing.",
+      type: "info"
+    }, function() {
+        window.location.href = redirectUrl;
+    });
   });
 });
  </script>

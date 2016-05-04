@@ -1133,12 +1133,12 @@ class ExpectedAttachment(models.Model):
         except cls.DoesNotExist:
             return
         except cls.MultipleObjectsReturned:
-            # This exception is to remedy a situation where case sensitive
-            # uploads where permitted, i.e., same filenames with lower or
-            # upper case characters. In July 2015 a commit was introduced
-            # that made it not possible anymore (I think), but the projects
-            # that were created before that commit still have same filenames
-            # that can have different cases.
+            # We shouldn't normally get here. This exception is to remedy a
+            # situation where case sensitive  uploads where permitted, i.e.,
+            # same filenames with lower or upper case characters. In July 2015
+            # a commit was introduced that made it not possible anymore (I
+            # think), but the projects that were created before that commit
+            # still have same filenames that can have different cases.
             expected_attachments = cls.objects.distinct().filter(
                 measurements__location__activity=activity,
                 filename__iexact=filename)

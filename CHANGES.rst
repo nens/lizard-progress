@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.1 (unreleased)
+3.1 (2016-05-06)
 ----------------
 
 - Archiving a Project is now a Celery task.

@@ -25,14 +25,24 @@ $('.archive').on('click', function(e) {
   var redirectUrl = $(e.target).parent().attr('href');
   swal({
     title: "Weet u het zeker?",
-    text: "U staat op het punt om dit project te archiveren. U kunt het later weer heractiveren.",
+    text: "Let op! U staat op het punt om dit project te archiveren. U kunt het later weer heractiveren. " +
+          "Voor rioleringsprojecten worden hiermee alle mediabestanden permanent verwijderd, " +
+          "dit is niet herstelbaar via heractivatie.",
     type: "warning",
     showCancelButton: true,
     confirmButtonColor: "#DD6B55",
     confirmButtonText: "Ja, archiveer dit project",
     closeOnConfirm: false
   }, function() {
-    window.location.href = redirectUrl;
+    swal({
+      title: "Wordt gearchiveerd...",
+      text: "Project wordt gearchiveerd. Voor grote projecten kan dit enige tijd duren. " +
+            "U kunt op een later moment terugkijken voor de status; bij voltooiing zal het " +
+            "archiefsymbool verschijnen.",
+      type: "info"
+    }, function() {
+        window.location.href = redirectUrl;
+    });
   });
 });
  </script>

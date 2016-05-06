@@ -8,6 +8,7 @@ from __future__ import division
 
 from celery.task import task
 
+from lizard_progress import archive
 from lizard_progress import process_uploaded_file
 from lizard_progress import exports
 from lizard_progress.util import shapevac
@@ -49,4 +50,14 @@ def shapefile_vacuum(directory):
         shapevac.shapefile_vacuum_directory(directory)
     except:
         logger.exception("Error in task 'shapefile_vacuum'.")
+        raise
+
+
+@task
+def archive_task(project_id):
+    """Call the archive function."""
+    try:
+        archive.archive(project_id)
+    except:
+        logger.exception("Error in task 'archive_task'.")
         raise

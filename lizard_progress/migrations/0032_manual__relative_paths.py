@@ -28,30 +28,36 @@ def relative(path):
 
 class Migration(SchemaMigration):
 
+    # IMPORTANT:
+    # Using orm.<model>.objects.all() we can avoid conflicts with a column
+    # that hasn't been introduced yet in the current migration. See this
+    # answer: http://stackoverflow.com/a/17973918 and the South docs:
+    # http://south.readthedocs.io/en/latest/tutorial/part3.html
+
     def forwards(self, orm):
-        exportruns = lizard_progress.models.ExportRun.objects.all()
+        exportruns = orm.ExportRun.objects.all()
         for exportrun in exportruns:
-            exportrun.file_path = relative(export.file_path)
+            exportrun.file_path = relative(exportrun.file_path)
             exportrun.save()
-        uploadedfiles = lizard_progress.models.UploadedFile.objects.all()
+        uploadedfiles = orm.UploadedFile.objects.all()
         for uploadedfile in uploadedfiles:
             uploadedfile.path = relative(uploadedfile.path)
             uploadedfile.save()
-        measurements = lizard_progress.models.Measurement.objects.all()
+        measurements = orm.Measurement.objects.all()
         for measurement in measurements:
             measurement.filename = relative(measurement.filename)
             measurement.save()
 
     def backwards(self, orm):
-        exportrun = lizard_progress.models.ExportRun.objects.all()
+        exportrun = orm.ExportRun.objects.all()
         for export in exportrun:
             export.file_path = directories.absolute(export.file_path)
             export.save()
-        uploadedfiles = lizard_progress.models.UploadedFile.objects.all()
+        uploadedfiles = orm.UploadedFile.objects.all()
         for uploadedfile in uploadedfiles:
             uploadedfile.path = directories.absolute(uploadedfile.path)
             uploadedfile.save()
-        measurements = lizard_progress.models.Measurement.objects.all()
+        measurements = orm.Measurement.objects.all()
         for measurement in measurements:
             measurement.filename = directories.absolute(measurement.filename)
             measurement.save()

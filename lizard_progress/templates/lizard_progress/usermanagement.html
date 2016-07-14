@@ -6,6 +6,7 @@
 <script>
 $('a.delete-user').on('click', function(e) {
   e.preventDefault();
+  var theUser = $(this).attr("href");
   swal({
     title: "Weet u het zeker?",
     text: "Dit verwijdert deze gebruiker van de Uploadservice. Deze gebruikersnaam kan daarna niet meer gebruikt worden.",
@@ -20,7 +21,7 @@ $('a.delete-user').on('click', function(e) {
         headers: { "X-CSRFToken": getCookie("csrftoken") }
       });
       $.ajax({
-        url: $(this).attr("href"),
+        url: theUser,
         type: 'DELETE',
         success: function () {
             location.reload(true);

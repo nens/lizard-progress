@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.2 (unreleased)
+3.2 (2016-07-14)
 ----------------
 
 - Fixed JS bug where you couldn't delete users.

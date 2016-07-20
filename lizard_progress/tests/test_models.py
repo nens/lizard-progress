@@ -113,7 +113,7 @@ class MeasurementF(factory.DjangoModelFactory):
 
     location = factory.SubFactory(LocationF)
     data = {"testkey": "testvalue"}
-    filename = "test.txt"
+    rel_file_path = "test.txt"
 
 
 class UploadedFileF(factory.DjangoModelFactory):
@@ -124,7 +124,7 @@ class UploadedFileF(factory.DjangoModelFactory):
     activity = factory.SubFactory(ActivityF)
     uploaded_by = factory.SubFactory(UserF)
     uploaded_at = datetime.datetime(2013, 3, 8, 10, 0)
-    path = "/path/to/file/file.met"
+    rel_file_path = "/path/to/file/file.met"
     ready = False
     linelike = True
 
@@ -149,7 +149,7 @@ class ExportRunF(factory.DjangoModelFactory):
     generates_file = True
     created_at = None
     created_by = None
-    file_path = None
+    rel_file_path = None
     ready_for_download = False
     export_running = False
 
@@ -591,7 +591,7 @@ class TestMeasurement(FixturesTestCase):
         fd, filename = tempfile.mkstemp()
         os.close(fd)
 
-        measurement = MeasurementF.create(filename=filename)
+        measurement = MeasurementF.create(rel_file_path=filename)
         self.assertTrue(os.path.exists(filename))
         measurement.delete()
         self.assertFalse(os.path.exists(filename))
@@ -600,8 +600,8 @@ class TestMeasurement(FixturesTestCase):
         fd, filename = tempfile.mkstemp()
         os.close(fd)
 
-        measurement1 = MeasurementF.create(filename=filename)
-        MeasurementF.create(filename=filename)
+        measurement1 = MeasurementF.create(rel_file_path=filename)
+        MeasurementF.create(rel_file_path=filename)
 
         measurement1.delete()
         self.assertTrue(os.path.exists(filename))
@@ -683,7 +683,7 @@ class TestExportRun(FixturesTestCase):
 
         run = ExportRunF.build(
             activity=activity,
-            file_path="/some/nonexisting/path",
+            rel_file_path="/some/nonexisting/path",
             generates_file=True)
         self.assertFalse(run.available)
 
@@ -726,7 +726,7 @@ class TestExportRun(FixturesTestCase):
 
         run = ExportRunF.build(
             activity=activity,
-            file_path="/some/nonexisting/path",
+            rel_file_path="/some/nonexisting/path",
             generates_file=False,
             created_at=datetime.datetime.now())
 
@@ -746,7 +746,7 @@ class TestExportRun(FixturesTestCase):
 
         run = ExportRunF.create(
             activity=activity,
-            file_path="/some/nonexisting/path",
+            rel_file_path="/some/nonexisting/path",
             generates_file=True)
 
         run.record_start(None)

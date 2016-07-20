@@ -361,7 +361,13 @@ class ProjectActivityMixin(object):
         """Return the UploadedLog belonging to this activity with the
         most recent 'when' date, or None if there are no such
         UploadedLogs."""
-        latest_log = UploadLog.latest_for_project(self)
+        if isinstance(self, Project):
+            project = self
+        elif isinstance(self, Activity):
+            project = self.project
+        else:
+            raise ValueError("This mixin only works with Project/Activity")
+        latest_log = UploadLog.latest_for_project(project)
         print(latest_log)
         return latest_log[0] if latest_log else None
 

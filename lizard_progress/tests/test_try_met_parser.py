@@ -48,7 +48,7 @@ class TestOrganization(FixturesTestCase):
         uploaded_file = test_models.UploadedFileF.create(
             activity=self.activity,
             uploaded_by=self.upload_user,
-            path=path)
+            rel_file_path=path)
         return uploaded_file
 
     def try_file(self, filename, expected_errors=None):

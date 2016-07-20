@@ -4,7 +4,9 @@ Changelog of lizard-progress
 3.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixed tests + updated directories.absolute function behavior.
+
+- Make ProjectActivityMixin.latest_log also work with Activity.
 
 
 3.2 (2016-07-14)

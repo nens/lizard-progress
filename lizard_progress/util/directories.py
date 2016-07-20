@@ -46,7 +46,7 @@ def mk_rel(directory):
 
 
 def absolute(path):
-    if not path.startswith('/'):
+    if path != '' and not path.startswith('/'):
         return os.path.join(BASE_DIR, path)
     return path
 

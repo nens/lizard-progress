@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.3 (unreleased)
+3.3 (2016-07-20)
 ----------------
 
 - Fixed tests + updated directories.absolute function behavior.

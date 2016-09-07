@@ -1,0 +1,25 @@
+version: '2'
+services:
+
+  db:
+    image: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+    environment:
+      POSTGRES_PASSWORD: 'buildout'
+      POSTGRES_USER: 'buildout'
+      POSTGRES_DB: 'lizard_progress'
+      PGDATA: '/var/lib/postgresql/data/pgdata'
+
+  web:
+    build: .
+    command: "bin/django runserver 0.0.0.0:5000"
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

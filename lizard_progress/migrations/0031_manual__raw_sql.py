@@ -15,6 +15,16 @@ class Migration(SchemaMigration):
         # 6 -- Gemeente Almere is 3 on staging, 6 on production
         # 31 -- on Production check id = 31 (Planmatig)
         # 14  -- corresponds to "ribx_reiniging_riool" on production
+
+        good_reason_to_skip = """This has already been run on
+        production/staging and this migration breaks since 8 sept 2016 as
+        migration 0034 changed something in the Organization model so the
+        below code breaks because of a missing field."""
+
+        if good_reason_to_skip:
+            print(good_reason_to_skip)
+            return
+
         try:
             organization = lizard_progress.models.Organization.objects.filter(
                 name='Gemeente Almere'

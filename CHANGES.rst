@@ -4,7 +4,7 @@ Changelog of lizard-progress
 3.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Code style fixes.
 
 
 3.5 (2016-09-08)

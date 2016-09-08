@@ -26,7 +26,7 @@ class ProjectTypeAdmin(admin.ModelAdmin):
 
 class ExportRunAdmin(admin.ModelAdmin):
     model = models.ExportRun
-    search_fields = ['activity', 'exporttype']
+    search_fields = ['activity__name', 'exporttype']
 
 
 admin.site.register(models.Hydrovak)

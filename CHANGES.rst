@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.4 (unreleased)
+3.4 (2016-09-08)
 ----------------
 
 - Added new kind of export. Like ``export_all_files()``, it exports all files,

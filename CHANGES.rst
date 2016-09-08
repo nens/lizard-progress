@@ -4,6 +4,13 @@ Changelog of lizard-progress
 3.4 (unreleased)
 ----------------
 
+- Added new kind of export. Like ``export_all_files()``, it exports all files,
+  but to a directory instead of into a zipfile. This way, it can be synced via
+  FTP. Files that don't need updating are left alone to save iops.
+
+  To enable it, both the organization and the measurement type should have the
+  "allow ftp sync" enabled.
+
 - Fixed textual search in the admin for export runs.
 
 - Disabled one-time migration 0031.

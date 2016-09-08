@@ -44,6 +44,7 @@ import string
 
 RDNEW = 28992
 SRID = RDNEW
+DIRECTORY_SYNC_TYPE = 'dirsync'
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,9 @@ class Organization(models.Model):
     # Only is_project_owner organizations are allowed to give the project
     # manager role to their users
     is_project_owner = models.BooleanField(default=False)
+    ftp_sync_allowed = models.BooleanField(
+        default=False,
+        help_text="allow space-intensive ftp sync (in addition to zipfile)")
 
     lizard_config = models.ForeignKey(
         'LizardConfiguration', blank=True, null=True)
@@ -782,6 +786,11 @@ class AvailableMeasurementType(models.Model):
 
     # Some measurements need to be deleted when the Project is archived.
     delete_on_archive = models.BooleanField(default=False)
+
+    # Note: this only applies when the organization also allows this.
+    ftp_sync_allowed = models.BooleanField(
+        default=False,
+        help_text="allow space-intensive ftp sync (in addition to zipfile)")
 
     @property
     def implementation_slug(self):
@@ -1706,6 +1715,13 @@ class ExportRun(models.Model):
 
     error_message = models.CharField(max_length=100, null=True, blank=True)
 
+    @property
+    def generates_directory(self):
+        # At the moment there's one export type that generates a directory
+        # with multiple files instead of a zipfile or another kind of single
+        # file.
+        return self.exporttype == DIRECTORY_SYNC_TYPE
+
     class Meta:
         unique_together = (('activity', 'exporttype'), )
 
@@ -1720,6 +1736,8 @@ class ExportRun(models.Model):
     def get_or_create(cls, activity, exporttype):
         instance, created = cls.objects.get_or_create(
             activity=activity, exporttype=exporttype)
+        if created:
+            logger.info("Created export run %s", instance)
         return instance
 
     @classmethod
@@ -1741,6 +1759,18 @@ class ExportRun(models.Model):
                             project.is_manager(user)):
                         exportrun = cls.get_or_create(activity, 'lizard')
                         exportrun.generates_file = False
+                        # Performance note 2016-09-08 by Reinout: this always
+                        # does a DB write!
+                        exportrun.save()
+                        yield exportrun
+
+                if (mtype.ftp_sync_allowed and
+                    project.organization.ftp_sync_allowed and
+                    project.is_manager(user)):
+                        exportrun = cls.get_or_create(activity,
+                                                      DIRECTORY_SYNC_TYPE)
+                        exportrun.generates_file = False
+                        # ^^^ it doesn't generate a single, downloadable file.
                         exportrun.save()
                         yield exportrun
 
@@ -1754,6 +1784,8 @@ class ExportRun(models.Model):
         """Check if the results of the export run are available. If
         the export generates a file, see if that is present, otherwise
         check that the export has run."""
+        # Possible TODO: the directory sync is more of an update tool. Perhaps
+        # we'd need an "updated at" field?
         if self.generates_file:
             return self.present
         else:
@@ -1770,14 +1802,20 @@ class ExportRun(models.Model):
         """Also delete the file."""
         if self.present:
             os.remove(self.abs_file_path)
+        if self.generates_directory and os.path.exists(self.abs_dir_path):
+            shutil.rmtree(self.abs_dir_path)
         return super(ExportRun, self).delete()
 
     def clear(self):
         """Make current data unavailable."""
         self.ready_for_download = False
-        if self.rel_file_path and os.path.exists(self.abs_file_path):
-            os.remove(self.abs_file_path)
-        self.rel_file_path = None
+        if self.generates_directory:
+            logger.debug(
+                "Not clearing directory, we only want to update new files")
+        else:
+            if self.rel_file_path and os.path.exists(self.abs_file_path):
+                os.remove(self.abs_file_path)
+                self.rel_file_path = None
         self.save()
 
     def record_start(self, user):
@@ -1788,8 +1826,11 @@ class ExportRun(models.Model):
         self.save()
 
     def set_ready_for_download(self):
-        self.ready_for_download = bool(
-            self.rel_file_path and os.path.exists(self.abs_file_path))
+        if self.generates_directory:
+            self.ready_for_download = True
+        else:
+            self.ready_for_download = bool(
+                self.rel_file_path and os.path.exists(self.abs_file_path))
         self.export_running = False
         self.save()
 
@@ -1829,6 +1870,10 @@ class ExportRun(models.Model):
             activity=directories.clean(self.activity.name),
             exporttype=self.exporttype,
             extension=extension).encode('utf8')
+
+    def abs_export_dirname(self):
+        """Return the dirname that the files should be placed into."""
+        return directories.abs_sync_dir(self.activity).encode('utf8')
 
     def fail(self, error_message):
         self.ready_for_download = False

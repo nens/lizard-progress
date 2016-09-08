@@ -1,116 +1,23 @@
 # -*- coding: utf-8 -*-
-import datetime
+from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-from django.db import connection
-import lizard_progress.models
-
-cursor = connection.cursor()
 
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # 6 -- Gemeente Almere is 3 on staging, 6 on production
-        # 31 -- on Production check id = 31 (Planmatig)
-        # 14  -- corresponds to "ribx_reiniging_riool" on production
-
-        good_reason_to_skip = """This has already been run on
-        production/staging and this migration breaks since 8 sept 2016 as
-        migration 0034 changed something in the Organization model so the
-        below code breaks because of a missing field."""
-
-        if good_reason_to_skip:
-            print(good_reason_to_skip)
-            return
-
-        try:
-            organization = lizard_progress.models.Organization.objects.filter(
-                name='Gemeente Almere'
-            )
-            project_type = lizard_progress.models.ProjectType.objects.filter(
-                organization=organization[0],
-                name='Planmatig'
-            )
-            measurement_type = \
-                lizard_progress.models.AvailableMeasurementType.objects.filter(
-                    slug='ribx_reiniging_riool'
-                )
-        except Exception as e:
-            print("MIGRATION ERROR!!!! %s" % e)
-            return
-
-        if len(organization) > 1 or len(project_type) > 1 or \
-                        len(measurement_type) > 1:
-            print('ERROR!!! organisation, project_type, or measurement_type '
-                  'contains too many of this element, respectively '
-                  'with value: "Gemeente Almere", "Planmatig" and '
-                  '"ribx_reiniging_riool"')
-            return
-
-        try:
-            cursor.execute('''
-                DROP VIEW IF EXISTS publiekskaart_almere;
-                CREATE VIEW publiekskaart_almere AS (
-                    SELECT
-                        location.id,
-                        location.location_code,
-                        COALESCE(location.measured_date, location.planned_date) AS inspection_date,
-                        location.location_type,
-                        location.one_measurement_uploaded,
-                        location.the_geom,
-                        CASE
-                            WHEN location.measured_date IS NOT NULL THEN 1 -- Done
-                            WHEN location.planned_date IS NULL THEN 0 -- Not planned
-                            WHEN current_date > location.planned_date THEN 0 -- planned date has past
-                            WHEN current_date + integer '1' >= location.planned_date THEN 2 -- Today or tomorrow
-                            WHEN current_date + integer '2' >= location.planned_date THEN 3 -- In 2 days
-                            WHEN current_date + integer '7' >= location.planned_date THEN 4 -- Within 7 days
-                            ELSE 5 -- further in the future
-                            -- The below are for week numbers
-                            --           WHEN EXTRACT(WEEK FROM location.planned_date) = EXTRACT(WEEK FROM current_date) THEN 2
-                            --            WHEN EXTRACT(WEEK FROM location.planned_date) = EXTRACT(WEEK FROM current_date) + 1 THEN 3
-                        END AS color_code
-                    FROM
-                        lizard_progress_location location
-                    INNER JOIN
-                        lizard_progress_activity activity
-                    ON
-                        location.activity_id = activity.id
-                    INNER JOIN
-                        lizard_progress_project project
-                    ON
-                        activity.project_id = project.id
-                    WHERE
-                        project.organization_id = {organization_id}
-                        AND project.project_type_id = {project_type_id}
-                        AND activity.measurement_type_id = {measurement_type_id}
-                        AND NOT project.is_archived
-                        AND (
-                             (NOT location.one_measurement_uploaded AND
-                             location.planned_date IS NOT NULL AND
-                             location.planned_date >= current_date - interval '30 days')
-                            OR
-                             (location.one_measurement_uploaded AND
-                              COALESCE(location.measured_date, location.planned_date) >= current_date - interval '30 days'))
-                        AND location.location_type IN ('drain', 'manhole', 'pipe')
-                );
-                '''.format(
-                organization_id=organization[0].id,
-                project_type_id=project_type[0].id,
-                measurement_type_id=measurement_type[0].id
-            ))
-        except IndexError:
-            print("WARNING!: The 'publiekskaart_almere' view has not been "
-                  "created in the database, since either organization, "
-                  "project_type, or measurement_type does not contain a "
-                  "value for respectively 'Gemeente Almere', 'Planmatig' and "
-                  "'ribx_reiniging_riool")
+        # Adding field 'AvailableMeasurementType.ftp_sync_allowed'
+        db.add_column(u'lizard_progress_availablemeasurementtype', 'ftp_sync_allowed',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
 
 
     def backwards(self, orm):
-        cursor.execute('''DROP VIEW IF EXISTS publiekskaart_almere;''')
+        # Deleting field 'AvailableMeasurementType.ftp_sync_allowed'
+        db.delete_column(u'lizard_progress_availablemeasurementtype', 'ftp_sync_allowed')
+
 
     models = {
         u'auth.group': {
@@ -172,6 +79,7 @@ class Migration(SchemaMigration):
             'default_icon_missing': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'delete_on_archive': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'description': ('django.db.models.fields.TextField', [], {'default': "u''", 'blank': 'True'}),
+            'ftp_sync_allowed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'has_only_point_locations': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'implementation': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
@@ -202,10 +110,10 @@ class Migration(SchemaMigration):
             'error_message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'export_running': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'exporttype': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
-            'file_path': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '1000', 'null': 'True'}),
             'generates_file': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'ready_for_download': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+            'ready_for_download': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'rel_file_path': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '1000', 'null': 'True'})
         },
         u'lizard_progress.hydrovak': {
             'Meta': {'unique_together': "((u'project', u'br_ident'),)", 'object_name': 'Hydrovak'},
@@ -246,11 +154,11 @@ class Migration(SchemaMigration):
             'data': ('jsonfield.fields.JSONField', [], {'null': 'True'}),
             'date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'expected_attachments': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'measurements'", 'symmetrical': 'False', 'to': u"orm['lizard_progress.ExpectedAttachment']"}),
-            'filename': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_point': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Location']", 'null': 'True'}),
             'parent': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Measurement']", 'null': 'True'}),
+            'rel_file_path': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             'the_geom': ('django.contrib.gis.db.models.fields.GeometryField', [], {'srid': '28992', 'null': 'True', 'blank': 'True'}),
             'timestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
@@ -265,6 +173,7 @@ class Migration(SchemaMigration):
             'Meta': {'ordering': "(u'name',)", 'object_name': 'Organization'},
             'description': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'}),
             'errors': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['lizard_progress.ErrorMessage']", 'symmetrical': 'False'}),
+            'ftp_sync_allowed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_project_owner': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'lizard_config': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.LizardConfiguration']", 'null': 'True', 'blank': 'True'}),
@@ -310,8 +219,8 @@ class Migration(SchemaMigration):
             'activity': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['lizard_progress.Activity']", 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'linelike': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'ready': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'rel_file_path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'success': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'uploaded_at': ('django.db.models.fields.DateTimeField', [], {}),
             'uploaded_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})

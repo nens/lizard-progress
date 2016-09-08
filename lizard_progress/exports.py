@@ -83,6 +83,8 @@ def start_run(export_run_id, user):
             export_as_shapefile(export_run, 'pipe')
         elif export_run.exporttype == "lizard":
             export_to_lizard(export_run)
+        elif export_run.exporttype == models.DIRECTORY_SYNC_TYPE:
+            export_all_files_to_directory(export_run)
         else:
             export_all_files(export_run)
     except:
@@ -112,7 +114,45 @@ def export_all_files(export_run):
             z.write(file_path, os.path.basename(file_path))
 
     export_run.rel_file_path = zipfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
+    export_run.save()
+
+
+def export_all_files_to_directory(export_run):
+    """Collect all the most recent (non-updated) files, and put them
+    in a directory."""
+
+    directory = export_run.abs_export_dirname()
+    logger.info("Exporting/updating files in %s", directory)
+
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+        logger.info("Created directory %s", directory)
+
+    num_added = 0
+    num_updated = 0
+    # TODO: do we need to delete files?
+    for source in sorted(export_run.abs_files_to_export()):
+        filename = os.path.basename(source)
+        target = os.path.join(directory, filename)
+        if not os.path.exists(target):
+            shutil.copyfile(source, target)
+            logger.debug("Copied new file to %s", target)
+            num_added += 1
+        else:
+            # File exists, check if it needs updating.
+            source_mtime = os.path.getmtime(source)
+            target_mtime = os.path.getmtime(target)
+            if source_mtime > target_mtime:
+                shutil.copyfile(source, target)
+                logger.debug("Updated file %s", target)
+                num_updated += 1
+            else:
+                logger.debug("File %s didn't need updating", target)
+
+    logger.info("Added %s files and updated %s files in %s",
+                num_added, num_updated, directory)
+    export_run.rel_file_path = directory
     export_run.save()
 
 
@@ -152,7 +192,7 @@ def export_as_metfile(export_run):
         f.write(exporter.export_metfile(metfile))
 
     export_run.rel_file_path = metfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 
@@ -182,7 +222,7 @@ def export_as_dxf(export_run):
     os.rmdir(temp)
 
     export_run.rel_file_path = zipfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 
@@ -233,7 +273,7 @@ def export_as_csv(export_run):
     os.rmdir(temp)
 
     export_run.rel_file_path = zipfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 
@@ -356,7 +396,7 @@ def export_as_shapefile(export_run, location_type):
             add_planning)
 
     export_run.rel_file_path = zipfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 

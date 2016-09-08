@@ -20,6 +20,8 @@ BASE_DIR = getattr(
     settings,
     'LIZARD_PROGRESS_ROOT',
     os.path.join(settings.BUILDOUT_DIR, 'var', 'lizard_progress'))
+FTP_READONLY_DIRNAME = 'ftp_readonly'
+AUTOSYNC_DIRNAME = 'autosync'
 
 
 def clean(s):
@@ -85,7 +87,7 @@ def abs_exports_dir(activity, base_dir=BASE_DIR):
     """
     export_dir = os.path.join(
         activity.project.organization.name,
-        'ftp_readonly', activity.project.slug,
+        FTP_READONLY_DIRNAME, activity.project.slug,
         '{} - {}'.format(activity.id, clean(activity.name)))
 
     if base_dir.startswith(settings.BUILDOUT_DIR):
@@ -103,8 +105,8 @@ def abs_sync_dir(activity, base_dir=BASE_DIR):
     """
     sync_dir = os.path.join(
         activity.project.organization.name,
-        'ftp_readonly',
-        'autosync',
+        FTP_READONLY_DIRNAME,
+        AUTOSYNC_DIRNAME,
         activity.project.slug,
         '{} - {}'.format(activity.id, clean(activity.name)))
 

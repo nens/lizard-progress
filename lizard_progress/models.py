@@ -786,6 +786,11 @@ class AvailableMeasurementType(models.Model):
     # Some measurements need to be deleted when the Project is archived.
     delete_on_archive = models.BooleanField(default=False)
 
+    # Note: this only applies when the organization also allows this.
+    ftp_sync_allowed = models.BooleanField(
+        default=False,
+        help_text="allow space-intensive ftp sync (in addition to zipfile)")
+
     @property
     def implementation_slug(self):
         """The implementation details are tied to the slug of the first

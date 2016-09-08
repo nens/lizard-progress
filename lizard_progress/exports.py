@@ -112,7 +112,7 @@ def export_all_files(export_run):
             z.write(file_path, os.path.basename(file_path))
 
     export_run.rel_file_path = zipfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 
@@ -152,7 +152,7 @@ def export_as_metfile(export_run):
         f.write(exporter.export_metfile(metfile))
 
     export_run.rel_file_path = metfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 
@@ -182,7 +182,7 @@ def export_as_dxf(export_run):
     os.rmdir(temp)
 
     export_run.rel_file_path = zipfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 
@@ -233,7 +233,7 @@ def export_as_csv(export_run):
     os.rmdir(temp)
 
     export_run.rel_file_path = zipfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 
@@ -356,7 +356,7 @@ def export_as_shapefile(export_run, location_type):
             add_planning)
 
     export_run.rel_file_path = zipfile_path
-      # ^^ absolute path is convert to relative path in the model's save method
+    # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 
 

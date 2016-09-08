@@ -86,6 +86,9 @@ class Organization(models.Model):
     # Only is_project_owner organizations are allowed to give the project
     # manager role to their users
     is_project_owner = models.BooleanField(default=False)
+    ftp_sync_allowed = models.BooleanField(
+        default=False,
+        help_text="allow space-intensive ftp sync (in addition to zipfile)")
 
     lizard_config = models.ForeignKey(
         'LizardConfiguration', blank=True, null=True)

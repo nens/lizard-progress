@@ -94,6 +94,26 @@ def abs_exports_dir(activity, base_dir=BASE_DIR):
     return export_dir
 
 
+def abs_sync_dir(activity, base_dir=BASE_DIR):
+    """Directory where all files for this activity are exported into. This
+    directory is then synced over FTP to the customer's own infrastructure.
+
+    <Organization>/ftp_readonly/autosync/<Project>/<Activity id and name>/
+
+    """
+    sync_dir = os.path.join(
+        activity.project.organization.name,
+        'ftp_readonly',
+        'autosync',
+        activity.project.slug,
+        '{} - {}'.format(activity.id, clean(activity.name)))
+
+    if base_dir.startswith(settings.BUILDOUT_DIR):
+        sync_dir = mk_abs(sync_dir)
+
+    return sync_dir
+
+
 def abs_reports_dir(activity):
     """Directory where uploads put reports from this activity."""
     return mk_abs(os.path.join(rel_activity_dir(activity), 'reports'))

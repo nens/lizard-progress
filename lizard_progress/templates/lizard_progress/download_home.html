@@ -3,7 +3,7 @@
 
 {% block extra_js %}
   <link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/jquery-ui.css" type="text/css" />
-  <link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />  
+  <link rel="stylesheet" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
   <script type="text/javascript" src="{{ STATIC_URL }}lizard_progress/jquery-ui.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.html5.js"></script>
@@ -17,10 +17,10 @@
 
 {% block content %}
 
-    {% include "lizard_progress/projectswitcher.html" %}    
+    {% include "lizard_progress/projectswitcher.html" %}
 
     <div class="container" id="project-details">
-      
+
       <div class="row">
         <div class="col-md-11">
 
@@ -97,7 +97,7 @@
                   </div>
                 </div>
               </div>
-              {% endif %}                
+              {% endif %}
 
 
               <div class="panel panel-default">
@@ -128,6 +128,7 @@
                               <td>{{ export_run.activity.name }}</td>
                               <td>
                                 {% if export_run.exporttype == "allfiles" %}ZIP bestand
+                                {% elif export_run.exporttype == "dirsync" %}Sync via FTP
                                 {% elif export_run.exporttype == "pointshape" %}Shapefile met locaties
                                 {% elif export_run.exporttype == "pipeshape" %}Shapefile met strengen
                                 {% elif export_run.exporttype == "drainshape" %}Shapefile met kolken
@@ -154,7 +155,7 @@
                                 {% endif %}
                               </td>
                               <td id="download-{{ export_run.id }}">
-                                {% if export_run.present %}
+                                {% if export_run.present and not export_run.generates_directory %}
                                   <a href="{% url "lizard_progress_download_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}{{ export_run.filename }}">download</a>
                                 {% endif %}
                               </td>
@@ -240,7 +241,7 @@
                   </div>
                 </div>
               </div>
-              {% endif %}                
+              {% endif %}
 
 
               {% if view.files.results %}
@@ -268,7 +269,7 @@
                     </table>
                   </div>
                 </div>
-              </div>              
+              </div>
               {% endif %}
           </div>
           </div>
@@ -276,4 +277,3 @@
       </div>
       </div>
 {% endblock %}
-

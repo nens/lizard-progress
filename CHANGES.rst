@@ -6,6 +6,8 @@ Changelog of lizard-progress
 
 - Fixed textual search in the admin for export runs.
 
+- Disabled one-time migration 0031.
+
 
 3.3 (2016-07-20)
 ----------------

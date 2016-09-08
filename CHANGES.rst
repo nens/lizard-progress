@@ -4,7 +4,7 @@ Changelog of lizard-progress
 3.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- UI fixes in the DownloadHomeView template.
 
 
 3.4 (2016-09-08)

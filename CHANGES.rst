@@ -4,7 +4,7 @@ Changelog of lizard-progress
 3.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixed textual search in the admin for export runs.
 
 
 3.3 (2016-07-20)

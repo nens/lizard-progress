@@ -467,7 +467,7 @@ class RibxReinigingInspectieRioolParser(RibxParser):
             location, item.inspection_date)
         # related_measurements = location.measurement_set.filter(parent=None)
         for ms in related_measurements:
-            all_uploaded = all_uploaded and bool(ms.missing_attachments())
+            all_uploaded = all_uploaded and ms.missing_attachments().exists()
 
         # Update completeness of location
         location.complete = all_uploaded

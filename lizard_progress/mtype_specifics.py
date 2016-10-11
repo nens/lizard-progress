@@ -263,7 +263,8 @@ class RibxReinigingKolkenSpecifics(RibxReinigingRioolSpecifics):
 
 
 class RibxReinigingInspectieRioolSpecifics(RibxReinigingRioolSpecifics):
-    pass
+    parser = \
+        lizard_progress.parsers.ribx_parser.RibxReinigingInspectieRioolParser
 
 
 class ExpectedAttachmentSpecifics(GenericSpecifics):

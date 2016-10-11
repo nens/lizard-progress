@@ -377,6 +377,111 @@ class RibxParser(ProgressParser):
         return location
 
 
+class RibxReinigingInspectieRioolParser(RibxParser):
+    """Parser with specifics for pipe inspections."""
+
+    def find_existing_ribx_measurement(self, location, inspection_date,
+                                       manhole_start):
+        for measurement in models.Measurement.objects.filter(
+                location=location, date=inspection_date):
+            if (measurement.data and
+                    measurement.data.get('filetype') == 'ribx' and
+                    measurement.data.get('manhole_start') == manhole_start):
+                return measurement
+        return None
+
+    def find_existing_ribx_measurements(self, location, inspection_date):
+        """Find the measurements that were inspected on the same date and in
+        the same location.
+
+        Returns:
+            a list of Measurements."""
+        measurements = []
+        for measurement in models.Measurement.objects.filter(
+                location=location, date=inspection_date):
+            if (measurement.data and
+                    measurement.data.get('filetype') == 'ribx'):
+                measurements.append(measurement)
+        return measurements
+
+    def save_measurement(self, item):
+        """item is a pipe, drain or manhole object that has properties
+        'ref', 'inspection_date', 'geom' and optionally 'media'.
+
+        Note: the behavior of this method changes depending on the attributes
+        of the item (i.e.: 'work_impossible', 'new')
+        """
+        try:
+            location = self.activity.location_set.get(
+                location_code=item.ref)
+        except models.Location.DoesNotExist:
+            # The reason for this check is because of the altered
+            # get_measurements in the RibxReinigingKolkenParser. Via the
+            # RibxParser you can't get here. It probably doesn't do much
+            # though.
+            if item.work_impossible:
+                return None
+            elif not item.new:
+                self.record_error(
+                    item.sourceline, 'LOCATION_NOT_FOUND',
+                    self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
+                return None
+            else:
+                location = self.create_new(item)
+
+        # If measurement already exists with the same date, this
+        # upload isn't new and we don't have to add a new Measurement
+        # instance for it. Details (like the associated files) may still have
+        # changed.
+        # If it doesn't exist with this date, add a
+        # new measurement, don't overwrite the old one.
+        measurement = self.find_existing_ribx_measurement(
+            location, item.inspection_date, item.manhole_start)
+
+        if measurement is None:
+            measurement = models.Measurement(
+                location=location,
+                date=item.inspection_date,
+                data={'filetype': 'ribx', 'manhole_start': item.manhole_start})
+
+        # Record the location regardless of whether it was uploaded before --
+        # maybe someone corrected the previous upload.
+        measurement.record_location(item.geom)  # Saves
+        associated_files = getattr(item, 'media', ())
+
+        try:
+            all_uploaded = measurement.setup_expected_attachments(
+                associated_files)
+        except models.AlreadyUploadedError as e:
+            self.record_error(
+                item.sourceline, 'ATTACHMENT_ALREADY_EXISTS',
+                self.ERRORS['ATTACHMENT_ALREADY_EXISTS'].format(
+                    e.filename))
+            return None
+
+
+
+        # Multiple measurements can belong to one location for pipe
+        # inspections. To determine the completeness of one location, we now
+        # have to determine the completeness of all related measurements
+        # and 'and' them together.
+        related_measurements = self.find_existing_ribx_measurements(
+            location, item.inspection_date)
+        # related_measurements = location.measurement_set.filter(parent=None)
+        # import pdb; pdb.set_trace()
+        for ms in related_measurements:
+            all_uploaded = all_uploaded and bool(ms.missing_attachments())
+
+
+
+
+        # Update completeness of location
+        location.complete = all_uploaded
+        location.save()
+
+        return measurement
+
+
 class RibxReinigingKolkenParser(RibxParser):
     """Special parser for drains.
 

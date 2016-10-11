@@ -126,3 +126,50 @@ class TestRibxParser(FixturesTestCase):
             activity=self.activity, location_code=self.location.location_code,
             request_type=Request.REQUEST_TYPE_REMOVE_CODE,
             request_status=Request.REQUEST_STATUS_OPEN).count(), 1)
+
+
+class TestRibxParser2(FixturesTestCase):
+    """Test specifics from the RibxReinigingInspectieRioolParser."""
+
+    def setUp(self):
+        self.mtype = test_models.AvailableMeasurementTypeF.create(
+            slug='ribx_reiniging_inspectie_riool')
+        self.activity = test_models.ActivityF.create(
+            measurement_type=self.mtype)
+        self.parser = ribx_parser.RibxReinigingInspectieRioolParser(
+            self.activity, None)
+        self.location = test_models.LocationF.create(
+            activity=self.activity, location_code='testref')
+
+    def test_find_existing_measurement(self):
+        """Test the fix_existing_ribx_measurement method with
+        'manhole_start' argument."""
+        m1 = test_models.MeasurementF.create(
+            location=self.location, date=today,
+            data={'filetype': 'ribx', 'manhole_start': 'foo'})
+        m2 = test_models.MeasurementF.create(
+            location=self.location, date=today,
+            data={'filetype': 'ribx', 'manhole_start': 'bar'})
+
+        m3 = self.parser.find_existing_ribx_measurement(
+            self.location, today, 'bar')
+        m4 = self.parser.find_existing_ribx_measurement(
+            self.location, today, 'foo')
+
+        self.assertEquals(m3.id, m2.id)
+        self.assertEquals(m4.id, m1.id)
+
+    def test_find_related_measurements(self):
+        """Test finding all measurements that belong to a location."""
+        m1 = test_models.MeasurementF.create(
+            location=self.location, date=today,
+            data={'filetype': 'ribx', 'manhole_start': 'foo'})
+        m2 = test_models.MeasurementF.create(
+            location=self.location, date=today,
+            data={'filetype': 'ribx', 'manhole_start': 'bar'})
+
+        measurements = self.parser.find_existing_ribx_measurements(
+            self.location, today)
+
+        self.assertTrue(m1 in measurements and m2 in measurements)
+        self.assertEqual(len(measurements), 2)

@@ -459,8 +459,6 @@ class RibxReinigingInspectieRioolParser(RibxParser):
                     e.filename))
             return None
 
-
-
         # Multiple measurements can belong to one location for pipe
         # inspections. To determine the completeness of one location, we now
         # have to determine the completeness of all related measurements
@@ -468,12 +466,8 @@ class RibxReinigingInspectieRioolParser(RibxParser):
         related_measurements = self.find_existing_ribx_measurements(
             location, item.inspection_date)
         # related_measurements = location.measurement_set.filter(parent=None)
-        # import pdb; pdb.set_trace()
         for ms in related_measurements:
             all_uploaded = all_uploaded and bool(ms.missing_attachments())
-
-
-
 
         # Update completeness of location
         location.complete = all_uploaded

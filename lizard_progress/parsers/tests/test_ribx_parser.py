@@ -142,7 +142,7 @@ class TestRibxParser2(FixturesTestCase):
             activity=self.activity, location_code='testref')
 
     def test_find_existing_measurement(self):
-        """Test the fix_existing_ribx_measurement method with
+        """Test the find_existing_ribx_measurement method with
         'manhole_start' argument."""
         m1 = test_models.MeasurementF.create(
             location=self.location, date=today,

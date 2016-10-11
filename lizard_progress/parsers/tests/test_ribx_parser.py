@@ -158,18 +158,3 @@ class TestRibxParser2(FixturesTestCase):
 
         self.assertEquals(m3.id, m2.id)
         self.assertEquals(m4.id, m1.id)
-
-    def test_find_related_measurements(self):
-        """Test finding all measurements that belong to a location."""
-        m1 = test_models.MeasurementF.create(
-            location=self.location, date=today,
-            data={'filetype': 'ribx', 'manhole_start': 'foo'})
-        m2 = test_models.MeasurementF.create(
-            location=self.location, date=today,
-            data={'filetype': 'ribx', 'manhole_start': 'bar'})
-
-        measurements = self.parser.find_existing_ribx_measurements(
-            self.location, today)
-
-        self.assertTrue(m1 in measurements and m2 in measurements)
-        self.assertEqual(len(measurements), 2)

@@ -390,20 +390,6 @@ class RibxReinigingInspectieRioolParser(RibxParser):
                 return measurement
         return None
 
-    def find_existing_ribx_measurements(self, location, inspection_date):
-        """Find the measurements that were inspected on the same date and in
-        the same location.
-
-        Returns:
-            a list of Measurements."""
-        measurements = []
-        for measurement in models.Measurement.objects.filter(
-                location=location, date=inspection_date):
-            if (measurement.data and
-                    measurement.data.get('filetype') == 'ribx'):
-                measurements.append(measurement)
-        return measurements
-
     def save_measurement(self, item):
         """item is a pipe, drain or manhole object that has properties
         'ref', 'inspection_date', 'geom' and optionally 'media'.
@@ -450,8 +436,7 @@ class RibxReinigingInspectieRioolParser(RibxParser):
         associated_files = getattr(item, 'media', ())
 
         try:
-            all_uploaded = measurement.setup_expected_attachments(
-                associated_files)
+            measurement.setup_expected_attachments(associated_files)
         except models.AlreadyUploadedError as e:
             self.record_error(
                 item.sourceline, 'ATTACHMENT_ALREADY_EXISTS',
@@ -462,16 +447,9 @@ class RibxReinigingInspectieRioolParser(RibxParser):
         # Multiple measurements can belong to one location for pipe
         # inspections. To determine the completeness of one location, we now
         # have to determine the completeness of all related measurements
-        # and 'and' them together.
-        related_measurements = self.find_existing_ribx_measurements(
-            location, item.inspection_date)
-        # related_measurements = location.measurement_set.filter(parent=None)
-        for ms in related_measurements:
-            all_uploaded = all_uploaded and ms.missing_attachments().exists()
-
-        # Update completeness of location
-        location.complete = all_uploaded
-        location.save()
+        # and 'and' them together. Location.set_completeness should cover this
+        # use case.
+        location.set_completeness()
 
         return measurement
 

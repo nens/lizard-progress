@@ -1764,6 +1764,13 @@ class ExportRun(models.Model):
                         exportrun.save()
                         yield exportrun
 
+                if mtype.implementation_slug in [
+                        'ribx_reiniging_riool',
+                        'ribx_reiniging_kolken',
+                        'ribx_reiniging_inspectie_riool',
+                        ]:
+                    yield cls.get_or_create(activity, 'mergeribx')
+
                 if (mtype.ftp_sync_allowed and
                     project.organization.ftp_sync_allowed and
                     project.is_manager(user)):

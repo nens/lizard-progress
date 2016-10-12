@@ -28,13 +28,12 @@ import shutil
 import tempfile
 import zipfile
 
+from lxml import etree
 import shapefile
 
 from metfilelib.util import dxf
-
 from metfilelib.util import retrieve_profile
 from metfilelib import exporters
-
 from lizard_progress import errors
 from lizard_progress import models
 from lizard_progress import lizard_export
@@ -85,6 +84,8 @@ def start_run(export_run_id, user):
             export_to_lizard(export_run)
         elif export_run.exporttype == models.DIRECTORY_SYNC_TYPE:
             export_all_files_to_directory(export_run)
+        elif export_run.exporttype == 'mergeribx':
+            export_mergeribx(export_run)
         else:
             export_all_files(export_run)
     except:
@@ -114,6 +115,53 @@ def export_all_files(export_run):
             z.write(file_path, os.path.basename(file_path))
 
     export_run.rel_file_path = zipfile_path
+    # ^^ absolute path is converted to relative path in the model's save method
+    export_run.save()
+
+
+def _is_activity(tag):
+    """Check if Ribx tag is an 'activity'."""
+    return tag.startswith('ZB_')
+
+
+def merge_ribx(ribx_files):
+    """Merge ribx files into one ElementTree."""
+    xml_element_tree = None
+    for ribxfile in ribx_files:
+        data = etree.parse(ribxfile).getroot()
+        for elem in data.getchildren():
+            if xml_element_tree is None:
+                xml_element_tree = data  # Set root with initial data
+
+                # Check some mandatory tags
+                try:
+                    language = data.xpath('/*/*/A2')[0]
+                    ribx_version = data.xpath('/*/*/A6')[0]
+                    logger.debug("A2: %s, A6: %s", language, ribx_version)
+                except IndexError:
+                    logger.exception("No A2 or A6 tag in Ribx.")
+                    raise
+            else:
+                if _is_activity(elem.tag):
+                    xml_element_tree.append(elem)
+    return etree.ElementTree(xml_element_tree)
+
+
+def export_mergeribx(export_run):
+    ribx_files = [f for f in export_run.abs_files_to_export() if
+                  f.endswith('ribx')]
+    merged_ribx = merge_ribx(ribx_files)
+
+    merged_ribx_path = export_run.abs_export_filename(extension="ribx")
+    if not os.path.isdir(os.path.dirname(merged_ribx_path)):
+        os.makedirs(os.path.dirname(merged_ribx_path))
+
+    with open(merged_ribx_path, 'w') as output:
+            xml_string = etree.tostring(merged_ribx, xml_declaration=True,
+                                        encoding=merged_ribx.docinfo.encoding)
+            output.write(xml_string)
+
+    export_run.rel_file_path = merged_ribx_path
     # ^^ absolute path is converted to relative path in the model's save method
     export_run.save()
 

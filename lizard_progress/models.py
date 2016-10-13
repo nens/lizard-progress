@@ -1764,6 +1764,13 @@ class ExportRun(models.Model):
                         exportrun.save()
                         yield exportrun
 
+                if mtype.implementation_slug in [
+                        'ribx_reiniging_riool',
+                        'ribx_reiniging_kolken',
+                        'ribx_reiniging_inspectie_riool',
+                        ]:
+                    yield cls.get_or_create(activity, 'mergeribx')
+
                 if (mtype.ftp_sync_allowed and
                     project.organization.ftp_sync_allowed and
                     project.is_manager(user)):
@@ -1857,6 +1864,14 @@ class ExportRun(models.Model):
         return set(
             measurement.abs_file_path
             for measurement in self.measurements_to_export())
+
+    def all_measurement_files(self):
+        """A modified version of 'abs_files_to_export' which doesn't check
+        for a Location's completeness."""
+        measurements_to_export = Measurement.objects.filter(
+            location__activity=self.activity).select_related()
+        return set(measurement.abs_file_path
+                   for measurement in measurements_to_export)
 
     def abs_export_filename(self, extension="zip"):
         """Return the filename that the result file should use."""

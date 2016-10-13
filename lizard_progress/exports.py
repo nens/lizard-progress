@@ -141,20 +141,22 @@ def merge_ribx(ribx_files):
         for elem in data.getchildren():
             if xml_element_tree is None:
                 xml_element_tree = data  # Set root with initial data
-
-                # Check some mandatory tags
-                try:
-                    language = data.xpath('/*/*/A2')[0]
-                    ribx_version = data.xpath('/*/*/A6')[0]
-                    logger.debug("A2: %s, A6: %s", language, ribx_version)
-                except IndexError:
-                    logger.exception("No A2 or A6 tag in Ribx.")
-                    return (None, "Geen A2 of A6 tag in Ribx")
             else:
                 if _is_activity(elem.tag):
                     xml_element_tree.append(elem)
+
     if not xml_element_tree:
         return (None, "Geen Ribx bestanden gevonden.")
+
+    # Check some mandatory tags
+    try:
+        language = xml_element_tree.xpath('/*/*/A2')[0]
+        ribx_version = xml_element_tree.xpath('/*/*/A6')[0]
+        logger.debug("A2: %s, A6: %s", language, ribx_version)
+    except IndexError:
+        logger.exception("No A2 and/or A6 tag in Ribx.")
+        return (None, "Geen A2 en/of A6 tag in Ribx")
+
     return (etree.ElementTree(xml_element_tree), "")
 
 

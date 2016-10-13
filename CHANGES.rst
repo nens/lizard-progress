@@ -4,6 +4,8 @@ Changelog of lizard-progress
 3.6 (unreleased)
 ----------------
 
+- Allow Ribx Pipe inspection to have multiple measurements.
+
 - Add export option for merging Ribx files into one file.
 
 - Code style fixes.

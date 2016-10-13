@@ -20,11 +20,14 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
         filename = os.path.basename(self.file_object)
 
         try:
-            expected_attachment = models.ExpectedAttachment.objects.get(
-                measurements__location__activity=self.activity,
-                filename__iexact=filename)
+            expected_attachment = models.ExpectedAttachment.objects.distinct(
+                ).get(measurements__location__activity=self.activity,
+                      filename__iexact=filename)
         except models.ExpectedAttachment.DoesNotExist:
             return self.error('UNEXPECTED', filename)
+        except models.ExpectedAttachment.MultipleObjectsReturned:
+            return self.error('QUERY RETURNS MULTIPLE EXPECTED ATTACHMENTS',
+                              filename)
 
         measurements = expected_attachment.register_uploading()
         return self._parser_result(measurements)

@@ -125,7 +125,16 @@ def _is_activity(tag):
 
 
 def merge_ribx(ribx_files):
-    """Merge ribx files into one ElementTree."""
+    """Merge ribx files into one ElementTree.
+
+    Args:
+        ribx_files: a list of ribx file paths
+
+    Returns:
+        a tuple: (lxml.etree.ElementTree, error_msg). If no merged Ribx can
+        be produced the ElementTree is None and the error_msg will contain
+        the reason.
+    """
     xml_element_tree = None
     for ribxfile in ribx_files:
         data = etree.parse(ribxfile).getroot()
@@ -140,17 +149,23 @@ def merge_ribx(ribx_files):
                     logger.debug("A2: %s, A6: %s", language, ribx_version)
                 except IndexError:
                     logger.exception("No A2 or A6 tag in Ribx.")
-                    raise
+                    return (None, "Geen A2 of A6 tag in Ribx")
             else:
                 if _is_activity(elem.tag):
                     xml_element_tree.append(elem)
-    return etree.ElementTree(xml_element_tree)
+    if not xml_element_tree:
+        return (None, "Geen Ribx bestanden gevonden.")
+    return (etree.ElementTree(xml_element_tree), "")
 
 
 def export_mergeribx(export_run):
     ribx_files = [f for f in export_run.abs_files_to_export() if
                   f.endswith('ribx')]
-    merged_ribx = merge_ribx(ribx_files)
+    merged_ribx, error_msg = merge_ribx(ribx_files)
+
+    if not merged_ribx:
+        export_run.fail(error_msg)
+        return
 
     merged_ribx_path = export_run.abs_export_filename(extension="ribx")
     if not os.path.isdir(os.path.dirname(merged_ribx_path)):

@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.6 (unreleased)
+3.6 (2016-10-13)
 ----------------
 
 - Bump ribxlib to 0.6.

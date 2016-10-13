@@ -4,6 +4,8 @@ Changelog of lizard-progress
 3.6 (unreleased)
 ----------------
 
+- Add export option for merging Ribx files into one file.
+
 - Code style fixes.
 
 

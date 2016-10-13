@@ -1865,6 +1865,14 @@ class ExportRun(models.Model):
             measurement.abs_file_path
             for measurement in self.measurements_to_export())
 
+    def all_measurement_files(self):
+        """A modified version of 'abs_files_to_export' which doesn't check
+        for a Location's completeness."""
+        measurements_to_export = Measurement.objects.filter(
+            location__activity=self.activity).select_related()
+        return set(measurement.abs_file_path
+                   for measurement in measurements_to_export)
+
     def abs_export_filename(self, extension="zip"):
         """Return the filename that the result file should use."""
         directory = directories.abs_exports_dir(self.activity)

@@ -159,7 +159,7 @@ def merge_ribx(ribx_files):
 
 
 def export_mergeribx(export_run):
-    ribx_files = [f for f in export_run.abs_files_to_export() if
+    ribx_files = [f for f in export_run.all_measurement_files() if
                   f.endswith('ribx')]
     merged_ribx, error_msg = merge_ribx(ribx_files)
 

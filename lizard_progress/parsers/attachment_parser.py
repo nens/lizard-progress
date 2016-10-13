@@ -26,7 +26,7 @@ class ExpectedAttachmentParser(specifics.ProgressParser):
         except models.ExpectedAttachment.DoesNotExist:
             return self.error('UNEXPECTED', filename)
         except models.ExpectedAttachment.MultipleObjectsReturned:
-            return self.error('QUERY RETURN MULTIPLE EXPECTED ATTACHMENTS',
+            return self.error('QUERY RETURNS MULTIPLE EXPECTED ATTACHMENTS',
                               filename)
 
         measurements = expected_attachment.register_uploading()

@@ -390,6 +390,25 @@ class RibxReinigingInspectieRioolParser(RibxParser):
                 return measurement
         return None
 
+    def find_or_create_ribx_measurement(self, location, inspection_date,
+                                        manhole_start):
+        # If measurement already exists with the same date, this
+        # upload isn't new and we don't have to add a new Measurement
+        # instance for it. Details (like the associated files) may still have
+        # changed.
+        # If it doesn't exist with this date, add a
+        # new measurement, don't overwrite the old one.
+        measurement = self.find_existing_ribx_measurement(
+            location, inspection_date, manhole_start)
+
+        if measurement is None:
+            measurement = models.Measurement(
+                location=location,
+                date=inspection_date,
+                data={'filetype': 'ribx', 'manhole_start': manhole_start})
+
+        return measurement
+
     def save_measurement(self, item):
         """item is a pipe, drain or manhole object that has properties
         'ref', 'inspection_date', 'geom' and optionally 'media'.
@@ -415,20 +434,8 @@ class RibxReinigingInspectieRioolParser(RibxParser):
             else:
                 location = self.create_new(item)
 
-        # If measurement already exists with the same date, this
-        # upload isn't new and we don't have to add a new Measurement
-        # instance for it. Details (like the associated files) may still have
-        # changed.
-        # If it doesn't exist with this date, add a
-        # new measurement, don't overwrite the old one.
-        measurement = self.find_existing_ribx_measurement(
+        measurement = self.find_or_create_ribx_measurement(
             location, item.inspection_date, item.manhole_start)
-
-        if measurement is None:
-            measurement = models.Measurement(
-                location=location,
-                date=item.inspection_date,
-                data={'filetype': 'ribx', 'manhole_start': item.manhole_start})
 
         # Record the location regardless of whether it was uploaded before --
         # maybe someone corrected the previous upload.

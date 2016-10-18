@@ -385,13 +385,16 @@ class RibxReinigingInspectieRioolParser(RibxParser):
         for measurement in models.Measurement.objects.filter(
                 location=location, date=inspection_date):
             if (measurement.data and
-                    measurement.data.get('filetype') == 'ribx' and
-                    measurement.data.get('manhole_start') == manhole_start):
-                return measurement
+                    measurement.data.get('filetype') == 'ribx'):
+                if manhole_start is None:
+                    return measurement
+                else:
+                    if measurement.data.get('manhole_start') == manhole_start:
+                        return measurement
         return None
 
     def find_or_create_ribx_measurement(self, location, inspection_date,
-                                        manhole_start):
+                                        manhole_start=None):
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement
         # instance for it. Details (like the associated files) may still have
@@ -402,10 +405,12 @@ class RibxReinigingInspectieRioolParser(RibxParser):
             location, inspection_date, manhole_start)
 
         if measurement is None:
+            if manhole_start:
+                jsdata = {'filetype': 'ribx', 'manhole_start': manhole_start}
+            else:
+                jsdata = {'filetype': 'ribx'}
             measurement = models.Measurement(
-                location=location,
-                date=inspection_date,
-                data={'filetype': 'ribx', 'manhole_start': manhole_start})
+                location=location, date=inspection_date, data=jsdata)
 
         return measurement
 
@@ -434,8 +439,12 @@ class RibxReinigingInspectieRioolParser(RibxParser):
             else:
                 location = self.create_new(item)
 
+        manhole_start = None
+        if isinstance(item, ribxmodels.InspectionPipe):
+            manhole_start = item.manhole_start
+
         measurement = self.find_or_create_ribx_measurement(
-            location, item.inspection_date, item.manhole_start)
+            location, item.inspection_date, manhole_start)
 
         # Record the location regardless of whether it was uploaded before --
         # maybe someone corrected the previous upload.

@@ -717,9 +717,12 @@ class Location(models.Model):
                 self.the_geom, D(m=self.CLOSE_BY_DISTANCE)),
             complete=True)
 
-    def set_completeness(self):
-        self.complete = (
+    def check_completeness(self):
+        return (
             self.has_measurements() and self.all_expected_attachments_present)
+
+    def set_completeness(self):
+        self.complete = self.check_completeness()
         self.save()
 
 

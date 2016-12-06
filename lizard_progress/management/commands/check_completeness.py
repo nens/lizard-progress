@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import ObjectDoesNotExist
 
 from lizard_progress import models
 
@@ -19,14 +20,23 @@ class Command(BaseCommand):
     help = "Check and set completeness."
 
     def handle(self, *args, **options):
-        organization_name, project_slug, activity_name = args[0:3]
-
-        # Get activity we want to inspect
-        organization = models.Organization.objects.get(name=organization_name)
-        project = models.Project.objects.get(
-            organization=organization, slug=project_slug)
-        activity = models.Activity.objects.get(
-            project=project, name=activity_name)
+        try:
+            organization_name, project_slug, activity_name = args[0:3]
+        except ValueError:
+            raise CommandError("Not enough arguments.")
+        try:
+            # Get activity we want to inspect
+            organization = models.Organization.objects.get(
+                name=organization_name)
+            project = models.Project.objects.get(
+                organization=organization, slug=project_slug)
+            activity = models.Activity.objects.get(
+                project=project, name=activity_name)
+        except ObjectDoesNotExist:
+            import traceback
+            raise CommandError(
+                "Please provide a valid organization, project and activity. "
+                "Msg: %s" % traceback.format_exc())
 
         print("---\nStarting checks for activity %s..." % activity)
         locations_to_fix = []

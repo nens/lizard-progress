@@ -1174,6 +1174,9 @@ class MeasurementTypeAllowed(models.Model):
 
     visible = models.BooleanField(default=True)
 
+    def __unicode__(self):
+        return self.mtype.name
+
 
 class Measurement(models.Model):
     """Although most Locations will have only a single associated
@@ -1425,6 +1428,10 @@ class Measurement(models.Model):
             self.rel_file_path = self.rel_file_path.replace(
                 directories.BASE_DIR + '/', '')
         super(Measurement, self).save(*args, **kwargs)
+
+    @property
+    def num_expected_attachments(self):
+        return self.expected_attachments.count()
 
     def __unicode__(self):
         return 'Measurement {} from {}, expects {} attachments'.format(

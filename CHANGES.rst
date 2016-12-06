@@ -4,7 +4,9 @@ Changelog of lizard-progress
 3.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Improve admin.
+
+- Add completeness script.
 
 
 3.7 (2016-10-21)

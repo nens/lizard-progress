@@ -25,14 +25,38 @@ class ProjectTypeAdmin(admin.ModelAdmin):
 
 
 class ExportRunAdmin(admin.ModelAdmin):
-    model = models.ExportRun
     search_fields = ['activity__name', 'exporttype']
 
 
+class MeasurementAdmin(admin.ModelAdmin):
+    list_display = ('id', 'base_filename', 'num_expected_attachments')
+    search_fields = [
+        'location__location_code', 'rel_file_path',
+        'location__activity__project__name']
+
+
+class LocationAdmin(admin.ModelAdmin):
+    list_display = ('location_code', 'location_type', 'activity')
+    search_fields = [
+        'location_code', 'location_type', 'activity__name',
+        'activity__project__name']
+
+
+class UploadedFileAdmin(admin.ModelAdmin):
+    list_display = ('rel_file_path', 'uploaded_by', 'uploaded_at')
+    list_filter = ('ready', 'success', 'linelike')
+    search_fields = ['activity__name', 'rel_file_path']
+
+
+class ProjectAdmin(admin.ModelAdmin):
+    search_fields = ['name', 'slug', 'organization__name']
+    list_filter = ['organization__name']
+
+
 admin.site.register(models.Hydrovak)
-admin.site.register(models.Location)
+admin.site.register(models.Location, LocationAdmin)
 admin.site.register(models.AvailableMeasurementType)
-admin.site.register(models.Project)
+admin.site.register(models.Project, ProjectAdmin)
 admin.site.register(models.Activity)
 admin.site.register(models.Organization, OrganizationAdmin)
 admin.site.register(models.UserProfile)
@@ -43,7 +67,7 @@ admin.site.register(models.ProjectType, ProjectTypeAdmin)
 admin.site.register(models.ExportRun, ExportRunAdmin)
 admin.site.register(models.ExpectedAttachment)
 admin.site.register(models.MeasurementTypeAllowed)
-admin.site.register(models.Measurement)
-admin.site.register(models.UploadedFile)
+admin.site.register(models.Measurement, MeasurementAdmin)
+admin.site.register(models.UploadedFile, UploadedFileAdmin)
 admin.site.register(models.UploadedFileError)
 admin.site.register(models.UploadLog)

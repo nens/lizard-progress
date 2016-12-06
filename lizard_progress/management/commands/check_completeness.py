@@ -9,6 +9,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import traceback
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import ObjectDoesNotExist
 
@@ -33,7 +35,6 @@ class Command(BaseCommand):
             activity = models.Activity.objects.get(
                 project=project, name=activity_name)
         except ObjectDoesNotExist:
-            import traceback
             raise CommandError(
                 "Please provide a valid organization, project and activity. "
                 "Msg: %s" % traceback.format_exc())

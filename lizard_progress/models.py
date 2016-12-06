@@ -1429,13 +1429,8 @@ class Measurement(models.Model):
                 directories.BASE_DIR + '/', '')
         super(Measurement, self).save(*args, **kwargs)
 
-    @property
-    def num_expected_attachments(self):
-        return self.expected_attachments.count()
-
     def __unicode__(self):
-        return 'Measurement {} from {}, expects {} attachments'.format(
-            self.id, self.rel_file_path, self.expected_attachments.count())
+        return 'Measurement {} from {}'.format(self.id, self.rel_file_path)
 
 
 class Hydrovak(models.Model):

@@ -34,6 +34,9 @@ class MeasurementAdmin(admin.ModelAdmin):
         'location__location_code', 'rel_file_path',
         'location__activity__project__name']
 
+    def num_expected_attachments(self, obj):
+        return obj.expected_attachments.count()
+
 
 class LocationAdmin(admin.ModelAdmin):
     list_display = ('location_code', 'location_type', 'activity')

@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.8 (unreleased)
+3.8 (2016-12-07)
 ----------------
 
 - Remove count() from Measurement.__unicode__() because it would generate

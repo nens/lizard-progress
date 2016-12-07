@@ -4,7 +4,12 @@ Changelog of lizard-progress
 3.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Remove count() from Measurement.__unicode__() because it would generate
+  a huge amount of ``COUNT(*)`` queries.
+
+- Improve admin.
+
+- Add completeness script.
 
 
 3.7 (2016-10-21)

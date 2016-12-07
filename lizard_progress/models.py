@@ -1174,6 +1174,9 @@ class MeasurementTypeAllowed(models.Model):
 
     visible = models.BooleanField(default=True)
 
+    def __unicode__(self):
+        return self.mtype.name
+
 
 class Measurement(models.Model):
     """Although most Locations will have only a single associated
@@ -1427,8 +1430,7 @@ class Measurement(models.Model):
         super(Measurement, self).save(*args, **kwargs)
 
     def __unicode__(self):
-        return 'Measurement {} from {}, expects {} attachments'.format(
-            self.id, self.rel_file_path, self.expected_attachments.count())
+        return 'Measurement {} from {}'.format(self.id, self.rel_file_path)
 
 
 class Hydrovak(models.Model):

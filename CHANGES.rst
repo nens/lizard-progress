@@ -4,7 +4,7 @@ Changelog of lizard-progress
 3.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add two manuals.
 
 
 3.8 (2016-12-07)

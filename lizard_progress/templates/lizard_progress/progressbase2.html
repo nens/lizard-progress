@@ -72,7 +72,8 @@
                   {% if view.user_has_manager_role %}
                   <li><a href="/us/archive/">Archief</a></li>
                   {% endif %}
-                  <li><a href="https://uploadservice.staging.lizard.net/static_media/lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf" target="_blank">Help</a></li>
+                  <li><a href="{{ STATIC_URL }}lizard_progress/Gebruikershandleiding_Uploadservice_v9 Riolering.pdf" target="_blank">Handleiding riolering</a></li>
+                  <li><a href="{{ STATIC_URL }}lizard_progress/Gebruikershandleiding_Uploadservice_v9 Dwarsprofielen.pdf" target="_blank">Handleiding dwarsprofielen</a></li>
                   {% if view.user_is_manager %}
                   <li role="separator" class="divider"></li>
                   <li><a href="{% url "lizard_progress_newproject" %}">+ Project toevoegen</a></li>

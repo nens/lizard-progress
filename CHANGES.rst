@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.9 (unreleased)
+3.9 (2016-12-13)
 ----------------
 
 - Add two manuals.

@@ -135,6 +135,9 @@ def merge_ribx(ribx_files):
         be produced the ElementTree is None and the error_msg will contain
         the reason.
     """
+    if not ribx_files:
+        return (None, "Geen Ribx bestanden gevonden.")
+
     xml_element_tree = None
     for ribxfile in ribx_files:
         data = etree.parse(ribxfile).getroot()
@@ -144,9 +147,6 @@ def merge_ribx(ribx_files):
             else:
                 if _is_activity(elem.tag):
                     xml_element_tree.append(elem)
-
-    if not xml_element_tree:
-        return (None, "Geen Ribx bestanden gevonden.")
 
     # Check some mandatory tags
     try:

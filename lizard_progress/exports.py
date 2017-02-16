@@ -119,16 +119,79 @@ def export_all_files(export_run):
     export_run.save()
 
 
-def _is_activity(tag):
-    """Check if Ribx tag is an 'activity'."""
-    return tag.startswith('ZB_')
+class RibxElementAnalyzer(object):
+    """This class was built specifically for merging Ribx files. It
+    basically implements some of the logic of the ribxlib package. Couldn't
+    we use the ribxlib instead? Well, maybe, but that would've probably
+    required modifying the ribxlib and probably some thought, and time.
+    """
+    def __init__(self, element):
+        self.element = element
+        self.activity_type = self._get_activity_type(self.element.tag)
+        if not self.activity_type:
+            # Can't perform self.tag without self.activity_type
+            return
+        self.ref = self.get_ref(self.element)
+        self.inspection_date = self.get_inspection_date(self.element)
+        self.inspection_time = self.get_inspection_time(self.element)
+        self.manhole_start = self.get_manhole_start(self.element)
+
+    @staticmethod
+    def _get_activity_type(tag):
+        """Check if Ribx tag is an 'activity' and return its type."""
+        if tag.startswith('ZB_'):
+            return tag[3:4]  # 'ZB_C' => 'C'
+        return None
+
+    def tag(self, tagname):
+        """Construct canonical tag name."""
+        return self.activity_type + tagname
+
+    def get_ref(self, element):
+        elm = element.find(self.tag('AA'))
+        return elm.text if elm else None
+
+    def get_inspection_date(self, element):
+        elm = element.find(self.tag('BF'))
+        return elm.text if elm else None
+
+    def get_inspection_time(self, element):
+        elm = element.find(self.tag('BG'))
+        return elm.text if elm else None
+
+    def get_manhole_start(self, element):
+        elm = element.find(self.tag('AB'))
+        return elm.text if elm else None
+
+    def has_duplicate_ref(self, other_element):
+        other_ref = self.get_ref(other_element)
+        return self.ref == other_ref
+
+    def has_duplicate_time(self, other_element):
+        other_time = self.get_inspection_time(other_element)
+        return self.inspection_time == other_time
+
+    def has_duplicate_date(self, other_element):
+        other_date = self.get_inspection_date(other_element)
+        return self.inspection_date == other_date
+
+    def has_duplicate_manhole_start(self, other_element):
+        other_manhole = self.get_manhole_start(other_element)
+        return self.manhole_start == other_manhole
+
+    @property
+    def is_activity(self):
+        return bool(self.activity_type)
 
 
 def merge_ribx(ribx_files):
     """Merge ribx files into one ElementTree.
 
+    NOTE: we expect the ribx_files to be sorted by descending date
+    already.
+
     Args:
-        ribx_files: a list of ribx file paths
+        ribx_files: a list of ribx file paths sorted by descending date
 
     Returns:
         a tuple: (lxml.etree.ElementTree, error_msg). If no merged Ribx can
@@ -138,31 +201,42 @@ def merge_ribx(ribx_files):
     if not ribx_files:
         return (None, "Geen Ribx bestanden gevonden.")
 
-    merged_elements = None
+    merged_elems = None  # the <DATA> wrapper element
     for ribxfile in ribx_files:
         data = etree.parse(ribxfile).getroot()
+
+        # Set root with initial data in the first loop
+        if merged_elems is None:
+            merged_elems = data
+            continue  # TODO: uncomment
+
         for elem in data.getchildren():
-            if merged_elements is None:
-                merged_elements = data  # Set root with initial data
-            else:
-                if _is_activity(elem.tag):
-                    merged_elements.append(elem)
+            rea = RibxElementAnalyzer(elem)
+            if not rea.is_activity:
+                continue
+            if (rea.has_duplicate_ref(merged_elems) and
+                    rea.has_duplicate_date(merged_elems) and
+                    rea.has_duplicate_time(merged_elems) and
+                    rea.has_duplicate_manhole_start(merged_elems)):
+                continue
+            merged_elems.append(elem)
 
     # Check some mandatory tags
     try:
-        language = merged_elements.xpath('/*/*/A2')[0]
-        ribx_version = merged_elements.xpath('/*/*/A6')[0]
+        language = merged_elems.xpath('/*/*/A2')[0]
+        ribx_version = merged_elems.xpath('/*/*/A6')[0]
         logger.debug("A2: %s, A6: %s", language, ribx_version)
     except IndexError:
         logger.exception("No A2 and/or A6 tag in Ribx.")
         return (None, "Geen A2 en/of A6 tag in Ribx")
 
-    return (etree.ElementTree(merged_elements), "")
+    return (etree.ElementTree(merged_elems), "")
 
 
 def export_mergeribx(export_run):
-    ribx_files = [f for f in export_run.all_measurement_files() if
-                  f.endswith('ribx')]
+    ribx_files = [
+        f for f in export_run.all_measurement_files_by_desc_timestamp() if
+        f.endswith('ribx')]
     merged_ribx, error_msg = merge_ribx(ribx_files)
 
     if not merged_ribx:

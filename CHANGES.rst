@@ -4,7 +4,8 @@ Changelog of lizard-progress
 3.10 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Improve Ribx merge strategy by identifying duplicates by their unique
+  identifying fields and only saving them once.
 
 
 3.9 (2016-12-13)

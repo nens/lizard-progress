@@ -1870,13 +1870,18 @@ class ExportRun(models.Model):
             measurement.abs_file_path
             for measurement in self.measurements_to_export())
 
-    def all_measurement_files(self):
+    def all_measurement_files_by_desc_timestamp(self):
         """A modified version of 'abs_files_to_export' which doesn't check
-        for a Location's completeness."""
+        for a Location's completeness, sorted by descending timestamp.
+        """
         measurements_to_export = Measurement.objects.filter(
-            location__activity=self.activity).select_related()
-        return set(measurement.abs_file_path
-                   for measurement in measurements_to_export)
+            location__activity=self.activity).order_by(
+                '-timestamp').select_related()
+        to_export = []
+        for measurement in measurements_to_export:
+            if measurement.abs_file_path not in to_export:
+                to_export.append(measurement.abs_file_path)
+        return to_export
 
     def abs_export_filename(self, extension="zip"):
         """Return the filename that the result file should use."""

@@ -208,7 +208,7 @@ def merge_ribx(ribx_files):
         # Set root with initial data in the first loop
         if merged_elems is None:
             merged_elems = data
-            continue  # TODO: uncomment
+            continue
 
         for elem in data.getchildren():
             rea = RibxElementAnalyzer(elem)

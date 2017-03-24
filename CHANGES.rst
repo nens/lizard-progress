@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.11 (unreleased)
+3.11 (2017-03-24)
 -----------------
 
 - Use profile midpoint instead of start_point for the ``TOO_FAR_FROM_LOCATION``

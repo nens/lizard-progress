@@ -464,10 +464,12 @@ class MetParser(specifics.ProgressParser):
             point = Point(profile.start_x, profile.start_y)
             location = self.activity.get_or_create_location(
                 location_code=profile.id, point=point)
-            profile_point = profile.start_point
 
+            # metfilelib points
+            profile_point = profile.midpoint
             location_point = linear_algebra.Point(
                 x=location.the_geom.x, y=location.the_geom.y)
+
             distance = location_point.distance(profile_point)
             maxdistance = self.config_value('maximum_location_distance')
             if distance > maxdistance:

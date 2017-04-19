@@ -58,12 +58,13 @@ def process_capturing_errors(uploaded_file):
         uploaded_file.success = False
         uploaded_file.linelike = False
         uploaded_file.save()
+        # Give a generic error message for the user
         uploaded_file.uploadedfileerror_set.create(
             line=0,
             error_code="EXCEPTION",
             error_message=(
-                "Fout tijdens verwerken van de file: {0}, {1}"
-                .format(e, traceback.format_exc()))[:300])
+                "Onbekende fout opgetreden tijdens het verwerken van het "
+                "bestand {0}".format(uploaded_file.filename))[:300])
 
 
 def process(uploaded_file):

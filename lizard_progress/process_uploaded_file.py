@@ -53,7 +53,7 @@ def process_capturing_errors(uploaded_file):
     except Exception as e:
         # Something went wrong. Record it as an error at line 0, what
         # else to do.
-        logger.exception("Error processing uploaded file.")
+        logger.exception("Error processing uploaded file: %s.", e)
         uploaded_file.ready = True
         uploaded_file.success = False
         uploaded_file.linelike = False
@@ -63,7 +63,7 @@ def process_capturing_errors(uploaded_file):
             error_code="EXCEPTION",
             error_message=(
                 "Fout tijdens verwerken van de file: {0}, {1}"
-                .format(e, traceback.format_exc())))
+                .format(e, traceback.format_exc()))[:300])
 
 
 def process(uploaded_file):

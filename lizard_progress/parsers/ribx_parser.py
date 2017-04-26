@@ -173,7 +173,7 @@ class RibxParser(ProgressParser):
             # Return, because unusable XML.
             return self._parser_result([])
 
-        if settings.GWSW_API_ENABLED:
+        if settings.GWSW_API_ENABLED and not self.project.is_simple:
             try:
                 gwsw_errors = check_gwsw(self.file_object)
             except (ValueError, KeyError, requests.exceptions.HTTPError):

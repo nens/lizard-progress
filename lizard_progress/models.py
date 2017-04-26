@@ -164,6 +164,11 @@ class ProjectType(models.Model):
         help_text=_("If this is True, multiple recent uploads to one location "
                     "will be marked by numbers on the map page. Used to find "
                     "frequently recurring problems."), default=False)
+    simple_upload = models.BooleanField(
+        help_text="A simplified project without scheduling of measurements, "
+                  "without (non-essential) checks, and with a simplified "
+                  "interface.",
+        default=False)
 
     class Meta:
         unique_together = (('name', 'organization'),)
@@ -283,9 +288,11 @@ def has_access(user=None, project=None, contractor=None, userprofile=None):
         # Everybody in the project's organization can see it.
         return True
 
-    # A user may only see projects of other organizations if this user
-    # is an Uploader.
-    if not userprofile.has_role(UserRole.ROLE_UPLOADER):
+    # A user may only see projects of other organizations if (1) this user
+    # is an Uploader or (2) if the user is a contractor in a simple
+    # project.
+    if not userprofile.has_role(UserRole.ROLE_UPLOADER) and \
+            not project.is_simple:
         return False
 
     if contractor:
@@ -465,6 +472,10 @@ class Project(ProjectActivityMixin, models.Model):
     @property
     def percentage_done(self):
         return self.percentage(self.number_of_locations(), self.number_of_complete_locations())
+
+    @property
+    def is_simple(self):
+        return bool(self.project_type and self.project_type.simple_upload)
 
     def is_complete(self):
         """Project is complete if there are any activities, and they are

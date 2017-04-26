@@ -282,6 +282,21 @@ class ProjectsMixin(object):
                                           mtypes])))
         return user_mtypes
 
+    @property
+    def is_simple(self):
+        """A simplified project."""
+        return self.project.is_simple
+
+    @property
+    def user_is_viewer(self):
+        """A viewer is basically a contractor in a simple project, for which
+        we want to show a simplified interface. The exception is if you're
+        the contractor in your own project.
+        """
+        return (self.is_simple and
+                self.project.organization != self.profile.organization)
+
+
 class KickOutMixin(object):
     """Checks that the current user is logged in and has an
     organization. Sets self.organization if this is true, otherwise

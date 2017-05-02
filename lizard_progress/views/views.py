@@ -167,15 +167,6 @@ class ProjectsMixin(object):
             return False
         return self.project.can_upload(self.request.user)
 
-    def user_is_uploader(self):
-        """User is an upload if his organization is a contractor in
-        this project and user has role ROLE_UPLOADER."""
-        return (self.user_has_uploader_role() and
-                (not self.project or models.Activity.objects.filter(
-                    project=self.project,
-                    contractor=self.profile.organization)
-                 .exists()))
-
     def user_has_uploader_role(self):
         return (
             self.profile and
@@ -279,7 +270,7 @@ class ProjectsMixin(object):
             organization=self.profile.organization
         ))
         user_mtypes = sorted(list(set([str(x.mtype) for x in
-                                          mtypes])))
+                                       mtypes])))
         return user_mtypes
 
     @property

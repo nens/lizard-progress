@@ -81,7 +81,7 @@ class NewProjectForm(forms.Form):
                         'data-live-search': 'true'
                     }
                 ),
-                label=_("Contractor") + " " + str(i),
+                label=_("Contractor/viewer") + " " + str(i),
                 queryset=models.Organization.objects.all(),
                 required=False
             )

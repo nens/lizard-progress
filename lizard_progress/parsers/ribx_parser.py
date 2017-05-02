@@ -160,6 +160,11 @@ class RibxParser(ProgressParser):
         "Kies een nieuwe naam.",
     }
 
+    @property
+    def gwsw_is_enabled(self):
+        """Only enable GWSW API for non-simple projects."""
+        return settings.GWSW_API_ENABLED and not self.project.is_simple
+
     def parse(self, check_only=False):
         if isinstance(self.file_object, ImageFile):
             return UnSuccessfulParserResult()
@@ -173,7 +178,7 @@ class RibxParser(ProgressParser):
             # Return, because unusable XML.
             return self._parser_result([])
 
-        if settings.GWSW_API_ENABLED and not self.project.is_simple:
+        if self.gwsw_is_enabled:
             try:
                 gwsw_errors = check_gwsw(self.file_object)
             except (ValueError, KeyError, requests.exceptions.HTTPError):

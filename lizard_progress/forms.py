@@ -260,7 +260,7 @@ class AddActivityForm(forms.Form):
 
     contractor = forms.ModelChoiceField(
         widget=forms.Select(attrs={'class' : 'form-control'}),
-        label=_("Contractor"),
+        label=_("Contractor/viewer"),
         queryset=models.Organization.objects.all(),
         required=True)
 

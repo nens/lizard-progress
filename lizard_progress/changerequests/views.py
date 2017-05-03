@@ -48,7 +48,7 @@ class ChangeRequestsPage(ActivityView):
         return requests
 
     def recently_closed_requests(self):
-        if not self.user_is_uploader():
+        if not self.user_is_activity_uploader():
             return None
 
         requests = list(
@@ -167,7 +167,7 @@ class AcceptOrRefuseRequest(RequestDetailPage):
                 else:
                     return self.get(request, project_slug)
         elif request.POST.get('withdraw'):
-            if not self.user_is_uploader() or self.user_is_manager():
+            if not self.user_is_activity_uploader() or self.user_is_manager():
                 raise PermissionDenied()
             self.changerequest.withdraw()
 

@@ -26,7 +26,7 @@
               <i class="fa fa-tasks"></i>&nbsp;<a href="../dashboard">{{ view.project.name }}</a> /  {{ view.activity.name }} ({{ view.activity.contractor }})
             </h3> -->
             <div class="btn-group pull-right">
-            {% if view.show_planning_menu %}
+            {% if view.show_planning_menu and not view.user_is_viewer %}
             <a href="./planning/">
             <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Planning werkzaamheid">
               <i class="fa fa-calendar"></i>
@@ -38,25 +38,27 @@
             <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Instellingen werkzaamheid">
               <i class="fa fa-cog"></i>
             </button>
-            </a> 
+            </a>
             {% endif %}
+            {% if not view.user_is_viewer %}
             <a href="./changerequests/">
             <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Toon alle aanvragen">
               <i class="fa fa-question-circle"></i>&nbsp;{{view.activity.open_requests.count}} aanvr{{view.activity.open_requests.count|pluralize:'aag,agen'}}
             </button>
-            </a>     
-            {% if view.user_is_uploader %}
+            </a>
+            {% endif %}
+            {% if view.user_is_activity_uploader and not view.user_is_viewer %}
             <a href="./upload/">
             <button class="btn btn-sm btn-default" data-toggle="tooltip" data-placement="top" title="Uploaden">
               <i class="fa fa-cloud-upload"></i>&nbsp;Uploaden
             </button>
             </a>
-            {% endif %}            
+            {% endif %}
             </div>
           </div>
 
           <div class="panel-body">
-         
+
             <div class="col-md-3">
               <div class="panel panel-default">
                 <div class="panel-heading"><h4 class="panel-title" style="color:#777">Voortgang {{ view.activity.name }}</h4></div>
@@ -64,18 +66,24 @@
               </div>
             </div>
             <dl style="float: left;">
+              {% if view.is_simple %}
+              <dt>Organisatie:</dt>
+              {% else %}
               <dt>Opdrachtnemer:</dt>
+              {% endif %}
               <dd>{{ view.activity.contractor }}</dd>
               <dt>Type meting:</dt>
               <dd>{{ view.activity.measurement_type }}</dd>
               {% if view.user_is_manager %}
                 <dt>Planning:</dt>
                 <dd>
-                
+
                 <a href="{% url "lizard_progress_planningview" project_slug=view.project.slug activity_id=view.activity_id %}"><button class="btn btn-sm btn-default"><i class="fa fa-calendar"></i>&nbsp;Locaties inplannen</button></a></dd>
               {% endif %}
+              {% if not view.user_is_viewer %}
               <dt>Open aanvragen:</dt>
               <dd><a href="./changerequests/">{{ view.activity.open_requests.count }} aanvr{{view.activity.open_requests.count|pluralize:'aag,agen'}}</a></dd>
+              {% endif %}
             </dl>
 
           </div>

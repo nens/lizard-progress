@@ -81,10 +81,17 @@ class ActivityMixin(object):
 
     @property
     def user_is_activity_uploader(self):
-        """User is an uploader if this organization is the contractor for
-        this activity and user has role ROLE_UPLOADER."""
-        return (self.user_has_uploader_role() and
-                self.activity.contractor == self.organization)
+        """User is an uploader if the user has the role ROLE_UPLOADER and (1)
+        this organization is the contractor for this activity, or (2) the
+        project owning organisation is the same as this organization.
+        """
+        is_contracted_uploader = (
+            self.user_has_uploader_role() and
+            self.activity.contractor == self.organization)
+        is_project_owner_in_simple_project = (
+            self.activity.project.organization == self.organization and
+            self.is_simple)
+        return is_contracted_uploader or is_project_owner_in_simple_project
 
     @property
     def date_planning(self):
@@ -106,6 +113,10 @@ class ActivityMixin(object):
         return (self.user_is_manager() or (
             self.date_planning and self.user_is_activity_uploader))
 
+    @property
+    def show_date_planning_menu(self):
+        return (self.date_planning and self.user_is_activity_uploader and
+                not self.is_simple)
 
 
 class ActivityView(KickOutMixin, ProjectsMixin, ActivityMixin, UiView):

@@ -34,8 +34,8 @@ msgid "Project type (optional)"
 msgstr "Projecttype (optioneel)"
 
 #: forms.py:77 forms.py:242
-msgid "Contractor"
-msgstr "Opdrachtnemer"
+msgid "Contractor/viewer"
+msgstr "Opdrachtnemer/viewer"
 
 #: forms.py:83 forms.py:236
 msgid "Measurement type"

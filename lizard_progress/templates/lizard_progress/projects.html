@@ -204,6 +204,9 @@ $( window ).resize(function() {
                                   <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe">door: {{ log.activity.contractor }}</span></li>
                               {% endif %}
                                 <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe">met: {{ log.num_measurements }} meting{% if log.num_measurements == 0 or log.num_measurements > 1 %}en{% endif %}</span></li>
+                              {% if project.project_type %}
+                              <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe"><strong>Projecttype: {{ project.project_type }}</strong></span></li>
+                              {% endif %}
                             </ul>
                             {% else %}
                               <p style="color:#494949 !important" class="project-no-latest">(Er is nog geen laatste upload.)</p>

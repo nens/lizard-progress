@@ -20,7 +20,13 @@
           gepland. Als u een eerste planning voor een werkzaamheid wilt
           uploaden, bent u wellicht bij de verkeerde werkzaamheid.
         </div>
-        {% endif %}        
+        {% endif %}
+
+        {% if view.is_simple %}
+        <div class="panel-body alert alert-info">
+          <strong>Opmerking:</strong> dit is een simpel projecttype en vereist geen tijdsplanning via shapefile.
+        </div>
+        {% endif %}
 
         <div class="panel-body">
           {% with mtype=view.activity.measurement_type %}

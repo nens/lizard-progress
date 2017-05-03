@@ -469,10 +469,6 @@ class MetParser(specifics.ProgressParser):
             location_point = linear_algebra.Point(
                 x=location.the_geom.x, y=location.the_geom.y)
             if not profile.midpoint:
-                self.record_error_code(
-                    line_number=profile.line_number,
-                    error_code='MET_CANNOT_DETERMINE_MIDPOINT'
-                    )
                 return None
             distance = location_point.distance(profile.midpoint)
             maxdistance = self.config_value('maximum_location_distance')

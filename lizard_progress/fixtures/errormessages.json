@@ -390,13 +390,5 @@
         },
         "model": "lizard_progress.errormessage",
         "pk": 49
-    },
-    {
-        "fields": {
-            "error_code": "MET_CANNOT_DETERMINE_MIDPOINT",
-            "error_message": "Kan geen middelpunt bepalen."
-        },
-        "model": "lizard_progress.errormessage",
-        "pk": 50
     }
 ]

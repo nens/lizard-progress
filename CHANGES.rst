@@ -4,8 +4,8 @@ Changelog of lizard-progress
 3.12 (unreleased)
 -----------------
 
-- Fix crash in MET parser when no midpoint can be determined, and also add
-  a new error for it.
+- Fix crash in MET parser when no midpoint can be determined (to catch this
+  error the 22 code check should be used).
 
 - Add simple project option
 

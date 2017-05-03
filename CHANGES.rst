@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.12 (unreleased)
+3.12 (2017-05-03)
 -----------------
 
 - Fix crash in MET parser when no midpoint can be determined (to catch this

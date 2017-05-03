@@ -471,6 +471,8 @@ class MetParser(specifics.ProgressParser):
             if profile.midpoint:
                 distance = location_point.distance(profile.midpoint)
             else:
+                # This can sometimes happen e.g. if there is no water in a ditch.
+                # Then we just use the start_point instead.
                 distance = location_point.distance(profile.start_point)
             maxdistance = self.config_value('maximum_location_distance')
             if distance > maxdistance:

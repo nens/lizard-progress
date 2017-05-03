@@ -469,12 +469,9 @@ class MetParser(specifics.ProgressParser):
             location_point = linear_algebra.Point(
                 x=location.the_geom.x, y=location.the_geom.y)
             if not profile.midpoint:
-                self.record_error(
-                    profile.line_number,
-                    # this is custom error code, TODO: maybe put it in the
-                    # errormessages.json fixture
-                    'CANNOT_DETERMINE_MIDPOINT',
-                    'Kan geen middelpunt bepalen'
+                self.record_error_code(
+                    line_number=profile.line_number,
+                    error_code='MET_CANNOT_DETERMINE_MIDPOINT'
                     )
                 return None
             distance = location_point.distance(profile.midpoint)

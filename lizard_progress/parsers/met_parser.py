@@ -466,11 +466,14 @@ class MetParser(specifics.ProgressParser):
                 location_code=profile.id, point=point)
 
             # metfilelib points
-            profile_point = profile.midpoint
             location_point = linear_algebra.Point(
                 x=location.the_geom.x, y=location.the_geom.y)
-
-            distance = location_point.distance(profile_point)
+            if profile.midpoint:
+                distance = location_point.distance(profile.midpoint)
+            else:
+                # This can sometimes happen e.g. if there is no water in a ditch.
+                # Then we just use the start_point instead.
+                distance = location_point.distance(profile.start_point)
             maxdistance = self.config_value('maximum_location_distance')
             if distance > maxdistance:
                 self.record_error_code(

@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.13 (unreleased)
+3.13 (2017-05-08)
 -----------------
 
 - Fix bug in GWSW check property.

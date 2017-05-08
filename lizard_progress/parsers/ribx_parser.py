@@ -163,7 +163,8 @@ class RibxParser(ProgressParser):
     @property
     def gwsw_is_enabled(self):
         """Only enable GWSW API for non-simple projects."""
-        return settings.GWSW_API_ENABLED and not self.project.is_simple
+        return (
+            settings.GWSW_API_ENABLED and not self.activity.project.is_simple)
 
     def parse(self, check_only=False):
         if isinstance(self.file_object, ImageFile):

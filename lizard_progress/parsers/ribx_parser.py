@@ -279,7 +279,14 @@ class RibxParser(ProgressParser):
                     self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
                 return None
             else:
-                location = self.create_new(item)
+                try:
+                    location = self.create_new(item)
+                except ValueError:
+                    self.record_error(
+                        item.sourceline,
+                        'CANT_CREATE_LOCATION',
+                        "Can't create location {}".format(item.ref))
+                    return None
 
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement

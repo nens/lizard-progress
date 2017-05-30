@@ -286,7 +286,8 @@ def export_mergeribx(export_run):
 
     with open(merged_ribx_path, 'w') as output:
             xml_string = etree.tostring(merged_ribx, xml_declaration=True,
-                                        encoding=merged_ribx.docinfo.encoding)
+                                        encoding=merged_ribx.docinfo.encoding,
+                                        pretty_print=True)
             output.write(xml_string)
 
     export_run.rel_file_path = merged_ribx_path

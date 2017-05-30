@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.14 (unreleased)
+3.14 (2017-05-30)
 -----------------
 
 - Fix bug in ribx merge export due to unexpected comments in ribx file.

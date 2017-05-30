@@ -28,7 +28,7 @@ import shutil
 import tempfile
 import zipfile
 
-from lxml import etree
+from lxml import etree, objectify
 import shapefile
 
 from metfilelib.util import dxf
@@ -236,7 +236,10 @@ def merge_ribx(ribx_files):
 
     merged_elems = None  # the <DATA> wrapper element
     for ribxfile in ribx_files:
-        data = etree.parse(ribxfile).getroot()
+        # Parser that ignores comments
+        parser = objectify.makeparser(remove_comments=True)
+        tree = objectify.parse(ribxfile, parser=parser)
+        data = tree.getroot()
 
         # Set root with initial data in the first loop
         if merged_elems is None:

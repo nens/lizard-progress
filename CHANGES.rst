@@ -4,7 +4,7 @@ Changelog of lizard-progress
 3.15 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fixed a non-working ``__init__`` in a weird subclassed namedtuple.
 
 
 3.14 (2017-05-30)

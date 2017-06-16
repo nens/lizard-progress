@@ -23,10 +23,6 @@ class MapLayer(namedtuple(
         'MapLayer', 'name adapter_class adapter_layer_json extent')):
     """Class that represents a map layers that can be added to a lizard-map
     WorkspaceEdit."""
-    def __init__(self, name, adapter_class, adapter_layer_json, extent=None):
-        """Allow omitting the extent."""
-        return super(MapLayer, self).__init__(
-            name, adapter_class, adapter_layer_json, extent)
 
     @property
     def truncated_name(self):

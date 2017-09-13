@@ -35,6 +35,8 @@ install_requires = [
     ],
 
 tests_require = [
+    'coverage',
+    'nose',
     ]
 
 setup(name='lizard-progress',

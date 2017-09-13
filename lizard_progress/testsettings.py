@@ -29,7 +29,7 @@ DATABASES = {
         'ENGINE': 'lizard_progress.db_backend',
         'USER': 'buildout',
         'PASSWORD': 'buildout',
-        'HOST': '',  # empty string for localhost.
+        'HOST': 'db',  # The 'db' host from docker-compose.yml
         'PORT': '',  # empty string for default.
     }
 }

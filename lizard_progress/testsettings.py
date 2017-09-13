@@ -14,7 +14,61 @@ SETTINGS_DIR = os.path.dirname(os.path.realpath(__file__))
 # BUILDOUT_DIR/var/static files to give django-staticfiles a proper place
 # to place all collected static files.
 BUILDOUT_DIR = os.path.abspath(os.path.join(SETTINGS_DIR, '..'))
-LOGGING = setup_logging(BUILDOUT_DIR)
+#LOGGING = setup_logging(BUILDOUT_DIR)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'simple':  {
+            'format': '%(levelname)s %(message)s'},
+        'verbose': {
+            'format': '%(asctime)s %(name)s %(levelname)s\n%(message)s'}
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'level': None
+        },
+        'logfile': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BUILDOUT_DIR, 'var', 'log', 'django.log'),
+            'formatter': 'verbose',
+            'level': 'WARN'
+        },
+        'null': {
+            'class': 'logging.NullHandler',
+            'level': 'DEBUG'
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True
+        },
+        'django.request': {
+            'handlers': ['console', 'logfile'],
+            'propagate': False,
+            'level': 'WARN',  # WARN also shows 404 errors
+        },
+        'django.db.backends': {
+            'handlers': ['null'],
+            'level': 'WARN',
+            'propagate': False
+        },
+        'south': {
+            'handlers': ['null'],
+            'level': 'WARN',
+            'propagate': False
+        },
+        'factory': {
+            'handlers': ['null'],
+            'level': 'DEBUG',
+            'propagate': False
+        }
+    }
+}
 
 SECRET_KEY = "Does not need to be secret"
 
@@ -29,7 +83,7 @@ DATABASES = {
         'ENGINE': 'lizard_progress.db_backend',
         'USER': 'buildout',
         'PASSWORD': 'buildout',
-        'HOST': '',  # empty string for localhost.
+        'HOST': 'db',  # The 'db' host from docker-compose.yml
         'PORT': '',  # empty string for default.
     }
 }

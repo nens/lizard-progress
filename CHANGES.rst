@@ -4,6 +4,8 @@ Changelog of lizard-progress
 3.15 (unreleased)
 -----------------
 
+- Modernised setup a bit by adding docker and a Jenkinsfile.
+
 - Fixed a non-working ``__init__`` in a weird subclassed namedtuple.
 
 

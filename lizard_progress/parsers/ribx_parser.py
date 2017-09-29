@@ -193,6 +193,7 @@ class RibxParser(ProgressParser):
         if not measurements:
             self.record_error(0, None, 'Bestand bevat geen gegevens.')
 
+        self.check_angle_measurements(ribx)
         return self._parser_result(measurements)
 
     def get_measurements(self, ribx):
@@ -239,6 +240,51 @@ class RibxParser(ProgressParser):
                         self.min_y, self.max_y))
                 error = True
         return error
+
+    def check_angle_measurements(self, ribx):
+        # "Hellinghoek" checks
+        MINIMUM_LENGTH_FOR_CHECK = 3.0
+        LENGTH_ADJUSTMENT = 3.0
+        LENGTH_MULTIPLIER = 6
+
+        for inspection_pipe in ribx.inspection_pipes:
+            # Note: abbreviated 'observation' to 'obs' in the code below.
+            starts = [obs for obs in inspection_pipe.observations
+                      if obs.observation_type == 'BCD']
+            ends = [obs for obs in inspection_pipe.observations
+                    if obs.observation_type in ['BDC', 'BCE']]
+            if not (starts and ends):
+                logger.error(
+                    "Either measurement start (%s) or end (%s) missing",
+                    starts, ends)
+                msg = ("Measurement start and/or end missing for "
+                       "inspection pipe %s")
+                self.record_error(0, None, msg % inspection_pipe.ref)
+                continue
+            start_distance = starts[0].distance
+            end_distance = ends[0].distance
+            inspection_length = end_distance - start_distance
+            logger.debug("Pipe %s: inspection length = %s",
+                         inspection_pipe.ref, inspection_length)
+            if inspection_length < MINIMUM_LENGTH_FOR_CHECK:
+                logger.debug(
+                    "Inspection length is less than %s, skipping the check",
+                    MINIMUM_LENGTH_FOR_CHECK)
+                continue
+
+            num_observations_required = (
+                (inspection_length - LENGTH_ADJUSTMENT) * LENGTH_MULTIPLIER)
+            num_observations = len([obs for obs in inspection_pipe.observations
+                                    if obs.observation_type == 'BXA'])
+            msg = "Pipe %s: #angle observations required: %s, #found: %s"
+            if num_observations < num_observations_required:
+                logger.error(msg, inspection_pipe.ref,
+                             num_observations_required, num_observations)
+                self.record_error(0, None, msg % (
+                    inspection_pipe.ref, num_observations_required, num_observations))
+            else:
+                logger.debug(msg, inspection_pipe.ref,
+                             num_observations_required, num_observations)
 
     def create_deletion_request(self, item):
         # Deletion requests can only handle point geometries;

@@ -1,13 +1,12 @@
+from django.test import TestCase
+from lizard_progress.changerequests.models import Request
+from lizard_progress.parsers import ribx_parser
+from lizard_progress.tests import test_models
+from lizard_progress.tests.base import FixturesTestCase
+
 import datetime
 import mock
-
 import osgeo.ogr
-
-from lizard_progress.tests import test_models
-
-from lizard_progress.parsers import ribx_parser
-from lizard_progress.changerequests.models import Request
-from lizard_progress.tests.base import FixturesTestCase
 
 # Some helper variables for when the actual value doesn't matter.
 today = datetime.date.today()
@@ -158,3 +157,75 @@ class TestRibxParser2(FixturesTestCase):
 
         self.assertEquals(m3.id, m2.id)
         self.assertEquals(m4.id, m1.id)
+
+
+class TestRibxParserAngleCheck(TestCase):
+
+    def setUp(self):
+        self.inspection_pipe = mock.Mock()
+        self.inspection_pipe.observations = []
+        self.ribx = mock.Mock()
+        self.ribx.inspection_pipes = [self.inspection_pipe]
+        self.parser = ribx_parser.RibxParser(None, None)
+
+    def test_missing_start_node(self):
+        """Fail on missing start node"""
+        obs_end = mock.Mock(observation_type='BDC',
+                            distance=20)
+        self.inspection_pipe.observations.append(obs_end)
+        self.parser.check_angle_measurements(self.ribx)
+        self.assertEqual(len(self.parser.errors), 1)
+
+    def test_short_length_ok(self):
+        """No errors if inspection length is less than 3 meters"""
+        obs_start = mock.Mock(observation_type='BCD',
+                              distance=0)
+        obs_end = mock.Mock(observation_type='BDC',
+                            distance=1)
+        self.inspection_pipe.observations.append(obs_start)
+        self.inspection_pipe.observations.append(obs_end)
+        self.parser.check_angle_measurements(self.ribx)
+        self.assertEqual(len(self.parser.errors), 0)
+
+    def test_not_enough_measurements_1(self):
+        """Not enough measurements (0) found"""
+        obs_start = mock.Mock(observation_type='BCD',
+                              distance=0)
+        obs_end = mock.Mock(observation_type='BDC',
+                            distance=20)
+        self.inspection_pipe.observations.append(obs_start)
+        self.inspection_pipe.observations.append(obs_end)
+        self.parser.check_angle_measurements(self.ribx)
+        self.assertEqual(len(self.parser.errors), 1)
+
+    def test_not_enough_measurements_2(self):
+        """Not enough measurements found"""
+        obs_start = mock.Mock(observation_type='BCD',
+                              distance=0)
+        obs_end = mock.Mock(observation_type='BDC',
+                            distance=20)
+        for i in range(20):
+            # One every meter is not enough
+            obs = mock.Mock(observation_type='BXA',
+                            distance=i)
+            self.inspection_pipe.observations.append(obs)
+        self.inspection_pipe.observations.append(obs_start)
+        self.inspection_pipe.observations.append(obs_end)
+        self.parser.check_angle_measurements(self.ribx)
+        self.assertEqual(len(self.parser.errors), 1)
+
+    def test_enough_measurements_2(self):
+        """Not enough measurements found"""
+        obs_start = mock.Mock(observation_type='BCD',
+                              distance=0)
+        obs_end = mock.Mock(observation_type='BDC',
+                            distance=20)
+        for i in range(20 * 10):
+            # 10 per meter is plenty.
+            obs = mock.Mock(observation_type='BXA',
+                            distance=i * 0.1)
+            self.inspection_pipe.observations.append(obs)
+        self.inspection_pipe.observations.append(obs_start)
+        self.inspection_pipe.observations.append(obs_end)
+        self.parser.check_angle_measurements(self.ribx)
+        self.assertEqual(len(self.parser.errors), 0)

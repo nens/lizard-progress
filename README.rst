@@ -4,6 +4,29 @@ lizard-progress
 This is a generic Lizard app for keeping track of the progress of large
 measurement projects.
 
+Local setup
+-----------
+
+There's a docker, so do a one-time-only::
+
+  $ docker-compose build
+
+There's no `bootstrap.py` anymore, instead just run::
+
+  $ docker-compose run web buildout
+
+And to start django::
+
+  $ docker-compose up
+
+And to run the tests::
+
+  $ docker-compose run web bin/test
+
+
+Usage
+-----
+
 Split off from a project where measurements were taken of a large
 number of points along waterways, consisting of depth measurements,
 photos and other data.

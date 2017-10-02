@@ -249,6 +249,11 @@ class RibxParser(ProgressParser):
 
         for inspection_pipe in ribx.inspection_pipes:
             # Note: abbreviated 'observation' to 'obs' in the code below.
+            #
+            # The three-letter strings' definitions are not all known. BCD is
+            # the start of a measurement run, BDC the end. BCE is probably the
+            # end of a measurement run if there's a problem (like an
+            # obstruction). BXA is an angle measurement.
             starts = [obs for obs in inspection_pipe.observations
                       if obs.observation_type == 'BCD']
             ends = [obs for obs in inspection_pipe.observations

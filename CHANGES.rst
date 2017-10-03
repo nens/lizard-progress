@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.15 (unreleased)
+3.15 (2017-10-03)
 -----------------
 
 - Modernised setup a bit by adding docker and a Jenkinsfile.

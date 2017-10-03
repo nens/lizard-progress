@@ -8,6 +8,11 @@ Changelog of lizard-progress
 
 - Fixed a non-working ``__init__`` in a weird subclassed namedtuple.
 
+- Requiring at ribxlib > 0.10: this version parses more "observations"
+  information which is needed for checking angle measurements.
+
+- Added check for minimum number of angle measurements ("hellinghoek").
+
 
 3.14 (2017-05-30)
 -----------------

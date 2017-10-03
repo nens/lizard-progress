@@ -28,5 +28,8 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
 && apt-get clean -y
 
+RUN pip install --upgrade pip setuptools
+RUN pip install zc.buildout
+
 VOLUME /code
 WORKDIR /code

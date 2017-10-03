@@ -55,6 +55,10 @@ class UploadedFileAdmin(admin.ModelAdmin):
     ordering = ('-uploaded_at',)
 
 
+class UploadedFileErrorAdmin(admin.ModelAdmin):
+    raw_id_fields = ['uploaded_file']
+
+
 class ProjectAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'organization', 'is_archived')
     search_fields = ['name', 'slug', 'organization__name']
@@ -88,5 +92,5 @@ admin.site.register(models.ExpectedAttachment, ExpectedAttachmentAdmin)
 admin.site.register(models.MeasurementTypeAllowed)
 admin.site.register(models.Measurement, MeasurementAdmin)
 admin.site.register(models.UploadedFile, UploadedFileAdmin)
-admin.site.register(models.UploadedFileError)
+admin.site.register(models.UploadedFileError, UploadedFileErrorAdmin)
 admin.site.register(models.UploadLog)

@@ -5,7 +5,7 @@ pipeline {
     stages {
         stage("Checkout") {
             steps {
-                sh echo "Krijg nou het rasborakoudumakulatavirus"
+                sh "echo 'Krijg nou het rasborakoudumakulatavirus'"
                 checkout scm
             }
         }

@@ -11,8 +11,6 @@ pipeline {
         }
         stage("Build") {
             steps {
-                sh "echo 'COMPOSE_PROJECT_NAME=${env.JOB_NAME}-${env.BUILD_ID}' > .env"
-                sh "cat .env"
                 sh "docker-compose down -v"
                 sh "docker-compose build"
                 sh "docker-compose run web buildout"

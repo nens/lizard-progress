@@ -1,8 +1,11 @@
 pipeline {
+    agent any
+    environment {
+        COMPOSE_PROJECT_NAME = "${env.JOB_NAME}-${env.BUILD_ID}"
+    }
     stages {
         stage("Checkout") {
             steps {
-                sh "echo 'Krijg nou het rasborakoudumakulatavirus'"
                 checkout scm
             }
         }

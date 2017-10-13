@@ -1,12 +1,10 @@
 pipeline {
     agent any
-    environment {
-        COMPOSE_PROJECT_NAME = "${env.JOB_NAME}-${env.BUILD_ID}"
-    }
     stages {
         stage("Checkout") {
             steps {
                 checkout scm
+                sh "echo 'COMPOSE_PROJECT_NAME=${env.JOB_NAME}-${env.BUILD_ID}' > .env"
             }
         }
         stage("Build") {

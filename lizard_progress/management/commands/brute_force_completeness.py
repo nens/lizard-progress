@@ -1,7 +1,7 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 # -*- coding: utf-8 -*-
 
-"""Check all locations added in the last hour and FIX the completeness"""
+"""Check all locations added in the last 15 minutes and FIX the completeness"""
 
 # Python 3 is coming
 from __future__ import unicode_literals
@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     args = ""
-    help = "Check and set completeness for locations added in the last hour"
+    help = "Check and set completeness for locations added in the last 15 minutes"
 
     def handle(self, *args, **options):
-        hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
+        hour_ago = datetime.datetime.now() - datetime.timedelta(minutes=15)
 
         for location in Location.objects.filter(timestamp__gt=hour_ago):
             if location.complete != location.check_completeness():

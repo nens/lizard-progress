@@ -4,7 +4,9 @@ Changelog of lizard-progress
 3.17 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- "Fixed" locations' completeness by adding a management command that fixes
+  all locations that have been added in the last 15 minutes. We can adjust the
+  time duration later on.
 
 
 3.16 (2017-10-13)

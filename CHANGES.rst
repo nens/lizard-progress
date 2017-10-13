@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.17 (unreleased)
+3.17 (2017-10-13)
 -----------------
 
 - "Fixed" locations' completeness by adding a management command that fixes

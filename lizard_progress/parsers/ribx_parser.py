@@ -194,8 +194,6 @@ class RibxParser(ProgressParser):
             self.record_error(0, None, 'Bestand bevat geen gegevens.')
 
         self.check_angle_measurements(ribx)
-        for location in self.activity.location_set.all():
-            location.set_completeness()
         return self._parser_result(measurements)
 
     def get_measurements(self, ribx):

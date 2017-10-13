@@ -4,7 +4,8 @@ Changelog of lizard-progress
 3.16 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fixed a problem with locations' completeness which would not be updated
+  correctly.
 
 
 3.15 (2017-10-03)

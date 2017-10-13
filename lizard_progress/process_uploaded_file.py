@@ -137,7 +137,6 @@ def try_parser(uploaded_file, parser):
     class DummyException(Exception):
         pass
 
-    location_ids_to_set_completeness_on = []
     try:
         with transaction.commit_on_success():
             # Call the parser.
@@ -159,7 +158,6 @@ def try_parser(uploaded_file, parser):
                     location.one_measurement_uploaded = True
                     location.measured_date = location.latest_measurement_date()
                     location.save()
-                    location_ids_to_set_completeness_on.append(location.id)
 
                 # Log success
                 uploaded_file.log_success(parseresult.measurements)
@@ -195,10 +193,6 @@ def try_parser(uploaded_file, parser):
                 raise DummyException()
     except DummyException:
         pass
-
-    for location in models.Location.objects.filter(
-            id__in=location_ids_to_set_completeness_on):
-        location.set_completeness()
 
     return False, errors, possible_requests
 

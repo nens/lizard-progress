@@ -4,7 +4,7 @@ Changelog of lizard-progress
 3.18 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Using Dutch error messages.
 
 
 3.17 (2017-10-13)

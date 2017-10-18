@@ -262,8 +262,8 @@ class RibxParser(ProgressParser):
                 logger.error(
                     "Either measurement start (%s) or end (%s) missing",
                     starts, ends)
-                msg = ("Measurement start and/or end missing for "
-                       "inspection pipe %s")
+                msg = ("Begin- of eindpunt van meting is niet gedefinieerd "
+                       "voor streng %s")
                 self.record_error(0, None, msg % inspection_pipe.ref)
                 continue
             start_distance = starts[0].distance
@@ -281,7 +281,8 @@ class RibxParser(ProgressParser):
                 (inspection_length - LENGTH_ADJUSTMENT) * LENGTH_MULTIPLIER)
             num_observations = len([obs for obs in inspection_pipe.observations
                                     if obs.observation_type == 'BXA'])
-            msg = "Pipe %s: #angle observations required: %s, #found: %s"
+            msg = ("Streng %s: aantal benodigde hellinghoekmetingen: %s, "
+                   "er zijn er maar %s gevonden")
             if num_observations < num_observations_required:
                 logger.error(msg, inspection_pipe.ref,
                              num_observations_required, num_observations)

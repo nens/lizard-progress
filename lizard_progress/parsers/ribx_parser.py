@@ -193,7 +193,8 @@ class RibxParser(ProgressParser):
         if not measurements:
             self.record_error(0, None, 'Bestand bevat geen gegevens.')
 
-        self.check_angle_measurements(ribx)
+        if not self.activity.project.is_simple:
+            self.check_angle_measurements(ribx)
         return self._parser_result(measurements)
 
     def get_measurements(self, ribx):

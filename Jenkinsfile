@@ -11,6 +11,7 @@ pipeline {
             steps {
                 sh "docker-compose down -v"
                 sh "docker-compose build"
+                sh "docker-compose start db"
                 sh "docker-compose run web buildout"
             }
         }

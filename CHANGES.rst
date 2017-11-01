@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.19 (unreleased)
+3.19 (2017-11-01)
 -----------------
 
 - Disabled angle checks for simple projects.

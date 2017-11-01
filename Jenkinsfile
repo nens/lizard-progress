@@ -13,6 +13,7 @@ pipeline {
                 sh "docker-compose build"
                 sh "docker-compose create"
                 sh "docker-compose run web buildout"
+                sh "docker-compose start db"
             }
         }
         stage("Test") {

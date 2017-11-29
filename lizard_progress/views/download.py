@@ -5,6 +5,7 @@
 import logging
 import os
 import platform
+from datetime import datetime
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -51,6 +52,14 @@ def file_download(request, path):
     there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
     """
     # Only works for Apache and Nginx, under Linux right now
+
+    # Download a file. Here we must update its modification date.
+    # import pdb
+    # pdb.set_trace()
+    abs_path = directories.absolute(path)
+    if os.path.exists(abs_path):
+        os.utime(abs_path, None)
+
     if settings.DEBUG or not platform.system() == 'Linux' or "+" in \
             path:
         logger.debug(
@@ -170,8 +179,17 @@ class DownloadHomeView(ProjectsView):
             })
 
     def _project_files(self):
+        # import pdb
+        # pdb.set_trace()
+
         for path in directories.abs_files_in(
                 directories.abs_project_files_dir(self.project)):
+            # Try to query the upload date of the file
+            # The file should be in models.UploadedFile
+
+            # May not be the best idea as entries in that db do not need to keep existing
+            # if the file has been succesfully uploaded...
+
             yield {
                 'type': 'Handleidingen e.d.',
                 'filename': os.path.basename(path),
@@ -187,6 +205,11 @@ class DownloadHomeView(ProjectsView):
             if has_access(self.user, self.project, activity.contractor):
                 for path in directories.abs_files_in(
                         directories.abs_reports_dir(activity)):
+                    import pdb
+                    accepted_files = models.AcceptedFile.objects.filter(activity=activity, rel_file_path=directories.relative(path))
+                    if accepted_files:
+                        accepted_file = accepted_files[0]
+
                     yield {
                         'type': 'Rapporten {}'.format(activity),
                         'filename': os.path.basename(path),
@@ -194,7 +217,9 @@ class DownloadHomeView(ProjectsView):
                         'url': self._make_url('reports',
                                               self.project,
                                               activity,
-                                              path)
+                                              path),
+                        'uploaded': accepted_file.uploaded_at,  # datetime.fromtimestamp()
+                        'last_downloaded': accepted_file.last_downloaded_at
                     }
 
     def _results_files(self):
@@ -246,6 +271,7 @@ class DownloadHomeView(ProjectsView):
                     }}
 
     def files(self):
+        # This is the 'bestanden'-tab in a project
         if not hasattr(self, '_files'):
             def sorted_on_filename(iterable):
                 return sorted(
@@ -265,6 +291,8 @@ class DownloadHomeView(ProjectsView):
                     }
             except Exception as e:
                 logger.debug(e)
+        # import pdb
+        # pdb.set_trace()
         return self._files
 
     def csv(self):

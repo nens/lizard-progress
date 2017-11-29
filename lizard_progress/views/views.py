@@ -476,6 +476,7 @@ class DashboardView(ProjectsView):
 
     @property
     def num_open_requests(self):
+        print('asdf')
         return self.project.num_open_requests
 
     @property

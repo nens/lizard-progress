@@ -96,6 +96,8 @@ class UploadView(ActivityView):
         # in Javascript because it is buggy.
 
         # Usually we return JSON, but not with the simple upload form (for IE)
+
+
         return_json = not request.POST.get("simple-upload")
 
         if not self.activity.can_upload(request.user):
@@ -153,6 +155,11 @@ class UploadMeasurementsView(UploadView):
 
         uploaded_file.schedule_processing()
 
+        # succes, create acceptedFile
+        # TODO: add rel_path_file
+
+        # models.AcceptedFile.objects.create(project=self.project)
+
         return json_response({})
 
 
@@ -172,6 +179,10 @@ class UploadReportsView(UploadView):
         # Copy the report.
         shutil.copy(path, dst)
 
+        # succes, create acceptedFile
+        models.AcceptedFile.objects.create(activity=self.activity, rel_file_path=directories.relative(dst),
+                                           file_size=os.path.getsize(dst))
+
         return json_response({})
 
 
@@ -179,6 +190,7 @@ class UploadShapefilesView(UploadView):
     exts = [".dbf", ".prj", ".sbn", ".sbx", ".shp", ".shx", ".xml"]
 
     def process_file(self, path):
+
         ext = os.path.splitext(path)[1].lower()
         if not ext in self.exts:
             msg = "Allowed file types: %s." % self.exts
@@ -192,6 +204,12 @@ class UploadShapefilesView(UploadView):
 
         # Copy the report.
         shutil.copy(path, dst)
+
+        # succes, create acceptedFile
+        import pdb
+        pdb.set_trace()
+
+        models.AcceptedFile.objects.create(project=self.project, rel_file_path=dst)
 
         return json_response({})
 

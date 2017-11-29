@@ -564,6 +564,28 @@ class Project(ProjectActivityMixin, models.Model):
         self.save()
 
 
+class AcceptedFile(models.Model):
+    """ Files which have successfully been uploaded and copied from their tmp
+    directory to their project-directory """
+    activity = models.ForeignKey('Activity', null=False, blank=False)
+
+    rel_file_path = models.CharField(max_length=1000, null=True, blank=True)
+
+    # file_size in bytes
+    file_size = models.IntegerField()
+    last_downloaded_at = models.DateTimeField(default=datetime.datetime.now)
+    uploaded_at = models.DateTimeField(default=datetime.datetime.now)
+
+    def update_last_downloaded(self):
+        pass
+
+
+    @classmethod
+    def create_accepted_file(cls, activity, rel_file_path, file_size):
+        print('creating accepted file')
+        accepted_file = cls(activity=activity, rel_file_path=rel_file_path, file_size=file_size)
+
+
 class Location(models.Model):
     LOCATION_TYPE_POINT = 'point'
     LOCATION_TYPE_PIPE = 'pipe'
@@ -1558,6 +1580,14 @@ class UploadedFile(models.Model):
 
     class PathDoesNotExist(Exception):
         pass
+
+    def get_file_size(self):
+        try:
+            return os.path.getsize(self.rel_file_path)
+        except os.error:
+            print('file is inaccessable or does not exist')
+            return -1
+
 
     def re_upload(self):
         """Make a new UploadedFile instance that refers to the same file,

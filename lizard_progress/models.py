@@ -568,22 +568,26 @@ class AcceptedFile(models.Model):
     """ Files which have successfully been uploaded and copied from their tmp
     directory to their project-directory """
     activity = models.ForeignKey('Activity', null=False, blank=False)
-
     rel_file_path = models.CharField(max_length=1000, null=True, blank=True)
-
-    # file_size in bytes
-    file_size = models.IntegerField()
+    file_size = models.IntegerField()  # in bytes
     last_downloaded_at = models.DateTimeField(default=datetime.datetime.now)
     uploaded_at = models.DateTimeField(default=datetime.datetime.now)
 
-    def update_last_downloaded(self):
-        pass
-
-
     @classmethod
-    def create_accepted_file(cls, activity, rel_file_path, file_size):
-        print('creating accepted file')
-        accepted_file = cls(activity=activity, rel_file_path=rel_file_path, file_size=file_size)
+    def create_from_path(cls, activity, rel_file_path):
+        """Create and return accepted file
+
+        Set attributes like file size according to the actual file.
+        """
+        abs_file_path = directories.absolute(rel_file_path)
+        file_size = os.path.getsize(abs_file_path)
+        last_modified = datetime.datetime.fromtimestamp(
+            os.path.getmtime(abs_file_path))
+        return cls.objects.create(activity=activity,
+                                  rel_file_path=rel_file_path,
+                                  file_size=file_size,
+                                  last_downloaded_at=last_modified,
+                                  uploaded_at=last_modified)
 
 
 class Location(models.Model):

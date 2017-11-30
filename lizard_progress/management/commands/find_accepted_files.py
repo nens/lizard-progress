@@ -49,6 +49,7 @@ class Command(BaseCommand):
 
         for (activity_id, rel_file_path) in erroneously_in_db:
             activity = Activity.objects.get(pk=activity_id)
-            AcceptedFile.objects.get(activity, rel_file_path).delete()
+            AcceptedFile.objects.get(activity=activity,
+                                     rel_file_path=rel_file_path).delete()
             logger.info("Deleted AcceptedFile for activity %s and file %s",
                          activity_id, rel_file_path)

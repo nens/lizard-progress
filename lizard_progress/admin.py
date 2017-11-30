@@ -69,6 +69,7 @@ class ActivityAdmin(admin.ModelAdmin):
     list_display = ('name', 'project', 'measurement_type', 'contractor')
     search_fields = [
         'project__name', 'name', 'measurement_type__name', 'contractor__name']
+    list_select_related = ['contractor', 'project', 'measurement_type']
 
 
 class ExpectedAttachmentAdmin(admin.ModelAdmin):

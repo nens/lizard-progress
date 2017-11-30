@@ -27,7 +27,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         os.chdir(BASE_DIR)
-        rel_paths_on_fs = glob.glob('*/*/*/uploads/*/*')
+        rel_paths_on_fs = glob.glob('*/*/*/*/*/*')
+        # Perhaps 'final_results' needs to be excluded.
         logger.debug("Found %s uploaded files in %s",
                      len(rel_paths_on_fs), BASE_DIR)
         # Activity ID is the third item in the path.

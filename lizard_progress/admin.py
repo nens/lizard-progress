@@ -76,10 +76,12 @@ class ExpectedAttachmentAdmin(admin.ModelAdmin):
     search_fields = ['filename']
     list_display = ('filename', 'uploaded')
 
+
 class AcceptedFileAdmin(admin.ModelAdmin):
     list_display = ('activity', 'rel_file_path', 'file_size',
                     'last_downloaded_at', 'uploaded_at')
     search_fields = ['activity', 'rel_file_path']
+
 
 admin.site.register(models.Hydrovak)
 admin.site.register(models.Location, LocationAdmin)

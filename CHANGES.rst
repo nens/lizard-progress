@@ -4,7 +4,7 @@ Changelog of lizard-progress
 3.20 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added last download and upload date for uploaded files.
 
 
 3.19 (2017-11-01)

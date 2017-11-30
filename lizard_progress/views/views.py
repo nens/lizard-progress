@@ -40,19 +40,19 @@ from lizard_ui.layout import Action
 from lizard_ui.views import UiView  # Don't delete, it is imported by ``views/activity.py``
 
 from lizard_progress import configuration
-from lizard_progress import models
-from lizard_progress.models import Location
-from lizard_progress.models import Project
-from lizard_progress.models import MeasurementTypeAllowed
-from lizard_progress.models import has_access
-from lizard_progress.util import directories
-from lizard_progress.util import workspaces
-from lizard_progress.util import geo
 from lizard_progress import crosssection_graph
 from lizard_progress import forms
-from lizard_progress.email_notifications.models import NotificationType
-from lizard_progress.email_notifications.models import NotificationSubscription
+from lizard_progress import models
 from lizard_progress.changerequests.models import Request
+from lizard_progress.email_notifications.models import NotificationSubscription
+from lizard_progress.email_notifications.models import NotificationType
+from lizard_progress.models import Location
+from lizard_progress.models import MeasurementTypeAllowed
+from lizard_progress.models import Project
+from lizard_progress.models import has_access
+from lizard_progress.util import directories
+from lizard_progress.util import geo
+from lizard_progress.util import workspaces
 
 logger = logging.getLogger(__name__)
 
@@ -889,7 +889,7 @@ class DeleteActivity(ProjectsView):
             raise PermissionDenied()
 
         activity = get_object_or_404(models.Activity, pk=activity_id)
-        print('activity',activity)
+        print('activity', activity)
 
         if activity.project.slug != project_slug:
             raise PermissionDenied()

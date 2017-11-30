@@ -5,6 +5,7 @@
 import logging
 import os
 import platform
+from datetime import datetime
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -51,6 +52,15 @@ def file_download(request, path):
     there. Also see the bit of nginx conf in hdsr's etc/nginx.conf.in.
     """
     # Only works for Apache and Nginx, under Linux right now
+
+    # Download a file. Here we must update its modification date.
+    accepted_files = models.AcceptedFile.objects.filter(
+        rel_file_path=directories.relative(path))
+    if accepted_files:
+        accepted_file = accepted_files[0]
+        accepted_file.last_downloaded_at = datetime.now()
+        accepted_file.save(update_fields=['last_downloaded_at'])
+
     if settings.DEBUG or not platform.system() == 'Linux' or "+" in \
             path:
         logger.debug(
@@ -170,6 +180,7 @@ class DownloadHomeView(ProjectsView):
             })
 
     def _project_files(self):
+
         for path in directories.abs_files_in(
                 directories.abs_project_files_dir(self.project)):
             yield {
@@ -187,6 +198,17 @@ class DownloadHomeView(ProjectsView):
             if has_access(self.user, self.project, activity.contractor):
                 for path in directories.abs_files_in(
                         directories.abs_reports_dir(activity)):
+
+                    accepted_files = models.AcceptedFile.objects.filter(
+                        activity=activity,
+                        rel_file_path=directories.relative(path))
+                    uploaded_at = None
+                    last_downloaded_at = None
+                    if accepted_files:
+                        accepted_file = accepted_files[0]
+                        uploaded_at = accepted_file.uploaded_at
+                        last_downloaded_at = accepted_file.last_downloaded_at
+
                     yield {
                         'type': 'Rapporten {}'.format(activity),
                         'filename': os.path.basename(path),
@@ -194,7 +216,9 @@ class DownloadHomeView(ProjectsView):
                         'url': self._make_url('reports',
                                               self.project,
                                               activity,
-                                              path)
+                                              path),
+                        'uploaded': uploaded_at,
+                        'last_downloaded': last_downloaded_at
                     }
 
     def _results_files(self):
@@ -216,6 +240,17 @@ class DownloadHomeView(ProjectsView):
             if has_access(self.user, self.project, activity.contractor):
                 for path in directories.all_abs_files_in(
                         directories.abs_shapefile_dir(activity)):
+
+                    accepted_files = models.AcceptedFile.objects.filter(
+                        activity=activity,
+                        rel_file_path=directories.relative(path))
+                    uploaded_at = None
+                    last_downloaded_at = None
+                    if accepted_files:
+                        accepted_file = accepted_files[0]
+                        uploaded_at = accepted_file.uploaded_at
+                        last_downloaded_at = accepted_file.last_downloaded_at
+
                     yield {
                         'type': 'Ingevulde monstervakken shapefile {}'
                         .format(activity.contractor.name),
@@ -223,7 +258,9 @@ class DownloadHomeView(ProjectsView):
                         'size': directories.human_size(path),
                         'url': self._make_url(
                             'contractor_monstervakken', self.project,
-                            activity, path)
+                            activity, path),
+                        'uploaded': uploaded_at,
+                        'last_downloaded': last_downloaded_at
                     }
 
     def _monstervakken_files(self):
@@ -263,8 +300,8 @@ class DownloadHomeView(ProjectsView):
                     'monstervakken': sorted_on_filename(
                         self._monstervakken_files()),
                     }
-            except Exception as e:
-                logger.debug(e)
+            except Exception:
+                logger.exception()
         return self._files
 
     def csv(self):
@@ -367,7 +404,6 @@ class DownloadView(View):
             raise http.Http404()
 
         return file_download(request, directories.relative(abs_path))
-
 
     def delete(self, request, filetype, project_slug, filename):
         """Delete a downloadable file. For now, only for files without

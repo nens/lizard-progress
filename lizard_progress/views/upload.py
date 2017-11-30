@@ -34,6 +34,7 @@ APP_LABEL = models.Project._meta.app_label
 
 logger = logging.getLogger(__name__)
 
+
 def json_response(obj):
     """Return a HttpResponse with obj serialized as JSON as content"""
     return HttpResponse(json.dumps(obj), mimetype="application/json")
@@ -172,6 +173,11 @@ class UploadReportsView(UploadView):
         # Copy the report.
         shutil.copy(path, dst)
 
+        # succes, create acceptedFile
+        file_name = path.split('/')[-1]
+        rel_file = os.path.join(directories.relative(dst), file_name)
+        models.AcceptedFile.create_from_path(activity=self.activity,
+                                             rel_file_path=rel_file)
         return json_response({})
 
 
@@ -179,6 +185,7 @@ class UploadShapefilesView(UploadView):
     exts = [".dbf", ".prj", ".sbn", ".sbx", ".shp", ".shx", ".xml"]
 
     def process_file(self, path):
+
         ext = os.path.splitext(path)[1].lower()
         if not ext in self.exts:
             msg = "Allowed file types: %s." % self.exts
@@ -192,6 +199,12 @@ class UploadShapefilesView(UploadView):
 
         # Copy the report.
         shutil.copy(path, dst)
+
+        # succes, create acceptedFile
+        file_name = path.split('/')[-1]
+        rel_file = os.path.join(directories.relative(dst), file_name)
+        models.AcceptedFile.create_from_path(activity=self.activity,
+                                             rel_file_path=rel_file)
 
         return json_response({})
 
@@ -299,7 +312,8 @@ class UploadProjectFileView(ProjectsView):
                 f.write(chunk)
 
         # Put shapefile parts into zip files
-        tasks.shapefile_vacuum.delay(directories.abs_project_files_dir(project))
+        tasks.shapefile_vacuum.delay(
+            directories.abs_project_files_dir(project))
 
         return json_response({})
 

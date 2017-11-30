@@ -15,14 +15,12 @@ import os
 import shutil
 import tempfile
 import time
-import traceback
 
 from django.db import transaction
 
 from lizard_progress import models
 from lizard_progress.changerequests.models import PossibleRequest
 from lizard_progress import specifics
-from lizard_progress.util import directories
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +148,10 @@ def try_parser(uploaded_file, parser):
 
                 shutil.move(uploaded_file.abs_file_path, target_path)
 
+                models.AcceptedFile.create_from_path(
+                    activity=uploaded_file.activity,
+                    rel_file_path=directories.relative(target_path))
+
                 # Update measurements and locations.
                 for m in parseresult.measurements:
                     m.rel_file_path = target_path
@@ -193,7 +195,6 @@ def try_parser(uploaded_file, parser):
                 raise DummyException()
     except DummyException:
         pass
-
     return False, errors, possible_requests
 
 

@@ -471,7 +471,8 @@ class Project(ProjectActivityMixin, models.Model):
 
     @property
     def percentage_done(self):
-        return self.percentage(self.number_of_locations(), self.number_of_complete_locations())
+        return self.percentage(self.number_of_locations(),
+                               self.number_of_complete_locations())
 
     @property
     def is_simple(self):
@@ -562,6 +563,44 @@ class Project(ProjectActivityMixin, models.Model):
     def activate(self):
         self.is_archived = False
         self.save()
+
+
+class AcceptedFile(models.Model):
+    """ Files which have successfully been uploaded and copied from their tmp
+    directory to their project-directory """
+    activity = models.ForeignKey('Activity', null=False, blank=False)
+    rel_file_path = models.CharField(
+        max_length=1000,
+        null=True,
+        blank=True)
+    file_size = models.IntegerField(
+        null=True,
+        blank=True)  # in bytes
+    last_downloaded_at = models.DateTimeField(
+        default=None,
+        null=True,
+        blank=True)
+    uploaded_at = models.DateTimeField(
+        default=datetime.datetime.now)
+
+    class Meta:
+        unique_together = (("activity", "rel_file_path"),)
+
+    @classmethod
+    def create_from_path(cls, activity, rel_file_path):
+        """Create and return accepted file
+
+        Set attributes like file size according to the actual file.
+        """
+        accepted_file, created = cls.objects.get_or_create(
+            activity=activity,
+            rel_file_path=rel_file_path)
+        abs_file_path = directories.absolute(rel_file_path)
+        accepted_file.file_size = os.path.getsize(abs_file_path)
+        accepted_file.uploaded_at = datetime.datetime.fromtimestamp(
+            os.path.getmtime(abs_file_path))
+        accepted_file.save()
+        return accepted_file
 
 
 class Location(models.Model):
@@ -1072,10 +1111,10 @@ class Activity(ProjectActivityMixin, models.Model):
     @property
     def percentage_done(self):
         if self.has_locations():
-            return self.percentage(self.num_locations(), self.num_complete_locations())
+            return self.percentage(self.num_locations(),
+                                   self.num_complete_locations())
         else:
             return "N/A"
-
 
 
 class ExpectedAttachment(models.Model):

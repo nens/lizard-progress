@@ -28,9 +28,6 @@ logger = logging.getLogger(__name__)
 
 
 def process_uploaded_file(uploaded_file_id):
-    import sys
-    sys.stdout.write('process uploaded file \n')
-    sys.stdout.flush()
     try:
         uploaded_file = models.UploadedFile.objects.get(pk=uploaded_file_id)
         uploaded_file.wait_until_path_exists()
@@ -51,9 +48,6 @@ def process_uploaded_file(uploaded_file_id):
 
 
 def process_capturing_errors(uploaded_file):
-    import sys
-    sys.stdout.write('process capturing errors \n')
-    sys.stdout.flush()
     try:
         process(uploaded_file)
     except Exception as e:
@@ -134,10 +128,6 @@ def try_parser(uploaded_file, parser):
     and updates its taken measurements with the new filename in
     case of success."""
     import sys
-    sys.stdout.write('try parser \n')
-    sys.stdout.flush()
-    print('--------------------------------------------\n')
-    logger.info('==================================================\n')
 
     errors = []
     possible_requests = []

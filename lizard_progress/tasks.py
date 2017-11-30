@@ -26,9 +26,6 @@ def add(x, y):
 @task
 def process_uploaded_file_task(uploaded_file_id):
     """Call the process_uploaded_file function."""
-    import sys
-    sys.stdout.write('process uploaded file task \n')
-    sys.stdout.flush()
     try:
         process_uploaded_file.process_uploaded_file(uploaded_file_id)
     except:

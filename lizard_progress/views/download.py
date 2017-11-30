@@ -217,9 +217,9 @@ class DownloadHomeView(ProjectsView):
                         'url': self._make_url('reports',
                                               self.project,
                                               activity,
-                                              path),
-                        'uploaded': accepted_file.uploaded_at,  # datetime.fromtimestamp()
-                        'last_downloaded': accepted_file.last_downloaded_at
+                                              path)
+                        # 'uploaded': accepted_file.uploaded_at,  # datetime.fromtimestamp()
+                        # 'last_downloaded': accepted_file.last_downloaded_at
                     }
 
     def _results_files(self):
@@ -276,7 +276,7 @@ class DownloadHomeView(ProjectsView):
             def sorted_on_filename(iterable):
                 return sorted(
                     iterable,
-                    key=lambda f: f.get('filename', '').lower())
+                    key=lambda f: f.f('filename', '').lower())
 
             try:
                 self._files = {
@@ -291,8 +291,8 @@ class DownloadHomeView(ProjectsView):
                     }
             except Exception as e:
                 logger.debug(e)
-        # import pdb
-        # pdb.set_trace()
+        import pdb
+        pdb.set_trace()
         return self._files
 
     def csv(self):

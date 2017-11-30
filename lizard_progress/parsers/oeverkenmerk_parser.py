@@ -1,3 +1,5 @@
+# ScheduledMeasurement doesn't exist. This file cannot be working.
+
 from PIL.ImageFile import ImageFile
 import csv
 import logging

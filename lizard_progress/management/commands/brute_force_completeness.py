@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     args = ""
-    help = "Check and set completeness for locations added in the last 15 minutes"
+    help = ("Check and set completeness for locations added in the " +
+            "last 15 minutes")
 
     def handle(self, *args, **options):
         hour_ago = datetime.datetime.now() - datetime.timedelta(minutes=15)

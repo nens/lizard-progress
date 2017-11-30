@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
             # Sanity check
             if not dirname.startswith(directories.absolute(
-                        directories.rel_activity_dir(activity))):
+                    directories.rel_activity_dir(activity))):
                 print("Skipping {}".format(dirname))
                 continue
 

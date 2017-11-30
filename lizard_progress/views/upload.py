@@ -96,8 +96,6 @@ class UploadView(ActivityView):
         # in Javascript because it is buggy.
 
         # Usually we return JSON, but not with the simple upload form (for IE)
-
-
         return_json = not request.POST.get("simple-upload")
 
         if not self.activity.can_upload(request.user):
@@ -156,9 +154,7 @@ class UploadMeasurementsView(UploadView):
         uploaded_file.schedule_processing()
 
         # succes, create acceptedFile
-        # TODO: add rel_path_file
-
-        # models.AcceptedFile.objects.create(project=self.project)
+        # TODO:
 
         return json_response({})
 
@@ -182,9 +178,8 @@ class UploadReportsView(UploadView):
         # succes, create acceptedFile
         file_name = path.split('/')[-1]
         rel_file = os.path.join(directories.relative(dst), file_name)
-        models.AcceptedFile.objects.create(activity=self.activity,
-                                           rel_file_path=rel_file,
-                                           file_size=os.path.getsize(dst))
+        models.AcceptedFile.create_from_path(activity=self.activity,
+                                             rel_file_path=rel_file)
         return json_response({})
 
 
@@ -210,9 +205,8 @@ class UploadShapefilesView(UploadView):
         # succes, create acceptedFile
         file_name = path.split('/')[-1]
         rel_file = os.path.join(directories.relative(dst), file_name)
-        models.AcceptedFile.objects.create(activity=self.activity,
-                                           rel_file_path=rel_file,
-                                           file_size=os.path.getsize(dst))
+        models.AcceptedFile.create_from_path(activity=self.activity,
+                                           rel_file_path=rel_file)
 
         return json_response({})
 

@@ -580,20 +580,24 @@ class AcceptedFile(models.Model):
     uploaded_at = models.DateTimeField(
         default=datetime.datetime.now)
 
+    class Meta:
+        unique_together = (("activity", "rel_file_path"),)
+
     @classmethod
     def create_from_path(cls, activity, rel_file_path):
         """Create and return accepted file
 
         Set attributes like file size according to the actual file.
         """
+        accepted_file = cls.objects.get_or_create(
+            activity=activity,
+            rel_file_path=rel_file_path)
         abs_file_path = directories.absolute(rel_file_path)
-        file_size = os.path.getsize(abs_file_path)
-        last_modified = datetime.datetime.fromtimestamp(
+        accepted_file.file_size = os.path.getsize(abs_file_path)
+        accepted_file.uploaded_at = datetime.datetime.fromtimestamp(
             os.path.getmtime(abs_file_path))
-        return cls.objects.create(activity=activity,
-                                  rel_file_path=rel_file_path,
-                                  file_size=file_size,
-                                  uploaded_at=last_modified)
+        accepted_file.save()
+        return accepted_file
 
 
 class Location(models.Model):
@@ -1590,14 +1594,6 @@ class UploadedFile(models.Model):
 
     class PathDoesNotExist(Exception):
         pass
-
-    def get_file_size(self):
-        try:
-            return os.path.getsize(self.rel_file_path)
-        except os.error:
-            print('file is inaccessable or does not exist')
-            return -1
-
 
     def re_upload(self):
         """Make a new UploadedFile instance that refers to the same file,

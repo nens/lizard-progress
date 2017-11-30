@@ -68,9 +68,6 @@ def process_capturing_errors(uploaded_file):
 
 
 def process(uploaded_file):
-    import sys
-    sys.stdout.write('process \n')
-    sys.stdout.flush()
     filename = uploaded_file.filename
 
     # Since the latest change, where each measurement type has its own
@@ -144,45 +141,19 @@ def try_parser(uploaded_file, parser):
     try:
         with transaction.commit_on_success():
             # Call the parser.
-            sys.stdout.write('transaction commit on success \n')
-            sys.stdout.flush()
             parseresult = call_parser(uploaded_file, parser)
             if (parseresult.success and hasattr(parseresult, 'measurements')
                     and parseresult.measurements):
                 # Move the file.
-                sys.stdout.write('parseresult.success and hasattr and parseresult measeurments \n')
-                sys.stdout.flush()
                 target_path = path_for_uploaded_file(
                     uploaded_file.activity,
                     os.path.basename(uploaded_file.filename))
 
-                # File has been succesfully uploaded and parsed
-                # We can move it form its temp directory to final directory
-                # TODO: Add AcceptedFile
-                sys.stdout.write('==================================================\n')
-                print('parser', parser)
-                print('uploaded_file', uploaded_file)
-                print('dir(uploaded_file)', dir(uploaded_file))
-
-                print('uploaded_file.filename', uploaded_file.filename)
-                print('uploaded_file.get_file_size():', uploaded_file.get_file_size())
-                print('uploaded_file.rel_file_path:', uploaded_file.rel_file_path)
-                print('uploaded_file.abs_file_path:', uploaded_file.abs_file_path)
-                # print('uploaded_file.size1:', os.path.getsize(uploaded_file.rel_file_path))
-                print('uploaded_file.size2:', os.path.getsize(uploaded_file.abs_file_path))
-                print('-================================================================')
-                print('uploaded_file.activity:', uploaded_file.activity)
-                print('target_path:', target_path)
-                sys.stdout.flush()
-
-                uploaded_file_size = os.path.getsize(uploaded_file.abs_file_path)
-
                 shutil.move(uploaded_file.abs_file_path, target_path)
 
-                accepted_file = models.AcceptedFile(activity=uploaded_file.activity,
-                                                                 rel_file_path=target_path,
-                                                                 file_size=uploaded_file_size)
-                accepted_file.save()
+                accepted_file = models.AcceptedFile.create_from_path(
+                    activity=uploaded_file.activity,
+                    rel_file_path=target_path)
 
                 # Update measurements and locations.
                 for m in parseresult.measurements:
@@ -226,11 +197,7 @@ def try_parser(uploaded_file, parser):
                 # was done to our database in the meantime.
                 raise DummyException()
     except DummyException:
-        sys.stdout.write('Dummy exception \n')
-        sys.stdout.flush()
         pass
-    sys.stdout.write('End of try parser \n')
-    sys.stdout.flush()
     return False, errors, possible_requests
 
 

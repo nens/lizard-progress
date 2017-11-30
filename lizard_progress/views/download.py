@@ -204,16 +204,15 @@ class DownloadHomeView(ProjectsView):
                 for path in directories.abs_files_in(
                         directories.abs_reports_dir(activity)):
 
-                    accepted_files = models.AcceptedFile.objects.filter(activity=activity, rel_file_path=directories.relative(path))
-                    uploaded_at = datetime.fromtimestamp(0)
-                    last_downloaded_at = datetime.fromtimestamp(0)
+                    accepted_files = models.AcceptedFile.objects.filter(
+                        activity=activity,
+                        rel_file_path=directories.relative(path))
+                    uploaded_at = None
+                    last_downloaded_at = None
                     if accepted_files:
                         accepted_file = accepted_files[0]
                         uploaded_at = accepted_file.uploaded_at
                         last_downloaded_at = accepted_file.last_downloaded_at
-
-                    # import pdb
-                    # pdb.set_trace()
 
                     yield {
                         'type': 'Rapporten {}'.format(activity),
@@ -247,9 +246,11 @@ class DownloadHomeView(ProjectsView):
                 for path in directories.all_abs_files_in(
                         directories.abs_shapefile_dir(activity)):
 
-                    accepted_files = models.AcceptedFile.objects.filter(activity=activity, rel_file_path=directories.relative(path))
-                    uploaded_at = datetime.fromtimestamp(0)
-                    last_downloaded_at = datetime.fromtimestamp(0)
+                    accepted_files = models.AcceptedFile.objects.filter(
+                        activity=activity,
+                        rel_file_path=directories.relative(path))
+                    uploaded_at = None
+                    last_downloaded_at = None
                     if accepted_files:
                         accepted_file = accepted_files[0]
                         uploaded_at = accepted_file.uploaded_at
@@ -287,7 +288,6 @@ class DownloadHomeView(ProjectsView):
                     }}
 
     def files(self):
-        # This is the 'bestanden'-tab in a project
         if not hasattr(self, '_files'):
             def sorted_on_filename(iterable):
                 return sorted(

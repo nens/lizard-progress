@@ -182,12 +182,6 @@ class DownloadHomeView(ProjectsView):
 
         for path in directories.abs_files_in(
                 directories.abs_project_files_dir(self.project)):
-            # Try to query the upload date of the file
-            # The file should be in models.UploadedFile
-
-            # May not be the best idea as entries in that db do not need to keep existing
-            # if the file has been succesfully uploaded...
-
             yield {
                 'type': 'Handleidingen e.d.',
                 'filename': os.path.basename(path),

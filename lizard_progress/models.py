@@ -572,7 +572,9 @@ class AcceptedFile(models.Model):
         max_length=1000,
         null=True,
         blank=True)
-    file_size = models.IntegerField()  # in bytes
+    file_size = models.IntegerField(
+        null=True,
+        blank=True)  # in bytes
     last_downloaded_at = models.DateTimeField(
         default=None,
         null=True,
@@ -589,7 +591,7 @@ class AcceptedFile(models.Model):
 
         Set attributes like file size according to the actual file.
         """
-        accepted_file = cls.objects.get_or_create(
+        accepted_file, created = cls.objects.get_or_create(
             activity=activity,
             rel_file_path=rel_file_path)
         abs_file_path = directories.absolute(rel_file_path)

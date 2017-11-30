@@ -124,7 +124,6 @@ def try_parser(uploaded_file, parser):
     of an error message. Moves the file to the current location
     and updates its taken measurements with the new filename in
     case of success."""
-    import sys
 
     errors = []
     possible_requests = []

@@ -153,9 +153,6 @@ class UploadMeasurementsView(UploadView):
 
         uploaded_file.schedule_processing()
 
-        # succes, create acceptedFile
-        # TODO:
-
         return json_response({})
 
 

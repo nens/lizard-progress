@@ -152,7 +152,7 @@ def try_parser(uploaded_file, parser):
 
                 accepted_file = models.AcceptedFile.create_from_path(
                     activity=uploaded_file.activity,
-                    rel_file_path=target_path)
+                    rel_file_path=directories.relative(target_path))
 
                 # Update measurements and locations.
                 for m in parseresult.measurements:

@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.20 (unreleased)
+3.20 (2017-11-30)
 -----------------
 
 - Added last download and upload date for uploaded files.

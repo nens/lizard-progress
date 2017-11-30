@@ -568,10 +568,17 @@ class AcceptedFile(models.Model):
     """ Files which have successfully been uploaded and copied from their tmp
     directory to their project-directory """
     activity = models.ForeignKey('Activity', null=False, blank=False)
-    rel_file_path = models.CharField(max_length=1000, null=True, blank=True)
+    rel_file_path = models.CharField(
+        max_length=1000,
+        null=True,
+        blank=True)
     file_size = models.IntegerField()  # in bytes
-    last_downloaded_at = models.DateTimeField(default=datetime.datetime.now)
-    uploaded_at = models.DateTimeField(default=datetime.datetime.now)
+    last_downloaded_at = models.DateTimeField(
+        default=None,
+        null=True,
+        blank=True)
+    uploaded_at = models.DateTimeField(
+        default=datetime.datetime.now)
 
     @classmethod
     def create_from_path(cls, activity, rel_file_path):
@@ -586,7 +593,6 @@ class AcceptedFile(models.Model):
         return cls.objects.create(activity=activity,
                                   rel_file_path=rel_file_path,
                                   file_size=file_size,
-                                  last_downloaded_at=last_modified,
                                   uploaded_at=last_modified)
 
 

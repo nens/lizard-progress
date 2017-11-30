@@ -34,6 +34,7 @@ APP_LABEL = models.Project._meta.app_label
 
 logger = logging.getLogger(__name__)
 
+
 def json_response(obj):
     """Return a HttpResponse with obj serialized as JSON as content"""
     return HttpResponse(json.dumps(obj), mimetype="application/json")
@@ -206,7 +207,7 @@ class UploadShapefilesView(UploadView):
         file_name = path.split('/')[-1]
         rel_file = os.path.join(directories.relative(dst), file_name)
         models.AcceptedFile.create_from_path(activity=self.activity,
-                                           rel_file_path=rel_file)
+                                             rel_file_path=rel_file)
 
         return json_response({})
 
@@ -314,7 +315,8 @@ class UploadProjectFileView(ProjectsView):
                 f.write(chunk)
 
         # Put shapefile parts into zip files
-        tasks.shapefile_vacuum.delay(directories.abs_project_files_dir(project))
+        tasks.shapefile_vacuum.delay(
+            directories.abs_project_files_dir(project))
 
         return json_response({})
 

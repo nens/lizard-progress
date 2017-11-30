@@ -70,4 +70,4 @@ class Command(BaseCommand):
             AcceptedFile.objects.get(activity=activity,
                                      rel_file_path=rel_file_path).delete()
             logger.info("Deleted AcceptedFile for activity %s and file %s",
-                         activity_id, rel_file_path)
+                        activity_id, rel_file_path)

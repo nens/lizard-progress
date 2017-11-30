@@ -19,7 +19,6 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 
 from lizard_progress.views.activity import ActivityView
-from lizard_progress.util import geo
 from lizard_progress import models as pmodels
 
 from . import models

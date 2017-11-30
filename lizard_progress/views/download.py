@@ -54,7 +54,8 @@ def file_download(request, path):
     # Only works for Apache and Nginx, under Linux right now
 
     # Download a file. Here we must update its modification date.
-    accepted_files = models.AcceptedFile.objects.filter(rel_file_path=directories.relative(path))
+    accepted_files = models.AcceptedFile.objects.filter(
+        rel_file_path=directories.relative(path))
     if accepted_files:
         accepted_file = accepted_files[0]
         accepted_file.last_downloaded_at = datetime.now()
@@ -299,7 +300,7 @@ class DownloadHomeView(ProjectsView):
                     'monstervakken': sorted_on_filename(
                         self._monstervakken_files()),
                     }
-            except Exception as e:
+            except Exception:
                 logger.exception()
         return self._files
 
@@ -403,7 +404,6 @@ class DownloadView(View):
             raise http.Http404()
 
         return file_download(request, directories.relative(abs_path))
-
 
     def delete(self, request, filetype, project_slug, filename):
         """Delete a downloadable file. For now, only for files without

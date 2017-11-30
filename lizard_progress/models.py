@@ -471,7 +471,8 @@ class Project(ProjectActivityMixin, models.Model):
 
     @property
     def percentage_done(self):
-        return self.percentage(self.number_of_locations(), self.number_of_complete_locations())
+        return self.percentage(self.number_of_locations(),
+                               self.number_of_complete_locations())
 
     @property
     def is_simple(self):
@@ -1110,10 +1111,10 @@ class Activity(ProjectActivityMixin, models.Model):
     @property
     def percentage_done(self):
         if self.has_locations():
-            return self.percentage(self.num_locations(), self.num_complete_locations())
+            return self.percentage(self.num_locations(),
+                                   self.num_complete_locations())
         else:
             return "N/A"
-
 
 
 class ExpectedAttachment(models.Model):

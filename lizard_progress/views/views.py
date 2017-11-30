@@ -889,7 +889,7 @@ class DeleteActivity(ProjectsView):
             raise PermissionDenied()
 
         activity = get_object_or_404(models.Activity, pk=activity_id)
-        print('activity',activity)
+        print('activity', activity)
 
         if activity.project.slug != project_slug:
             raise PermissionDenied()

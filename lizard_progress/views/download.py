@@ -276,7 +276,7 @@ class DownloadHomeView(ProjectsView):
             def sorted_on_filename(iterable):
                 return sorted(
                     iterable,
-                    key=lambda f: f.f('filename', '').lower())
+                    key=lambda f: f.get('filename', '').lower())
 
             try:
                 self._files = {
@@ -290,7 +290,7 @@ class DownloadHomeView(ProjectsView):
                         self._monstervakken_files()),
                     }
             except Exception as e:
-                logger.debug(e)
+                logger.exception('hoi')
         import pdb
         pdb.set_trace()
         return self._files

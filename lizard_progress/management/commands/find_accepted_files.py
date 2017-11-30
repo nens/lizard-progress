@@ -46,3 +46,9 @@ class Command(BaseCommand):
             AcceptedFile.create_from_path(activity, rel_file_path)
             logger.debug("Created AcceptedFile for activity %s and file %s",
                          activity_id, rel_file_path)
+
+        for (activity_id, rel_file_path) in erroneously_in_db:
+            activity = Activity.objects.get(pk=activity_id)
+            AcceptedFile.objects.get(activity, rel_file_path).delete()
+            logger.info("Deleted AcceptedFile for activity %s and file %s",
+                         activity_id, rel_file_path)

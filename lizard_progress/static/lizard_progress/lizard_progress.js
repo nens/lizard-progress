@@ -200,9 +200,9 @@ $("a.delete_file").click(function (event) {
 });
 
 // Make table headers sortable
-function sortTable(n, isDate) {
+function sortTable(n, isDate, tableId) {
   var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-  table = document.getElementById("document-table");
+  table = document.getElementById(tableId);
   switching = true;
   // Set the sorting direction to ascending:
   dir = "asc";
@@ -219,12 +219,12 @@ function sortTable(n, isDate) {
       /* Get the two elements you want to compare,
       one from current row and one from the next: */
       x = rows[i].getElementsByTagName("TD")[n];
-      x = x.innerHTML.toLowerCase();
+      x = x ? x.innerHTML.toLowerCase() : '';
       y = rows[i + 1].getElementsByTagName("TD")[n];
-      y = y.innerHTML.toLowerCase();
+      y = y ? y.innerHTML.toLowerCase() : '';
       if (isDate === true) {
-        x = new Date(x)
-        y = new Date(y)
+        x = Date.parse(x) ? Date.parse(x) : new Date(-1);
+        y = Date.parse(y) ? Date.parse(y) : new Date(-1);
       }
       /* Check if the two rows should switch place,
       based on the direction, asc or desc: */

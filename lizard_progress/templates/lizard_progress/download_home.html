@@ -35,12 +35,10 @@
                   </a>
                 </div>
                 <div id="collapse-documenten" class = "panel-collapse collapse out">
-                  <div id="document-table" class="panel-body">
+                  <div id="document-table2" class="panel-body">
                     <table class="table table fixed sortable">
                       <thead>
-                        <th onclick="sortTable(0, false)">Filename</th>
-                        <th onclick="sortTable(1, true)">Upgeload</th>
-                        <th onclick="sortTable(2, true)">Laatst gedownload</th>
+                        <th>Filename</th>
                         <th style="width: 6em;">Download</th>
                         {% if view.user_is_manager %}
                           <th style="width: 6em;">Verwijderen</th>
@@ -50,8 +48,6 @@
                       <script> var last_download = {{ file.last_downloaded }} </script>
                         <tr>
                           <td class="filename">{{ file.filename }} ({{ file.size }})</td>
-                          <td class="upgeload">{{ file.uploaded|date:"d M Y H:i" }}</td>
-                          <td class="last_download">{{ file.last_downloaded|date:"d M Y H:i" }}</td>
                           <td class="download"><a href="{{ file.url }}">download</a></td>
                           {% if view.user_is_manager %}
                             <td><a class="delete_file"
@@ -224,19 +220,19 @@
                   </a>
                 </div>
                 <div id="collapse-rapportages" class="panel-collapse collapse out">
-                  <div class="panel-body">
-                    <table class="table fixed">
+                  <div id="sort-rapportages" class="panel-body">
+                    <table class="table fixed sortable">
                       <thead>
-                        <th>Filenaam</th>
-                        <th>laatst gedownload</th>
-                        <th>geupload op</th>
+                        <th onclick="sortTable(0, false, 'sort-rapportages')">Filenaam</th>
+                        <th onclick="sortTable(1, true, 'sort-rapportages')">laatst gedownload</th>
+                        <th onclick="sortTable(2, true, 'sort-rapportages')">geupload op</th>
                         <th style="width: 6em;">Download</th>
                       </thead>
                       <tbody>
                         {% for file in view.files.reports %}
                           <tr>
                             <td class="filename">{{ file.filename }} ({{ file.size }})</td>
-                            <td class="last_download">{{ file.last_downloaded }}</td>
+                            <td class="last_download">{{ file.last_downloaded|date:"d M Y H:i" }}</td>
                             <td class="upgeload">{{ file.uploaded|date:"d M Y H:i" }}</td>
                             <td class="download"><a href="{{ file.url }}">download</a></td>
                           </tr>
@@ -244,6 +240,8 @@
                         {% for file in view.files.contractor_monstervakken %}
                           <tr>
                             <td class="filename">{{ file.filename }} ({{ file.size }})</td>
+                            <td class="last_download">{{ file.last_downloaded|date:"d M Y H:i" }}</td>
+                            <td class="upgeload">{{ file.uploaded|date:"d M Y H:i" }}</td>
                             <td class="download"><a href="{{ file.url }}">download</a></td>
                           </tr>
                         {% endfor %}

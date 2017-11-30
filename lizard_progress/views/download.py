@@ -54,11 +54,11 @@ def file_download(request, path):
     # Only works for Apache and Nginx, under Linux right now
 
     # Download a file. Here we must update its modification date.
-    # import pdb
-    # pdb.set_trace()
-    abs_path = directories.absolute(path)
-    if os.path.exists(abs_path):
-        os.utime(abs_path, None)
+    accepted_files = models.AcceptedFile.objects.filter(rel_file_path=directories.relative(path))
+    if accepted_files:
+        accepted_file = accepted_files[0]
+        accepted_file.last_downloaded_at = datetime.now()
+        accepted_file.save(update_fields=['last_downloaded_at'])
 
     if settings.DEBUG or not platform.system() == 'Linux' or "+" in \
             path:
@@ -179,8 +179,6 @@ class DownloadHomeView(ProjectsView):
             })
 
     def _project_files(self):
-        # import pdb
-        # pdb.set_trace()
 
         for path in directories.abs_files_in(
                 directories.abs_project_files_dir(self.project)):
@@ -205,10 +203,17 @@ class DownloadHomeView(ProjectsView):
             if has_access(self.user, self.project, activity.contractor):
                 for path in directories.abs_files_in(
                         directories.abs_reports_dir(activity)):
-                    import pdb
+
                     accepted_files = models.AcceptedFile.objects.filter(activity=activity, rel_file_path=directories.relative(path))
+                    uploaded_at = datetime.fromtimestamp(0)
+                    last_downloaded_at = datetime.fromtimestamp(0)
                     if accepted_files:
                         accepted_file = accepted_files[0]
+                        uploaded_at = accepted_file.uploaded_at
+                        last_downloaded_at = accepted_file.last_downloaded_at
+
+                    # import pdb
+                    # pdb.set_trace()
 
                     yield {
                         'type': 'Rapporten {}'.format(activity),
@@ -217,9 +222,9 @@ class DownloadHomeView(ProjectsView):
                         'url': self._make_url('reports',
                                               self.project,
                                               activity,
-                                              path)
-                        # 'uploaded': accepted_file.uploaded_at,  # datetime.fromtimestamp()
-                        # 'last_downloaded': accepted_file.last_downloaded_at
+                                              path),
+                        'uploaded': uploaded_at,
+                        'last_downloaded': last_downloaded_at
                     }
 
     def _results_files(self):
@@ -241,6 +246,15 @@ class DownloadHomeView(ProjectsView):
             if has_access(self.user, self.project, activity.contractor):
                 for path in directories.all_abs_files_in(
                         directories.abs_shapefile_dir(activity)):
+
+                    accepted_files = models.AcceptedFile.objects.filter(activity=activity, rel_file_path=directories.relative(path))
+                    uploaded_at = datetime.fromtimestamp(0)
+                    last_downloaded_at = datetime.fromtimestamp(0)
+                    if accepted_files:
+                        accepted_file = accepted_files[0]
+                        uploaded_at = accepted_file.uploaded_at
+                        last_downloaded_at = accepted_file.last_downloaded_at
+
                     yield {
                         'type': 'Ingevulde monstervakken shapefile {}'
                         .format(activity.contractor.name),
@@ -248,7 +262,9 @@ class DownloadHomeView(ProjectsView):
                         'size': directories.human_size(path),
                         'url': self._make_url(
                             'contractor_monstervakken', self.project,
-                            activity, path)
+                            activity, path),
+                        'uploaded': uploaded_at,
+                        'last_downloaded': last_downloaded_at
                     }
 
     def _monstervakken_files(self):
@@ -290,9 +306,7 @@ class DownloadHomeView(ProjectsView):
                         self._monstervakken_files()),
                     }
             except Exception as e:
-                logger.exception('hoi')
-        import pdb
-        pdb.set_trace()
+                logger.exception()
         return self._files
 
     def csv(self):

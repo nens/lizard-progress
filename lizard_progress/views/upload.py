@@ -178,12 +178,13 @@ class UploadReportsView(UploadView):
 
         # Copy the report.
         shutil.copy(path, dst)
-        import pdb
-        pdb.set_trace()
-        # succes, create acceptedFile
-        models.AcceptedFile.objects.create(activity=self.activity, rel_file_path=directories.relative(dst),
-                                           file_size=os.path.getsize(dst))
 
+        # succes, create acceptedFile
+        file_name = path.split('/')[-1]
+        rel_file = os.path.join(directories.relative(dst), file_name)
+        models.AcceptedFile.objects.create(activity=self.activity,
+                                           rel_file_path=rel_file,
+                                           file_size=os.path.getsize(dst))
         return json_response({})
 
 
@@ -207,10 +208,11 @@ class UploadShapefilesView(UploadView):
         shutil.copy(path, dst)
 
         # succes, create acceptedFile
-        # import pdb
-        # pdb.set_trace()
-
-        # models.AcceptedFile.objects.create(project=self.project, rel_file_path=dst)
+        file_name = path.split('/')[-1]
+        rel_file = os.path.join(directories.relative(dst), file_name)
+        models.AcceptedFile.objects.create(activity=self.activity,
+                                           rel_file_path=rel_file,
+                                           file_size=os.path.getsize(dst))
 
         return json_response({})
 

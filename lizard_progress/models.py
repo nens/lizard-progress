@@ -565,6 +565,46 @@ class Project(ProjectActivityMixin, models.Model):
         self.save()
 
 
+class ProjectInspection(models.Model):
+    """
+    """
+    # A ProjectInspection should only be linked to a completed Project.
+    project = models.ForeignKey('Project', null=True, blank=True)
+
+    ribx = None # Initial RIBX-file
+    inspection_filter = None # filter .xlsx-file which might auto-fill some inspections
+    inspections = None # All performed inspections
+
+    def generate_json_from_ribx(self, ribx):
+        """ Generate a json-file from the ribx-file """
+        pass
+
+    def apply_filter(self, inspection_filter, inspections):
+        """ Apply the inspection_filter on the inspections.
+
+        Auto-fills any empty inspections with the rules inside the filter.
+        None-empty inspections are ignored.
+        """
+
+    def get_inspections(self, incl_completed=True):
+        """ Return all inspections
+
+         Args:
+             incl_completed (bool): include (True) or exclude (False) completed
+                inspection.
+             """
+        pass
+
+    def generate_json(self):
+        """ Generate a json-file from all inspections.
+
+         This includes completed and incompleted inspections. """
+        pass
+
+
+
+
+
 class AcceptedFile(models.Model):
     """ Files which have successfully been uploaded and copied from their tmp
     directory to their project-directory """

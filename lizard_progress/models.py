@@ -42,6 +42,8 @@ import random
 import shutil
 import string
 
+import ribxlib
+
 RDNEW = 28992
 SRID = RDNEW
 DIRECTORY_SYNC_TYPE = 'dirsync'
@@ -565,19 +567,30 @@ class Project(ProjectActivityMixin, models.Model):
         self.save()
 
 
-class ProjectInspection(models.Model):
+class ProjectReview(models.Model):
+    """ ProjectReview reviews completed projects.
+
+    Each inspection of a completed project should be reviewed, either
+    automatically using the inspection_filter, or manually using the qgis
+    plugin.
     """
-    """
-    # A ProjectInspection should only be linked to a completed Project.
+
+    # A ProjectReview should only be linked to a completed Project.
     project = models.ForeignKey('Project', null=True, blank=True)
 
-    ribx = None # Initial RIBX-file
+    ribx_file = None # Initial RIBX-file path location
     inspection_filter = None # filter .xlsx-file which might auto-fill some inspections
-    inspections = None # All performed inspections
+    inspections = {} # All performed inspections
 
     def generate_json_from_ribx(self, ribx):
         """ Generate a json-file from the ribx-file """
+        # maybe not needed if we implement generate_inspections_from_ribx()
         pass
+
+    def generate_inspections_from_ribx(self, ribx_file):
+        """ Generate inspections from the ribx-file """
+        ribx, error_log = ribxlib.parsers.parse(f1, mode=2)
+
 
     def apply_filter(self, inspection_filter, inspections):
         """ Apply the inspection_filter on the inspections.
@@ -595,13 +608,15 @@ class ProjectInspection(models.Model):
              """
         pass
 
-    def generate_json(self):
+    def generate_json_from_inspections(self):
         """ Generate a json-file from all inspections.
 
          This includes completed and incompleted inspections. """
         pass
 
-
+    def parse_json(self, json):
+        """ Read json-file and create inspections from it """
+        pass
 
 
 

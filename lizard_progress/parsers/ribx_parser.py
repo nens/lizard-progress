@@ -47,8 +47,15 @@ def _get_log_content(record_id):
     if 'logcontent' not in j:
         logger.info("key logcontent not found in GWSW response. Keys: %r",
                     j.keys())
-        return []
+        return None
     log_content = j.get('logcontent')
+    try:
+        if ''.join(log_content) == '':
+            return None
+    except:
+        logger.warn("log_content is no list anymore: %r",
+                    log_content)
+        return log_content
     return log_content
 
 
@@ -69,7 +76,7 @@ def get_log_content(filename, retries=10, initial_wait=2):
         # If the ribx file has not yet been processed you will get a
         # log_content with the value ['']. This join operation is to guard
         # against these blank values.
-        if ''.join(log_content) == '':
+        if log_content is None:
             time.sleep(2*i**2 + 1)
         else:
             logger.debug("get_log_content succesful")

@@ -4,7 +4,11 @@ Changelog of lizard-progress
 3.21 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Bugfix for missing import in process_uploaded_file.
+
+- Workaround for ``KeyError: u'logcontent'`` error when talking to the GWSW
+  API, probably the logcontent key is missing instead of being empty when the
+  check is not ready yet.
 
 
 3.20 (2017-11-30)

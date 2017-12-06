@@ -21,6 +21,7 @@ from django.db import transaction
 from lizard_progress import models
 from lizard_progress.changerequests.models import PossibleRequest
 from lizard_progress import specifics
+from lizard_progress.util import directories
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 Changelog of lizard-progress
 ===================================================
 
-3.21 (unreleased)
------------------
+3.20.1 (2017-12-06)
+-------------------
 
 - Bugfix for missing import in process_uploaded_file.
 

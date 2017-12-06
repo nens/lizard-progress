@@ -44,7 +44,11 @@ def _get_log_content(record_id):
     """
     r_getlog = requests.get(settings.GWSW_GETLOG_URL % record_id)
     j = json.loads(r_getlog.text)
-    log_content = j['logcontent']
+    if 'logcontent' not in j:
+        logger.info("key logcontent not found in GWSW response. Keys: %r",
+                    j.keys())
+        return []
+    log_content = j.get('logcontent')
     return log_content
 
 

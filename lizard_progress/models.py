@@ -42,6 +42,7 @@ import random
 import shutil
 import string
 
+from lxml import etree
 import ribxlib
 
 RDNEW = 28992
@@ -568,7 +569,7 @@ class Project(ProjectActivityMixin, models.Model):
 
 
 class ProjectReview(models.Model):
-    """ ProjectReview reviews completed projects.
+    """ProjectReview reviews completed projects.
 
     Each inspection of a completed project should be reviewed, either
     automatically using the inspection_filter, or manually using the qgis
@@ -577,30 +578,134 @@ class ProjectReview(models.Model):
 
     # A ProjectReview should only be linked to a completed Project.
     project = models.ForeignKey('Project', null=True, blank=True)
+    # Initial RIBX-file path location
+    ribx_file = models.CharField(
+        max_length=1000,
+        null=True,
+        blank=True)
+    # filter .xlsx-file which might auto-fill some reviews for inspections
+    inspection_filter = models.CharField(
+        max_length=1000,
+        null=True,
+        blank=True)
+    # All performed inspections and their reviews, reviews might be empty
+    reviews = JSONField(null=True, blank=True)
 
-    ribx_file = None # Initial RIBX-file path location
-    inspection_filter = None # filter .xlsx-file which might auto-fill some inspections
-    inspections = {} # All performed inspections
+    ZB_A_FIELDS = ['AAA', 'AAB', 'AAC', 'AAD', 'AAE', 'AAF', 'AAG', 'AAH',
+                   'AAI', 'AAJ', 'AAK', 'AAL', 'AAM', 'AAN', 'AAO', 'AAP',
+                   'AAQ', 'AAT', 'AAU', 'AAV', 'ABA', 'ABB', 'ABC', 'ABE',
+                   'ABF', 'ABG', 'ABH', 'ABI', 'ABJ', 'ABK', 'ABL', 'ABM',
+                   'ABN', 'ABO', 'ABP', 'ABQ', 'ABR', 'ABS', 'ABT', 'ACA',
+                   'ACB', 'ACC', 'ACD', 'ACE', 'ACF', 'ACG', 'ACH', 'ACI',
+                   'ACJ', 'ACK', 'ACL', 'ACM', 'ACN', 'ADA', 'ADB', 'ADC',
+                   'ADE', 'AXA', 'AXB', 'AXC', 'AXD', 'AXE', 'AXF', 'AXG',
+                   'AXH', 'AXY', 'Herstelmaatregel', 'Opmerking']
+    ZB_C_FIELDS = ['CAA', 'CAB', 'CAJ', 'CAL', 'CAM', 'CAN', 'CAO', 'CAP',
+                   'CAQ', 'CAR', 'CAS', 'CBA', 'CBB', 'CBC', 'CBD', 'CBE',
+                   'CBF', 'CBG', 'CBH', 'CBI', 'CBJ', 'CBK', 'CBL', 'CBM',
+                   'CBN', 'CBO', 'CBP', 'CBR', 'CBS', 'CBT', 'CCA', 'CCB',
+                   'CCC', 'CCD', 'CCG', 'CCK', 'CCL', 'CCM', 'CCN', 'CCO',
+                   'CCP', 'CCQ', 'CCR', 'CCS', 'CCT', 'CDA', 'CDB', 'CDC',
+                   'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE',
+                   'Herstelmaatregel', 'Opmerking']
 
-    def generate_json_from_ribx(self, ribx):
-        """ Generate a json-file from the ribx-file """
-        # maybe not needed if we implement generate_inspections_from_ribx()
-        pass
+    @classmethod
+    def create_from_ribx(cls, ribx_file, project=None, inspection_filter=None):
+        """Create and return ProjectReview from ribx file
 
-    def generate_inspections_from_ribx(self, ribx_file):
-        """ Generate inspections from the ribx-file """
-        ribx, error_log = ribxlib.parsers.parse(f1, mode=2)
+        Go over all inspections (pipes and manholes) in the ribx-file and
+        extract all needed data (described in the xlsx). Also add two additional
+        fields 'Herstelmaatregel' and 'Opmerking'.
 
+        Args:
+            ribx_file (str): path to the ribx file
+
+        Returns:
+            A dict containing all pipe and manhole inspections with their data
+            and two additional empty keys: 'Herstelmaatregel' and 'Opmerking'.
+        """
+        project_review = cls.objects.create(
+            project=project,
+            ribx_file=ribx_file,
+            inspection_filter=inspection_filter,
+        )
+        parser = etree.XMLParser()
+        tree = etree.parse(ribx_file)
+        root = tree.getroot()
+
+        reviews = {
+            'pipes': [],
+            'manholes': []
+        }
+
+        for elem in root.iter('ZB_A'):
+            # pipes
+            pipe = project_review._parse_zb_a(elem)
+            reviews['pipes'].append(pipe)
+        for elem in root.iter('ZB_C'):
+            # manholes
+            manhole = project_review._parse_zb_c(elem)
+            reviews['manholes'].append(manhole)
+        project_review.reviews = reviews
+        # TODO: apply inspection_filter if we specify one?
+        project_review.save()
+        return project_review
+
+    def _parse_zb_a(self, zb_a):
+        """Parse a zb_a (pipe) and extract all relevant info (as stated in the
+        xlsx)
+
+        Args:
+            zb_a (XMLElement): XMLElement from which all relevant data is
+                extracted
+
+        Returns:
+            A dict representing the ZB_A (pipe) element.
+        """
+        result = {}
+        for elem in zb_a.getchildren():
+            if elem.tag in self.ZB_A_FIELDS:
+                if elem.tag in ('AAE', 'AAG'):
+                    result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
+                else:
+                    result[elem.tag] = elem.text
+        result['Herstelmaatregel'] = ''
+        result['Opmerking'] = ''
+        return result
+
+
+    def _parse_zb_c(self, zb_c):
+        """Parse a zb_c (manhole) and extract all relevant info (as stated in
+        the xlsx)
+
+        Args:
+            zb_c (XMLElement): XMLElement from which all relevant data is
+                extracted
+
+        Return:
+            A dict representing the ZB_C (manhole) element
+        """
+        result = {}
+        for elem in zb_c.getchildren():
+            if elem.tag in self.ZB_C_FIELDS:
+                if elem.tag in ('CAB'):
+                    result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
+                else:
+                    result[elem.tag] = elem.text
+        result['Herstelmaatregel'] = ''
+        result['Opmerking'] = ''
+        return result
 
     def apply_filter(self, inspection_filter, inspections):
-        """ Apply the inspection_filter on the inspections.
+        """Apply the inspection_filter on the reviews.
 
-        Auto-fills any empty inspections with the rules inside the filter.
-        None-empty inspections are ignored.
+        Auto-fills any inspections with a review if one of the rules inside
+        the filter applies. None-empty inspections are ignored.
         """
+        pass
 
     def get_inspections(self, incl_completed=True):
-        """ Return all inspections
+        """Return all inspections
 
          Args:
              incl_completed (bool): include (True) or exclude (False) completed
@@ -608,14 +713,21 @@ class ProjectReview(models.Model):
              """
         pass
 
-    def generate_json_from_inspections(self):
-        """ Generate a json-file from all inspections.
+    def generate_json_from_reviews(self, reviews):
+        """Generate a json-file from all inspections.
 
-         This includes completed and incompleted inspections. """
-        pass
+         This includes completed and incompleted inspections.
+         """
+        return json.dumps(reviews, indent=2, sort_keys=True)
 
-    def parse_json(self, json):
-        """ Read json-file and create inspections from it """
+
+    def update_reviews_from_json(self, json):
+        """Read json-file containing the inspections and corresponding
+        reviews. Update the reviews of this ProjectReview.
+
+        Not all inspections have to be reviewed, i.e. this can be used as an
+        intermediate update to save all performed reviews.
+        """
         pass
 
 

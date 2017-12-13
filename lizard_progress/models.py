@@ -568,15 +568,15 @@ class Project(ProjectActivityMixin, models.Model):
         self.save()
 
 
-class ProjectReview(models.Model):
-    """ProjectReview reviews completed projects.
+class ReviewProject(models.Model):
+    """ReviewProject reviews completed projects.
 
     Each inspection of a completed project should be reviewed, either
     automatically using the inspection_filter, or manually using the qgis
     plugin.
     """
 
-    # A ProjectReview should only be linked to a completed Project.
+    # A ReviewProject should only be linked to a completed Project.
     project = models.ForeignKey('Project', null=True, blank=True)
     # Initial RIBX-file path location
     ribx_file = models.CharField(
@@ -611,16 +611,16 @@ class ProjectReview(models.Model):
 
     @classmethod
     def create_from_ribx(cls, ribx_file, project=None, inspection_filter=None):
-        """Create and return ProjectReview from ribx file
+        """Create and return ReviewProject from ribx file
 
         Go over all inspections (pipes and manholes) in the ribx-file and
         extract all needed data (described in the xlsx). Also add two additional
         fields 'Herstelmaatregel' and 'Opmerking'.
 
-        Args:
+        :arg:
             ribx_file (str): path to the ribx file
 
-        Returns:
+        :return:
             A dict containing all pipe and manhole inspections with their data
             and two additional empty keys: 'Herstelmaatregel' and 'Opmerking'.
         """
@@ -655,11 +655,11 @@ class ProjectReview(models.Model):
         """Parse a zb_a (pipe) and extract all relevant info (as stated in the
         xlsx)
 
-        Args:
+        :arg:
             zb_a (XMLElement): XMLElement from which all relevant data is
                 extracted
 
-        Returns:
+        :return:
             A dict representing the ZB_A (pipe) element.
         """
         result = {}
@@ -678,11 +678,11 @@ class ProjectReview(models.Model):
         """Parse a zb_c (manhole) and extract all relevant info (as stated in
         the xlsx)
 
-        Args:
+        :arg:
             zb_c (XMLElement): XMLElement from which all relevant data is
                 extracted
 
-        Return:
+        :return:
             A dict representing the ZB_C (manhole) element
         """
         result = {}
@@ -723,13 +723,19 @@ class ProjectReview(models.Model):
 
     def update_reviews_from_json(self, json):
         """Read json-file containing the inspections and corresponding
-        reviews. Update the reviews of this ProjectReview.
+        reviews. Update the reviews of this ReviewProject.
 
         Not all inspections have to be reviewed, i.e. this can be used as an
         intermediate update to save all performed reviews.
         """
         pass
 
+    def generate_geojson_reviews(self):
+        """Generate geojson from the reviews
+
+        :return: Geojson
+        """
+        pass
 
 
 class AcceptedFile(models.Model):

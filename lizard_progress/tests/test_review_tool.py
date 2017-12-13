@@ -21,11 +21,10 @@ class TestReviewProject(TestCase):
         self.parser = etree.XMLParser()
         self.tree = etree.parse(self.ribx_file)
         self.root = self.tree.getroot()
-        self.pr = models.ProjectReview.objects.create()
+        self.pr = models.ReviewProject.objects.create()
 
     def test_create_reviewProject(self):
-        pass
-        # Create blank ProjectReview
+        # Create blank ReviewProject
         self.pr.save()
 
     def test__parse_zb_a(self):
@@ -42,7 +41,7 @@ class TestReviewProject(TestCase):
         self.assertTrue(set(manhole.keys()).issubset(self.pr.ZB_C_FIELDS))
 
     def test_create_from_ribx(self):
-        pr = models.ProjectReview.create_from_ribx(self.ribx_file)
+        pr = models.ReviewProject.create_from_ribx(self.ribx_file)
         reviews = pr.reviews
         pipes = reviews['pipes']
         man_holes = reviews['manholes']

@@ -84,8 +84,9 @@ class AcceptedFileAdmin(admin.ModelAdmin):
 
 
 class ReviewProjectAdmin(admin.ModelAdmin):
-    list_display = ('project', 'ribx_file', 'inspection_filter', 'reviews' )
-    search_fields = ['project', 'reviews']
+    list_display = ('name', 'organization', 'project', 'ribx_file',
+                    'inspection_filter', 'reviews' )
+    search_fields = ['name', 'organization', 'project', 'reviews']
 
 
 admin.site.register(models.Hydrovak)

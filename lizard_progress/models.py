@@ -576,6 +576,10 @@ class ReviewProject(models.Model):
     plugin.
     """
 
+    name = models.CharField(max_length=50,
+                            unique=False,
+                            verbose_name='reviewnaam')
+    organization = models.ForeignKey(Organization, null=False)
     # A ReviewProject should only be linked to a completed Project.
     project = models.ForeignKey('Project', null=True, blank=True)
     # Initial RIBX-file path location

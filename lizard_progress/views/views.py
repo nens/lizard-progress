@@ -49,6 +49,7 @@ from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.models import Location
 from lizard_progress.models import MeasurementTypeAllowed
 from lizard_progress.models import Project
+from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
 from lizard_progress.util import directories
 from lizard_progress.util import geo
@@ -113,6 +114,7 @@ class ProjectsMixin(object):
 
     def projects(self):
         """Returns a list of projects the current user has access to."""
+        #TODO: Seems like a obscure and inefficient way to get all projects, why this way?
         projecttable = Project.objects.select_related(
             'organization').prefetch_related(
             'activity_set__contractor').filter(is_archived=False)
@@ -286,6 +288,60 @@ class ProjectsMixin(object):
         """
         return (self.is_simple and
                 self.project.organization != self.profile.organization)
+
+
+class ReviewProjectMixin(object):
+    """Helper functions for working with specific reviewprojects in views"""
+    reviewproject_id = None
+    reviewproject = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.reviewproject_id = kwargs.get('review_id')
+        if self.reviewproject_id:
+            try:
+                self.reviewproject = ReviewProject.objects.get(
+                    id=self.reviewproject_id)
+            except ReviewProject.DoesNotExist:
+                raise Http404()
+            # TODO: Isn't access rights not already checked with KickoutMixin?
+            # if has_access(project=self.project, userprofile=self.profile):
+            #     self.has_full_access = all(
+            #         has_access(
+            #             project=self.project,
+            #             contractor=activity.contractor,
+            #             userprofile=self.profile)
+            #         for activity in self.project.activity_set.all())
+            # else:
+            #     raise PermissionDenied()
+        else:
+            self.reviewproject_id = None
+
+        return super(
+            ReviewProjectMixin, self).dispatch(request, *args, **kwargs)
+
+    def reviews(self):
+        pass
+
+    def empty_reviews(self):
+        pass
+
+    @property
+    def breadcrumbs(self):
+        """Returns a list of breadcrumbs to this project."""
+        crumbs = [
+            Action(
+                description="Home",
+                name="Home",
+                url="/")]
+
+        if self.project:
+            crumbs.append(
+                Action(
+                    description=self.reviewproject.name,
+                    name=self.reviewproject.name,
+                    url='/'))
+
+        return crumbs
 
 
 class KickOutMixin(object):
@@ -966,6 +1022,24 @@ class EmailNotificationConfigurationView(ProjectsView):
                 option.unsubscribe(self.project)
 
         return redirect
+
+
+class ReviewProjectsOverview(KickOutMixin, ProjectsMixin, TemplateView):
+
+    template_name = 'lizard_progress/reviewprojects_overview.html'
+
+
+class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
+
+    template_name = 'lizard_progress/reviewproject.html'
+    # active_menu = "dashboard"???
+
+
+    @property
+    def breadcrumbs(self):
+        """Breadcrumbs for this page."""
+        # TODO: Implement if we want to add breadcrumbs
+        pass
 
 
 def multiproject_crosssection_graph(request, organization_id, location_id):

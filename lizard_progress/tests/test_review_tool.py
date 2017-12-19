@@ -31,10 +31,10 @@ class TestReviewProject(FixturesTestCase):
 
     def setUp(self):
         self.name = 'Test reviewproject'
-        self.ribx_file = 'lizard_progress/testdata/goed.ribx'
-        self.parser = etree.XMLParser()
-        self.tree = etree.parse(self.ribx_file)
-        self.root = self.tree.getroot()
+        self.ribx_file = 'lizard_progress/tests/test_met_files/ribx/goed.ribx'
+        self.single_pipe = 'lizard_progress/tests/test_met_files/ribx/single_pipe.ribx'
+        self.single_manhole = 'lizard_progress/tests/test_met_files/ribx/single_manhole.ribx'
+
         self.organization = models.Organization.objects.create(
             name='Test organization'
         )
@@ -55,17 +55,28 @@ class TestReviewProject(FixturesTestCase):
         self.assertTrue('test-reviewproject' in pr.slug)
 
     def test__parse_zb_a(self):
-        element = self.root.find('ZB_A')
+        tree = etree.parse(self.single_pipe)
+        root = tree.getroot()
+        element = root.find('ZB_A')
         pipe = self.pr._parse_zb_a(element)
         self.assertEqual('147715.18 491929.01', pipe['AAE'])
         self.assertEqual('147779.16 491974.99', pipe['AAG'])
         self.assertTrue(set(pipe.keys()).issubset(self.pr.ZB_A_FIELDS))
+        self.assertEquals(len(pipe['ZC']), 2)
 
     def test__parse_zb_c(self):
-        element = self.root.find('ZB_C')
+        tree = etree.parse(self.single_manhole)
+        root = tree.getroot()
+        element = root.find('ZB_C')
         manhole = self.pr._parse_zb_c(element)
-        self.assertEqual('146912.77 492728.73', manhole['CAB'])
+        self.assertEqual('146916.82 492326.42', manhole['CAB'])
         self.assertTrue(set(manhole.keys()).issubset(self.pr.ZB_C_FIELDS))
+
+    def test__parse_zc(self):
+        tree = etree.parse(self.single_pipe)
+        root = tree.getroot()
+        element = root.find('ZB_A').find('ZC')
+        inspection = self.pr._parse_zc(element)
 
     def test_create_from_ribx(self):
         pr = models.ReviewProject.create_from_ribx(self.name,
@@ -84,5 +95,4 @@ class TestReviewProject(FixturesTestCase):
 
         self.assertTrue(set(pipes[0].keys()).issubset(pr.ZB_A_FIELDS))
         self.assertTrue(set(man_holes[0].keys()).issubset(pr.ZB_C_FIELDS))
-
 

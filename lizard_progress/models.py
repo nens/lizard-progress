@@ -608,7 +608,7 @@ class ReviewProject(models.Model):
                    'ACB', 'ACC', 'ACD', 'ACE', 'ACF', 'ACG', 'ACH', 'ACI',
                    'ACJ', 'ACK', 'ACL', 'ACM', 'ACN', 'ADA', 'ADB', 'ADC',
                    'ADE', 'AXA', 'AXB', 'AXC', 'AXD', 'AXE', 'AXF', 'AXG',
-                   'AXH', 'AXY', 'Herstelmaatregel', 'Opmerking']
+                   'AXH', 'AXY', 'ZC', 'Herstelmaatregel', 'Opmerking']
     ZB_C_FIELDS = ['CAA', 'CAB', 'CAJ', 'CAL', 'CAM', 'CAN', 'CAO', 'CAP',
                    'CAQ', 'CAR', 'CAS', 'CBA', 'CBB', 'CBC', 'CBD', 'CBE',
                    'CBF', 'CBG', 'CBH', 'CBI', 'CBJ', 'CBK', 'CBL', 'CBM',
@@ -690,16 +690,18 @@ class ReviewProject(models.Model):
             A dict representing the ZB_A (pipe) element.
         """
         result = {}
+        result['ZC'] = []
         for elem in zb_a.getchildren():
             if elem.tag in self.ZB_A_FIELDS:
                 if elem.tag in ('AAE', 'AAG'):
                     result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
+                elif elem.tag == 'ZC':
+                    result['ZC'].append(self._parse_zc(elem))
                 else:
                     result[elem.tag] = elem.text
         result['Herstelmaatregel'] = ''
         result['Opmerking'] = ''
         return result
-
 
     def _parse_zb_c(self, zb_c):
         """Parse a zb_c (manhole) and extract all relevant info (as stated in
@@ -722,6 +724,14 @@ class ReviewProject(models.Model):
         result['Herstelmaatregel'] = ''
         result['Opmerking'] = ''
         return result
+
+    def _parse_zc(self, zc):
+        """Parse a zc (inspection) and extraxt all relevant info"""
+        result = {}
+        for elem in zc.getchildren():
+            result[elem.tag] = elem.text
+        return result
+
 
     def apply_filter(self, inspection_filter, inspections):
         """Apply the inspection_filter on the reviews.

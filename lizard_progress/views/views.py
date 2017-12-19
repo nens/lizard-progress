@@ -29,6 +29,7 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.shortcuts import render
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
@@ -54,6 +55,7 @@ from lizard_progress.models import has_access
 from lizard_progress.util import directories
 from lizard_progress.util import geo
 from lizard_progress.util import workspaces
+from lizard_progress.forms import NewReviewProjectForm
 
 logger = logging.getLogger(__name__)
 
@@ -291,11 +293,15 @@ class ProjectsMixin(object):
 
 
 class ReviewProjectMixin(object):
-    """Helper functions for working with specific reviewprojects in views"""
+    """Helper functions for working with reviewprojects in views"""
+    all_review_projects = None
+
     reviewproject_id = None
     reviewproject = None
 
     def dispatch(self, request, *args, **kwargs):
+        self.all_review_projects = ReviewProject.objects.filter(
+            organization=self.organization)
         self.reviewproject_id = kwargs.get('review_id')
         if self.reviewproject_id:
             try:
@@ -324,6 +330,18 @@ class ReviewProjectMixin(object):
 
     def empty_reviews(self):
         pass
+
+    def user_is_manager(self):
+        """User is a manager if his organization owns this projects
+        and user has the ROLE_MANAGER role."""
+        return (self.user_has_manager_role() and
+                (not self.reviewproject or
+                 self.profile.organization == self.reviewproject.organization))
+
+    def user_has_manager_role(self):
+        return (
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_MANAGER))
 
     @property
     def breadcrumbs(self):
@@ -1024,7 +1042,7 @@ class EmailNotificationConfigurationView(ProjectsView):
         return redirect
 
 
-class ReviewProjectsOverview(KickOutMixin, ProjectsMixin, TemplateView):
+class ReviewProjectsOverview(KickOutMixin, ReviewProjectMixin, TemplateView):
 
     template_name = 'lizard_progress/reviewprojects_overview.html'
 
@@ -1040,6 +1058,54 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         """Breadcrumbs for this page."""
         # TODO: Implement if we want to add breadcrumbs
         pass
+
+
+class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
+
+    template_name = 'lizard_progress/new_reviewproject.html'
+
+    def get(self, request, *args, **kwargs):
+        if not hasattr(self, 'form'):
+            self.form = forms.NewReviewProjectForm(
+                organization=self.profile.organization)
+        return super(NewReviewProjectView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        # if request.FILES.has_key('ribx'):
+        #     request.POST['ribx'] = request.FILES['ribx'].name
+        self.form = NewReviewProjectForm(request.POST, request.FILES)
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+
+        try:
+            # TODO: add project-field
+            ribx_file = request.FILES['ribx']
+            project_review = models.ReviewProject.create_from_ribx(
+                name=request.POST['name'],
+                ribx_file=ribx_file,
+                organization=self.organization
+            )
+            project_review.set_slug_and_save()
+
+            rel_dest_folder = directories.rel_reviewproject_dir(project_review)
+            abs_dest_folder = directories.absolute(rel_dest_folder)
+            handle_uploaded_file(ribx_file, abs_dest_folder)
+        except Error:
+            # If something goes wrong, don't save anything, revert all back
+            # TODO: revert everyting
+            pass
+
+        return HttpResponseRedirect('/us/reviews/')
+
+
+def handle_uploaded_file(file, dest):
+    """Write the file to destination folder"""
+    dest_file = os.path.join(dest, file.name)
+    with open(dest_file, 'wb+') as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
 
 
 def multiproject_crosssection_graph(request, organization_id, location_id):

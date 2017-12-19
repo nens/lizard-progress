@@ -1,0 +1,37 @@
+{% extends "lizard_progress/progressbase2.html" %}
+
+{% block extra_js %}
+<script>
+$(document).on('ready', function() {
+  $('input.form-control').first().focus();
+});
+
+
+</script>
+<style>
+.bootstrap-select.btn-group {
+    margin-bottom: 20px !important;
+}
+</style>
+
+{% endblock extra_js %}
+
+{% block content %}
+
+  <div class="container">
+    <h2>Review Project toevoegen</h2>
+
+      <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <p class="text-warning">{{ view.form.non_field_errors }}</p>
+        {% for field in view.form %}
+          <div class="col-sm-12">
+           {{ field.label }} : {{ field }}<span class="text-warning">{{ field.errors }}</span>
+          </div>
+        {% endfor %}
+
+        <input type="submit" class="btn btn-primary" value="Nieuw review project toevoegen">
+      </form>
+  </div>
+
+{% endblock content %}

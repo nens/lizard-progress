@@ -176,7 +176,8 @@ reviewproject_urls = [
 
     # Specific ReviewProject details:
     url(r'^$',
-        login_required(views.ReviewProjectView.as_view()))
+        login_required(views.ReviewProjectView.as_view()),
+        name='lizard_progress_reviewproject'),
 
     # Upload new reviews
 
@@ -252,7 +253,13 @@ urlpatterns = patterns(
 
     # ReviewProjects overview
     url(r'^reviews/$',
-        login_required(views.ReviewProjectsOverview.as_view())),
+        login_required(views.ReviewProjectsOverview.as_view()),
+        name='lizard_progress_reviews_overview'),
+
+    # Create new ReviewProject
+    url(r'^newreviewproject/$',
+        login_required(views.NewReviewProjectView.as_view()),
+        name='lizard_progress_new_reviewproject'),
 
     # All URLS related to some specific review project
     url(r'^reviews/(?P<review_id>[0-9]+)/', include(reviewproject_urls)),

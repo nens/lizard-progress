@@ -1,31 +1,58 @@
+# (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
+# -*- coding: utf-8 -*-
 
+"""Tests for lizard_progress models.ReviewProject."""
 
 from django.test import TestCase
 
 from lizard_progress import models
+from lizard_progress.tests.base import FixturesTestCase
+from lizard_progress.tests.test_models import OrganizationF
 
 from lxml import etree
 
+import factory
 
 # TODO: set these tests in test_models.py
-
 # lizard_progress.tests.test_review_tool
 
 
+class ReviewProjectF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.ReviewProject
 
-class TestReviewProject(TestCase):
+    name = 'Test reviewproject'
+    slug = 'testreviewproject'
+    organization = factory.SubFactory(OrganizationF)
+
+
+class TestReviewProject(FixturesTestCase):
     """Tests for the ReviewProject model"""
 
     def setUp(self):
+        self.name = 'Test reviewproject'
         self.ribx_file = 'lizard_progress/testdata/goed.ribx'
         self.parser = etree.XMLParser()
         self.tree = etree.parse(self.ribx_file)
         self.root = self.tree.getroot()
-        self.pr = models.ReviewProject.objects.create()
+        self.organization = models.Organization.objects.create(
+            name='Test organization'
+        )
+        self.pr = models.ReviewProject.objects.create(
+            name='Test reviewproject',
+            organization=self.organization)
 
     def test_create_reviewProject(self):
         # Create blank ReviewProject
         self.pr.save()
+
+    def test_set_slug_and_save(self):
+        organization = self.organization
+        pr = self.pr
+        pr.set_slug_and_save()
+        self.assertTrue(pr.slug)
+        self.assertTrue(unicode(pr.id) in pr.slug)
+        self.assertTrue('test-reviewproject' in pr.slug)
 
     def test__parse_zb_a(self):
         element = self.root.find('ZB_A')
@@ -41,7 +68,9 @@ class TestReviewProject(TestCase):
         self.assertTrue(set(manhole.keys()).issubset(self.pr.ZB_C_FIELDS))
 
     def test_create_from_ribx(self):
-        pr = models.ReviewProject.create_from_ribx(self.ribx_file)
+        pr = models.ReviewProject.create_from_ribx(self.name,
+                                                   self.ribx_file,
+                                                   self.organization)
         reviews = pr.reviews
         pipes = reviews['pipes']
         man_holes = reviews['manholes']

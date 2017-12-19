@@ -4,20 +4,13 @@
   <h2> Overview of ReviewProjects: </h2>
   <br/>
   <ul>
-  {% for review in view.review_projects %}
+  {% for review in view.all_review_projects %}
     <li> <a href="{{ review.id }}"> {{ review.name }} </a> </li>
   {% endfor %}
   </ul>
 
-  <h2> Overview of (Inspection)Projects  </h2>
   <br/>
-  <ul>
-  {% for project, numrequest, mtype in view.projects_requests %}
-      <li> {{ project.slug }} </li>
-  {% endfor %}
-  </ul>
-  <br/>
-  <h2> <a href=""> Create new review project </a> </h2>
+  <h2> <a href={% url 'lizard_progress_new_reviewproject' %}> Create new review project </a> </h2>
 
 
 {% endblock %}

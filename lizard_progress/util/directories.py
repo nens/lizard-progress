@@ -68,6 +68,13 @@ def rel_activity_dir(activity):
     return mk_rel(
         os.path.join(rel_project_dir(activity.project), str(activity.id)))
 
+def rel_reviewproject_dir(reviewproject):
+    """Return base directory for this reviewproject"""
+    return mk_rel(os.path.join(
+        reviewproject.organization.name,
+        reviewproject.slug
+    ))
+
 
 def abs_upload_dir(activity):
     return mk_abs(os.path.join(rel_activity_dir(activity), 'uploads'))

@@ -578,7 +578,12 @@ class ReviewProject(models.Model):
 
     name = models.CharField(max_length=50,
                             unique=False,
-                            verbose_name='reviewnaam')
+                            null=False,
+                            blank=False)
+    slug = models.SlugField(max_length=60,
+                            unique=True,
+                            null=True,
+                            blank=True)
     organization = models.ForeignKey(Organization, null=False)
     # A ReviewProject should only be linked to a completed Project.
     project = models.ForeignKey('Project', null=True, blank=True)
@@ -613,8 +618,24 @@ class ReviewProject(models.Model):
                    'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE',
                    'Herstelmaatregel', 'Opmerking']
 
+    def set_slug_and_save(self):
+        """Call on an unsaved project.
+
+        Sets a random slug, saves the project, then sets a new slug
+        based on primary key and name."""
+        chars = list(string.lowercase)
+        random.shuffle(chars)
+        self.slug = ''.join(chars)
+        self.save()
+
+        self.slug = "{id}-{slug}".format(
+            id=self.id,
+            slug=slugify(self.name))
+        self.save()
+
     @classmethod
-    def create_from_ribx(cls, ribx_file, project=None, inspection_filter=None):
+    def create_from_ribx(cls, name, ribx_file, organization, project=None,
+                         inspection_filter=None):
         """Create and return ReviewProject from ribx file
 
         Go over all inspections (pipes and manholes) in the ribx-file and
@@ -629,8 +650,10 @@ class ReviewProject(models.Model):
             and two additional empty keys: 'Herstelmaatregel' and 'Opmerking'.
         """
         project_review = cls.objects.create(
-            project=project,
+            name=name,
             ribx_file=ribx_file,
+            organization=organization,
+            project=project,
             inspection_filter=inspection_filter,
         )
         parser = etree.XMLParser()

@@ -305,3 +305,21 @@ class ConnectActivityForm(forms.Form):
             label=_('Activity'), queryset=models.Activity.objects.filter(
                 project=activity.project).exclude(
                 pk=activity.id))
+
+
+class NewReviewProjectForm(forms.Form):
+
+    name = forms.CharField(label='name', max_length=50)
+    # (inspection)Project
+    ribx = ExtFileField(
+        exts=[".ribx", ".ribxa", ".xml"],
+        label="ribx")
+
+    def __init__(self, *args, **kwargs):
+        if 'organization' in kwargs:
+            self.organization = kwargs['organization']
+            del kwargs['organization']
+        else:
+            self.organization = None
+
+        super(NewReviewProjectForm, self).__init__(*args, **kwargs)

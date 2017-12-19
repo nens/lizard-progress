@@ -730,6 +730,8 @@ class ReviewProject(models.Model):
         result = {}
         for elem in zc.getchildren():
             result[elem.tag] = elem.text
+        result['Herstelmaatregel'] = ''
+        result['Opmerking'] = ''
         return result
 
 

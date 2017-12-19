@@ -77,6 +77,8 @@ class TestReviewProject(FixturesTestCase):
         root = tree.getroot()
         element = root.find('ZB_A').find('ZC')
         inspection = self.pr._parse_zc(element)
+        self.assertTrue(inspection.has_key('Herstelmaatregel'))
+        self.assertTrue(inspection.has_key('Opmerking'))
 
     def test_create_from_ribx(self):
         pr = models.ReviewProject.create_from_ribx(self.name,

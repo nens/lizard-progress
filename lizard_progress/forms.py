@@ -9,6 +9,7 @@ from django.contrib.auth import models as authmodels
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from jsonfield.fields import JSONFormField
 from lizard_progress import models
 
 import os
@@ -323,3 +324,9 @@ class NewReviewProjectForm(forms.Form):
             self.organization = None
 
         super(NewReviewProjectForm, self).__init__(*args, **kwargs)
+
+
+class UploadReviews(forms.Form):
+
+    reviews = JSONFormField(label='reviews')
+

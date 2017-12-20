@@ -749,7 +749,7 @@ class ReviewProject(models.Model):
          Args:
              incl_completed (bool): include (True) or exclude (False) completed
                 inspection.
-             """
+        """
         pass
 
     def generate_json_from_reviews(self, reviews):
@@ -767,7 +767,12 @@ class ReviewProject(models.Model):
         Not all inspections have to be reviewed, i.e. this can be used as an
         intermediate update to save all performed reviews.
         """
-        pass
+        # TODO: validate json? json should be subset of reviews?
+        # Don't validate json here, do that in the forms validate()
+
+        # TODO: store old json?
+        self.reviews = json
+        self.save()
 
     def generate_geojson_reviews(self):
         """Generate geojson from the reviews

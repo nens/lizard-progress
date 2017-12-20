@@ -56,6 +56,7 @@ from lizard_progress.util import directories
 from lizard_progress.util import geo
 from lizard_progress.util import workspaces
 from lizard_progress.forms import NewReviewProjectForm
+from lizard_progress.forms import UploadReviews
 
 logger = logging.getLogger(__name__)
 
@@ -1059,6 +1060,15 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         # TODO: Implement if we want to add breadcrumbs
         pass
 
+    def post(self, request, *args, **kwargs):
+        self.form = UploadReviews(request.POST)
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+        # Upload the new reviews
+        cleaned_json = self.form.cleaned_data['reviews']
+        self.reviewproject.update_reviews_from_json(cleaned_json)
+        return HttpResponseRedirect(request.path)
+
 
 class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
 
@@ -1077,7 +1087,6 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         self.form = NewReviewProjectForm(request.POST, request.FILES)
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
-
 
         try:
             # TODO: add project-field

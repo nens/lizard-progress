@@ -13,6 +13,7 @@ from lizard_progress.tests.test_models import OrganizationF
 from lizard_progress.tests.test_review_tool import ReviewProjectF
 from lizard_progress.tests.base import FixturesTestCase
 
+import json
 import os
 
 # lizard_progress.tests.test_views
@@ -52,10 +53,10 @@ class TestReviewProjectViews(FixturesTestCase):
         self.assertEquals(len(reviewprojects), 1)
 
     def test_get_reviewproject(self):
-        pass
-        # response = self.client.get(reverse('lizard_progress_reviewproject'),
-        #                            {'user': self.user1})
-        # self.assertEquals(response.context_data, 200)
+        response = self.client.get(reverse('lizard_progress_reviewproject',
+                                           kwargs={'review_id': self.review.id}),
+                                   {'user': self.user1})
+        self.assertEquals(response.status_code, 200)
 
     def test_post_new_reviewproject(self):
         # Go to new_reviewproject page
@@ -84,7 +85,17 @@ class TestReviewProjectViews(FixturesTestCase):
         self.assertIn('name', response.context_data['view'].form.errors)
         self.assertIn('ribx', response.context_data['view'].form.errors)
 
-
-
+    def test_upload_reviews(self):
+        # Starting with no reviews
+        self.assertFalse(self.review.reviews)
+        json_string = '{"a": "b"}'
+        url = reverse('lizard_progress_reviewproject',
+                      kwargs={'review_id': 5})
+        response = self.client.post(url,
+                                    {'reviews': json_string})
+        # Succesfully update reviews
+        self.assertEquals(response.status_code, 302)
+        updated_review = models.ReviewProject.objects.get(id=self.review.id)
+        self.assertEquals(updated_review.reviews, json.loads(json_string))
 
 

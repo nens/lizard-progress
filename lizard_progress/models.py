@@ -32,6 +32,7 @@ from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
+
 import datetime
 import functools
 import json
@@ -760,18 +761,21 @@ class ReviewProject(models.Model):
         return json.dumps(reviews, indent=2, sort_keys=True)
 
 
-    def update_reviews_from_json(self, json):
+    def update_reviews_from_json(self, reviews):
         """Read json-file containing the inspections and corresponding
         reviews. Update the reviews of this ReviewProject.
 
         Not all inspections have to be reviewed, i.e. this can be used as an
         intermediate update to save all performed reviews.
+
+        :arg
+            reviews: a dict with serializable objects.
         """
         # TODO: validate json? json should be subset of reviews?
         # Don't validate json here, do that in the forms validate()
 
         # TODO: store old json?
-        self.reviews = json
+        self.reviews = reviews
         self.save()
 
     def generate_geojson_reviews(self):

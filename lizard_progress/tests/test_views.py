@@ -38,7 +38,7 @@ class TestReviewProjectViews(FixturesTestCase):
         self.organization = OrganizationF(name="testOrganization")
         UserProfileF(user=self.user1,
                      organization=self.organization)
-        self.review = ReviewProjectF(organization=self.organization)
+        self.reviewproject = ReviewProjectF(organization=self.organization)
         self.user1.save()
 
         self.client = Client()
@@ -54,7 +54,7 @@ class TestReviewProjectViews(FixturesTestCase):
 
     def test_get_reviewproject(self):
         response = self.client.get(reverse('lizard_progress_reviewproject',
-                                           kwargs={'review_id': self.review.id}),
+                                           kwargs={'review_id': self.reviewproject.id}),
                                    {'user': self.user1})
         self.assertEquals(response.status_code, 200)
 
@@ -85,17 +85,40 @@ class TestReviewProjectViews(FixturesTestCase):
         self.assertIn('name', response.context_data['view'].form.errors)
         self.assertIn('ribx', response.context_data['view'].form.errors)
 
-    def test_upload_reviews(self):
+    def test_upload_valid_reviews(self):
         # Starting with no reviews
-        self.assertFalse(self.review.reviews)
-        json_string = '{"a": "b"}'
+        self.assertFalse(self.reviewproject.reviews)
         url = reverse('lizard_progress_reviewproject',
-                      kwargs={'review_id': 5})
-        response = self.client.post(url,
-                                    {'reviews': json_string})
-        # Succesfully update reviews
+                      kwargs={'review_id': self.reviewproject.id})
+        simple_review_path = os.path.join('lizard_progress',
+                                          'tests',
+                                          'test_met_files',
+                                          'review',
+                                          'simple.json')
+        response = None
+        with open(simple_review_path, 'r') as json_file:
+            response = self.client.post(url,
+                                        {'reviews': json_file})
+
         self.assertEquals(response.status_code, 302)
-        updated_review = models.ReviewProject.objects.get(id=self.review.id)
-        self.assertEquals(updated_review.reviews, json.loads(json_string))
+        updated_review = models.ReviewProject.objects.get(id=self.reviewproject.id)
+        self.assertEquals(updated_review.reviews, json.loads('{"a": "b"}'))
+
+    def test_upload_invalid_reviews(self):
+        url = reverse('lizard_progress_reviewproject',
+                      kwargs={'review_id': self.reviewproject.id})
+        test_file = os.path.join('lizard_progress',
+                                 'tests',
+                                 'test_met_files',
+                                 'review',
+                                 'invalid.json')
+        response = None
+        with open(test_file, 'r') as json_file:
+            response = self.client.post(url,
+                                        {'reviews': json_file})
+
+        self.assertEquals(response.status_code, 200)
+        self.assertTrue(response.context_data['view'].form.errors)
+
 
 

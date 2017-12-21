@@ -15,6 +15,7 @@ from lizard_progress import models
 import os
 
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -328,5 +329,19 @@ class NewReviewProjectForm(forms.Form):
 
 class UploadReviews(forms.Form):
 
-    reviews = JSONFormField(label='reviews')
+    #reviews = JSONFormField(label='reviews')
+    reviews = forms.FileField(label='reviews')
+
+    def __init__(self, *args, **kwargs):
+        super(UploadReviews, self).__init__(*args, **kwargs)
+
+    def clean_reviews(self):
+        try:
+            valid_json = json.load(self.cleaned_data['reviews'])
+            return valid_json
+        except Exception as e:
+            raise ValidationError('Invalid JSON: {}'.format(e))
+
+
+
 

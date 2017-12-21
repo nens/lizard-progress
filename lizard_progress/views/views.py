@@ -1053,6 +1053,11 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
     template_name = 'lizard_progress/reviewproject.html'
     # active_menu = "dashboard"???
 
+    def get(self, request, *args, **kwargs):
+        if not hasattr(self, 'form'):
+            self.form = forms.UploadReviews()
+        return super(ReviewProjectView, self).get(request, *args, **kwargs)
+
 
     @property
     def breadcrumbs(self):
@@ -1061,12 +1066,12 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         pass
 
     def post(self, request, *args, **kwargs):
-        self.form = UploadReviews(request.POST)
+        self.form = UploadReviews(request.POST, request.FILES)
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
-        # Upload the new reviews
-        cleaned_json = self.form.cleaned_data['reviews']
-        self.reviewproject.update_reviews_from_json(cleaned_json)
+
+        cleaned_json_file = self.form.cleaned_data['reviews']
+        self.reviewproject.update_reviews_from_json(cleaned_json_file)
         return HttpResponseRedirect(request.path)
 
 

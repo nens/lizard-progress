@@ -33,6 +33,7 @@ from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
 
+import geojson
 import datetime
 import functools
 import json
@@ -781,9 +782,28 @@ class ReviewProject(models.Model):
     def generate_geojson_reviews(self):
         """Generate geojson from the reviews
 
-        :return: Geojson
+        :return: GeometryCollection of manholes as points and pipes as lines
         """
-        pass
+        manholes_geo = self._manholes_to_points()
+        pipes_geo = self._pipes_to_lines()
+        return geojson.GeometryCollection([manholes_geo, pipes_geo])
+
+    def _manholes_to_points(self):
+        """Convert the manholes to a MultiPoint geojson object"""
+        points = []
+        for manhole in self.reviews['manholes']:
+            lng, lat = manhole.get('CAB').split(' ')
+            points.append((float(lng), float(lat)))
+        return geojson.MultiPoint(points)
+
+    def _pipes_to_lines(self):
+        """Convert the pipes to a MultiLineString geojson object"""
+        lines = []
+        for pipe in self.reviews['pipes']:
+            start = [float(coord) for coord in pipe.get('AAE').split(' ')]
+            end = [float(coord) for coord in pipe.get('AAG').split(' ')]
+            lines.append([start, end])
+        return geojson.MultiLineString(lines)
 
 
 class AcceptedFile(models.Model):

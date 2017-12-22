@@ -98,3 +98,28 @@ class TestReviewProject(FixturesTestCase):
         self.assertTrue(set(pipes[0].keys()).issubset(pr.ZB_A_FIELDS))
         self.assertTrue(set(man_holes[0].keys()).issubset(pr.ZB_C_FIELDS))
 
+    def test__manholes_to_points(self):
+        pr = models.ReviewProject.create_from_ribx(self.name,
+                                                   self.single_manhole,
+                                                   self.organization)
+        geo_manholes = pr._manholes_to_points()
+        self.assertTrue(geo_manholes.is_valid)
+        self.assertEquals(len(geo_manholes.get('coordinates')), 1)
+
+    def test__pipes_to_lines(self):
+        pr = models.ReviewProject.create_from_ribx(self.name,
+                                                   self.single_pipe,
+                                                   self.organization)
+        geo_pipes = pr._pipes_to_lines()
+        self.assertTrue(geo_pipes.is_valid)
+
+
+    def test_generate_geojson_reviews(self):
+        pr = models.ReviewProject.create_from_ribx(self.name,
+                                                   self.ribx_file,
+                                                   self.organization)
+        geojson = pr.generate_geojson_reviews()
+        self.assertTrue(geojson.is_valid)
+        self.assertEquals(len(geojson['geometries'][0]['coordinates']), 6)
+        self.assertEquals(len(geojson['geometries'][1]['coordinates']), 4)
+

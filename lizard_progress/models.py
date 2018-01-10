@@ -33,6 +33,9 @@ from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
 
+from osgeo import osr
+from lizard_map import coordinates
+
 import geojson
 import datetime
 import functools
@@ -43,9 +46,11 @@ import os
 import random
 import shutil
 import string
+import csv
 
 from lxml import etree
 import ribxlib
+import itertools
 
 RDNEW = 28992
 SRID = RDNEW
@@ -594,7 +599,7 @@ class ReviewProject(models.Model):
         max_length=1000,
         null=True,
         blank=True)
-    # filter .xlsx-file which might auto-fill some reviews for inspections
+    # filter .csv-file which might auto-fill some reviews for inspections
     inspection_filter = models.CharField(
         max_length=1000,
         null=True,
@@ -619,6 +624,31 @@ class ReviewProject(models.Model):
                    'CCP', 'CCQ', 'CCR', 'CCS', 'CCT', 'CDA', 'CDB', 'CDC',
                    'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE',
                    'Herstelmaatregel', 'Opmerking']
+
+    def calc_progress(self):
+        """Return a float indicating how much has been reviewed
+
+        Assumes each manhole and pipe weights the same independent of the
+        number of required reviews it has.
+        """
+        completion = []
+        for manhole in self.reviews['manholes']:
+            completion.append(self._calc_progress_manhole(manhole))
+        for pipe in self.reviews['pipes']:
+            completion.append(self._calc_progress_pipe(pipe))
+        return sum(completion) / len(completion)
+
+    def _calc_progress_manhole(self, manhole):
+        """Return a float indicating how % much the manhole has been reviewed
+
+        Because there is only 1 thing to review for a manhole, it either returns
+        0.0 or 1.0"""
+        return float(bool(manhole['Opmerking']))
+
+    def _calc_progress_pipe(self, pipe):
+        """Return a float indicating how % much the pipe has been reviewed"""
+        completed = sum(1 for zc in pipe['ZC'] if zc['Opmerking'])
+        return completed / len(pipe['ZC'])
 
     def set_slug_and_save(self):
         """Call on an unsaved project.
@@ -736,14 +766,126 @@ class ReviewProject(models.Model):
         result['Opmerking'] = ''
         return result
 
+    def parse_filter(self, inspection_filter, delimiter=str(',')):
+        """Read in the inspection filter and saves it to this ReviewProject
 
-    def apply_filter(self, inspection_filter, inspections):
+        Inspection filter generates a set of rules.
+
+        :arg
+            inspection_filter (file object): a csv file with rules for
+                filtering.
+            delimiter (str): one-character string used to separate fields."""
+        reader = csv.reader(inspection_filter, delimiter=delimiter)
+        # Skip header
+        reader.next()
+
+        inspection_rules = {}
+        flat_rules = []
+        for rule in reader:
+            assert(len(rule) == 5)
+            flat_rules += list(self._flatten_rule(rule, ','))
+
+        # TODO: Convert the flat_rules to an rule_tree?
+        # TODO: save the flat_rules or rule_tree
+        return flat_rules
+
+    def _flatten_rule(self, rule, delimiter=str(',')):
+        """Return an iterator which generates new flattened rules.
+
+        I.e. the rule:
+            [A, [B, C], D]
+            ---(flatten)-->
+            [A, B, D],
+            [A, C, D]
+
+        :arg
+            rules (list): the rules to be flattened.
+        :return a iterator which returns flattened rules.
+        """
+        bags = (it.split(delimiter) for it in rule)
+        return itertools.product(*bags)
+
+    # TODO: Can probably be removed
+    def build_tree_old(self, rules):
+        result = {}
+        # first key
+        hoofd_groups = itertools.groupby(rules, lambda x: x[0])
+        # group by hoofd_code and create a key for each group
+        for hoofd_key, hoofd_group in hoofd_groups:
+            result[hoofd_key] = {}
+            # for each hoofd_code group, group its subelement and repeat
+            kar1_groups = itertools.groupby(hoofd_group, lambda x: x[1])
+
+            for kar1_key, kar1_group in kar1_groups:
+                result[hoofd_key][kar1_key] = {}
+                kar2_groups = itertools.groupby(kar1_group, lambda x: x[2])
+                for kar2_key, kar2_group in kar2_groups:
+                    actions = list(kar2_group)
+                    for action in actions:
+                        waarschuwing = action[3]
+                        ingrijp = action[4]
+                        new_actions = {
+                            waarschuwing: 'waarschuwing',
+                            ingrijp: 'ingrijp'
+                        }
+                        new_actions.update(result[hoofd_key][kar1_key].get(kar2_key, {}))
+                        result[hoofd_key][kar1_key][kar2_key] = new_actions
+
+        return result
+
+    def build_rule_tree(self, rules):
+        """Build a rule tree of a list of rules
+
+        :arg
+            rules (list): flattened rules"""
+        result = {}
+
+        for rule in rules:
+            assert(len(rule) == 5)
+            hoofd_key = rule[0]
+            kar1_key = rule[1]
+            kar2_key = rule[2]
+            waarschuwing = rule[3]
+            ingrijp = rule[4]
+            # Check if the branch exists, if not create it.
+            if not hoofd_key in result:
+                result[hoofd_key] = {}
+            if not kar1_key in result[hoofd_key]:
+                result[hoofd_key][kar1_key] = {}
+            if not kar2_key in result[hoofd_key][kar1_key]:
+                result[hoofd_key][kar1_key][kar2_key] = {}
+            # Add rule to tree, potentially combine it if it already contains
+            # some rules in this branch
+            new_rule = {
+                waarschuwing: 'waarschuwing',
+                ingrijp: 'ingrijp'
+            }
+            old_rules = result[hoofd_key][kar1_key][kar2_key]
+            new_rule.update(old_rules)
+            result[hoofd_key][kar1_key][kar2_key] = new_rule
+        return result
+
+    def apply_filter(self, filter):
         """Apply the inspection_filter on the reviews.
 
         Auto-fills any inspections with a review if one of the rules inside
         the filter applies. None-empty inspections are ignored.
+
+        Currently the filter only applies to inspections of pipes (ZC).
         """
-        pass
+        rules = self.parse_filter()
+        for pipe in reviews['pipes']:
+            for zc in pipe['ZC']:
+                self.apply_zc_rule(rules, zc)
+
+    def apply_rule(self, rules, zc, level=0):
+        """Checks if one of the rules applies to this inspection
+
+        Applies the first found rule if it does"""
+        for rule in rules:
+            if zc['A'] in zc:
+                pass
+
 
     def get_inspections(self, incl_completed=True):
         """Return all inspections
@@ -792,8 +934,8 @@ class ReviewProject(models.Model):
         """Convert the manholes to a MultiPoint geojson object"""
         points = []
         for manhole in self.reviews['manholes']:
-            lng, lat = manhole.get('CAB').split(' ')
-            points.append((float(lng), float(lat)))
+            x, y = manhole.get('CAB').split(' ')
+            points.append(coordinates.rd_to_wgs84(x, y))
         return geojson.MultiPoint(points)
 
     def _pipes_to_lines(self):
@@ -801,9 +943,48 @@ class ReviewProject(models.Model):
         lines = []
         for pipe in self.reviews['pipes']:
             start = [float(coord) for coord in pipe.get('AAE').split(' ')]
+            start = coordinates.rd_to_wgs84(start[0], start[1])
             end = [float(coord) for coord in pipe.get('AAG').split(' ')]
+            end = coordinates.rd_to_wgs84(end[0], end[1])
             lines.append([start, end])
         return geojson.MultiLineString(lines)
+
+    def generate_feature_collection(self):
+        """Create a feature collection of the reviews.
+
+        Each feature gets a set of properties:
+            - Completion: float between 0-1, indicating how much it has been
+            reviews (manhole is either 0 or 1, but pipes can contain many
+            reviews."""
+        features = []
+
+        # maholes
+        for manhole in self.reviews['manholes']:
+            x, y = manhole.get('CAB').split(' ')
+            coord = coordinates.rd_to_wgs84(x, y)
+            geom = geojson.Point(coord)
+            completion = float(bool(manhole.get('Opmerking')))
+            feature = geojson.Feature(geometry=geom,
+                                      properties={"completion": completion})
+            features.append(feature)
+
+        # pipes
+        for pipe in self.reviews['pipes']:
+            start = [float(coord) for coord in pipe.get('AAE').split(' ')]
+            start = coordinates.rd_to_wgs84(start[0], start[1])
+            end = [float(coord) for coord in pipe.get('AAG').split(' ')]
+            end = coordinates.rd_to_wgs84(end[0], end[1])
+            geom = geojson.LineString([start, end])
+
+            completed = sum(1 for zc in pipe['ZC'] if zc['Opmerking'])
+            completion = completed/len(pipe['ZC'])
+
+            feature = geojson.Feature(geometry=geom,
+                                      properties={"completion": completion})
+            features.append(feature)
+
+        return geojson.FeatureCollection(features)
+
 
 
 class AcceptedFile(models.Model):

@@ -1096,6 +1096,8 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         try:
             # TODO: add project-field
             ribx_file = request.FILES['ribx']
+            # TODO: Apply the filter and allow for empty filter
+            filter_file = request.FILES['filter_file']
             project_review = models.ReviewProject.create_from_ribx(
                 name=request.POST['name'],
                 ribx_file=ribx_file,

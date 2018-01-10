@@ -1,5 +1,22 @@
 {% extends "lizard_progress/progressbase2.html" %}
 
+{% block css %}
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+     integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+     crossorigin=""/>
+
+  <style>
+    #mapid {
+      padding: 20px;
+      margin: auto;
+      height: 700px;
+      width: 90%;
+   }
+  </style>
+
+{% endblock css %}
+
 {% block content %}
   <div class="container">
     ReviewProject
@@ -8,13 +25,19 @@
 
 
     <h1> {{ view.reviewproject.name }} </h1>
+    <h3> Voortgang %%% </h3>
+    <progress value="22" max="100"></progress>
 
     <a href="">
       <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
         Apply review-filter
       </button>
     </a>
-
+    <a href="">
+      <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
+        Download reviews
+      </button>
+    </a>
     <form action="" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <p class="text-warning">{{ view.form.non_field_errors }}</p>
@@ -27,5 +50,10 @@
       <input type="submit" class="btn btn-primary" value="Upload reviews">
     </form>
 
+   {% include "lizard_progress/reviewproject_map.html" %}
+
   </div>
+
+
+
 {% endblock content %}

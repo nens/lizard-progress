@@ -32,6 +32,7 @@ from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
+from lizard_progress.util import filler
 
 from osgeo import osr
 from lizard_map import coordinates
@@ -676,6 +677,7 @@ class ReviewProject(models.Model):
 
         :arg:
             ribx_file (str): path to the ribx file
+            inspection_filter (str): path to the inspection filter
 
         :return:
             A dict containing all pipe and manhole inspections with their data
@@ -706,7 +708,11 @@ class ReviewProject(models.Model):
             manhole = project_review._parse_zb_c(elem)
             reviews['manholes'].append(manhole)
         project_review.reviews = reviews
-        # TODO: apply inspection_filter if we specify one?
+        # apply inspection_filter if we specify one
+        if inspection_filter:
+            with open(inspection_filter) as filter:
+                rule_tree = self.parse_insp_filter(filter)
+                self.apply_filter(rule_tree)
         project_review.save()
         return project_review
 
@@ -766,126 +772,26 @@ class ReviewProject(models.Model):
         result['Opmerking'] = ''
         return result
 
-    def parse_filter(self, inspection_filter, delimiter=str(',')):
-        """Read in the inspection filter and saves it to this ReviewProject
-
-        Inspection filter generates a set of rules.
-
-        :arg
-            inspection_filter (file object): a csv file with rules for
-                filtering.
-            delimiter (str): one-character string used to separate fields."""
-        reader = csv.reader(inspection_filter, delimiter=delimiter)
-        # Skip header
-        reader.next()
-
-        inspection_rules = {}
-        flat_rules = []
-        for rule in reader:
-            assert(len(rule) == 5)
-            flat_rules += list(self._flatten_rule(rule, ','))
-
-        # TODO: Convert the flat_rules to an rule_tree?
-        # TODO: save the flat_rules or rule_tree
-        return flat_rules
-
-    def _flatten_rule(self, rule, delimiter=str(',')):
-        """Return an iterator which generates new flattened rules.
-
-        I.e. the rule:
-            [A, [B, C], D]
-            ---(flatten)-->
-            [A, B, D],
-            [A, C, D]
+    def apply_inspection_filler(self,
+                                inspection_filler=None,
+                                delimiter=str(',')):
+        """Apply the inspection filler to the inspections of this reviewproject
 
         :arg
-            rules (list): the rules to be flattened.
-        :return a iterator which returns flattened rules.
+            inspection_filler (string): the path location of the inspection
+                filler
+            delimiter (str): one-character string used to separate fields.
+        :return
+            Reviews updated according to the rules defined in the inspection_filler.
         """
-        bags = (it.split(delimiter) for it in rule)
-        return itertools.product(*bags)
+        if inspection_filler is None:
+            inspection_filler = self.inspection_filter
 
-    # TODO: Can probably be removed
-    def build_tree_old(self, rules):
-        result = {}
-        # first key
-        hoofd_groups = itertools.groupby(rules, lambda x: x[0])
-        # group by hoofd_code and create a key for each group
-        for hoofd_key, hoofd_group in hoofd_groups:
-            result[hoofd_key] = {}
-            # for each hoofd_code group, group its subelement and repeat
-            kar1_groups = itertools.groupby(hoofd_group, lambda x: x[1])
+        flat_rules = filler.parse_insp_filter(inspection_filler)
+        rule_tree = filler.build_rule_tree(flat_rules)
+        new_reviews = filler.apply_rules(rule_tree, reviews)
 
-            for kar1_key, kar1_group in kar1_groups:
-                result[hoofd_key][kar1_key] = {}
-                kar2_groups = itertools.groupby(kar1_group, lambda x: x[2])
-                for kar2_key, kar2_group in kar2_groups:
-                    actions = list(kar2_group)
-                    for action in actions:
-                        waarschuwing = action[3]
-                        ingrijp = action[4]
-                        new_actions = {
-                            waarschuwing: 'waarschuwing',
-                            ingrijp: 'ingrijp'
-                        }
-                        new_actions.update(result[hoofd_key][kar1_key].get(kar2_key, {}))
-                        result[hoofd_key][kar1_key][kar2_key] = new_actions
-
-        return result
-
-    def build_rule_tree(self, rules):
-        """Build a rule tree of a list of rules
-
-        :arg
-            rules (list): flattened rules"""
-        result = {}
-
-        for rule in rules:
-            assert(len(rule) == 5)
-            hoofd_key = rule[0]
-            kar1_key = rule[1]
-            kar2_key = rule[2]
-            waarschuwing = rule[3]
-            ingrijp = rule[4]
-            # Check if the branch exists, if not create it.
-            if not hoofd_key in result:
-                result[hoofd_key] = {}
-            if not kar1_key in result[hoofd_key]:
-                result[hoofd_key][kar1_key] = {}
-            if not kar2_key in result[hoofd_key][kar1_key]:
-                result[hoofd_key][kar1_key][kar2_key] = {}
-            # Add rule to tree, potentially combine it if it already contains
-            # some rules in this branch
-            new_rule = {
-                waarschuwing: 'waarschuwing',
-                ingrijp: 'ingrijp'
-            }
-            old_rules = result[hoofd_key][kar1_key][kar2_key]
-            new_rule.update(old_rules)
-            result[hoofd_key][kar1_key][kar2_key] = new_rule
-        return result
-
-    def apply_filter(self, filter):
-        """Apply the inspection_filter on the reviews.
-
-        Auto-fills any inspections with a review if one of the rules inside
-        the filter applies. None-empty inspections are ignored.
-
-        Currently the filter only applies to inspections of pipes (ZC).
-        """
-        rules = self.parse_filter()
-        for pipe in reviews['pipes']:
-            for zc in pipe['ZC']:
-                self.apply_zc_rule(rules, zc)
-
-    def apply_rule(self, rules, zc, level=0):
-        """Checks if one of the rules applies to this inspection
-
-        Applies the first found rule if it does"""
-        for rule in rules:
-            if zc['A'] in zc:
-                pass
-
+        return new_reviews
 
     def get_inspections(self, incl_completed=True):
         """Return all inspections
@@ -984,7 +890,6 @@ class ReviewProject(models.Model):
             features.append(feature)
 
         return geojson.FeatureCollection(features)
-
 
 
 class AcceptedFile(models.Model):

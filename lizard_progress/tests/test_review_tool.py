@@ -28,6 +28,7 @@ class ReviewProjectF(factory.DjangoModelFactory):
     slug = factory.Sequence(lambda n: 'testreviewproject%d' % n)
     organization = factory.SubFactory(OrganizationF)
     reviews = None
+    inspection_filter = None
 
 
 class TestReviewProject(FixturesTestCase):
@@ -45,17 +46,20 @@ class TestReviewProject(FixturesTestCase):
         self.organization = models.Organization.objects.create(
             name='Test organization'
         )
-        self.pr = models.ReviewProject.objects.create(
+        self.rp = ReviewProjectF(
             name='Test reviewproject',
             organization=self.organization)
 
     def test_create_reviewProject(self):
         # Create blank ReviewProject
-        self.pr.save()
+        pr = models.ReviewProject.objects.create(
+            name='Test reviewproject',
+            organization=self.organization)
+        pr.save()
 
     def test_set_slug_and_save(self):
         organization = self.organization
-        pr = self.pr
+        pr = self.rp
         pr.set_slug_and_save()
         self.assertTrue(pr.slug)
         self.assertTrue(unicode(pr.id) in pr.slug)
@@ -65,25 +69,25 @@ class TestReviewProject(FixturesTestCase):
         tree = etree.parse(self.single_pipe)
         root = tree.getroot()
         element = root.find('ZB_A')
-        pipe = self.pr._parse_zb_a(element)
+        pipe = self.rp._parse_zb_a(element)
         self.assertEqual('147715.18 491929.01', pipe['AAE'])
         self.assertEqual('147779.16 491974.99', pipe['AAG'])
-        self.assertTrue(set(pipe.keys()).issubset(self.pr.ZB_A_FIELDS))
+        self.assertTrue(set(pipe.keys()).issubset(self.rp.ZB_A_FIELDS))
         self.assertEquals(len(pipe['ZC']), 2)
 
     def test__parse_zb_c(self):
         tree = etree.parse(self.single_manhole)
         root = tree.getroot()
         element = root.find('ZB_C')
-        manhole = self.pr._parse_zb_c(element)
+        manhole = self.rp._parse_zb_c(element)
         self.assertEqual('146916.82 492326.42', manhole['CAB'])
-        self.assertTrue(set(manhole.keys()).issubset(self.pr.ZB_C_FIELDS))
+        self.assertTrue(set(manhole.keys()).issubset(self.rp.ZB_C_FIELDS))
 
     def test__parse_zc(self):
         tree = etree.parse(self.single_pipe)
         root = tree.getroot()
         element = root.find('ZB_A').find('ZC')
-        inspection = self.pr._parse_zc(element)
+        inspection = self.rp._parse_zc(element)
         self.assertTrue(inspection.has_key('Herstelmaatregel'))
         self.assertTrue(inspection.has_key('Opmerking'))
 
@@ -138,11 +142,11 @@ class TestReviewProject(FixturesTestCase):
         self.assertEquals(len(geojson.features), 10)
 
     def _calc_progress_manhole(self, manhole):
-        progress = self.pr._calc_progress_manhole(manhole)
+        progress = self.rp._calc_progress_manhole(manhole)
         self.assertEquals(progress, 0.0)
 
     def _calc_progress_pipe(self, pipe):
-        progress = self.pr._calc_progress_pipe(pipe)
+        progress = self.rp._calc_progress_pipe(pipe)
         self.assertEquals(progress, 1.0)
 
     def test_calc_progress(self):
@@ -158,44 +162,3 @@ class TestReviewProject(FixturesTestCase):
 
             total_progress = review.calc_progress()
             self.assertEquals(total_progress, 0.375)
-
-    def test_flatten_rule(self):
-        unflattenned_filter = 'unflattenned_filter.csv'
-        filter_file = os.path.join(self.test_files,
-                                  'filter',
-                                  unflattenned_filter)
-        with open(filter_file) as csvfile:
-            reader = csv.reader(csvfile)
-            simple_rule = reader.next()
-            unflat_rule = reader.next()
-            empty_field_rule = reader.next()
-
-            flat_simple_rules = list(self.pr._flatten_rule(simple_rule))
-            self.assertEquals(len(flat_simple_rules), 1)
-            # a rule contains 5 elements
-            self.assertEquals(len(flat_simple_rules[0]), 5)
-            for el in simple_rule[0]:
-                self.assertTrue(',' not in el)
-
-            flat_unflat_rules = list(self.pr._flatten_rule(unflat_rule))
-            self.assertEquals(len(flat_unflat_rules), 6)
-
-            flat_empty_field_rules = list(self.pr._flatten_rule(empty_field_rule))
-            self.assertEquals(len(flat_empty_field_rules), 2)
-
-    def test_build_rule_tree(self):
-        simple_filter = 'simple_filter.csv'
-        filter_file = os.path.join(self.test_files, 'filter', simple_filter)
-        with open(filter_file) as csvfile:
-            inspection_rules = self.pr.parse_filter(csvfile)
-            self.assertEquals(len(inspection_rules), 4)
-
-            rule_tree = self.pr.build_rule_tree(inspection_rules)
-            self.assertEquals(len(rule_tree.keys()), 2)
-            self.assertTrue(len(rule_tree['a']), 1)
-            self.assertTrue(len(rule_tree['b']), 2)
-            self.assertTrue(len(rule_tree['b']['b']), 2)
-
-    def test_apply_filter(self):
-        pass
-

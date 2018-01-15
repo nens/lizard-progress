@@ -608,6 +608,8 @@ class ReviewProject(models.Model):
     # All performed inspections and their reviews, reviews might be empty
     reviews = JSONField(null=True, blank=True)
 
+    HERSTELMAATREGEL = 'Herstelmaatregel'
+    OPMERKING = 'Opmerking'
     ZB_A_FIELDS = ['AAA', 'AAB', 'AAC', 'AAD', 'AAE', 'AAF', 'AAG', 'AAH',
                    'AAI', 'AAJ', 'AAK', 'AAL', 'AAM', 'AAN', 'AAO', 'AAP',
                    'AAQ', 'AAT', 'AAU', 'AAV', 'ABA', 'ABB', 'ABC', 'ABE',
@@ -616,7 +618,7 @@ class ReviewProject(models.Model):
                    'ACB', 'ACC', 'ACD', 'ACE', 'ACF', 'ACG', 'ACH', 'ACI',
                    'ACJ', 'ACK', 'ACL', 'ACM', 'ACN', 'ADA', 'ADB', 'ADC',
                    'ADE', 'AXA', 'AXB', 'AXC', 'AXD', 'AXE', 'AXF', 'AXG',
-                   'AXH', 'AXY', 'ZC', 'Herstelmaatregel', 'Opmerking']
+                   'AXH', 'AXY', 'ZC', HERSTELMAATREGEL, OPMERKING]
     ZB_C_FIELDS = ['CAA', 'CAB', 'CAJ', 'CAL', 'CAM', 'CAN', 'CAO', 'CAP',
                    'CAQ', 'CAR', 'CAS', 'CBA', 'CBB', 'CBC', 'CBD', 'CBE',
                    'CBF', 'CBG', 'CBH', 'CBI', 'CBJ', 'CBK', 'CBL', 'CBM',
@@ -624,31 +626,33 @@ class ReviewProject(models.Model):
                    'CCC', 'CCD', 'CCG', 'CCK', 'CCL', 'CCM', 'CCN', 'CCO',
                    'CCP', 'CCQ', 'CCR', 'CCS', 'CCT', 'CDA', 'CDB', 'CDC',
                    'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE',
-                   'Herstelmaatregel', 'Opmerking']
+                   HERSTELMAATREGEL, OPMERKING]
+
 
     def calc_progress(self):
-        """Return a float indicating how much has been reviewed
+        """Return an int between 0 and 100, indicating the percentage that has
+         been reviewed.
 
         Assumes each manhole and pipe weights the same independent of the
-        number of required reviews it has.
+        number of reviews it has.
         """
         completion = []
         for manhole in self.reviews['manholes']:
             completion.append(self._calc_progress_manhole(manhole))
         for pipe in self.reviews['pipes']:
             completion.append(self._calc_progress_pipe(pipe))
-        return sum(completion) / len(completion)
+        return int(round(sum(completion) / len(completion) * 100))
 
     def _calc_progress_manhole(self, manhole):
         """Return a float indicating how % much the manhole has been reviewed
 
         Because there is only 1 thing to review for a manhole, it either returns
         0.0 or 1.0"""
-        return float(bool(manhole['Opmerking']))
+        return float(bool(manhole[self.OPMERKING]))
 
     def _calc_progress_pipe(self, pipe):
         """Return a float indicating how % much the pipe has been reviewed"""
-        completed = sum(1 for zc in pipe['ZC'] if zc['Opmerking'])
+        completed = sum(1 for zc in pipe['ZC'] if zc[self.OPMERKING])
         return completed / len(pipe['ZC'])
 
     def set_slug_and_save(self):
@@ -676,8 +680,8 @@ class ReviewProject(models.Model):
         fields 'Herstelmaatregel' and 'Opmerking'.
 
         :arg:
-            ribx_file (str): path to the ribx file
-            inspection_filter (str): path to the inspection filter
+            ribx_file: file object containing XML data
+            inspection_filter (str): absolute path to the inspection filter
 
         :return:
             A dict containing all pipe and manhole inspections with their data
@@ -737,8 +741,8 @@ class ReviewProject(models.Model):
                     result['ZC'].append(self._parse_zc(elem))
                 else:
                     result[elem.tag] = elem.text
-        result['Herstelmaatregel'] = ''
-        result['Opmerking'] = ''
+        result[self.HERSTELMAATREGEL] = ''
+        result[self.OPMERKING] = ''
         return result
 
     def _parse_zb_c(self, zb_c):
@@ -759,8 +763,8 @@ class ReviewProject(models.Model):
                     result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
                 else:
                     result[elem.tag] = elem.text
-        result['Herstelmaatregel'] = ''
-        result['Opmerking'] = ''
+        result[self.HERSTELMAATREGEL] = ''
+        result[self.OPMERKING] = ''
         return result
 
     def _parse_zc(self, zc):
@@ -768,8 +772,8 @@ class ReviewProject(models.Model):
         result = {}
         for elem in zc.getchildren():
             result[elem.tag] = elem.text
-        result['Herstelmaatregel'] = ''
-        result['Opmerking'] = ''
+        result[self.HERSTELMAATREGEL] = ''
+        result[self.OPMERKING] = ''
         return result
 
     def apply_inspection_filler(self,
@@ -869,7 +873,7 @@ class ReviewProject(models.Model):
             x, y = manhole.get('CAB').split(' ')
             coord = coordinates.rd_to_wgs84(x, y)
             geom = geojson.Point(coord)
-            completion = float(bool(manhole.get('Opmerking')))
+            completion = float(bool(manhole.get(self.OPMERKING)))
             feature = geojson.Feature(geometry=geom,
                                       properties={"completion": completion})
             features.append(feature)
@@ -882,7 +886,7 @@ class ReviewProject(models.Model):
             end = coordinates.rd_to_wgs84(end[0], end[1])
             geom = geojson.LineString([start, end])
 
-            completed = sum(1 for zc in pipe['ZC'] if zc['Opmerking'])
+            completed = sum(1 for zc in pipe['ZC'] if zc[self.OPMERKING])
             completion = completed/len(pipe['ZC'])
 
             feature = geojson.Feature(geometry=geom,

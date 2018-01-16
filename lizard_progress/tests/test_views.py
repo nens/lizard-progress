@@ -22,14 +22,11 @@ class TestReviewProjectViews(FixturesTestCase):
 
     def setUp(self):
         # RIBX test files:
-        ribx_file_dir = os.path.join('lizard_progress',
+        self.goed_ribx_file_dir = os.path.join('lizard_progress',
                                      'tests',
                                      'test_met_files',
-                                     'ribx')
-        ribx_files = os.listdir(ribx_file_dir)
-
-        self.abs_path_files = \
-            [os.path.join(ribx_file_dir, file) for file in ribx_files]
+                                     'ribx',
+                                     'goed.ribx')
 
         # Setup test-database with user, organization and reviewproject.
         self.user1 = UserF(username="user1")
@@ -53,37 +50,85 @@ class TestReviewProjectViews(FixturesTestCase):
         self.assertEquals(len(reviewprojects), 1)
 
     def test_get_reviewproject(self):
+        # Go to new_reviewproject page
         response = self.client.get(reverse('lizard_progress_reviewproject',
                                            kwargs={'review_id': self.reviewproject.id}),
                                    {'user': self.user1})
         self.assertEquals(response.status_code, 200)
 
-    def test_post_new_reviewproject(self):
-        # Go to new_reviewproject page
-        response = self.client.get(reverse('lizard_progress_new_reviewproject'),
-                                   {'user': self.user1})
-        self.assertEquals(response.status_code, 200)
+    def test_post_invalid_reviewproject(self):
+        # Create a invalid reviewproject: no name and no ribx-file
+        with open(self.goed_ribx_file_dir) as file:
+            response = self.client.post(reverse('lizard_progress_new_reviewproject'),
+                                         {'name': '',
+                                          'ribx': None
+                                          })
+            self.assertEquals(response.status_code, 200)
+            self.assertTrue(response.context_data['view'].form.errors)
+            self.assertIn('name', response.context_data['view'].form.errors)
+            self.assertIn('ribx', response.context_data['view'].form.errors)
 
-        # Create a valid reviewproject
-        with open(self.abs_path_files[0]) as file:
+    def test_post_new_reviewproject_without_filler(self):
+        # Create a valid reviewproject without a filler
+        with open(self.goed_ribx_file_dir) as file:
             response = self.client.post(reverse('lizard_progress_new_reviewproject'),
                              {'name': 'new reviewproject',
-                              'ribx': file
+                              'ribx': file,
+                              'filler_file': None
                               })
             self.assertEquals(response.status_code, 302)
             self.assertTrue(models.ReviewProject.objects.get(
                 name='new reviewproject')
             )
 
-        # Create a invalid reviewproject: no name and no ribx-file
-        response = self.client.post(reverse('lizard_progress_new_reviewproject'),
-                                     {'name': '',
-                                      'ribx': None
-                                      })
-        self.assertEquals(response.status_code, 200)
-        self.assertTrue(response.context_data['view'].form.errors)
-        self.assertIn('name', response.context_data['view'].form.errors)
-        self.assertIn('ribx', response.context_data['view'].form.errors)
+
+    def test_post_new_reviewproject_with_filler(self):
+        # Create a valid reviewproject with a filler, but won't have any
+        # matching rules.
+        filler_file_path = os.path.join('lizard_progress',
+                                   'tests',
+                                   'test_met_files',
+                                   'filter',
+                                   'simple_filter.csv')
+        with open(self.goed_ribx_file_dir) as ribx_file, \
+            open(filler_file_path) as filler_file:
+            response = self.client.post(
+                reverse('lizard_progress_new_reviewproject'),
+                {'name': 'new reviewproject',
+                 'ribx': ribx_file,
+                 'filler_file': filler_file
+                 })
+            self.assertEquals(response.status_code, 302)
+            self.assertTrue(models.ReviewProject.objects.get(
+                name='new reviewproject')
+            )
+            reviewProject = models.ReviewProject.objects.get(
+                            name='new reviewproject')
+            self.assertEquals(reviewProject.calc_progress(), 0)
+
+    def test_post_new_reviewproject_with_filler_applicable(self):
+        # Create a valid reviewproject with a filler which should auto-fill
+        # some values of the reviews
+        filler_file_path = os.path.join('lizard_progress',
+                                   'tests',
+                                   'test_met_files',
+                                   'filter',
+                                   'complex_filler.csv')
+        with open(self.goed_ribx_file_dir) as ribx_file, \
+            open(filler_file_path) as filler_file:
+            response = self.client.post(
+                reverse('lizard_progress_new_reviewproject'),
+                {'name': 'new reviewproject',
+                 'ribx': ribx_file,
+                 'filler_file': filler_file
+                 })
+            self.assertEquals(response.status_code, 302)
+            self.assertTrue(models.ReviewProject.objects.get(
+                name='new reviewproject')
+            )
+            reviewProject = models.ReviewProject.objects.get(
+                            name='new reviewproject')
+            self.assertEquals(reviewProject.calc_progress(), 1)
 
     def test_upload_valid_reviews(self):
         # Starting with no reviews

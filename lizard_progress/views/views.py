@@ -1096,22 +1096,27 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         try:
             # TODO: add project-field
             ribx_file = request.FILES['ribx']
-            # TODO: Apply the filter and allow for empty filter
-            filter_file = request.FILES['filter_file']
+            # TODO: Apply the filler and allow for empty filler
+            filler_file = None
+            if request.FILES.has_key('filler_file'):
+                filler_file = request.FILES['filler_file']
             project_review = models.ReviewProject.create_from_ribx(
                 name=request.POST['name'],
                 ribx_file=ribx_file,
-                organization=self.organization
+                organization=self.organization,
+                inspection_filter=filler_file
             )
             project_review.set_slug_and_save()
 
             rel_dest_folder = directories.rel_reviewproject_dir(project_review)
             abs_dest_folder = directories.absolute(rel_dest_folder)
             handle_uploaded_file(ribx_file, abs_dest_folder)
-        except Error:
+            if filler_file:
+                handle_uploaded_file(filler_file, abs_dest_folder)
+        except:
             # If something goes wrong, don't save anything, revert all back
             # TODO: revert everyting
-            pass
+            raise
 
         return HttpResponseRedirect('/us/reviews/')
 

@@ -3,7 +3,6 @@
 
 """Tests for lizard_progress util.Filler."""
 
-# lizard_progress.util.tests.test_filler
 
 from django.test import TestCase
 from lizard_progress.tests.base import FixturesTestCase
@@ -17,6 +16,7 @@ from lizard_progress.util.filler import apply_rules
 import json
 import os
 
+# lizard_progress.util.tests.test_filler
 
 class TestFlattenRule(FixturesTestCase):
 
@@ -103,70 +103,243 @@ class TestRuleTree(FixturesTestCase):
             self.assertEquals(len(rule_tree.keys()), 2)
             self.assertTrue(len(rule_tree['a']), 1)
             self.assertTrue(len(rule_tree['b']), 2)
-            self.assertTrue(len(rule_tree['b']['b']), 2)
+            self.assertTrue(len(rule_tree['b']['b']), 1)
 
-    def test_apply_rule(self):
+class TestApplyRuleSimple(FixturesTestCase):
+
+    def setUp(self):
+        self.filler_files = os.path.join('lizard_progress',
+                                         'util',
+                                         'tests',
+                                         'test_filler_files',
+                                         'fillers')
         filler_simple = 'simple_filler.csv'
         filler_simple_file = os.path.join(self.filler_files, filler_simple)
+        self.rule_tree = None
         with open(filler_simple_file) as filler:
             rules = parse_insp_filler(filler)
-            rule_tree = build_rule_tree(rules)
-            zc_empty = {'A': '',
-                        'B': '',
-                        'C': '',
-                        'D': '',
-                        'Herstelmaatregel': '',
-                        'Opmerking': ''}
-            result = _apply_rule(rule_tree, zc_empty)
-            self.assertEquals('', result['Herstelmaatregel'])
+            self.rule_tree = build_rule_tree(rules)
 
-            zc_waarschuwing = {'A': 'a',
-                        'B': 'b',
-                        'C': 'c',
-                        'D': 'd',
-                        'Herstelmaatregel': '',
-                        'Opmerking': ''}
-            result = _apply_rule(rule_tree, zc_waarschuwing)
-            self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+    def test_apply_rule_empty_zc(self):
+        zc_empty = {'A': '',
+                    'B': '',
+                    'C': '',
+                    'D': '',
+                    'Herstelmaatregel': '',
+                    'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_empty)
+        self.assertEquals('', result['Herstelmaatregel'])
 
-            zc_ingrijp = {'A': 'a',
-                          'B': 'b',
-                          'C': 'c',
-                          'D': 'f',
-                          'Herstelmaatregel': '',
-                          'Opmerking': ''}
-            result = _apply_rule(rule_tree, zc_ingrijp)
-            self.assertEquals('ingrijp', result['Herstelmaatregel'])
+    def test_apply_simple_rule_waarschuwing(self):
+        zc_waarschuwing = {'A': 'a',
+                    'B': 'b',
+                    'C': 'c',
+                    'D': 'd',
+                    'Herstelmaatregel': '',
+                    'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
 
-            zc_skip = {'A': 'a',
-                          'B': 'b',
-                          'C': 'c',
-                          'D': 'f',
-                          'Herstelmaatregel': 'aaa',
-                          'Opmerking': ''}
-            result = _apply_rule(rule_tree, zc_skip)
-            self.assertEquals('aaa', result['Herstelmaatregel'])
+    def test_apply_simple_rule_ingrijp(self):
+        zc_ingrijp = {'A': 'a',
+                      'B': 'b',
+                      'C': 'c',
+                      'D': 'f',
+                      'Herstelmaatregel': '',
+                      'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_ingrijp)
+        self.assertEquals('ingrijp', result['Herstelmaatregel'])
+
+    def test_apply_simple_rule_already_filled_zc(self):
+        # rule should skip because zc has already been filled in
+        zc_skip = {'A': 'a',
+                   'B': 'b',
+                   'C': 'c',
+                   'D': 'f',
+                   'Herstelmaatregel': 'aaa',
+                   'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_skip)
+        self.assertEquals('aaa', result['Herstelmaatregel'])
 
     def test_apply_rule_with_empty_rules(self):
-        filler_unflat = 'unflattenned_filler.csv'
-        filler_unflat_file = os.path.join(self.filler_files, filler_unflat)
-        with open(filler_unflat_file) as filler:
-            rules = parse_insp_filler(filler)
-            rule_tree = build_rule_tree(rules)
-            zc_waarschuwing = {'A': 'a',
-                        'B': 'c',
-                        'C': 'c',
-                        'D': 'd',
-                        'Herstelmaatregel': '',
-                        'Opmerking': ''}
-            result = _apply_rule(rule_tree, zc_waarschuwing)
-            self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+        zc_waarschuwing = {'A': 'b',
+                    'B': '',
+                    'C': '',
+                    'D': 'h',
+                    'Herstelmaatregel': '',
+                    'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
 
-            zc_with_empty = {'A': 'b',
-                               'B': 'f',
-                               'C': '',
-                               'D': 'g',
-                               'Herstelmaatregel': '',
-                               'Opmerking': ''}
-            result = _apply_rule(rule_tree, zc_with_empty)
-            self.assertEquals('ingrijp', result['Herstelmaatregel'])
+class TestApplyRuleComplex(FixturesTestCase):
+
+    def setUp(self):
+        self.filler_files = os.path.join('lizard_progress',
+                                         'util',
+                                         'tests',
+                                         'test_filler_files',
+                                         'fillers')
+        filler_complex = 'complex_filler.csv'
+        filler_complex_file = os.path.join(self.filler_files, filler_complex)
+        self.rule_tree = None
+        with open(filler_complex_file) as filler:
+            rules = parse_insp_filler(filler)
+            self.rule_tree = build_rule_tree(rules)
+
+    def test_apply_rule_waarschuwing(self):
+        zc_waarschuwing = {'A': 'a',
+                           'B': 'b',
+                           'C': 'c',
+                           'D': '3',
+                           'Herstelmaatregel': '',
+                           'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+
+    def test_apply_rule_ingrijp(self):
+        zc_ingrijp = {'A': 'a',
+                      'B': 'b',
+                      'C': 'c',
+                      'D': '7',
+                      'Herstelmaatregel': '',
+                      'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_ingrijp)
+        self.assertEquals('ingrijp', result['Herstelmaatregel'])
+
+    def test_apply_rule_ingrijp_smaller(self):
+        zc_ingrijp = {'A': 'b',
+                      'B': 'b',
+                      'C': 'c2',
+                      'D': '-2',
+                      'Herstelmaatregel': '',
+                      'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_ingrijp)
+        self.assertEquals('ingrijp', result['Herstelmaatregel'])
+
+    def test_apply_rule_simple_complex(self):
+        # a rule with both '>' and 'a'
+        zc_ingrijp = {'A': 'c',
+                      'B': 'd',
+                      'C': 'e',
+                      'D': '6',
+                      'Herstelmaatregel': '',
+                      'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_ingrijp)
+        self.assertEquals('ingrijp', result['Herstelmaatregel'])
+
+    def test_apply_rule_simple_complex_waarschuwing(self):
+        # a rule with both '>' and 'a'
+        zc_waarschuwing = {'A': 'c',
+                           'B': 'd',
+                           'C': 'e',
+                           'D': 'a',
+                           'Herstelmaatregel': '',
+                           'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+
+    def test_apply_rule_simple_complex_ingrijp(self):
+        # a rule with both '>' and 'a'
+        zc_ingrijp = {'A': 'c',
+                           'B': 'd',
+                           'C': 'e',
+                           'D': '10.00',
+                           'Herstelmaatregel': '',
+                           'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_ingrijp)
+        self.assertEquals('ingrijp', result['Herstelmaatregel'])
+
+    def test_apply_rule_complex_simple_waarschuwing(self):
+        # a rule with both 'a' and '<'
+        zc_waarschuwing = {'A': 'c',
+                           'B': 'd',
+                           'C': 'f',
+                           'D': '4.4',
+                           'Herstelmaatregel': '',
+                           'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+
+    def test_apply_rule_complex_simple_ingrijp(self):
+        # a rule with both 'a' and '<'
+        zc_ingrijp = {'A': 'c',
+                       'B': 'd',
+                       'C': 'f',
+                       'D': 'b',
+                       'Herstelmaatregel': '',
+                       'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_ingrijp)
+        self.assertEquals('ingrijp', result['Herstelmaatregel'])
+
+    def test_overriding_rule(self):
+        zc_waarschuwing = {'A': 'd',
+                      'B': 'e',
+                      'C': 'f',
+                      'D': 'g',
+                      'Herstelmaatregel': '',
+                      'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+
+        zc_waarschuwing = {'A': 'd',
+                           'B': 'e',
+                           'C': 'f',
+                           'D': 'h',
+                           'Herstelmaatregel': '',
+                           'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+
+    def test_overriding_rule2(self):
+        zc_waarschuwing = {'A': 'c',
+                      'B': 'd',
+                      'C': 'f',
+                      'D': '4',
+                      'Herstelmaatregel': '',
+                      'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+
+        zc_ingrijp = {'A': 'c',
+                       'B': 'd',
+                       'C': 'f',
+                       'D': '-0.4',
+                       'Herstelmaatregel': '',
+                       'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_ingrijp)
+        self.assertEquals('ingrijp', result['Herstelmaatregel'])
+
+class TestZApplyFiller(FixturesTestCase):
+
+    def setUp(self):
+        self.filler_files = os.path.join('lizard_progress',
+                                         'util',
+                                         'tests',
+                                         'test_filler_files',
+                                         'fillers')
+        self.review_files = os.path.join('lizard_progress',
+                                         'util',
+                                         'tests',
+                                         'test_filler_files',
+                                         'reviews')
+
+        filler_simple_file = os.path.join(self.filler_files, 'simple_filler.csv')
+        with open(filler_simple_file) as filler:
+            rules = parse_insp_filler(filler)
+            self.rule_tree_simple = build_rule_tree(rules)
+        filler_complex_file2 = os.path.join(self.filler_files, 'complex_filler2.csv')
+        with open(filler_complex_file2) as filler:
+            rules = parse_insp_filler(filler)
+            self.rule_tree_complex = build_rule_tree(rules)
+
+        review_complex_file = os.path.join(self.review_files, 'complex_review.json')
+        with open(review_complex_file) as review:
+            self.review_complex = json.load(review)
+
+    def test_apply_filler_simple(self):
+        pass
+
+    def test_apply_filler_complex2(self):
+
+        apply_rules(self.rule_tree_complex, self.review_complex)
+

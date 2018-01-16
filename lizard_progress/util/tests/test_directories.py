@@ -2,7 +2,7 @@
 
 from lizard_progress.tests.base import FixturesTestCase
 from lizard_progress.tests.test_models import ActivityF
-from lizard_progress.tests.test_review_tool import EmptyReviewProjectF
+from lizard_progress.tests.test_review_tool import ReviewProjectF
 from lizard_progress.util import directories
 
 import os
@@ -24,7 +24,7 @@ class TestSyncDir(FixturesTestCase):
 class TestReviewProjectDir(FixturesTestCase):
 
     def setUp(self):
-        self.rp = EmptyReviewProjectF.create()
+        self.rp = ReviewProjectF.create()
         # self.pr.set_slug_and_save()
 
     def test_rel_reviewproject_dir(self):

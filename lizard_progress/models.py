@@ -648,11 +648,11 @@ class ReviewProject(models.Model):
 
         Because there is only 1 thing to review for a manhole, it either returns
         0.0 or 1.0"""
-        return float(bool(manhole[self.OPMERKING]))
+        return float(bool(manhole[self.HERSTELMAATREGEL]))
 
     def _calc_progress_pipe(self, pipe):
         """Return a float indicating how % much the pipe has been reviewed"""
-        completed = sum(1 for zc in pipe['ZC'] if zc[self.OPMERKING])
+        completed = sum(1 for zc in pipe['ZC'] if zc[self.HERSTELMAATREGEL])
         return completed / len(pipe['ZC'])
 
     def set_slug_and_save(self):
@@ -680,8 +680,8 @@ class ReviewProject(models.Model):
         fields 'Herstelmaatregel' and 'Opmerking'.
 
         :arg:
-            ribx_file: file object containing XML data
-            inspection_filter (str): absolute path to the inspection filter
+            ribx_file: file object containing XML (RIBX) data
+            inspection_filter (str): file object containing CSV data
 
         :return:
             A dict containing all pipe and manhole inspections with their data
@@ -714,9 +714,9 @@ class ReviewProject(models.Model):
         project_review.reviews = reviews
         # apply inspection_filter if we specify one
         if inspection_filter:
-            with open(inspection_filter) as filter:
-                rule_tree = self.parse_insp_filter(filter)
-                self.apply_filter(rule_tree)
+            rules = filler.parse_insp_filler(inspection_filter)
+            rule_tree = filler.build_rule_tree(rules)
+            filler.apply_rules(rule_tree, reviews)
         project_review.save()
         return project_review
 

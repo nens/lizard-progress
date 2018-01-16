@@ -161,4 +161,4 @@ class TestReviewProject(FixturesTestCase):
             self._calc_progress_pipe(uncompleted_pipe)
 
             total_progress = review.calc_progress()
-            self.assertEquals(total_progress, 0.375)
+            self.assertEquals(total_progress, 38)

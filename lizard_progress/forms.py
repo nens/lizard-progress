@@ -317,7 +317,7 @@ class NewReviewProjectForm(forms.Form):
         exts=[".ribx", ".ribxa", ".xml"],
         label="ribx")
     filter_file = forms.FileField(
-        label="filter_file")
+        label="filler_file", required=False)
 
     def __init__(self, *args, **kwargs):
         if 'organization' in kwargs:

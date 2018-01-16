@@ -8,7 +8,7 @@ Helper functions to auto-fill inspections of a review project.
 A user can define its own filler as csv-file, in which he/she declares a set of
 rules. Rules are defined on the rows and must consist of 5 columns:
 
- Hoofdcode | Karakteresering 1 | Karakterisering 2 | Ingrijp | Waarschuwing
+ Hoofdcode | Karakterisering 1 | Karakterisering 2 | Ingrijp | Waarschuwing
 
  translated to ribx-tags:
 
@@ -22,7 +22,7 @@ The function build_rule_tree() is the main function of this file, which builds
 a rule-tree based on a set of rules. This rule-tree can be used by the
 reviewproject to auto-fill its inspections.
 
-An rule-tree is dict of (4) nested dicts to efficiently find the rule which is
+A rule-tree is dict of (4) nested dicts to efficiently find the rule which is
 applicable to a specific inspection (ZC). Each branch (from the root till the
 leaf) is a specific rule defined in the filler csv-file. The leaf node of the
 tree defines what action/function must be applied to the inspection.
@@ -33,6 +33,7 @@ applicable to this inspection and thus it can be skipped.
 import itertools
 import csv
 
+# lizard_progres.util.tests.test_filler
 
 def parse_insp_filler(inspection_filler,
                       delimiter=str(',')):
@@ -79,18 +80,61 @@ def build_rule_tree(rules):
             result[hoofd_key] = {}
         if not kar1_key in result[hoofd_key]:
             result[hoofd_key][kar1_key] = {}
-        if not kar2_key in result[hoofd_key][kar1_key]:
-            result[hoofd_key][kar1_key][kar2_key] = {}
-        # Add rule to tree, potentially combine it if it already contains
-        # some rules in this branch
-        new_rule = {
-            waarschuwing: 'waarschuwing',
-            ingrijp: 'ingrijp'
-        }
-        old_rules = result[hoofd_key][kar1_key][kar2_key]
-        new_rule.update(old_rules)
+
+        new_rule = _create_rule(waarschuwing, ingrijp)
+
+        if kar2_key in result[hoofd_key][kar1_key]:
+            # if there already exist a rule, the old rule needs to be updated
+            # with the new rule
+            old_rule = result[hoofd_key][kar1_key][kar2_key]
+            new_rule = _update_rule(old_rule, new_rule)
         result[hoofd_key][kar1_key][kar2_key] = new_rule
     return result
+
+
+def _create_rule(waarschuwing, ingrijp):
+    """Creates a rule function based on the two user defined expressions
+
+    :arg
+        waarschuwing (func): function which takes one argument and returns true
+            if it should be marked as 'waarschuwing'
+        ingrijp (func): function which takes one argument and returns true
+                    if it should be marked as 'ingrijp'"""
+    expr_func_waarschuwing = _generate_expr_func(waarschuwing)
+    expr_func_ingrijp = _generate_expr_func(ingrijp)
+    def rule(arg):
+        # 'ingrijp' is more important than 'waarschuwing'
+        if (expr_func_ingrijp(arg)):
+            return 'ingrijp'
+        elif(expr_func_waarschuwing(arg)):
+            return 'waarschuwing'
+        else:
+            return ''
+    return rule
+
+
+def _generate_expr_func(expr):
+    """Generate a function from expr which takes exactly one input argument
+     and return an expression"""
+    # if no expression is given, we always return false
+    # TODO: confirm if this behaviour is desired
+    if not expr:
+        return lambda x: False
+    elif expr[0] == '>':
+        return lambda x: _try_convert(x, None, float) and (float(x) > float(expr[1:]))
+    elif expr[0] == '<':
+        return lambda x: _try_convert(x, None, float) and (float(x) < float(expr[1:]))
+    else:
+        return lambda x: str(x) == str(expr)
+
+
+def _try_convert(value, default, *types):
+    for t in types:
+        try:
+            return t(value)
+        except ValueError, TypeError:
+            return False
+    return default
 
 
 def apply_rules(rule_tree, reviews):
@@ -101,11 +145,23 @@ def apply_rules(rule_tree, reviews):
 
     Currently the filter only applies to inspections of pipes (ZC).
     """
-    rules = self.parse_ins_filter()
-    rule_tree = self.build_rule_tree(rules)
     for pipe in reviews['pipes']:
         for zc in pipe['ZC']:
             _apply_rule(rule_tree, zc)
+
+
+def _update_rule(old_rule, new_rule):
+    def updated_rule(expr):
+        result = []
+        result.append(old_rule(expr))
+        result.append(new_rule(expr))
+        if 'ingrijp' in result:
+            return 'ingrijp'
+        elif 'waarschuwing' in result:
+            return 'waarschuwing'
+        else:
+            return ''
+    return updated_rule
 
 
 def _flatten_rule(rule, delimiter=str(',')):
@@ -113,7 +169,7 @@ def _flatten_rule(rule, delimiter=str(',')):
 
     I.e. the rule:
         [A, [B, C], D]
-        ---(flatten)-->
+        --(flatten)-->
         [A, B, D],
         [A, C, D]
 
@@ -142,17 +198,13 @@ def _apply_rule(rule_tree, zc):
     """
     if zc['Herstelmaatregel'] != '':
         return zc
-    hoofdcode = zc['A']
-    karakt1 = zc['B']
-    karakt2 = zc['C']
-    kwant = zc['D']
+    hoofdcode = zc.get('A', '')
+    karakt1 = zc.get('B', '')
+    karakt2 = zc.get('C', '')
+    kwant = zc.get('D', '')
     if (hoofdcode in rule_tree and
             karakt1 in rule_tree[hoofdcode] and
-            karakt2 in rule_tree[hoofdcode][karakt1] and
-            kwant in rule_tree[hoofdcode][karakt1][karakt2]):
-        applicable_rule = rule_tree[hoofdcode][karakt1][karakt2][kwant]
-        # TODO: let the rule be a function instead of a string and apply
-        # the function.
-
-        zc['Herstelmaatregel'] = applicable_rule
+            karakt2 in rule_tree[hoofdcode][karakt1]):
+        applicable_rule = rule_tree[hoofdcode][karakt1][karakt2]
+        zc['Herstelmaatregel'] = applicable_rule(kwant)
     return zc

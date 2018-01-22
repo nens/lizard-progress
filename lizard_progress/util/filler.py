@@ -22,12 +22,17 @@ The function build_rule_tree() is the main function of this file, which builds
 a rule-tree based on a set of rules. This rule-tree can be used by the
 reviewproject to auto-fill its inspections.
 
-A rule-tree is dict of (4) nested dicts to efficiently find the rule which is
+A rule-tree is dict of (3) nested dicts to efficiently find the rule which is
 applicable to a specific inspection (ZC). Each branch (from the root till the
 leaf) is a specific rule defined in the filler csv-file. The leaf node of the
-tree defines what action/function must be applied to the inspection.
-If an inspection does not contain a branch in the rule-tree, no rules are
-applicable to this inspection and thus it can be skipped.
+tree contains a function which, given the 'kwantiteit' (value of D), returns
+whether the inspection should be marked as 'ingrijp' or 'waarschuwing'. The
+'kwantiteit' can either be a condition (greater than: > or smaller than: <) or
+a string in which case the are checked for equality.
+
+If an inspection does not contain a branch in the rule-tree or function on the
+branch return nohting, no rules are applicable to this inspection and thus it
+can be skipped.
 """
 
 import itertools
@@ -42,7 +47,7 @@ def parse_insp_filler(inspection_filler,
     Inspection filter generates a set of rules.
 
     :arg
-        inspection_filter (file object): a csv file with rules for
+        inspection_filler (file object): a csv file with rules for
             filtering.
         delimiter (str): one-character string used to separate fields.
     :return
@@ -138,7 +143,7 @@ def _try_convert(value, default, *types):
 
 
 def apply_rules(rule_tree, reviews):
-    """Apply the inspection_filter on the reviews.
+    """Apply the inspection_filler on the reviews.
 
     Auto-fills any inspections with a review if one of the rules inside
     the filter applies. None-empty inspections are ignored.
@@ -146,8 +151,13 @@ def apply_rules(rule_tree, reviews):
     Currently the filter only applies to inspections of pipes (ZC).
     """
     for pipe in reviews['pipes']:
+        filled_zcs = []
         for zc in pipe['ZC']:
-            _apply_rule(rule_tree, zc)
+            new_zc = _apply_rule(rule_tree, zc)
+            if new_zc:
+                filled_zcs.append(new_zc)
+        pipe['ZC'] = filled_zcs
+    return reviews
 
 
 def _update_rule(old_rule, new_rule):
@@ -206,5 +216,11 @@ def _apply_rule(rule_tree, zc):
             karakt1 in rule_tree[hoofdcode] and
             karakt2 in rule_tree[hoofdcode][karakt1]):
         applicable_rule = rule_tree[hoofdcode][karakt1][karakt2]
+        # applicable_rule(zc)
         zc['Herstelmaatregel'] = applicable_rule(kwant)
+
+        # TODO: currently hardcoded filters 'BXA'. Should have more elegant
+        # solution.
+        if(hoofdcode == 'BXA'):
+            return None
     return zc

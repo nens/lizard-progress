@@ -13,6 +13,7 @@ import csv
 import logging
 import os
 import shutil
+import json
 
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -1074,6 +1075,14 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         self.reviewproject.update_reviews_from_json(cleaned_json_file)
         return HttpResponseRedirect(request.path)
 
+class DownloadReviewProjectReviewsView(KickOutMixin, ReviewProjectMixin, TemplateView):
+
+    def get(self, request, *args, **kwargs):
+        # TODO: is this safe?
+        reviewProject = ReviewProject.objects.get(id=self.reviewproject_id)
+        reviews = reviewProject.reviews
+        return HttpResponse(json.dumps(reviews, indent=2))
+
 
 class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
 
@@ -1096,7 +1105,6 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         try:
             # TODO: add project-field
             ribx_file = request.FILES['ribx']
-            # TODO: Apply the filler and allow for empty filler
             filler_file = None
             if request.FILES.has_key('filler_file'):
                 filler_file = request.FILES['filler_file']
@@ -1104,9 +1112,8 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
                 name=request.POST['name'],
                 ribx_file=ribx_file,
                 organization=self.organization,
-                inspection_filter=filler_file
+                inspection_filler=filler_file
             )
-            project_review.set_slug_and_save()
 
             rel_dest_folder = directories.rel_reviewproject_dir(project_review)
             abs_dest_folder = directories.absolute(rel_dest_folder)

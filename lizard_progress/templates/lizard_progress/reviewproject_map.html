@@ -17,9 +17,9 @@
 
 
       function styler(feature) {
-        if (feature.properties.completion === 1.0) {
+        if (feature.properties.completion === 100) {
             return {color: "green", fillColor: 'green'};
-        } else if(feature.properties.completion === 0.0) {
+        } else if(feature.properties.completion === 0) {
             return {color: "red", fillColor: 'red' };
         } else {
           return {color: "orange", fillColor: 'orange'};

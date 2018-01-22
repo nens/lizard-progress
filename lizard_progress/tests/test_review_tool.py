@@ -28,7 +28,7 @@ class ReviewProjectF(factory.DjangoModelFactory):
     slug = factory.Sequence(lambda n: 'testreviewproject%d' % n)
     organization = factory.SubFactory(OrganizationF)
     reviews = None
-    inspection_filter = None
+    inspection_filler = None
 
 
 class TestReviewProject(FixturesTestCase):
@@ -70,9 +70,11 @@ class TestReviewProject(FixturesTestCase):
         root = tree.getroot()
         element = root.find('ZB_A')
         pipe = self.rp._parse_zb_a(element)
-        self.assertEqual('147715.18 491929.01', pipe['AAE'])
-        self.assertEqual('147779.16 491974.99', pipe['AAG'])
-        self.assertTrue(set(pipe.keys()).issubset(self.rp.ZB_A_FIELDS))
+        self.assertEqual('147715.18', pipe['Beginpunt x'])
+        self.assertEqual('491929.01', pipe['Beginpunt y'])
+        self.assertEqual('147779.16', pipe['Eindpunt x'])
+        self.assertEqual('491974.99', pipe['Eindpunt y'])
+        # self.assertTrue(set(pipe.keys()).issubset(self.rp.ZB_A_FIELDS))
         self.assertEquals(len(pipe['ZC']), 2)
 
     def test__parse_zb_c(self):
@@ -80,14 +82,22 @@ class TestReviewProject(FixturesTestCase):
         root = tree.getroot()
         element = root.find('ZB_C')
         manhole = self.rp._parse_zb_c(element)
-        self.assertEqual('146916.82 492326.42', manhole['CAB'])
-        self.assertTrue(set(manhole.keys()).issubset(self.rp.ZB_C_FIELDS))
+        self.assertEqual('146916.82', manhole['x'])
+        self.assertEqual('492326.42', manhole['y'])
+        # self.assertTrue(set(manhole.keys()).issubset(self.rp.ZB_C_FIELDS))
 
     def test__parse_zc(self):
         tree = etree.parse(self.single_pipe)
         root = tree.getroot()
+        zb_a = {
+            'ABQ': '5',
+            'Beginpunt x': '0',
+            'Beginpunt y' : '0',
+            'Eindpunt x': '1',
+            'Eindpunt y': '1'
+        }
         element = root.find('ZB_A').find('ZC')
-        inspection = self.rp._parse_zc(element)
+        inspection = self.rp._parse_zc(element, zb_a)
         self.assertTrue(inspection.has_key('Herstelmaatregel'))
         self.assertTrue(inspection.has_key('Opmerking'))
 
@@ -102,12 +112,15 @@ class TestReviewProject(FixturesTestCase):
         self.assertEqual(len(pipes), 4)
         self.assertEqual(len(man_holes), 6)
 
-        self.assertEqual('147715.18 491929.01', pipes[0]['AAE'])
-        self.assertEqual('147779.16 491974.99', pipes[0]['AAG'])
-        self.assertEqual('146912.77 492728.73', man_holes[0]['CAB'])
+        self.assertEqual('147715.18', pipes[0]['Beginpunt x'])
+        self.assertEqual('491929.01', pipes[0]['Beginpunt y'])
+        self.assertEqual('147779.16', pipes[0]['Eindpunt x'])
+        self.assertEqual('491974.99', pipes[0]['Eindpunt y'])
+        self.assertEqual('146912.77', man_holes[0]['x'])
+        self.assertEqual('492728.73', man_holes[0]['y'])
 
-        self.assertTrue(set(pipes[0].keys()).issubset(pr.ZB_A_FIELDS))
-        self.assertTrue(set(man_holes[0].keys()).issubset(pr.ZB_C_FIELDS))
+        # self.assertTrue(set(pr.ZB_A_FIELDS).issubset(pipes[0].keys()))
+        # self.assertTrue(set(man_holes[0].keys()).issubset(pr.ZB_C_FIELDS))
 
     def test__manholes_to_points(self):
         pr = models.ReviewProject.create_from_ribx(self.name,
@@ -139,7 +152,7 @@ class TestReviewProject(FixturesTestCase):
                                                    self.organization)
         geojson = pr.generate_feature_collection()
         self.assertTrue(geojson.is_valid)
-        self.assertEquals(len(geojson.features), 10)
+        self.assertEquals(len(geojson.features), 690)
 
     def _calc_progress_manhole(self, manhole):
         progress = self.rp._calc_progress_manhole(manhole)

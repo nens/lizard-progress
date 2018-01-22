@@ -184,7 +184,9 @@ reviewproject_urls = [
     # Apply filter
 
     # Download reviews
-
+    url(r'^download/$',
+            login_required(views.DownloadReviewProjectReviewsView.as_view()),
+            name='lizard_progress_download_reviews'),
     # Finish project?
 
 ]

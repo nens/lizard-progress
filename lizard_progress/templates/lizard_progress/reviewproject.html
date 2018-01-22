@@ -25,15 +25,10 @@
 
 
     <h1> {{ view.reviewproject.name }} </h1>
-    <h3> Voortgang: {{ view.reviewproject.calc_progress }} </h3>
-    <progress value={{ view.reviewproject.calc_progress }} max="1.0"></progress>
+    <h3> Voortgang: {{ view.reviewproject.calc_progress }}% </h3>
+    <progress value={{ view.reviewproject.calc_progress }}  max="100"></progress>
 
-    <a href="">
-      <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
-        Apply review-filter
-      </button>
-    </a>
-    <a href="">
+    <a href="download">
       <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
         Download reviews
       </button>

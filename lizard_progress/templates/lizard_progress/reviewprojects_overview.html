@@ -20,11 +20,20 @@
   <div class="container" id="reviewprojects">
     <h2> Overview of ReviewProjects: </h2>
     <br/>
-    <ul>
-    {% for review in view.all_review_projects %}
-      <li> <a href="{{ review.id }}"> {{ review.name }} </a> </li>
-    {% endfor %}
-    </ul>
+      <ul>
+      {% for review in view.all_review_projects %}
+        <li>
+          <div class="row">
+            <div class="col-sm"><a href="{{ review.id }}"> {{ review.name }} </a></div>
+            <div class="col-sm">{{ review.calc_progress }}%</div>
+          </div>
+        </li>
+
+      {% endfor %}
+      </ul>
+    </div>
+
+    </div>
 
     <br/>
 

@@ -18,6 +18,7 @@ import os
 
 # lizard_progress.util.tests.test_filler
 
+
 class TestFlattenRule(FixturesTestCase):
 
     def setUp(self):
@@ -309,7 +310,7 @@ class TestApplyRuleComplex(FixturesTestCase):
         result = _apply_rule(self.rule_tree, zc_ingrijp)
         self.assertEquals('ingrijp', result['Herstelmaatregel'])
 
-class TestZApplyFiller(FixturesTestCase):
+class TestApplyFiller(FixturesTestCase):
 
     def setUp(self):
         self.filler_files = os.path.join('lizard_progress',
@@ -342,4 +343,6 @@ class TestZApplyFiller(FixturesTestCase):
     def test_apply_filler_complex2(self):
 
         apply_rules(self.rule_tree_complex, self.review_complex)
+        print('a')
+        print('b')
 

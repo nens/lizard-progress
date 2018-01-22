@@ -48,6 +48,7 @@ import random
 import shutil
 import string
 import csv
+import math
 
 from lxml import etree
 import ribxlib
@@ -580,7 +581,7 @@ class ReviewProject(models.Model):
     """ReviewProject reviews completed projects.
 
     Each inspection of a completed project should be reviewed, either
-    automatically using the inspection_filter, or manually using the qgis
+    automatically using the inspection_filer, or manually using the qgis
     plugin.
     """
 
@@ -595,13 +596,13 @@ class ReviewProject(models.Model):
     organization = models.ForeignKey(Organization, null=False)
     # A ReviewProject should only be linked to a completed Project.
     project = models.ForeignKey('Project', null=True, blank=True)
-    # Initial RIBX-file path location
+    # The file name of the RIBX-file.
     ribx_file = models.CharField(
         max_length=1000,
         null=True,
         blank=True)
-    # filter .csv-file which might auto-fill some reviews for inspections
-    inspection_filter = models.CharField(
+    # The file name of the filler.csv.
+    inspection_filler = models.CharField(
         max_length=1000,
         null=True,
         blank=True)
@@ -610,6 +611,7 @@ class ReviewProject(models.Model):
 
     HERSTELMAATREGEL = 'Herstelmaatregel'
     OPMERKING = 'Opmerking'
+    # Fields which will be extracted from the Ribx
     ZB_A_FIELDS = ['AAA', 'AAB', 'AAC', 'AAD', 'AAE', 'AAF', 'AAG', 'AAH',
                    'AAI', 'AAJ', 'AAK', 'AAL', 'AAM', 'AAN', 'AAO', 'AAP',
                    'AAQ', 'AAT', 'AAU', 'AAV', 'ABA', 'ABB', 'ABC', 'ABE',
@@ -618,15 +620,14 @@ class ReviewProject(models.Model):
                    'ACB', 'ACC', 'ACD', 'ACE', 'ACF', 'ACG', 'ACH', 'ACI',
                    'ACJ', 'ACK', 'ACL', 'ACM', 'ACN', 'ADA', 'ADB', 'ADC',
                    'ADE', 'AXA', 'AXB', 'AXC', 'AXD', 'AXE', 'AXF', 'AXG',
-                   'AXH', 'AXY', 'ZC', HERSTELMAATREGEL, OPMERKING]
+                   'AXH', 'AXY', 'ZC']
     ZB_C_FIELDS = ['CAA', 'CAB', 'CAJ', 'CAL', 'CAM', 'CAN', 'CAO', 'CAP',
                    'CAQ', 'CAR', 'CAS', 'CBA', 'CBB', 'CBC', 'CBD', 'CBE',
                    'CBF', 'CBG', 'CBH', 'CBI', 'CBJ', 'CBK', 'CBL', 'CBM',
                    'CBN', 'CBO', 'CBP', 'CBR', 'CBS', 'CBT', 'CCA', 'CCB',
                    'CCC', 'CCD', 'CCG', 'CCK', 'CCL', 'CCM', 'CCN', 'CCO',
                    'CCP', 'CCQ', 'CCR', 'CCS', 'CCT', 'CDA', 'CDB', 'CDC',
-                   'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE',
-                   HERSTELMAATREGEL, OPMERKING]
+                   'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE']
 
 
     def calc_progress(self):
@@ -655,6 +656,13 @@ class ReviewProject(models.Model):
         completed = sum(1 for zc in pipe['ZC'] if zc[self.HERSTELMAATREGEL])
         return completed / len(pipe['ZC'])
 
+    def _calc_progress_inspection(self, inspection):
+        """Return a float indicating how % much the inspection has been reviewed
+
+        Because there is only 1 thing to review for an inspection, it either
+        returns 0.0 or 1.0"""
+        return float(bool(inspection[self.HERSTELMAATREGEL]))
+
     def set_slug_and_save(self):
         """Call on an unsaved project.
 
@@ -672,7 +680,7 @@ class ReviewProject(models.Model):
 
     @classmethod
     def create_from_ribx(cls, name, ribx_file, organization, project=None,
-                         inspection_filter=None):
+                         inspection_filler=None):
         """Create and return ReviewProject from ribx file
 
         Go over all inspections (pipes and manholes) in the ribx-file and
@@ -681,19 +689,22 @@ class ReviewProject(models.Model):
 
         :arg:
             ribx_file: file object containing XML (RIBX) data
-            inspection_filter (str): file object containing CSV data
+            inspection_filler (str): file object containing CSV data
 
         :return:
             A dict containing all pipe and manhole inspections with their data
             and two additional empty keys: 'Herstelmaatregel' and 'Opmerking'.
         """
+
         project_review = cls.objects.create(
             name=name,
             ribx_file=ribx_file,
             organization=organization,
             project=project,
-            inspection_filter=inspection_filter,
+            inspection_filler=inspection_filler,
         )
+        project_review.set_slug_and_save()
+
         parser = etree.XMLParser()
         tree = etree.parse(ribx_file)
         root = tree.getroot()
@@ -711,12 +722,14 @@ class ReviewProject(models.Model):
             # manholes
             manhole = project_review._parse_zb_c(elem)
             reviews['manholes'].append(manhole)
-        project_review.reviews = reviews
-        # apply inspection_filter if we specify one
-        if inspection_filter:
-            rules = filler.parse_insp_filler(inspection_filter)
+
+        # apply inspection_filler if we specify one
+        if inspection_filler:
+            rules = filler.parse_insp_filler(inspection_filler)
             rule_tree = filler.build_rule_tree(rules)
-            filler.apply_rules(rule_tree, reviews)
+            project_review.reviews = filler.apply_rules(rule_tree, reviews)
+
+        project_review.reviews = reviews
         project_review.save()
         return project_review
 
@@ -735,10 +748,22 @@ class ReviewProject(models.Model):
         result['ZC'] = []
         for elem in zb_a.getchildren():
             if elem.tag in self.ZB_A_FIELDS:
-                if elem.tag in ('AAE', 'AAG'):
+                if elem.tag in ('AAE'):
                     result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
+                    x, y = result[elem.tag] = elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    result['Beginpunt x'] = x
+                    result['Beginpunt y'] = y
+                    result['Beginpunt CRS'] = elem.getchildren()[0].attrib[
+                        'srsName']
+                elif elem.tag in ('AAG'):
+                    x, y = result[elem.tag] = \
+                    elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    result['Eindpunt x'] = x
+                    result['Eindpunt y'] = y
+                    result['Eindpunt CRS'] = elem.getchildren()[0].attrib[
+                        'srsName']
                 elif elem.tag == 'ZC':
-                    result['ZC'].append(self._parse_zc(elem))
+                    result['ZC'].append(self._parse_zc(elem, result))
                 else:
                     result[elem.tag] = elem.text
         result[self.HERSTELMAATREGEL] = ''
@@ -760,22 +785,44 @@ class ReviewProject(models.Model):
         for elem in zb_c.getchildren():
             if elem.tag in self.ZB_C_FIELDS:
                 if elem.tag in ('CAB'):
-                    result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
+                    # result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
+                    x, y = elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    result['x'] = x
+                    result['y'] = y
+                    result['CRS'] = elem.getchildren()[0].attrib['srsName']
                 else:
                     result[elem.tag] = elem.text
         result[self.HERSTELMAATREGEL] = ''
         result[self.OPMERKING] = ''
         return result
 
-    def _parse_zc(self, zc):
-        """Parse a zc (inspection) and extraxt all relevant info"""
+    def _parse_zc(self, zc, zb_a):
+        """Parse a zc (inspection) and extraxt all relevant info
+
+        :param zc: dict of of the inspection
+        :param zb_a: dict of the pipe to which this inspection belongs.
+            The zb_a should contain the following keys:
+                ABQ, Beginpunt x, Beginpunt y, Eindpunt x, Eindpunt y
+        """
         result = {}
         for elem in zc.getchildren():
             result[elem.tag] = elem.text
+
+        ls = LineString((float(zb_a['Beginpunt x']),
+                         float(zb_a['Beginpunt y'])),
+                        (float(zb_a['Eindpunt x']),
+                         float(zb_a['Eindpunt y']))
+                        )
+        p = ls.interpolate(float(result['I']))
+        x, y = p.coords
+        result['x'] = x
+        result['y'] = y
+
         result[self.HERSTELMAATREGEL] = ''
         result[self.OPMERKING] = ''
         return result
 
+    # TODO: NOT USED ANYWHERE, nor tested, should probably remove this
     def apply_inspection_filler(self,
                                 inspection_filler=None,
                                 delimiter=str(',')):
@@ -789,7 +836,7 @@ class ReviewProject(models.Model):
             Reviews updated according to the rules defined in the inspection_filler.
         """
         if inspection_filler is None:
-            inspection_filler = self.inspection_filter
+            inspection_filler = self.inspection_filler
 
         flat_rules = filler.parse_insp_filter(inspection_filler)
         rule_tree = filler.build_rule_tree(flat_rules)
@@ -844,7 +891,7 @@ class ReviewProject(models.Model):
         """Convert the manholes to a MultiPoint geojson object"""
         points = []
         for manhole in self.reviews['manholes']:
-            x, y = manhole.get('CAB').split(' ')
+            x, y = manhole.get('x'), manhole.get('y')
             points.append(coordinates.rd_to_wgs84(x, y))
         return geojson.MultiPoint(points)
 
@@ -852,9 +899,11 @@ class ReviewProject(models.Model):
         """Convert the pipes to a MultiLineString geojson object"""
         lines = []
         for pipe in self.reviews['pipes']:
-            start = [float(coord) for coord in pipe.get('AAE').split(' ')]
+            start = [float(pipe.get('Beginpunt x')),
+                     float(pipe.get('Beginpunt y'))]
             start = coordinates.rd_to_wgs84(start[0], start[1])
-            end = [float(coord) for coord in pipe.get('AAG').split(' ')]
+            end = [float(pipe.get('Eindpunt x')),
+                   float(pipe.get('Eindpunt y'))]
             end = coordinates.rd_to_wgs84(end[0], end[1])
             lines.append([start, end])
         return geojson.MultiLineString(lines)
@@ -868,30 +917,42 @@ class ReviewProject(models.Model):
             reviews."""
         features = []
 
-        # maholes
+        # manholes
         for manhole in self.reviews['manholes']:
-            x, y = manhole.get('CAB').split(' ')
+            x, y = manhole.get('x'), manhole.get('y')
             coord = coordinates.rd_to_wgs84(x, y)
             geom = geojson.Point(coord)
-            completion = float(bool(manhole.get(self.OPMERKING)))
+            completion = self._calc_progress_manhole(manhole)
             feature = geojson.Feature(geometry=geom,
                                       properties={"completion": completion})
             features.append(feature)
 
         # pipes
         for pipe in self.reviews['pipes']:
-            start = [float(coord) for coord in pipe.get('AAE').split(' ')]
+            start = [float(pipe.get('Beginpunt x')),
+                     float(pipe.get('Beginpunt y'))]
             start = coordinates.rd_to_wgs84(start[0], start[1])
-            end = [float(coord) for coord in pipe.get('AAG').split(' ')]
+            end = [float(pipe.get('Eindpunt x')),
+                   float(pipe.get('Eindpunt y'))]
             end = coordinates.rd_to_wgs84(end[0], end[1])
             geom = geojson.LineString([start, end])
 
-            completed = sum(1 for zc in pipe['ZC'] if zc[self.OPMERKING])
-            completion = completed/len(pipe['ZC'])
+            completion = self._calc_progress_pipe(pipe)
 
             feature = geojson.Feature(geometry=geom,
                                       properties={"completion": completion})
             features.append(feature)
+
+        # Pipe inscpections (ZC)
+        for pipe in self.reviews['pipes']:
+            for zc in pipe['ZC']:
+                x, y = zc.get('x'), zc.get('y')
+                coord = coordinates.rd_to_wgs84(x, y)
+                geom = geojson.Point(coord)
+                completion = self._calc_progress_inspection(zc)
+                feature = geojson.Feature(geometry=geom,
+                                          properties={"completion": completion})
+                features.append(feature)
 
         return geojson.FeatureCollection(features)
 

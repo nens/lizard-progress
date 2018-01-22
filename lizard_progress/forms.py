@@ -316,7 +316,7 @@ class NewReviewProjectForm(forms.Form):
     ribx = ExtFileField(
         exts=[".ribx", ".ribxa", ".xml"],
         label="ribx")
-    filter_file = forms.FileField(
+    filler_file = forms.FileField(
         label="filler_file", required=False)
 
     def __init__(self, *args, **kwargs):

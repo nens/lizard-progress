@@ -1,0 +1,5 @@
+A,B,C,D waarschuwing,D Ingrijp
+BXA,K,,"0.600, 0.300, 0.700",5.400
+BXA,K,,,5.300
+BXA,K,,>0.500,>2.00
+BDD,,,>0,>50

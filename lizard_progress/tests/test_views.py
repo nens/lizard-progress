@@ -128,7 +128,9 @@ class TestReviewProjectViews(FixturesTestCase):
             )
             reviewProject = models.ReviewProject.objects.get(
                             name='new reviewproject')
-            self.assertEquals(reviewProject.calc_progress(), 1)
+            self.assertTrue(reviewProject.reviews)
+            self.assertTrue(reviewProject.inspection_filler)
+            self.assertGreater(reviewProject.calc_progress(), 1)
 
     def test_upload_valid_reviews(self):
         # Starting with no reviews

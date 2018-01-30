@@ -626,7 +626,7 @@ class ReviewProject(models.Model):
     """ReviewProject reviews completed projects.
 
     Each inspection of a completed project should be reviewed, either
-    automatically using the inspection_filer, or manually using the qgis
+    automatically using the inspection_filler, or manually using the qgis
     plugin.
     """
 
@@ -798,8 +798,9 @@ class ReviewProject(models.Model):
             rules = filler.parse_insp_filler(inspection_filler)
             rule_tree = filler.build_rule_tree(rules)
             project_review.reviews = filler.apply_rules(rule_tree, reviews)
+        else:
+            project_review.reviews = reviews
 
-        project_review.reviews = reviews
         project_review.save()
         return project_review
 
@@ -818,14 +819,14 @@ class ReviewProject(models.Model):
         result['ZC'] = []
         for elem in zb_a.getchildren():
             if elem.tag in self.ZB_A_FIELDS:
-                if elem.tag in ('AAE'):
+                if elem.tag in ['AAE']:
                     result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
                     x, y = result[elem.tag] = elem.getchildren()[0].getchildren()[0].text.split(' ')
                     result['Beginpunt x'] = x
                     result['Beginpunt y'] = y
                     result['Beginpunt CRS'] = elem.getchildren()[0].attrib[
                         'srsName']
-                elif elem.tag in ('AAG'):
+                elif elem.tag in ['AAG']:
                     x, y = result[elem.tag] = \
                     elem.getchildren()[0].getchildren()[0].text.split(' ')
                     result['Eindpunt x'] = x
@@ -854,7 +855,7 @@ class ReviewProject(models.Model):
         result = {}
         for elem in zb_c.getchildren():
             if elem.tag in self.ZB_C_FIELDS:
-                if elem.tag in ('CAB'):
+                if elem.tag in ['CAB']:
                     # result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
                     x, y = elem.getchildren()[0].getchildren()[0].text.split(' ')
                     result['x'] = x
@@ -867,7 +868,7 @@ class ReviewProject(models.Model):
         return result
 
     def _parse_zc(self, zc, zb_a):
-        """Parse a zc (inspection) and extraxt all relevant info
+        """Parse a zc (inspection) and extract all relevant info
 
         :param zc: dict of of the inspection
         :param zb_a: dict of the pipe to which this inspection belongs.
@@ -961,7 +962,7 @@ class ReviewProject(models.Model):
         """Convert the manholes to a MultiPoint geojson object"""
         points = []
         for manhole in self.reviews['manholes']:
-            x, y = manhole.get('x'), manhole.get('y')
+            x, y = manhole['x'], manhole['y']
             points.append(coordinates.rd_to_wgs84(x, y))
         return geojson.MultiPoint(points)
 
@@ -969,11 +970,11 @@ class ReviewProject(models.Model):
         """Convert the pipes to a MultiLineString geojson object"""
         lines = []
         for pipe in self.reviews['pipes']:
-            start = [float(pipe.get('Beginpunt x')),
-                     float(pipe.get('Beginpunt y'))]
+            start = [float(pipe['Beginpunt x']),
+                     float(pipe['Beginpunt y'])]
             start = coordinates.rd_to_wgs84(start[0], start[1])
-            end = [float(pipe.get('Eindpunt x')),
-                   float(pipe.get('Eindpunt y'))]
+            end = [float(pipe['Eindpunt x']),
+                   float(pipe['Eindpunt y'])]
             end = coordinates.rd_to_wgs84(end[0], end[1])
             lines.append([start, end])
         return geojson.MultiLineString(lines)
@@ -989,7 +990,7 @@ class ReviewProject(models.Model):
 
         # manholes
         for manhole in self.reviews['manholes']:
-            x, y = manhole.get('x'), manhole.get('y')
+            x, y = manhole['x'], manhole['y']
             coord = coordinates.rd_to_wgs84(x, y)
             geom = geojson.Point(coord)
             completion = self._calc_progress_manhole(manhole)
@@ -999,11 +1000,11 @@ class ReviewProject(models.Model):
 
         # pipes
         for pipe in self.reviews['pipes']:
-            start = [float(pipe.get('Beginpunt x')),
-                     float(pipe.get('Beginpunt y'))]
+            start = [float(pipe['Beginpunt x']),
+                     float(pipe['Beginpunt y'])]
             start = coordinates.rd_to_wgs84(start[0], start[1])
-            end = [float(pipe.get('Eindpunt x')),
-                   float(pipe.get('Eindpunt y'))]
+            end = [float(pipe['Eindpunt x']),
+                   float(pipe['Eindpunt y'])]
             end = coordinates.rd_to_wgs84(end[0], end[1])
             geom = geojson.LineString([start, end])
 
@@ -1016,7 +1017,7 @@ class ReviewProject(models.Model):
         # Pipe inscpections (ZC)
         for pipe in self.reviews['pipes']:
             for zc in pipe['ZC']:
-                x, y = zc.get('x'), zc.get('y')
+                x, y = zc['x'], zc['y']
                 coord = coordinates.rd_to_wgs84(x, y)
                 geom = geojson.Point(coord)
                 completion = self._calc_progress_inspection(zc)

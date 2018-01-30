@@ -24,14 +24,6 @@ class TestFlattenRule(FixturesTestCase):
     def setUp(self):
         pass
 
-    def test_aaaa_temp(self):
-        # Weird behaviour: django tests does not return good output when the first
-        # test case fails when specifying a specific test case. But it does
-        # return good output when the first testcase passes. Thus we
-        # make sure the testcase passes
-        self.assertTrue(True)
-        self.assertEquals(1, 1)
-
     def test_flatten_rule(self):
         valid_simple_rule = ['a', 'b', 'c', 'd', 'e']
         valid_rule_empty_value1 = ['a', '', 'c', 'd', 'e']

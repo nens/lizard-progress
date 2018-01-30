@@ -31,7 +31,7 @@ whether the inspection should be marked as 'ingrijp' or 'waarschuwing'. The
 a string in which case the are checked for equality.
 
 If an inspection does not contain a branch in the rule-tree or function on the
-branch return nohting, no rules are applicable to this inspection and thus it
+branch return nothing, no rules are applicable to this inspection and thus it
 can be skipped.
 """
 

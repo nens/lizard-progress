@@ -1,3 +1,4 @@
 A,B,C,D waarschuwing,D Ingrijp
-BXA,K,,>2,>4
-BCD,A,,31D0043,<0
+a,b,c,,Remove
+c,,,>2,>4
+a,,,>2,Remove

@@ -15,6 +15,7 @@ from lizard_progress.tests.base import FixturesTestCase
 
 import json
 import os
+import factory
 
 # lizard_progress.tests.test_views
 
@@ -33,8 +34,13 @@ class TestReviewProjectViews(FixturesTestCase):
         password = 'bad_password'
         self.user1.set_password(password)
         self.organization = OrganizationF(name="testOrganization")
-        UserProfileF(user=self.user1,
-                     organization=self.organization)
+        self.contractor = OrganizationF(name='contractor')
+        profile = UserProfileF(user=self.user1,
+                               organization=self.organization)
+        profile.roles.add(
+            models.UserRole.objects.get(
+                code=models.UserRole.ROLE_MANAGER))
+
         self.reviewproject = ReviewProjectF(organization=self.organization)
         self.user1.save()
 
@@ -81,7 +87,6 @@ class TestReviewProjectViews(FixturesTestCase):
                 name='new reviewproject')
             )
 
-
     def test_post_new_reviewproject_with_filler(self):
         # Create a valid reviewproject with a filler, but won't have any
         # matching rules.
@@ -110,12 +115,12 @@ class TestReviewProjectViews(FixturesTestCase):
         # Create a valid reviewproject with a filler which should auto-fill
         # some values of the reviews
         filler_file_path = os.path.join('lizard_progress',
-                                   'tests',
-                                   'test_met_files',
-                                   'filter',
-                                   'complex_filler.csv')
+                                        'tests',
+                                        'test_met_files',
+                                        'filter',
+                                        'complex_filler.csv')
         with open(self.goed_ribx_file_dir) as ribx_file, \
-            open(filler_file_path) as filler_file:
+                open(filler_file_path) as filler_file:
             response = self.client.post(
                 reverse('lizard_progress_new_reviewproject'),
                 {'name': 'new reviewproject',
@@ -167,5 +172,181 @@ class TestReviewProjectViews(FixturesTestCase):
         self.assertEquals(response.status_code, 200)
         self.assertTrue(response.context_data['view'].form.errors)
 
+    def test_post_new_reviewproject_with_contractor(self):
+        filler_file_path = os.path.join('lizard_progress',
+                                        'tests',
+                                        'test_met_files',
+                                        'filter',
+                                        'complex_filler.csv')
+        with open(self.goed_ribx_file_dir) as ribx_file, \
+                open(filler_file_path) as filler_file:
+            response = self.client.post(
+                reverse('lizard_progress_new_reviewproject'),
+                {'name': 'reviewproject with contractor',
+                 'ribx': ribx_file,
+                 'contractor': self.organization.pk
+                 })
+            self.assertEquals(response.status_code, 302)
+            self.assertTrue(models.ReviewProject.objects.get(
+                name='reviewproject with contractor')
+            )
+            reviewProject = models.ReviewProject.objects.get(
+                            name='reviewproject with contractor')
+            self.assertTrue(reviewProject.reviews)
+            self.assertTrue(reviewProject.contractor)
 
 
+class ClientFactory(object):
+
+    def __init__(self, role, organization, is_superuser=False):
+        username = factory.Sequence(lambda n: 'user{0}'.format(n))
+        user = UserF.create(username=username, is_superuser=is_superuser)
+        user_profile = UserProfileF.create(user=user, organization=organization)
+        user_profile.roles.add(
+            models.UserRole.objects.get(code=role))
+        password = 'bad_password'
+        user.set_password(password)
+        user.save()
+
+        self.user_client = Client()
+        self.user_client.login(username=user.username,
+                               password=password)
+        self.user_client.login(username=user.username,
+                               password=password)
+
+    @classmethod
+    def create(cls, role, organization, is_superuser=False):
+        """Creates a user for the organization and returns a client."""
+        clientF = cls(role, organization, is_superuser)
+        return clientF.user_client
+
+
+class TestCreateReviewProjectViews(FixturesTestCase):
+
+    def setUp(self):
+        organization = OrganizationF.create(name="Organization")
+        self.manager_client = ClientFactory.create(
+            role=models.UserRole.ROLE_MANAGER,
+            organization=organization)
+        self.reviewer_client = ClientFactory.create(
+            role=models.UserRole.ROLE_REVIEWER,
+            organization=organization)
+        self.random_client = Client()
+
+    def test_manager_create_reviewproject(self):
+        response = self.manager_client.post(
+            reverse('lizard_progress_new_reviewproject'), {})
+        self.assertEqual(200, response.status_code)
+
+    def test_reviewer_create_reviewproject(self):
+        response = self.reviewer_client.post(
+            reverse('lizard_progress_new_reviewproject'), {})
+        self.assertEqual(403, response.status_code)
+
+    def test_random_create_reviewproject(self):
+        response = self.random_client.post(
+            reverse('lizard_progress_new_reviewproject'), {})
+        self.assertEqual(302, response.status_code)
+        self.assertTrue('/accounts/login/' in response.url)
+
+
+class TestViewDetailReviewProjectViews(FixturesTestCase):
+
+    def setUp(self):
+        organization = OrganizationF.create(name="Organization")
+        self.reviewproject = ReviewProjectF(organization=organization)
+        self.manager_client = ClientFactory.create(
+            role=models.UserRole.ROLE_MANAGER,
+            organization=organization)
+        self.reviewer_client = ClientFactory.create(
+            role=models.UserRole.ROLE_REVIEWER,
+            organization=organization)
+        self.random_client = Client()
+
+    def test_manager_view_project(self):
+        response = self.manager_client.get(
+            reverse('lizard_progress_reviewproject',
+                    kwargs={'review_id': self.reviewproject.id}))
+        self.assertEqual(200, response.status_code)
+
+    def test_reviewer_view_project(self):
+        response = self.reviewer_client.get(
+            reverse('lizard_progress_reviewproject',
+                    kwargs={'review_id': self.reviewproject.id}))
+        self.assertEqual(200, response.status_code)
+
+    def test_random_view_project(self):
+        response = self.random_client.get(
+            reverse('lizard_progress_reviewproject',
+                    kwargs={'review_id': self.reviewproject.id}))
+        self.assertEqual(302, response.status_code)
+        self.assertTrue('/accounts/login/' in response.url)
+
+
+class TestDownloadReviewProjectViews(FixturesTestCase):
+
+    def setUp(self):
+        organization = OrganizationF.create(name="Organization")
+        self.reviewproject = ReviewProjectF(organization=organization)
+        self.manager_client = ClientFactory.create(
+            role=models.UserRole.ROLE_MANAGER,
+            organization=organization)
+        self.reviewer_client = ClientFactory.create(
+            role=models.UserRole.ROLE_REVIEWER,
+            organization=organization)
+        self.random_client = Client()
+
+    def test_manager_download_reviews(self):
+        response = self.manager_client.get(
+            reverse('lizard_progress_download_reviews',
+                    kwargs={'review_id': self.reviewproject.id}))
+        self.assertEqual(200, response.status_code)
+
+    def test_reviewer_download_reviews(self):
+        response = self.reviewer_client.get(
+            reverse('lizard_progress_download_reviews',
+                    kwargs = {'review_id': self.reviewproject.id}))
+        self.assertEqual(200, response.status_code)
+
+    def test_random_download_reviews(self):
+        response = self.random_client.get(
+            reverse('lizard_progress_download_reviews',
+                    kwargs={'review_id': self.reviewproject.id}))
+        self.assertEqual(302, response.status_code)
+        self.assertTrue('/accounts/login/' in response.url)
+
+
+class TestUploadReviewProjectViews(FixturesTestCase):
+
+    def setUp(self):
+        orgBeheer = OrganizationF.create(name="Org beheerder")
+        orgReview = OrganizationF.create(name="Org reviewer")
+        self.reviewproject = ReviewProjectF(organization=orgBeheer,
+                                            contractor=orgReview)
+
+        self.manager_client = ClientFactory.create(
+            role=models.UserRole.ROLE_MANAGER,
+            organization=orgBeheer)
+        self.reviewer_client = ClientFactory.create(
+            role=models.UserRole.ROLE_REVIEWER,
+            organization=orgReview)
+        self.random_client = Client()
+
+    def test_manager_upload_reviews(self):
+        response = self.manager_client.post(
+            reverse('lizard_progress_reviewproject',
+                    kwargs={'review_id': self.reviewproject.id}))
+        self.assertEqual(200, response.status_code)
+
+    def test_reviewer_upload_reviews(self):
+        response = self.reviewer_client.post(
+            reverse('lizard_progress_reviewproject',
+                    kwargs={'review_id': self.reviewproject.id}))
+        self.assertEqual(200, response.status_code)
+
+    def test_random_upload_reviews(self):
+        response = self.random_client.post(
+            reverse('lizard_progress_reviewproject',
+                    kwargs={'review_id': self.reviewproject.id}))
+        self.assertEqual(302, response.status_code)
+        self.assertTrue('/accounts/login/' in response.url)

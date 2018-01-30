@@ -198,6 +198,9 @@ class UserRole(models.Model):
     # Can upload measurements and reports if user's organization is a
     # contractor in the project
     ROLE_UPLOADER = "uploader"
+    # Can upload reviews to a reviewproject if user's organization is a
+    # contractor in the reviewproject
+    ROLE_REVIEWER = "reviewer"
     # Can assign roles to people in the organization, create and delete user
     # accounts belonging to this organization.
     ROLE_ADMIN = "admin"
@@ -212,7 +215,8 @@ class UserRole(models.Model):
 
     @classmethod
     def all_role_codes(cls):
-        return (cls.ROLE_MANAGER, cls.ROLE_UPLOADER, cls.ROLE_ADMIN)
+        return (cls.ROLE_MANAGER, cls.ROLE_UPLOADER, cls.ROLE_REVIEWER,
+                cls.ROLE_ADMIN)
 
     @classmethod
     def check(cls, role):
@@ -317,6 +321,47 @@ def has_access(user=None, project=None, contractor=None, userprofile=None):
         for activity in project.activity_set.all():
             if activity.contractor == userprofile.organization:
                 return True
+
+    return False
+
+# Temp method which needs to be replaced with has_access once we refactor the
+# reviewproject to a project.
+def has_access_reviewproject(user=None, project=None, contractor=None, userprofile=None):
+    """Test whether user has access to this project (showing data of
+    this contractor organization)."""
+
+    if userprofile is None:
+        userprofile = UserProfile.get_by_user(user)
+
+    if userprofile is None:
+        return False
+
+    if project.is_archived:
+        # Only organization's project managers have access
+        return (userprofile.organization ==
+                project.organization) and (
+            userprofile.has_role(UserRole.ROLE_MANAGER))
+
+    if (userprofile.organization == project.organization):
+        # Everybody in the project's organization can see it.
+        return True
+
+    # A user may only see projects of other organizations if (1) this user
+    # is an Uploader or (2) if the user is a contractor in a simple
+    # project.
+    if userprofile.has_role(UserRole.ROLE_REVIEWER):
+        return True
+
+    if contractor:
+        # If it is about one contractor's data in this project,
+        # it's only visible for that contractor.
+        return contractor == userprofile.organization
+    # else:
+    #     # If this is not about some specific contractor's data,
+    #     # all contractors also have access.
+    #     for activity in project.activity_set.all():
+    #         if activity.contractor == userprofile.organization:
+    #             return True
 
     return False
 
@@ -593,7 +638,16 @@ class ReviewProject(models.Model):
                             unique=True,
                             null=True,
                             blank=True)
-    organization = models.ForeignKey(Organization, null=False)
+    # Beheerder
+    organization = models.ForeignKey(Organization,
+                                     null=False,
+                                     related_name='beheerder')
+    # Reviewer
+    contractor = models.ForeignKey(
+        Organization,
+        null=True,
+        related_name='reviewer')
+    is_archived = models.BooleanField(default=False)
     # A ReviewProject should only be linked to a completed Project.
     project = models.ForeignKey('Project', null=True, blank=True)
     # The file name of the RIBX-file.
@@ -630,6 +684,18 @@ class ReviewProject(models.Model):
                    'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE']
 
 
+    def is_manager(self, user):
+        profile = UserProfile.get_by_user(user)
+        return (self.organization == profile.organization and
+                profile.has_role(UserRole.ROLE_MANAGER))
+
+    def can_upload(self, user):
+        """User can upload if he is with the contractor, or if user is a
+        manager in this project.  """
+        return (
+            self.is_manager(user) or
+            self.contractor == Organization.get_by_user(user))
+
     def calc_progress(self):
         """Return an int between 0 and 100, indicating the percentage that has
          been reviewed.
@@ -642,26 +708,28 @@ class ReviewProject(models.Model):
             completion.append(self._calc_progress_manhole(manhole))
         for pipe in self.reviews['pipes']:
             completion.append(self._calc_progress_pipe(pipe))
-        return int(round(sum(completion) / len(completion) * 100))
+        return int(round(sum(completion) / len(completion)))
 
     def _calc_progress_manhole(self, manhole):
         """Return a float indicating how % much the manhole has been reviewed
 
         Because there is only 1 thing to review for a manhole, it either returns
-        0.0 or 1.0"""
-        return float(bool(manhole[self.HERSTELMAATREGEL]))
+        0 or 100"""
+        return float(bool(manhole[self.HERSTELMAATREGEL])) * 100
 
     def _calc_progress_pipe(self, pipe):
         """Return a float indicating how % much the pipe has been reviewed"""
-        completed = sum(1 for zc in pipe['ZC'] if zc[self.HERSTELMAATREGEL])
+        if pipe[self.HERSTELMAATREGEL] != '':
+            return 100
+        completed = sum(100 for zc in pipe['ZC'] if zc[self.HERSTELMAATREGEL])
         return completed / len(pipe['ZC'])
 
     def _calc_progress_inspection(self, inspection):
         """Return a float indicating how % much the inspection has been reviewed
 
         Because there is only 1 thing to review for an inspection, it either
-        returns 0.0 or 1.0"""
-        return float(bool(inspection[self.HERSTELMAATREGEL]))
+        returns 0 or 100"""
+        return float(bool(inspection[self.HERSTELMAATREGEL])) * 100
 
     def set_slug_and_save(self):
         """Call on an unsaved project.
@@ -679,7 +747,8 @@ class ReviewProject(models.Model):
         self.save()
 
     @classmethod
-    def create_from_ribx(cls, name, ribx_file, organization, project=None,
+    def create_from_ribx(cls, name, ribx_file, organization, contractor=None,
+                         project=None,
                          inspection_filler=None):
         """Create and return ReviewProject from ribx file
 
@@ -701,6 +770,7 @@ class ReviewProject(models.Model):
             ribx_file=ribx_file,
             organization=organization,
             project=project,
+            contractor=contractor,
             inspection_filler=inspection_filler,
         )
         project_review.set_slug_and_save()

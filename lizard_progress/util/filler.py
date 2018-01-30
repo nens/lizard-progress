@@ -105,6 +105,13 @@ def _create_rule(waarschuwing, ingrijp):
             if it should be marked as 'waarschuwing'
         ingrijp (func): function which takes one argument and returns true
                     if it should be marked as 'ingrijp'"""
+
+    # Special case if the user specifies 'remove'
+    if ingrijp.lower() == 'remove':
+        def rule(arg):
+            return 'remove'
+        return rule
+
     expr_func_waarschuwing = _generate_expr_func(waarschuwing)
     expr_func_ingrijp = _generate_expr_func(ingrijp)
     def rule(arg):
@@ -114,6 +121,7 @@ def _create_rule(waarschuwing, ingrijp):
         elif(expr_func_waarschuwing(arg)):
             return 'waarschuwing'
         else:
+            # the rule is nog applicable, so we do nothing
             return ''
     return rule
 
@@ -159,13 +167,15 @@ def apply_rules(rule_tree, reviews):
         pipe['ZC'] = filled_zcs
     return reviews
 
-
+# Can probably be more elegant/pythonic
 def _update_rule(old_rule, new_rule):
     def updated_rule(expr):
         result = []
         result.append(old_rule(expr))
         result.append(new_rule(expr))
-        if 'ingrijp' in result:
+        if 'remove' in result:
+            return 'remove'
+        elif 'ingrijp' in result:
             return 'ingrijp'
         elif 'waarschuwing' in result:
             return 'waarschuwing'
@@ -221,6 +231,6 @@ def _apply_rule(rule_tree, zc):
 
         # TODO: currently hardcoded filters 'BXA'. Should have more elegant
         # solution.
-        if(hoofdcode == 'BXA'):
+        if(zc['Herstelmaatregel'] == 'remove'):
             return None
     return zc

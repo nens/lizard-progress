@@ -97,11 +97,11 @@ class TestRuleTree(FixturesTestCase):
         with open(filler_simple_file) as filler:
             rules = parse_insp_filler(filler)
 
-            self.assertEquals(len(rules), 4)
+            self.assertEquals(len(rules), 5)
 
             rule_tree = build_rule_tree(rules)
 
-            self.assertEquals(len(rule_tree.keys()), 2)
+            self.assertEquals(len(rule_tree.keys()), 3)
             self.assertTrue(len(rule_tree['a']), 1)
             self.assertTrue(len(rule_tree['b']), 2)
             self.assertTrue(len(rule_tree['b']['b']), 1)
@@ -171,6 +171,17 @@ class TestApplyRuleSimple(FixturesTestCase):
                     'Opmerking': ''}
         result = _apply_rule(self.rule_tree, zc_waarschuwing)
         self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+
+    def test_general_rule(self):
+        zc_ingrijp = {'A': 'c',
+                           'B': '',
+                           'C': '',
+                           'D': '0',
+                           'Herstelmaatregel': '',
+                           'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_ingrijp)
+        self.assertEquals('ingrijp', result['Herstelmaatregel'])
+
 
 class TestApplyRuleComplex(FixturesTestCase):
 
@@ -310,6 +321,74 @@ class TestApplyRuleComplex(FixturesTestCase):
         result = _apply_rule(self.rule_tree, zc_ingrijp)
         self.assertEquals('ingrijp', result['Herstelmaatregel'])
 
+
+class TestApplyRuleRemove(FixturesTestCase):
+
+    def setUp(self):
+        self.filler_files = os.path.join('lizard_progress',
+                                         'util',
+                                         'tests',
+                                         'test_filler_files',
+                                         'fillers')
+        filler_remove = 'filler_with_remove.csv'
+        filler_remove_file = os.path.join(self.filler_files, filler_remove)
+        self.rule_tree = None
+        with open(filler_remove_file) as filler:
+            rules = parse_insp_filler(filler)
+            self.rule_tree = build_rule_tree(rules)
+
+    def test_apply_rule_without_remove(self):
+        zc_waarschuwing = {'A': 'c',
+                           'B': 'd',
+                           'C': 'c',
+                           'D': '4',
+                           'Herstelmaatregel': '',
+                           'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_waarschuwing)
+        self.assertEquals('waarschuwing', result['Herstelmaatregel'])
+
+    def test_apply_rule_remove_specific(self):
+        zc_remove = {'A': 'c',
+                     'B': 'd',
+                     'C': 'e',
+                     'D': '4',
+                     'Herstelmaatregel': '',
+                     'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_remove)
+        self.assertIsNone(result)
+
+    def test_apply_rule_remove_general(self):
+        zc_remove = {'A': 'c',
+                     'B': 'd',
+                     'C': '',
+                     'D': '4',
+                     'Herstelmaatregel': '',
+                     'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_remove)
+        self.assertIsNone(result)
+
+    def test_apply_rule_remove_more_general(self):
+        zc_remove = {'A': 'c',
+                     'B': '',
+                     'C': '',
+                     'D': '',
+                     'Herstelmaatregel': '',
+                     'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_remove)
+        self.assertIsNone(result)
+
+    def test_apply_rule_remove_at_wrong_place(self):
+        zc_remove = {'A': 'd',
+                     'B': '',
+                     'C': '',
+                     'D': '',
+                     'Herstelmaatregel': '',
+                     'Opmerking': ''}
+        result = _apply_rule(self.rule_tree, zc_remove)
+        self.assertIsNotNone(result)
+        self.assertEquals(result, zc_remove)
+
+
 class TestApplyFiller(FixturesTestCase):
 
     def setUp(self):
@@ -323,26 +402,154 @@ class TestApplyFiller(FixturesTestCase):
                                          'tests',
                                          'test_filler_files',
                                          'reviews')
-
-        filler_simple_file = os.path.join(self.filler_files, 'simple_filler.csv')
-        with open(filler_simple_file) as filler:
+        simple_filler_file = os.path.join(self.filler_files, 'simple_filler.csv')
+        with open(simple_filler_file) as filler:
             rules = parse_insp_filler(filler)
             self.rule_tree_simple = build_rule_tree(rules)
+
         filler_complex_file2 = os.path.join(self.filler_files, 'complex_filler2.csv')
         with open(filler_complex_file2) as filler:
             rules = parse_insp_filler(filler)
-            self.rule_tree_complex = build_rule_tree(rules)
+            self.rule_tree_complex2 = build_rule_tree(rules)
 
         review_complex_file = os.path.join(self.review_files, 'complex_review.json')
         with open(review_complex_file) as review:
             self.review_complex = json.load(review)
 
     def test_apply_filler_simple(self):
-        pass
+        simple_reviews = """{
+                  "manholes": [],
+                  "pipes": [
+                      {
+                          "AAA": "3100036",
+                          "Herstelmaatregel": "",
+                          "Opmerking": "",
+                          "ZC": [
+                              {
+                                  "A": "a",
+                                  "B": "b",
+                                  "C": "c",
+                                  "D": "d",
+                                  "Herstelmaatregel": "",
+                                  "I": "0",
+                                  "N": "3100036.mpg|00:00:00",
+                                  "Opmerking": ""
+                              },
+                              {
+                                  "A": "c",
+                                  "B": "",
+                                  "D": "0",
+                                  "F": "Camera",
+                                  "Herstelmaatregel": "",
+                                  "I": "0.01",
+                                  "N": "3100036.mpg",
+                                  "Opmerking": ""
+                              }
+                          ]
+                      }
+        	]
+        }"""
+        reviews = json.loads(simple_reviews)
+        result = apply_rules(self.rule_tree_simple, reviews)
+        self.assertEquals(len(result['pipes']), 1)
+        self.assertEquals(len(result['pipes'][0]['ZC']), 2)
+        self.assertEquals(result['pipes'][0]['ZC'][0]['Herstelmaatregel'],
+                          'waarschuwing')
+        self.assertEquals(result['pipes'][0]['ZC'][1]['Herstelmaatregel'],
+                          'ingrijp')
 
-    def test_apply_filler_complex2(self):
+    def test_apply_filler_with_removal(self):
+        reviews = """
+        {
+          "manholes": [],
+          "pipes": 
+          [
+              {
+                  "AAA": "3100036",
+                  "Herstelmaatregel": "",
+                  "Opmerking": "",
+                  "ZC": [
+                      {
+                          "A": "a",
+                          "B": "b",
+                          "C": "c",
+                          "D": "d",
+                          "Herstelmaatregel": "",
+                          "I": "0",
+                          "N": "3100036.mpg|00:00:00",
+                          "Opmerking": ""
+                      },
+                      {
+                          "A": "c",
+                          "B": "",
+                          "D": "3",
+                          "F": "Camera",
+                          "Herstelmaatregel": "",
+                          "I": "0.01",
+                          "N": "3100036.mpg",
+                          "Opmerking": ""
+                      }
+                  ]
+              },
+              { 
+                  "AAA": "3100036",
+                  "Herstelmaatregel": "",
+                  "Opmerking": "",
+                  "ZC": [
+                  {
+                      "A": "a",
+                      "B": "d",
+                      "C": "c",
+                      "D": "d",
+                      "Herstelmaatregel": "",
+                      "I": "0",
+                      "N": "3100036.mpg|00:00:00",
+                      "Opmerking": ""
+                  },
+                  {
+                      "A": "a",
+                      "B": "",
+                      "F": "Camera",
+                      "Herstelmaatregel": "",
+                      "I": "0.01",
+                      "N": "3100036.mpg",
+                      "Opmerking": ""
+                  }
+                ]
+              }
+          ]	
+        }"""
+        reviews = json.loads(reviews)
+        result = apply_rules(self.rule_tree_complex2, reviews)
+        self.assertEquals(len(result['pipes'][0]['ZC']), 1)
+        self.assertEquals(result['pipes'][0]['ZC'][0]['Herstelmaatregel'],
+                          'waarschuwing')
+        self.assertEquals(len(result['pipes'][1]['ZC']), 1)
+        self.assertEquals(result['pipes'][1]['ZC'][0]['Herstelmaatregel'], '')
 
-        apply_rules(self.rule_tree_complex, self.review_complex)
-        print('a')
-        print('b')
-
+    def test_apply_filler_remove_all_inspections(self):
+        reviews = """
+        {
+          "manholes": [],
+          "pipes": 
+          [
+              {
+                  "AAA": "3100036",
+                  "Herstelmaatregel": "",
+                  "Opmerking": "",
+                  "ZC": [
+                      {
+                          "A": "a",
+                          "B": "",
+                          "Herstelmaatregel": "",
+                          "I": "0",
+                          "N": "3100036.mpg|00:00:00",
+                          "Opmerking": ""
+                      }
+                  ]
+              }
+          ]	
+        }"""
+        reviews = json.loads(reviews)
+        result = apply_rules(self.rule_tree_complex2, reviews)
+        self.assertEquals(len(result['pipes'][0]['ZC']), 0)

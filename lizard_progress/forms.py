@@ -310,14 +310,24 @@ class ConnectActivityForm(forms.Form):
 
 
 class NewReviewProjectForm(forms.Form):
-
     name = forms.CharField(label='name', max_length=50)
     # (inspection)Project
     ribx = ExtFileField(
         exts=[".ribx", ".ribxa", ".xml"],
         label="ribx")
     filler_file = forms.FileField(
-        label="filler_file", required=False)
+        label="filler file (optional)", required=False)
+    contractor = forms.ModelChoiceField(
+        widget=forms.Select(
+            attrs={
+                'class': 'form-control selectpicker',
+                'data-live-search': 'true'
+            }
+        ),
+        label=_("Contractor/reviewer"),
+        queryset=models.Organization.objects.all(),
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
         if 'organization' in kwargs:

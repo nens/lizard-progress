@@ -27,6 +27,7 @@ class ReviewProjectF(factory.DjangoModelFactory):
     name = 'Test reviewproject'
     slug = factory.Sequence(lambda n: 'testreviewproject%d' % n)
     organization = factory.SubFactory(OrganizationF)
+    contractor = None
     reviews = None
     inspection_filler = None
 
@@ -160,7 +161,7 @@ class TestReviewProject(FixturesTestCase):
 
     def _calc_progress_pipe(self, pipe):
         progress = self.rp._calc_progress_pipe(pipe)
-        self.assertEquals(progress, 1.0)
+        self.assertEquals(progress, 100)
 
     def test_calc_progress(self):
         review_file = os.path.join(self.test_files,

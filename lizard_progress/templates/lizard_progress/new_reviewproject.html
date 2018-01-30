@@ -1,37 +1,52 @@
-{% extends "lizard_progress/progressbase2.html" %}
+{% extends "lizard_progress/progressbase2.html" %}{% load i18n %}
 
 {% block extra_js %}
-<script>
-$(document).on('ready', function() {
-  $('input.form-control').first().focus();
-});
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.9.4/css/bootstrap-select.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.9.4/js/bootstrap-select.min.js"></script>
+
+  <script>
+  $(document).on('ready', function() {
+    $('input.form-control').first().focus();
+  });
 
 
-</script>
-<style>
-.bootstrap-select.btn-group {
-    margin-bottom: 20px !important;
-}
-</style>
-
+  </script>
+  <style>
+  .bootstrap-select.btn-group {
+      margin-bottom: 20px !important;
+  }
+  </style>
 {% endblock extra_js %}
 
 {% block content %}
 
   <div class="container">
-    <h2>Review Project toevoegen</h2>
+    <div class="row">
+      <div class="col-md-12">
+        <h2>Review Project toevoegen</h2>
 
-      <form action="" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <p class="text-warning">{{ view.form.non_field_errors }}</p>
-        {% for field in view.form %}
-          <div class="col-sm-12">
-           {{ field.label }} : {{ field }}<span class="text-warning">{{ field.errors }}</span>
-          </div>
-        {% endfor %}
+          <form action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p class="text-warning">{{ view.form.non_field_errors }}</p>
+            {% for field in view.form %}
+              <div class="panel panel-default">
+                <div class="panel-body">
+                  <div class="col-sm-12">
+                   {{ field.label_tag }}{{ field }}<span class="text-warning">{{ field.errors }}</span>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
 
-        <input type="submit" class="btn btn-primary" value="Nieuw review project toevoegen">
-      </form>
+
+            <div class="form-group">
+              <div class="col-sm-10">
+                <input type="submit" class="btn btn-primary" value="Nieuw review project toevoegen">
+              </div>
+            </div>
+          </form>
+      </div>
+    </div>
   </div>
 
 {% endblock content %}

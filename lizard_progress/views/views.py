@@ -213,6 +213,7 @@ class ProjectsMixin(object):
 
     @property
     def activity_requests(self):
+        # TODO: refactor this. Too many separate database queries.
         for activity in self.activities():
             yield activity, self.total_activity_requests(activity)
 
@@ -225,6 +226,8 @@ class ProjectsMixin(object):
             yield project, self.num_project_requests(project), mtypes
 
     def num_project_requests(self, project):
+        # TODO: refactor with database-level annotations/aggregations.
+        # Way too many requests!
         if self.user_is_manager():
             return project.num_open_requests
         else:

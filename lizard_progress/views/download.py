@@ -77,7 +77,7 @@ def file_download(request, path):
     response['X-Accel-Redirect'] = os.path.join(
         '/protected', path)  # Nginx
     response['Content-Disposition'] = (
-            'attachment; filename="{filename}"'.format(filename=filename))
+        'attachment; filename="{filename}"'.format(filename=filename))
 
     # Unset the Content-Type as to allow for the webserver
     # to determine it.

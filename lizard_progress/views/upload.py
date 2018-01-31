@@ -163,7 +163,7 @@ class UploadReportsView(UploadView):
     def process_file(self, path):
 
         ext = os.path.splitext(path)[1].lower()
-        if not ext in self.exts:
+        if ext not in self.exts:
             msg = "Allowed file types: %s." % self.exts
             return json_response({'error': {'details': msg}})
 
@@ -187,7 +187,7 @@ class UploadShapefilesView(UploadView):
     def process_file(self, path):
 
         ext = os.path.splitext(path)[1].lower()
-        if not ext in self.exts:
+        if ext not in self.exts:
             msg = "Allowed file types: %s." % self.exts
             return json_response({'error': {'details': msg}})
 

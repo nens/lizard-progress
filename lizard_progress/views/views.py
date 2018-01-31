@@ -30,7 +30,6 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
@@ -39,8 +38,7 @@ from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
 from lizard_map.views import MAP_LOCATION as EXTENT_SESSION_KEY
 from lizard_ui.layout import Action
-from lizard_ui.views import \
-    UiView  # Don't delete, it is imported by ``views/activity.py``
+from lizard_ui.views import UiView
 
 from lizard_progress import configuration
 from lizard_progress import crosssection_graph
@@ -62,6 +60,9 @@ from lizard_progress.forms import NewReviewProjectForm
 from lizard_progress.forms import UploadReviews
 
 logger = logging.getLogger(__name__)
+
+
+UiView  # Don't delete, it is imported by ``views/activity.py``
 
 
 class ProjectsMixin(object):
@@ -176,8 +177,8 @@ class ProjectsMixin(object):
 
     def user_has_uploader_role(self):
         return (
-                self.profile and
-                self.profile.has_role(models.UserRole.ROLE_UPLOADER))
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_UPLOADER))
 
     @property
     def total_requests(self):
@@ -239,13 +240,13 @@ class ProjectsMixin(object):
 
     def user_has_manager_role(self):
         return (
-                self.profile and
-                self.profile.has_role(models.UserRole.ROLE_MANAGER))
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_MANAGER))
 
     def user_has_usermanager_role(self):
         return (
-                self.profile and
-                self.profile.has_role(models.UserRole.ROLE_ADMIN))
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_ADMIN))
 
     def project_home_url(self):
         if not self.project_slug:
@@ -320,9 +321,9 @@ class ReviewProjectMixin(object):
             if has_access_reviewproject(project=self.reviewproject,
                                         userprofile=self.profile):
                 self.has_full_access = has_access_reviewproject(
-                        project=self.reviewproject,
-                        contractor=self.reviewproject.contractor,
-                        userprofile=self.profile)
+                    project=self.reviewproject,
+                    contractor=self.reviewproject.contractor,
+                    userprofile=self.profile)
             else:
                 raise PermissionDenied()
         else:
@@ -346,8 +347,8 @@ class ReviewProjectMixin(object):
 
     def user_has_manager_role(self):
         return (
-                self.profile and
-                self.profile.has_role(models.UserRole.ROLE_MANAGER))
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_MANAGER))
 
     @property
     def breadcrumbs(self):
@@ -415,8 +416,9 @@ class KickOutMixin(object):
                 icon='icon-question-sign',
                 name="Handleiding",
                 description=(_("Download the manual")),
-                url=settings.STATIC_URL +
-                    "lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf")
+                url=(settings.STATIC_URL +
+                     "lizard_progress/" +
+                     "Gebruikershandleiding_Uploadserver_v4.pdf"))
         ]
 
         return actions
@@ -532,7 +534,7 @@ class MapView(View, AppView):
             Action(
                 name="Kaartlagen",
                 description=("De kaartlagen van {project} in Lizard"
-                    .format(project=self.project.name)),
+                             .format(project=self.project.name)),
                 url=reverse('lizard_progress_mapview',
                             kwargs={'project_slug': self.project_slug})))
 
@@ -569,7 +571,7 @@ class DashboardView(ProjectsView):
             Action(
                 name="Dashboard",
                 description=("{project} dashboard"
-                    .format(project=self.project.name)),
+                             .format(project=self.project.name)),
                 url=reverse(
                     'lizard_progress_dashboardview',
                     kwargs={'project_slug': self.project_slug})))
@@ -598,7 +600,7 @@ class ActivitiesView(ProjectsView):
             Action(
                 name="Activities",
                 description=("{project} dashboard"
-                    .format(project=self.project.name)),
+                             .format(project=self.project.name)),
                 url=reverse(
                     'lizard_progress_activitiesview',
                     kwargs={'project_slug': self.project_slug})))
@@ -1098,7 +1100,8 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
 
     @models.UserRole.check(models.UserRole.ROLE_MANAGER)
     def dispatch(self, request, *args, **kwargs):
-        return super(NewReviewProjectView, self).dispatch(request, *args, **kwargs)
+        return super(NewReviewProjectView, self).dispatch(
+            request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         if not hasattr(self, 'form'):

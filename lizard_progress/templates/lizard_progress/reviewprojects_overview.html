@@ -1,0 +1,42 @@
+{% extends "lizard_progress/progressbase2.html" %}
+
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <div id="organisation" class="col-md-12">
+        <div class="organisation-title">
+          <p class="hidden-xs">{{ view.organization }}<p>
+          <!-- <p class="hidden-sm hidden-md hidden-lg" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="{{view.organization}}">{{ view.organization|truncatechars:10 }}<p> -->
+        </div>
+      </div>
+    </div>
+    <a href={% url 'lizard_progress_new_reviewproject' %}>
+      <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
+        + Review-project toevoegen
+      </button>
+    </a>
+  </div>
+
+  <div class="container" id="reviewprojects">
+    <h2> Overview of ReviewProjects: </h2>
+    <br/>
+      <ul>
+      {% for review in view.all_review_projects %}
+        <li>
+          <div class="row">
+            <div class="col-sm"><a href="{{ review.id }}"> {{ review.name }} </a></div>
+            <div class="col-sm">{{ review.calc_progress }}%</div>
+          </div>
+        </li>
+
+      {% endfor %}
+      </ul>
+    </div>
+
+    </div>
+
+    <br/>
+
+  </div>
+
+{% endblock %}

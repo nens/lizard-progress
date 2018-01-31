@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='utf-8'?>
+<DATA xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="GWSW_RibX_v1.3.xsd">
+  <ZB_C>
+    <CAA>245_H5</CAA>
+    <CAB>
+      <gml:Point srsName="Netherlands-RD" srsDimension="2">
+        <gml:pos>146916.82 492326.42</gml:pos>
+      </gml:Point>
+    </CAB>
+    <CAJ>H. Heukelsweg</CAJ>
+    <CAL>C</CAL>
+    <CAM>Gem. Almere</CAM>
+    <CAN>Almere</CAN>
+    <CAO>Buitenvaart</CAO>
+    <CAQ>A</CAQ>
+    <CAR>A</CAR>
+    <CBA>GWSW 1.3</CBA>
+    <CBB>SUFRIB2.1</CBB>
+    <CBC>B</CBC>
+    <CBD>C</CBD>
+    <CBE>B</CBE>
+    <CBF>2017-07-07</CBF>
+    <CBH>J. Van Houten</CBH>
+    <CBI>37090059D</CBI>
+    <CBJ>37090059D</CBJ>
+    <CBK CDE="Panoramo">Z</CBK>
+    <CBL CDE="B Stilstaand beeld op de computer">Z</CBL>
+    <CBM>B</CBM>
+    <CBO>245_H5.IPF</CBO>
+    <CBP>C</CBP>
+    <CCA>A</CCA>
+    <CCB>800</CCB>
+    <CCC>800</CCC>
+    <CCD>AX</CCD>
+    <CCK>A</CCK>
+    <CCM>A</CCM>
+    <CCN>1986</CCN>
+    <CCO>A</CCO>
+    <CCP>AM</CCP>
+    <CCQ>600</CCQ>
+    <CCR>600</CCR>
+    <CCS>E</CCS>
+    <CDA>A</CDA>
+    <CDB>A</CDB>
+    <CDC>A</CDC>
+    <CDD>E</CDD>
+  </ZB_C>
+</DATA>

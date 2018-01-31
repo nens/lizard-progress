@@ -32,6 +32,12 @@ from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
+from lizard_progress.util import filler
+
+from osgeo import osr
+from lizard_map import coordinates
+
+import geojson
 import datetime
 import functools
 import json
@@ -41,6 +47,12 @@ import os
 import random
 import shutil
 import string
+import csv
+import math
+
+from lxml import etree
+import ribxlib
+import itertools
 
 RDNEW = 28992
 SRID = RDNEW
@@ -186,6 +198,9 @@ class UserRole(models.Model):
     # Can upload measurements and reports if user's organization is a
     # contractor in the project
     ROLE_UPLOADER = "uploader"
+    # Can upload reviews to a reviewproject if user's organization is a
+    # contractor in the reviewproject
+    ROLE_REVIEWER = "reviewer"
     # Can assign roles to people in the organization, create and delete user
     # accounts belonging to this organization.
     ROLE_ADMIN = "admin"
@@ -200,7 +215,8 @@ class UserRole(models.Model):
 
     @classmethod
     def all_role_codes(cls):
-        return (cls.ROLE_MANAGER, cls.ROLE_UPLOADER, cls.ROLE_ADMIN)
+        return (cls.ROLE_MANAGER, cls.ROLE_UPLOADER, cls.ROLE_REVIEWER,
+                cls.ROLE_ADMIN)
 
     @classmethod
     def check(cls, role):
@@ -305,6 +321,47 @@ def has_access(user=None, project=None, contractor=None, userprofile=None):
         for activity in project.activity_set.all():
             if activity.contractor == userprofile.organization:
                 return True
+
+    return False
+
+# Temp method which needs to be replaced with has_access once we refactor the
+# reviewproject to a project.
+def has_access_reviewproject(user=None, project=None, contractor=None, userprofile=None):
+    """Test whether user has access to this project (showing data of
+    this contractor organization)."""
+
+    if userprofile is None:
+        userprofile = UserProfile.get_by_user(user)
+
+    if userprofile is None:
+        return False
+
+    if project.is_archived:
+        # Only organization's project managers have access
+        return (userprofile.organization ==
+                project.organization) and (
+            userprofile.has_role(UserRole.ROLE_MANAGER))
+
+    if (userprofile.organization == project.organization):
+        # Everybody in the project's organization can see it.
+        return True
+
+    # A user may only see projects of other organizations if (1) this user
+    # is an Uploader or (2) if the user is a contractor in a simple
+    # project.
+    if userprofile.has_role(UserRole.ROLE_REVIEWER):
+        return True
+
+    if contractor:
+        # If it is about one contractor's data in this project,
+        # it's only visible for that contractor.
+        return contractor == userprofile.organization
+    # else:
+    #     # If this is not about some specific contractor's data,
+    #     # all contractors also have access.
+    #     for activity in project.activity_set.all():
+    #         if activity.contractor == userprofile.organization:
+    #             return True
 
     return False
 
@@ -563,6 +620,412 @@ class Project(ProjectActivityMixin, models.Model):
     def activate(self):
         self.is_archived = False
         self.save()
+
+
+class ReviewProject(models.Model):
+    """ReviewProject reviews completed projects.
+
+    Each inspection of a completed project should be reviewed, either
+    automatically using the inspection_filler, or manually using the qgis
+    plugin.
+    """
+
+    name = models.CharField(max_length=50,
+                            unique=False,
+                            null=False,
+                            blank=False)
+    slug = models.SlugField(max_length=60,
+                            unique=True,
+                            null=True,
+                            blank=True)
+    # Beheerder
+    organization = models.ForeignKey(Organization,
+                                     null=False,
+                                     related_name='beheerder')
+    # Reviewer
+    contractor = models.ForeignKey(
+        Organization,
+        null=True,
+        related_name='reviewer')
+    is_archived = models.BooleanField(default=False)
+    # A ReviewProject should only be linked to a completed Project.
+    project = models.ForeignKey('Project', null=True, blank=True)
+    # The file name of the RIBX-file.
+    ribx_file = models.CharField(
+        max_length=1000,
+        null=True,
+        blank=True)
+    # The file name of the filler.csv.
+    inspection_filler = models.CharField(
+        max_length=1000,
+        null=True,
+        blank=True)
+    # All performed inspections and their reviews, reviews might be empty
+    reviews = JSONField(null=True, blank=True)
+
+    HERSTELMAATREGEL = 'Herstelmaatregel'
+    OPMERKING = 'Opmerking'
+    # Fields which will be extracted from the Ribx
+    ZB_A_FIELDS = ['AAA', 'AAB', 'AAC', 'AAD', 'AAE', 'AAF', 'AAG', 'AAH',
+                   'AAI', 'AAJ', 'AAK', 'AAL', 'AAM', 'AAN', 'AAO', 'AAP',
+                   'AAQ', 'AAT', 'AAU', 'AAV', 'ABA', 'ABB', 'ABC', 'ABE',
+                   'ABF', 'ABG', 'ABH', 'ABI', 'ABJ', 'ABK', 'ABL', 'ABM',
+                   'ABN', 'ABO', 'ABP', 'ABQ', 'ABR', 'ABS', 'ABT', 'ACA',
+                   'ACB', 'ACC', 'ACD', 'ACE', 'ACF', 'ACG', 'ACH', 'ACI',
+                   'ACJ', 'ACK', 'ACL', 'ACM', 'ACN', 'ADA', 'ADB', 'ADC',
+                   'ADE', 'AXA', 'AXB', 'AXC', 'AXD', 'AXE', 'AXF', 'AXG',
+                   'AXH', 'AXY', 'ZC']
+    ZB_C_FIELDS = ['CAA', 'CAB', 'CAJ', 'CAL', 'CAM', 'CAN', 'CAO', 'CAP',
+                   'CAQ', 'CAR', 'CAS', 'CBA', 'CBB', 'CBC', 'CBD', 'CBE',
+                   'CBF', 'CBG', 'CBH', 'CBI', 'CBJ', 'CBK', 'CBL', 'CBM',
+                   'CBN', 'CBO', 'CBP', 'CBR', 'CBS', 'CBT', 'CCA', 'CCB',
+                   'CCC', 'CCD', 'CCG', 'CCK', 'CCL', 'CCM', 'CCN', 'CCO',
+                   'CCP', 'CCQ', 'CCR', 'CCS', 'CCT', 'CDA', 'CDB', 'CDC',
+                   'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE']
+
+
+    def is_manager(self, user):
+        profile = UserProfile.get_by_user(user)
+        return (self.organization == profile.organization and
+                profile.has_role(UserRole.ROLE_MANAGER))
+
+    def can_upload(self, user):
+        """User can upload if he is with the contractor, or if user is a
+        manager in this project.  """
+        return (
+            self.is_manager(user) or
+            self.contractor == Organization.get_by_user(user))
+
+    def calc_progress(self):
+        """Return an int between 0 and 100, indicating the percentage that has
+         been reviewed.
+
+        Assumes each manhole and pipe weights the same independent of the
+        number of reviews it has.
+        """
+        completion = []
+        for manhole in self.reviews['manholes']:
+            completion.append(self._calc_progress_manhole(manhole))
+        for pipe in self.reviews['pipes']:
+            completion.append(self._calc_progress_pipe(pipe))
+        return int(round(sum(completion) / len(completion)))
+
+    def _calc_progress_manhole(self, manhole):
+        """Return a float indicating how % much the manhole has been reviewed
+
+        Because there is only 1 thing to review for a manhole, it either returns
+        0 or 100"""
+        return float(bool(manhole[self.HERSTELMAATREGEL])) * 100
+
+    def _calc_progress_pipe(self, pipe):
+        """Return a float indicating how % much the pipe has been reviewed"""
+        if pipe[self.HERSTELMAATREGEL] != '':
+            return 100
+        completed = sum(100 for zc in pipe['ZC'] if zc[self.HERSTELMAATREGEL])
+        return completed / len(pipe['ZC'])
+
+    def _calc_progress_inspection(self, inspection):
+        """Return a float indicating how % much the inspection has been reviewed
+
+        Because there is only 1 thing to review for an inspection, it either
+        returns 0 or 100"""
+        return float(bool(inspection[self.HERSTELMAATREGEL])) * 100
+
+    def set_slug_and_save(self):
+        """Call on an unsaved project.
+
+        Sets a random slug, saves the project, then sets a new slug
+        based on primary key and name."""
+        chars = list(string.lowercase)
+        random.shuffle(chars)
+        self.slug = ''.join(chars)
+        self.save()
+
+        self.slug = "{id}-{slug}".format(
+            id=self.id,
+            slug=slugify(self.name))
+        self.save()
+
+    @classmethod
+    def create_from_ribx(cls, name, ribx_file, organization, contractor=None,
+                         project=None,
+                         inspection_filler=None):
+        """Create and return ReviewProject from ribx file
+
+        Go over all inspections (pipes and manholes) in the ribx-file and
+        extract all needed data (described in the xlsx). Also add two additional
+        fields 'Herstelmaatregel' and 'Opmerking'.
+
+        :arg:
+            ribx_file: file object containing XML (RIBX) data
+            inspection_filler (str): file object containing CSV data
+
+        :return:
+            A dict containing all pipe and manhole inspections with their data
+            and two additional empty keys: 'Herstelmaatregel' and 'Opmerking'.
+        """
+
+        project_review = cls.objects.create(
+            name=name,
+            ribx_file=ribx_file,
+            organization=organization,
+            project=project,
+            contractor=contractor,
+            inspection_filler=inspection_filler,
+        )
+        project_review.set_slug_and_save()
+
+        parser = etree.XMLParser()
+        tree = etree.parse(ribx_file)
+        root = tree.getroot()
+
+        reviews = {
+            'pipes': [],
+            'manholes': []
+        }
+
+        for elem in root.iter('ZB_A'):
+            # pipes
+            pipe = project_review._parse_zb_a(elem)
+            reviews['pipes'].append(pipe)
+        for elem in root.iter('ZB_C'):
+            # manholes
+            manhole = project_review._parse_zb_c(elem)
+            reviews['manholes'].append(manhole)
+
+        # apply inspection_filler if we specify one
+        if inspection_filler:
+            rules = filler.parse_insp_filler(inspection_filler)
+            rule_tree = filler.build_rule_tree(rules)
+            project_review.reviews = filler.apply_rules(rule_tree, reviews)
+        else:
+            project_review.reviews = reviews
+
+        project_review.save()
+        return project_review
+
+    def _parse_zb_a(self, zb_a):
+        """Parse a zb_a (pipe) and extract all relevant info (as stated in the
+        xlsx)
+
+        :arg:
+            zb_a (XMLElement): XMLElement from which all relevant data is
+                extracted
+
+        :return:
+            A dict representing the ZB_A (pipe) element.
+        """
+        result = {}
+        result['ZC'] = []
+        for elem in zb_a.getchildren():
+            if elem.tag in self.ZB_A_FIELDS:
+                if elem.tag in ['AAE']:
+                    result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
+                    x, y = result[elem.tag] = elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    result['Beginpunt x'] = x
+                    result['Beginpunt y'] = y
+                    result['Beginpunt CRS'] = elem.getchildren()[0].attrib[
+                        'srsName']
+                elif elem.tag in ['AAG']:
+                    x, y = result[elem.tag] = \
+                    elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    result['Eindpunt x'] = x
+                    result['Eindpunt y'] = y
+                    result['Eindpunt CRS'] = elem.getchildren()[0].attrib[
+                        'srsName']
+                elif elem.tag == 'ZC':
+                    result['ZC'].append(self._parse_zc(elem, result))
+                else:
+                    result[elem.tag] = elem.text
+        result[self.HERSTELMAATREGEL] = ''
+        result[self.OPMERKING] = ''
+        return result
+
+    def _parse_zb_c(self, zb_c):
+        """Parse a zb_c (manhole) and extract all relevant info (as stated in
+        the xlsx)
+
+        :arg:
+            zb_c (XMLElement): XMLElement from which all relevant data is
+                extracted
+
+        :return:
+            A dict representing the ZB_C (manhole) element
+        """
+        result = {}
+        for elem in zb_c.getchildren():
+            if elem.tag in self.ZB_C_FIELDS:
+                if elem.tag in ['CAB']:
+                    # result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
+                    x, y = elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    result['x'] = x
+                    result['y'] = y
+                    result['CRS'] = elem.getchildren()[0].attrib['srsName']
+                else:
+                    result[elem.tag] = elem.text
+        result[self.HERSTELMAATREGEL] = ''
+        result[self.OPMERKING] = ''
+        return result
+
+    def _parse_zc(self, zc, zb_a):
+        """Parse a zc (inspection) and extract all relevant info
+
+        :param zc: dict of of the inspection
+        :param zb_a: dict of the pipe to which this inspection belongs.
+            The zb_a should contain the following keys:
+                ABQ, Beginpunt x, Beginpunt y, Eindpunt x, Eindpunt y
+        """
+        result = {}
+        for elem in zc.getchildren():
+            result[elem.tag] = elem.text
+
+        ls = LineString((float(zb_a['Beginpunt x']),
+                         float(zb_a['Beginpunt y'])),
+                        (float(zb_a['Eindpunt x']),
+                         float(zb_a['Eindpunt y']))
+                        )
+        p = ls.interpolate(float(result['I']))
+        x, y = p.coords
+        result['x'] = x
+        result['y'] = y
+
+        result[self.HERSTELMAATREGEL] = ''
+        result[self.OPMERKING] = ''
+        return result
+
+    # TODO: NOT USED ANYWHERE, nor tested, should probably remove this
+    def apply_inspection_filler(self,
+                                inspection_filler=None,
+                                delimiter=str(',')):
+        """Apply the inspection filler to the inspections of this reviewproject
+
+        :arg
+            inspection_filler (string): the path location of the inspection
+                filler
+            delimiter (str): one-character string used to separate fields.
+        :return
+            Reviews updated according to the rules defined in the inspection_filler.
+        """
+        if inspection_filler is None:
+            inspection_filler = self.inspection_filler
+
+        flat_rules = filler.parse_insp_filter(inspection_filler)
+        rule_tree = filler.build_rule_tree(flat_rules)
+        new_reviews = filler.apply_rules(rule_tree, reviews)
+
+        return new_reviews
+
+    def get_inspections(self, incl_completed=True):
+        """Return all inspections
+
+         Args:
+             incl_completed (bool): include (True) or exclude (False) completed
+                inspection.
+        """
+        pass
+
+    def generate_json_from_reviews(self, reviews):
+        """Generate a json-file from all inspections.
+
+         This includes completed and incompleted inspections.
+         """
+        return json.dumps(reviews, indent=2, sort_keys=True)
+
+
+    def update_reviews_from_json(self, reviews):
+        """Read json-file containing the inspections and corresponding
+        reviews. Update the reviews of this ReviewProject.
+
+        Not all inspections have to be reviewed, i.e. this can be used as an
+        intermediate update to save all performed reviews.
+
+        :arg
+            reviews: a dict with serializable objects.
+        """
+        # TODO: validate json? json should be subset of reviews?
+        # Don't validate json here, do that in the forms validate()
+
+        # TODO: store old json?
+        self.reviews = reviews
+        self.save()
+
+    def generate_geojson_reviews(self):
+        """Generate geojson from the reviews
+
+        :return: GeometryCollection of manholes as points and pipes as lines
+        """
+        manholes_geo = self._manholes_to_points()
+        pipes_geo = self._pipes_to_lines()
+        return geojson.GeometryCollection([manholes_geo, pipes_geo])
+
+    def _manholes_to_points(self):
+        """Convert the manholes to a MultiPoint geojson object"""
+        points = []
+        for manhole in self.reviews['manholes']:
+            x, y = manhole['x'], manhole['y']
+            points.append(coordinates.rd_to_wgs84(x, y))
+        return geojson.MultiPoint(points)
+
+    def _pipes_to_lines(self):
+        """Convert the pipes to a MultiLineString geojson object"""
+        lines = []
+        for pipe in self.reviews['pipes']:
+            start = [float(pipe['Beginpunt x']),
+                     float(pipe['Beginpunt y'])]
+            start = coordinates.rd_to_wgs84(start[0], start[1])
+            end = [float(pipe['Eindpunt x']),
+                   float(pipe['Eindpunt y'])]
+            end = coordinates.rd_to_wgs84(end[0], end[1])
+            lines.append([start, end])
+        return geojson.MultiLineString(lines)
+
+    def generate_feature_collection(self):
+        """Create a feature collection of the reviews.
+
+        Each feature gets a set of properties:
+            - Completion: float between 0-1, indicating how much it has been
+            reviews (manhole is either 0 or 1, but pipes can contain many
+            reviews."""
+        features = []
+
+        # manholes
+        for manhole in self.reviews['manholes']:
+            x, y = manhole['x'], manhole['y']
+            coord = coordinates.rd_to_wgs84(x, y)
+            geom = geojson.Point(coord)
+            completion = self._calc_progress_manhole(manhole)
+            feature = geojson.Feature(geometry=geom,
+                                      properties={"completion": completion})
+            features.append(feature)
+
+        # pipes
+        for pipe in self.reviews['pipes']:
+            start = [float(pipe['Beginpunt x']),
+                     float(pipe['Beginpunt y'])]
+            start = coordinates.rd_to_wgs84(start[0], start[1])
+            end = [float(pipe['Eindpunt x']),
+                   float(pipe['Eindpunt y'])]
+            end = coordinates.rd_to_wgs84(end[0], end[1])
+            geom = geojson.LineString([start, end])
+
+            completion = self._calc_progress_pipe(pipe)
+
+            feature = geojson.Feature(geometry=geom,
+                                      properties={"completion": completion})
+            features.append(feature)
+
+        # Pipe inscpections (ZC)
+        for pipe in self.reviews['pipes']:
+            for zc in pipe['ZC']:
+                x, y = zc['x'], zc['y']
+                coord = coordinates.rd_to_wgs84(x, y)
+                geom = geojson.Point(coord)
+                completion = self._calc_progress_inspection(zc)
+                feature = geojson.Feature(geometry=geom,
+                                          properties={"completion": completion})
+                features.append(feature)
+
+        return geojson.FeatureCollection(features)
 
 
 class AcceptedFile(models.Model):

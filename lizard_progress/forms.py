@@ -9,11 +9,13 @@ from django.contrib.auth import models as authmodels
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from jsonfield.fields import JSONFormField
 from lizard_progress import models
 
 import os
 
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -305,3 +307,53 @@ class ConnectActivityForm(forms.Form):
             label=_('Activity'), queryset=models.Activity.objects.filter(
                 project=activity.project).exclude(
                 pk=activity.id))
+
+
+class NewReviewProjectForm(forms.Form):
+    name = forms.CharField(label='name', max_length=50)
+    # (inspection)Project
+    ribx = ExtFileField(
+        exts=[".ribx", ".ribxa", ".xml"],
+        label="ribx")
+    filler_file = forms.FileField(
+        label="filler file (optional)", required=False)
+    contractor = forms.ModelChoiceField(
+        widget=forms.Select(
+            attrs={
+                'class': 'form-control selectpicker',
+                'data-live-search': 'true'
+            }
+        ),
+        label=_("Contractor/reviewer"),
+        queryset=models.Organization.objects.all(),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        if 'organization' in kwargs:
+            self.organization = kwargs['organization']
+            del kwargs['organization']
+        else:
+            self.organization = None
+
+        super(NewReviewProjectForm, self).__init__(*args, **kwargs)
+
+
+class UploadReviews(forms.Form):
+
+    #reviews = JSONFormField(label='reviews')
+    reviews = forms.FileField(label='reviews')
+
+    def __init__(self, *args, **kwargs):
+        super(UploadReviews, self).__init__(*args, **kwargs)
+
+    def clean_reviews(self):
+        try:
+            valid_json = json.load(self.cleaned_data['reviews'])
+            return valid_json
+        except Exception as e:
+            raise ValidationError('Invalid JSON: {}'.format(e))
+
+
+
+

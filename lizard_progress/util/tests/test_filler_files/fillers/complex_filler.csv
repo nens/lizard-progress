@@ -1,0 +1,8 @@
+A,B,C,D waarschuwing,D Ingrijp
+a,b,c,>2,>4
+b,b,c2,,<0
+c,d,e,a,>5
+c,d,f,<5,b
+d,e,f,g,i
+d,e,f,h,j
+c,d,f,k,<1

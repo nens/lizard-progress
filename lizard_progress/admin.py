@@ -83,6 +83,12 @@ class AcceptedFileAdmin(admin.ModelAdmin):
     search_fields = ['activity', 'rel_file_path']
 
 
+class ReviewProjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'organization', 'project', 'ribx_file',
+                    'inspection_filler' )
+    search_fields = ['name', 'organization', 'project']
+
+
 admin.site.register(models.Hydrovak)
 admin.site.register(models.Location, LocationAdmin)
 admin.site.register(models.AvailableMeasurementType)
@@ -102,3 +108,4 @@ admin.site.register(models.UploadedFile, UploadedFileAdmin)
 admin.site.register(models.UploadedFileError, UploadedFileErrorAdmin)
 admin.site.register(models.UploadLog)
 admin.site.register(models.AcceptedFile, AcceptedFileAdmin)
+admin.site.register(models.ReviewProject, ReviewProjectAdmin)

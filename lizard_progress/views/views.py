@@ -13,6 +13,7 @@ import csv
 import logging
 import os
 import shutil
+import json
 
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -37,7 +38,7 @@ from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
 from lizard_map.views import MAP_LOCATION as EXTENT_SESSION_KEY
 from lizard_ui.layout import Action
-from lizard_ui.views import UiView  # Don't delete, it is imported by ``views/activity.py``
+from lizard_ui.views import UiView
 
 from lizard_progress import configuration
 from lizard_progress import crosssection_graph
@@ -49,12 +50,19 @@ from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.models import Location
 from lizard_progress.models import MeasurementTypeAllowed
 from lizard_progress.models import Project
+from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
+from lizard_progress.models import has_access_reviewproject
 from lizard_progress.util import directories
 from lizard_progress.util import geo
 from lizard_progress.util import workspaces
+from lizard_progress.forms import NewReviewProjectForm
+from lizard_progress.forms import UploadReviews
 
 logger = logging.getLogger(__name__)
+
+
+UiView  # Don't delete, it is imported by ``views/activity.py``
 
 
 class ProjectsMixin(object):
@@ -108,7 +116,7 @@ class ProjectsMixin(object):
         self.orderchoices = {
             key: value[0] for key, value in self.sortparams.iteritems()
             if not value[0] == self.orderby
-            }
+        }
         return super(ProjectsMixin, self).get(request, *args, **kwargs)
 
     def projects(self):
@@ -124,7 +132,7 @@ class ProjectsMixin(object):
             else:
                 notNAs.append(project)
         sortedprojects = sorted(notNAs, reverse=self.order[1],
-               key=lambda a: getattr(a, self.order[0]))
+                                key=lambda a: getattr(a, self.order[0]))
         if self.order[1]:
             sortedprojects += NAs
         else:
@@ -220,7 +228,8 @@ class ProjectsMixin(object):
         if self.user_is_manager():
             return project.num_open_requests
         else:
-            return project.num_open_requests_for_contractor(self.profile.organization)
+            return project.num_open_requests_for_contractor(
+                self.profile.organization)
 
     def user_is_manager(self):
         """User is a manager if his organization owns this projects
@@ -288,11 +297,84 @@ class ProjectsMixin(object):
                 self.project.organization != self.profile.organization)
 
 
+class ReviewProjectMixin(object):
+    """Helper functions for working with reviewprojects in views"""
+    all_review_projects = None
+
+    reviewproject_id = None
+    reviewproject = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.all_review_projects = ReviewProject.objects.filter(
+            organization=self.organization)
+        self.reviewproject_id = kwargs.get('review_id')
+        if self.reviewproject_id:
+            try:
+                self.reviewproject = ReviewProject.objects.get(
+                    id=self.reviewproject_id)
+            except ReviewProject.DoesNotExist:
+                raise Http404()
+            # Simplified, ReviewProject doesn't have Activities.
+            # Instead each ReviewProject has one 'Beheerder' and one 'Reviewer'
+            # Thus a ReviewProject cannot be split up in multiple parts to be
+            # reviewed.
+            if has_access_reviewproject(project=self.reviewproject,
+                                        userprofile=self.profile):
+                self.has_full_access = has_access_reviewproject(
+                    project=self.reviewproject,
+                    contractor=self.reviewproject.contractor,
+                    userprofile=self.profile)
+            else:
+                raise PermissionDenied()
+        else:
+            self.reviewproject_id = None
+
+        return super(
+            ReviewProjectMixin, self).dispatch(request, *args, **kwargs)
+
+    def reviews(self):
+        pass
+
+    def empty_reviews(self):
+        pass
+
+    def user_is_manager(self):
+        """User is a manager if his organization owns this projects
+        and user has the ROLE_MANAGER role."""
+        return (self.user_has_manager_role() and
+                (not self.reviewproject or
+                 self.profile.organization == self.reviewproject.organization))
+
+    def user_has_manager_role(self):
+        return (
+            self.profile and
+            self.profile.has_role(models.UserRole.ROLE_MANAGER))
+
+    @property
+    def breadcrumbs(self):
+        """Returns a list of breadcrumbs to this project."""
+        crumbs = [
+            Action(
+                description="Home",
+                name="Home",
+                url="/")]
+
+        if self.project:
+            crumbs.append(
+                Action(
+                    description=self.reviewproject.name,
+                    name=self.reviewproject.name,
+                    url='/'))
+
+        return crumbs
+
+
 class KickOutMixin(object):
     """Checks that the current user is logged in and has an
     organization. Sets self.organization if this is true, otherwise
     kicks out the user. Most normal views in the Uploadservice require
     an organization."""
+
     def dispatch(self, request, *args, **kwargs):
         """You can only get here if you are part of some organization.
         So admin can't."""
@@ -334,8 +416,9 @@ class KickOutMixin(object):
                 icon='icon-question-sign',
                 name="Handleiding",
                 description=(_("Download the manual")),
-                url=settings.STATIC_URL +
-                "lizard_progress/Gebruikershandleiding_Uploadserver_v4.pdf")
+                url=(settings.STATIC_URL +
+                     "lizard_progress/" +
+                     "Gebruikershandleiding_Uploadserver_v4.pdf"))
         ]
 
         return actions
@@ -613,6 +696,7 @@ class ScreenFigure(figure.Figure):
     Dimensions are in pixels. Float division is required,
     not integer division!
     """
+
     def __init__(self, width, height):
         super(ScreenFigure, self).__init__(dpi=SCREEN_DPI)
         self.set_size_pixels(width, height)
@@ -731,7 +815,6 @@ class ArchiveProjectsOverview(ProjectsView):
 
 
 class ArchiveProjectsView(ProjectsView):
-
     template_name = 'lizard_progress/dashboard.html'
 
     def archive(self, project_slug):
@@ -763,7 +846,7 @@ class ArchiveProjectsView(ProjectsView):
 
         return HttpResponseRedirect(
             reverse('lizard_progress_dashboardview', kwargs={
-                    'project_slug': project_slug}))
+                'project_slug': project_slug}))
 
 
 class NewProjectView(ProjectsView):
@@ -966,6 +1049,103 @@ class EmailNotificationConfigurationView(ProjectsView):
                 option.unsubscribe(self.project)
 
         return redirect
+
+
+class ReviewProjectsOverview(KickOutMixin, ReviewProjectMixin, TemplateView):
+    template_name = 'lizard_progress/reviewprojects_overview.html'
+
+
+class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
+    template_name = 'lizard_progress/reviewproject.html'
+
+    def get(self, request, *args, **kwargs):
+        if not hasattr(self, 'form'):
+            self.form = forms.UploadReviews()
+        return super(ReviewProjectView, self).get(request, *args, **kwargs)
+
+    @property
+    def breadcrumbs(self):
+        """Breadcrumbs for this page."""
+        # TODO: Implement if we want to add breadcrumbs
+        pass
+
+    def post(self, request, *args, **kwargs):
+        # Upload new reviews
+
+        if not self.reviewproject.can_upload(self.user):
+            raise PermissionDenied()
+
+        self.form = UploadReviews(request.POST, request.FILES)
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        cleaned_json_file = self.form.cleaned_data['reviews']
+        self.reviewproject.update_reviews_from_json(cleaned_json_file)
+        return HttpResponseRedirect(request.path)
+
+
+class DownloadReviewProjectReviewsView(KickOutMixin, ReviewProjectMixin,
+                                       TemplateView):
+
+    def get(self, request, *args, **kwargs):
+        # TODO: is this safe?
+        reviewProject = ReviewProject.objects.get(id=self.reviewproject_id)
+        reviews = reviewProject.reviews
+        return HttpResponse(json.dumps(reviews, indent=2),
+                            content_type="application/json")
+
+
+class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
+    template_name = 'lizard_progress/new_reviewproject.html'
+
+    @models.UserRole.check(models.UserRole.ROLE_MANAGER)
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewReviewProjectView, self).dispatch(
+            request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if not hasattr(self, 'form'):
+            self.form = forms.NewReviewProjectForm(
+                organization=self.profile.organization)
+        return super(NewReviewProjectView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.form = NewReviewProjectForm(request.POST, request.FILES)
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        try:
+            # TODO: add (inspection)project-field
+            ribx_file = self.form.cleaned_data['ribx']
+            filler_file = self.form.cleaned_data['filler_file']
+            contractor = self.form.cleaned_data['contractor']
+            project_review = models.ReviewProject.create_from_ribx(
+                name=self.form.cleaned_data['name'],
+                ribx_file=ribx_file,
+                organization=self.organization,
+                contractor=contractor,
+                inspection_filler=filler_file
+            )
+
+            rel_dest_folder = directories.rel_reviewproject_dir(project_review)
+            abs_dest_folder = directories.absolute(rel_dest_folder)
+            handle_uploaded_file(ribx_file, abs_dest_folder)
+            if filler_file:
+                handle_uploaded_file(filler_file, abs_dest_folder)
+        except:
+            # If something goes wrong, don't save anything, revert all back
+            # TODO: revert everyting
+            raise
+
+        return HttpResponseRedirect('/us/reviews/')
+
+
+def handle_uploaded_file(file, dest):
+    """Write the file to destination folder"""
+    dest_file = os.path.join(dest, file.name)
+    with open(dest_file, 'wb+') as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
 
 
 def multiproject_crosssection_graph(request, organization_id, location_id):

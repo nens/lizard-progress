@@ -1,0 +1,124 @@
+{
+  "manholes": [
+    {
+      "CAA": "245_H5",
+      "Herstelmaatregel": "",
+      "Opmerking": ""
+    }
+  ],
+  "pipes": [
+    {
+      "AAA": "3100036",
+      "Herstelmaatregel": "",
+      "Opmerking": "",
+      "ZC": [
+        {
+          "A": "BCD",
+          "B": "A",
+          "D": "31D0043",
+          "Herstelmaatregel": "",
+          "I": "0",
+          "N": "3100036.mpg|00:00:00",
+          "Opmerking": ""
+        },
+        {
+          "A": "BDC",
+          "B": "Z",
+          "F": "Camera niet te plaatsen ivm einddop en Persleiding door het stelsel.",
+          "Herstelmaatregel": "",
+          "I": "0.01",
+          "N": "3100036.mpg|00:00:01",
+          "Opmerking": ""
+        }
+      ]
+    },
+    {
+      "AAA": "3100037",
+      "Herstelmaatregel": "",
+      "Opmerking": "",
+      "ZC": [
+        {
+          "A": "BCD",
+          "B": "A",
+          "D": "-1",
+          "Herstelmaatregel": "",
+          "I": "0",
+          "N": "3100037.mpg|00:00:00",
+          "Opmerking": ""
+        },
+        {
+          "A": "BDC",
+          "B": "Z",
+          "F": "Camera niet te plaatsen ivm  Persleideing door het stelsel en verdekte put",
+          "Herstelmaatregel": "",
+          "I": "0.1",
+          "N": "3100037.mpg|00:00:01",
+          "Opmerking": ""
+        }
+      ]
+    },
+    {
+      "AAA": "3100015",
+      "Herstelmaatregel": "",
+      "Opmerking": "",
+      "ZC": [
+        {
+          "A": "BXA",
+          "B": "K",
+          "D": "3.300",
+          "I": "50.6",
+          "Herstelmaatregel": "",
+          "Opmerking": ""
+        },
+        {
+          "A": "BXA",
+          "B": "K",
+          "D": "5.100",
+          "I": "50.7",
+          "Herstelmaatregel": "",
+          "Opmerking": ""
+        },
+        {
+          "A": "BXA",
+          "B": "K",
+          "D": "4.0",
+          "I": "50.9",
+          "Herstelmaatregel": "",
+          "Opmerking": ""
+        },
+        {
+          "A": "BXA",
+          "B": "K",
+          "D": "4.0",
+          "I": "51",
+          "Herstelmaatregel": "",
+          "Opmerking": ""
+        },
+        {
+          "A": "BXA",
+          "B": "K",
+          "D": "5.400",
+          "I": "51.1",
+          "Herstelmaatregel": "",
+          "Opmerking": ""
+        },
+        {
+          "A": "BXA",
+          "B": "K",
+          "D": "5.300",
+          "I": "51.2",
+          "Herstelmaatregel": "",
+          "Opmerking": ""
+        },
+        {
+          "A": "BXA",
+          "B": "K",
+          "D": "8.500",
+          "I": "51.3",
+          "Herstelmaatregel": "",
+          "Opmerking": ""
+        }
+      ]
+    }
+  ]
+}

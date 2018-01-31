@@ -172,6 +172,25 @@ project_urls = [
     url(r'^(?P<activity_id>\d+)/', include(activity_urls))
 ]
 
+reviewproject_urls = [
+
+    # Specific ReviewProject details:
+    url(r'^$',
+        login_required(views.ReviewProjectView.as_view()),
+        name='lizard_progress_reviewproject'),
+
+    # Upload new reviews
+
+    # Apply filter
+
+    # Download reviews
+    url(r'^download/$',
+            login_required(views.DownloadReviewProjectReviewsView.as_view()),
+            name='lizard_progress_download_reviews'),
+    # Finish project?
+
+]
+
 urlpatterns = patterns(
     '',
     # Homepage
@@ -233,6 +252,19 @@ urlpatterns = patterns(
     url('^crosssections/(?P<organization_id>\d+)/(?P<location_id>[^/]+)$',
         login_required(views.views.multiproject_crosssection_graph),
         name='crosssection_graph'),
+
+    # ReviewProjects overview
+    url(r'^reviews/$',
+        login_required(views.ReviewProjectsOverview.as_view()),
+        name='lizard_progress_reviews_overview'),
+
+    # Create new ReviewProject
+    url(r'^newreviewproject/$',
+        login_required(views.NewReviewProjectView.as_view()),
+        name='lizard_progress_new_reviewproject'),
+
+    # All URLS related to some specific review project
+    url(r'^reviews/(?P<review_id>[0-9]+)/', include(reviewproject_urls)),
 
     # All URLs related to some specific project
     url(r'^projects/(?P<project_slug>[^/]+)/', include(project_urls))

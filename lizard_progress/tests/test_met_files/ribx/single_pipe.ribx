@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='utf-8'?>
+<DATA xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="GWSW_RibX_v1.3.xsd">
+  <ZB_A>
+    <AAA>3100036</AAA>
+    <AAB>31D0043</AAB>
+    <AAD>31D0043</AAD>
+    <AAE>
+      <gml:Point srsName="Netherlands-RD" srsDimension="2">
+        <gml:pos>147715.18 491929.01</gml:pos>
+      </gml:Point>
+    </AAE>
+    <AAF>31D0044</AAF>
+    <AAG>
+      <gml:Point srsName="Netherlands-RD" srsDimension="2">
+        <gml:pos>147779.16 491974.99</gml:pos>
+      </gml:Point>
+    </AAG>
+    <AAJ>Hugo de Vriesweg</AAJ>
+    <AAK>C</AAK>
+    <AAL>C</AAL>
+    <AAM>Gem. Almere</AAM>
+    <AAN>Almere</AAN>
+    <AAO>Buitenvaart</AAO>
+    <AAP>244/0</AAP>
+    <AAQ>A</AAQ>
+    <ABA>GWSW 1.3</ABA>
+    <ABB>SUFRIB2.1</ABB>
+    <ABC>C</ABC>
+    <ABE>B</ABE>
+    <ABF>2017-07-14</ABF>
+    <ABH>J. Van Houten</ABH>
+    <ABI>37090059D</ABI>
+    <ABJ>37090059D</ABJ>
+    <ABK>B</ABK>
+    <ABL ADE="B Stilstaand beeld op de computer">Z</ABL>
+    <ABM>A</ABM>
+    <ABP>C</ABP>
+    <ABQ>78.79</ABQ>
+    <ABS>3100036.mpg</ABS>
+    <ACA>A</ACA>
+    <ACB>160</ACB>
+    <ACC>160</ACC>
+    <ACD>AX</ACD>
+    <ACG>10</ACG>
+    <ACJ>A</ACJ>
+    <ACK>A</ACK>
+    <ACM>A</ACM>
+    <ACN>1986</ACN>
+    <ADA>B</ADA>
+    <ADB>A</ADB>
+    <ADC>A</ADC>
+    <AXA>37090059D_05</AXA>
+    <AXB>F</AXB>
+    <AXF>B</AXF>
+    <AXG>-5.49</AXG>
+    <AXH>-5.34</AXH>
+    <ZC>
+      <A>BCD</A>
+      <B>A</B>
+      <D>31D0043</D>
+      <I>0</I>
+      <N>3100036.mpg|00:00:00</N>
+    </ZC>
+    <ZC>
+      <A>BDC</A>
+      <B>Z</B>
+      <F>Camera niet te plaatsen ivm einddop en Persleiding door het stelsel.</F>
+      <I>0.01</I>
+      <N>3100036.mpg|00:00:01</N>
+    </ZC>
+  </ZB_A>
+</DATA>

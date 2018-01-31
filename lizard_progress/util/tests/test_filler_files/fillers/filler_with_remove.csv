@@ -1,0 +1,8 @@
+A,B,C,D waarschuwing,D Ingrijp
+c,d,c,>2,>4
+c,d,e,>1,>1.5
+c,d,,>5,Remove
+d,,,Remove,
+c,d,e,,Remove
+c,,,>5,Remove
+a,b,c,,Remove

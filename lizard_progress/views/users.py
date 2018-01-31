@@ -125,5 +125,5 @@ class NewUserManagementView(ProjectsView):
         newuser = self.form.update_user(organization=self.organization)
 
         return HttpResponseRedirect(reverse(
-                "lizard_progress_single_user_management", kwargs={
-                    'user_id': newuser.id}))
+            "lizard_progress_single_user_management", kwargs={
+                'user_id': newuser.id}))

@@ -278,7 +278,8 @@ class ProjectsMixin(object):
 
     @property
     def measurementtypes(self):
-        mtypes = list(MeasurementTypeAllowed.objects.filter(
+        mtypes = list(MeasurementTypeAllowed.objects.select_related(
+            'mtype').filter(
             organization=self.profile.organization
         ))
         user_mtypes = sorted(list(set([str(x.mtype) for x in

@@ -122,7 +122,7 @@ class ProjectsMixin(object):
     def projects(self):
         """Returns a list of projects the current user has access to."""
         projecttable = Project.objects.select_related(
-            'organization').prefetch_related(
+            'organization', 'project_type').prefetch_related(
             'activity_set__contractor').filter(is_archived=False)
         NAs = []
         notNAs = []

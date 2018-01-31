@@ -219,6 +219,7 @@ class ProjectsMixin(object):
 
     @property
     def projects_requests(self):
+        # TODO: refactor this. Too many separate database queries.
         for project in self.projects():
             mtypes = project.activity_set.all().distinct(
                 "measurement_type").values_list('measurement_type__name',

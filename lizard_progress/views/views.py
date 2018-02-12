@@ -122,7 +122,7 @@ class ProjectsMixin(object):
     def projects(self):
         """Returns a list of projects the current user has access to."""
         projecttable = Project.objects.select_related(
-            'organization').prefetch_related(
+            'organization', 'project_type').prefetch_related(
             'activity_set__contractor').filter(is_archived=False)
         NAs = []
         notNAs = []
@@ -213,11 +213,13 @@ class ProjectsMixin(object):
 
     @property
     def activity_requests(self):
+        # TODO: refactor this. Too many separate database queries.
         for activity in self.activities():
             yield activity, self.total_activity_requests(activity)
 
     @property
     def projects_requests(self):
+        # TODO: refactor this. Too many separate database queries.
         for project in self.projects():
             mtypes = project.activity_set.all().distinct(
                 "measurement_type").values_list('measurement_type__name',
@@ -225,6 +227,8 @@ class ProjectsMixin(object):
             yield project, self.num_project_requests(project), mtypes
 
     def num_project_requests(self, project):
+        # TODO: refactor with database-level annotations/aggregations.
+        # Way too many requests!
         if self.user_is_manager():
             return project.num_open_requests
         else:
@@ -275,7 +279,8 @@ class ProjectsMixin(object):
 
     @property
     def measurementtypes(self):
-        mtypes = list(MeasurementTypeAllowed.objects.filter(
+        mtypes = list(MeasurementTypeAllowed.objects.select_related(
+            'mtype').filter(
             organization=self.profile.organization
         ))
         user_mtypes = sorted(list(set([str(x.mtype) for x in

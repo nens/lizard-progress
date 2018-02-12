@@ -89,13 +89,19 @@ class ReviewProjectAdmin(admin.ModelAdmin):
     search_fields = ['name', 'organization', 'project']
 
 
+class UserProfileAdmin(admin.ModelAdmin):
+    search_fields = ['user__username']
+    list_display = ['user', 'organization']
+    list_select_related = ['user', 'organization']
+
+
 admin.site.register(models.Hydrovak)
 admin.site.register(models.Location, LocationAdmin)
 admin.site.register(models.AvailableMeasurementType)
 admin.site.register(models.Project, ProjectAdmin)
 admin.site.register(models.Activity, ActivityAdmin)
 admin.site.register(models.Organization, OrganizationAdmin)
-admin.site.register(models.UserProfile)
+admin.site.register(models.UserProfile, UserProfileAdmin)
 admin.site.register(models.UserRole)
 admin.site.register(models.ErrorMessage)
 admin.site.register(models.LizardConfiguration)

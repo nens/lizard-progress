@@ -20,6 +20,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import connection
+from django.db.models import Count
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.http import HttpRequest
@@ -472,6 +473,18 @@ class ProjectActivityMixin(object):
                 return "ERROR-percentage-done-is---{}".format(x)
 
 
+class AnnotatedProjectManager(models.Manager):
+    """Special manager that adds often-used annotations
+
+    Otherwise a LOT of queries are done per project instance.
+    """
+
+    def get_queryset(self):
+        return super(AnnotatedProjectManager, self).get_queryset().annotate(
+            counted_number_of_locations=Count('activity__location',
+                                              distinct=True))
+
+
 class Project(ProjectActivityMixin, models.Model):
     name = models.CharField(max_length=50, unique=False,
                             verbose_name='projectnaam')
@@ -481,6 +494,8 @@ class Project(ProjectActivityMixin, models.Model):
 
     project_type = models.ForeignKey(ProjectType, null=True, blank=True)
     created_at = models.DateTimeField(default=datetime.datetime.now)
+
+    objects = AnnotatedProjectManager()
 
     class Meta:
         ordering = ('name',)
@@ -517,9 +532,7 @@ class Project(ProjectActivityMixin, models.Model):
         return lizard_progress.specifics.Specifics(self, activity)
 
     def number_of_locations(self):
-        return Location.objects.filter(
-            activity__project=self,
-            not_part_of_project=False).count()
+        return self.counted_number_of_locations
 
     def number_of_complete_locations(self):
         return Location.objects.filter(

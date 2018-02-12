@@ -4,7 +4,7 @@ Changelog of lizard-progress
 3.20.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Include the "Beoordelingstool."
 
 
 3.20.1 (2017-12-06)

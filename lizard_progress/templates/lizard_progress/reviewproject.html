@@ -21,12 +21,24 @@
       {% csrf_token %}
       <p class="text-warning">{{ view.form.non_field_errors }}</p>
       {{ form }}
-      {% for field in view.form %}
+      {% for field in view.upload_reviews_form %}
         <div class="col-sm-12">
          {{ field.label }} : {{ field }}<span class="text-warning">{{ field.errors }}</span>
         </div>
       {% endfor %}
-      <input type="submit" class="btn btn-primary" value="Upload reviews">
+      <input type="submit" class="btn btn-primary" name="Upload reviews" value="Upload reviews">
+    </form>
+
+    <form action="" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <p class="text-warning">{{ view.form.non_field_errors }}</p>
+      {{ form }}
+      {% for field in view.upload_shapefiles_form %}
+        <div class="col-sm-12">
+         {{ field.label }} : {{ field }}<span class="text-warning">{{ field.errors }}</span>
+        </div>
+      {% endfor %}
+      <input type="submit" class="btn btn-primary" name="Upload shapefiles" value="Upload shapefiles">
     </form>
 
    {% include "lizard_progress/reviewproject_map.html" %}

@@ -59,6 +59,7 @@ from lizard_progress.util import geo
 from lizard_progress.util import workspaces
 from lizard_progress.forms import NewReviewProjectForm
 from lizard_progress.forms import UploadReviews
+from lizard_progress.forms import UploadShapefiles
 
 logger = logging.getLogger(__name__)
 
@@ -1067,8 +1068,11 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
     template_name = 'lizard_progress/reviewproject.html'
 
     def get(self, request, *args, **kwargs):
-        if not hasattr(self, 'form'):
-            self.form = forms.UploadReviews()
+        if not hasattr(self, 'upload_reviews_form'):
+            self.upload_reviews_form = forms.UploadReviews()
+        if not hasattr(self, 'upload_shapefiles_form'):
+            self.upload_shapefiles_form = forms.UploadShapefiles()
+
         return super(ReviewProjectView, self).get(request, *args, **kwargs)
 
     @property
@@ -1078,25 +1082,37 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         pass
 
     def post(self, request, *args, **kwargs):
-        # Upload new reviews
-
         if not self.reviewproject.can_upload(self.user):
             raise PermissionDenied()
 
-        self.form = UploadReviews(request.POST, request.FILES)
-        if not self.form.is_valid():
-            return self.get(request, *args, **kwargs)
+        if 'Upload reviews' in request.POST:
+            # Upload new reviews:
+            self.upload_reviews_form = UploadReviews(request.POST,
+                                                     request.FILES)
+            if not self.upload_reviews_form.is_valid():
+                return self.get(request, *args, **kwargs)
 
-        cleaned_json_file = self.form.cleaned_data['reviews']
-        self.reviewproject.update_reviews_from_json(cleaned_json_file)
+            cleaned_json_file = self.upload_reviews_form.cleaned_data['reviews']
+            self.reviewproject.update_reviews_from_json(cleaned_json_file)
+
+        if 'Upload shapefiles' in request.POST:
+            # Upload new shapefiles:
+            self.upload_shapefiles_form = forms.UploadShapefiles(request.POST,
+                                                                 request.FILES)
+            if not self.upload_shapefiles_form.is_valid():
+                return self.get(request, *args, **kwargs)
+
+            self.reviewproject.shape_files = self.upload_shapefiles_form.cleaned_data['shape_files']
+            self.reviewproject.save()
+
         return HttpResponseRedirect(request.path)
 
 
 class DownloadReviewProjectReviewsView(KickOutMixin, ReviewProjectMixin,
                                        TemplateView):
 
+    @csrf_exempt
     def get(self, request, *args, **kwargs):
-        # TODO: is this safe?
         reviewProject = ReviewProject.objects.get(id=self.reviewproject_id)
         reviews = reviewProject.reviews
         return HttpResponse(json.dumps(reviews, indent=2),

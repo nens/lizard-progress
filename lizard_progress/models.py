@@ -668,6 +668,11 @@ class ReviewProject(models.Model):
         max_length=1000,
         null=True,
         blank=True)
+    shape_files = models.FileField(
+        null=True,
+        blank=True,
+        upload_to=directories.shapefile_dest
+    )
     # The file name of the filler.csv.
     inspection_filler = models.CharField(
         max_length=1000,
@@ -703,8 +708,11 @@ class ReviewProject(models.Model):
                 profile.has_role(UserRole.ROLE_MANAGER))
 
     def can_upload(self, user):
-        """User can upload if he is with the contractor, or if user is a
-        manager in this project.  """
+        """ Return if the user can upload files to this reviewproject
+
+        User can upload (reviews and shapefiles) if he/she is in the
+        organization of the contractor, or if the user is a  manager of the
+        project.  """
         return (
             self.is_manager(user) or
             self.contractor == Organization.get_by_user(user))
@@ -955,11 +963,17 @@ class ReviewProject(models.Model):
         :arg
             reviews: a dict with serializable objects.
         """
-        # TODO: validate json? json should be subset of reviews?
-        # Don't validate json here, do that in the forms validate()
-
         # TODO: store old json?
         self.reviews = reviews
+        self.save()
+
+    def update_shapefiles(self, shape_files):
+        """
+
+        :param shapefiles:
+        :return:
+        """
+        self.shape_files = shape_files
         self.save()
 
     def generate_geojson_reviews(self):

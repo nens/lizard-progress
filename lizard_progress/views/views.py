@@ -33,6 +33,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
+from django.views.decorators.csrf import csrf_exempt
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
@@ -311,7 +312,8 @@ class ReviewProjectMixin(object):
 
     def dispatch(self, request, *args, **kwargs):
         self.all_review_projects = ReviewProject.objects.filter(
-            organization=self.organization)
+            organization=self.organization) | ReviewProject.objects.filter(
+                        contractor=self.organization)
         self.reviewproject_id = kwargs.get('review_id')
         if self.reviewproject_id:
             try:
@@ -324,6 +326,7 @@ class ReviewProjectMixin(object):
             # Thus a ReviewProject cannot be split up in multiple parts to be
             # reviewed.
             if has_access_reviewproject(project=self.reviewproject,
+                                        contractor=self.reviewproject.contractor,
                                         userprofile=self.profile):
                 self.has_full_access = has_access_reviewproject(
                     project=self.reviewproject,
@@ -1120,7 +1123,6 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
             return self.get(request, *args, **kwargs)
 
         try:
-            # TODO: add (inspection)project-field
             ribx_file = self.form.cleaned_data['ribx']
             filler_file = self.form.cleaned_data['filler_file']
             contractor = self.form.cleaned_data['contractor']

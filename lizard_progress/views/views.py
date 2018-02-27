@@ -1113,10 +1113,29 @@ class DownloadReviewProjectReviewsView(KickOutMixin, ReviewProjectMixin,
 
     @csrf_exempt
     def get(self, request, *args, **kwargs):
-        reviewProject = ReviewProject.objects.get(id=self.reviewproject_id)
-        reviews = reviewProject.reviews
-        return HttpResponse(json.dumps(reviews, indent=2),
-                            content_type="application/json")
+        reviewproject = ReviewProject.objects.get(id=self.reviewproject_id)
+        reviews = reviewproject.reviews
+        response = HttpResponse(json.dumps(reviews, indent=2),
+                                content_type="application/json")
+        response['Content-Disposition'] = \
+            'attachment; filename="{reviewproject}-reviews.json"'.format(
+                reviewproject=reviewproject.name
+            )
+        return response
+
+
+class DownloadReviewProjectShapefilesView(KickOutMixin, ReviewProjectMixin,
+                                          TemplateView):
+
+    # TODO: How to serve static files?
+    @csrf_exempt
+    def get(self, request, *args, **kwargs):
+        reviewproject = ReviewProject.objects.get(id=self.reviewproject_id)
+        shapefiles = reviewproject.shape_files
+        response = HttpResponse(shapefiles,
+                                content_type="application/zip")
+        response['Content-Disposition'] = 'attachment'
+        return response
 
 
 class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
@@ -1139,6 +1158,7 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
             return self.get(request, *args, **kwargs)
 
         try:
+            url = request.get_host()
             ribx_file = self.form.cleaned_data['ribx']
             filler_file = self.form.cleaned_data['filler_file']
             contractor = self.form.cleaned_data['contractor']
@@ -1147,7 +1167,8 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
                 ribx_file=ribx_file,
                 organization=self.organization,
                 contractor=contractor,
-                inspection_filler=filler_file
+                inspection_filler=filler_file,
+                url=url
             )
 
             rel_dest_folder = directories.rel_reviewproject_dir(project_review)

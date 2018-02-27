@@ -770,7 +770,8 @@ class ReviewProject(models.Model):
     @classmethod
     def create_from_ribx(cls, name, ribx_file, organization, contractor=None,
                          project=None,
-                         inspection_filler=None):
+                         inspection_filler=None,
+                         url=None):
         """Create and return ReviewProject from ribx file
 
         Go over all inspections (pipes and manholes) in the ribx-file and
@@ -800,7 +801,15 @@ class ReviewProject(models.Model):
         tree = etree.parse(ribx_file)
         root = tree.getroot()
 
+        project_url = ''
+        if url:
+            project_url = str(url+'/us/reviews/{pk}').format(pk=project_review.pk)
         reviews = {
+            'project' : {
+                'name': name,
+                'slug': project_review.slug,
+                'url': project_url
+            },
             'pipes': [],
             'manholes': []
         }

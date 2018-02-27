@@ -187,6 +187,10 @@ reviewproject_urls = [
     url(r'^download/$',
             login_required(views.DownloadReviewProjectReviewsView.as_view()),
             name='lizard_progress_download_reviews'),
+    # Download shapefile zip
+    url(r'download_shapefile/$',
+        login_required(views.DownloadReviewProjectShapefilesView.as_view()),
+        name='lizard_progress_download_shapefiles'),
     # Finish project?
 
 ]

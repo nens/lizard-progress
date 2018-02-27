@@ -945,6 +945,30 @@ class ReviewProject(models.Model):
 
         return new_reviews
 
+    def get_map_view(self):
+        """Return a set of coordinates of this reviewproject.
+
+        Helper function to set where the leafletmap will be zoomed to.
+
+        :return: tuple of x, y coordinates in WSG84
+        """
+        # Try to get the first pipe coordinate
+        if len(self.reviews['pipes']) > 0:
+            if self.reviews['pipes'][0].get('Beginpunt x') and \
+                    self.reviews['pipes'][0].get('Beginpunt x'):
+                x = float(self.reviews['pipes'][0].get('Beginpunt x'))
+                y = float(self.reviews['pipes'][0].get('Beginpunt y'))
+                return coordinates.rd_to_wgs84(x, y)
+        # else try to get the first manhole coordinate
+        elif len(self.reviews['manholes']) > 0:
+            if self.reviews['manholes'][0].get('x') and \
+                    self.reviews['manholes'][0].get('y'):
+                x = float(self.reviews['manholes'][0].get('x'))
+                y = float(self.reviews['manholes'][0].get('y'))
+                return coordinates.rd_to_wgs84(x, y)
+        # else just center on the Netherlands
+        return (52.422, 5.268316940015781)
+
     def get_inspections(self, incl_completed=True):
         """Return all inspections
 

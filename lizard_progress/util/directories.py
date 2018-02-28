@@ -75,6 +75,9 @@ def rel_reviewproject_dir(reviewproject):
         reviewproject.slug
     ))
 
+def shapefile_dest(instance, filename):
+    rel_dest_folder = rel_reviewproject_dir(instance)
+    return os.path.join(rel_dest_folder, filename)
 
 def abs_upload_dir(activity):
     return mk_abs(os.path.join(rel_activity_dir(activity), 'uploads'))

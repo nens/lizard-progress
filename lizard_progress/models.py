@@ -668,6 +668,11 @@ class ReviewProject(models.Model):
         max_length=1000,
         null=True,
         blank=True)
+    shape_files = models.FileField(
+        null=True,
+        blank=True,
+        upload_to=directories.shapefile_dest
+    )
     # The file name of the filler.csv.
     inspection_filler = models.CharField(
         max_length=1000,
@@ -703,8 +708,11 @@ class ReviewProject(models.Model):
                 profile.has_role(UserRole.ROLE_MANAGER))
 
     def can_upload(self, user):
-        """User can upload if he is with the contractor, or if user is a
-        manager in this project.  """
+        """ Return if the user can upload files to this reviewproject
+
+        User can upload (reviews and shapefiles) if he/she is in the
+        organization of the contractor, or if the user is a  manager of the
+        project.  """
         return (
             self.is_manager(user) or
             self.contractor == Organization.get_by_user(user))
@@ -762,7 +770,8 @@ class ReviewProject(models.Model):
     @classmethod
     def create_from_ribx(cls, name, ribx_file, organization, contractor=None,
                          project=None,
-                         inspection_filler=None):
+                         inspection_filler=None,
+                         request=None):
         """Create and return ReviewProject from ribx file
 
         Go over all inspections (pipes and manholes) in the ribx-file and
@@ -792,7 +801,18 @@ class ReviewProject(models.Model):
         tree = etree.parse(ribx_file)
         root = tree.getroot()
 
+        project_url = ''
+        if request:
+            location = reverse('lizard_progress_reviewproject',
+                    kwargs={'review_id': project_review.id, })
+            project_url = request.build_absolute_uri(location)
+
         reviews = {
+            'project' : {
+                'name': name,
+                'slug': project_review.slug,
+                'url': project_url
+            },
             'pipes': [],
             'manholes': []
         }
@@ -928,6 +948,30 @@ class ReviewProject(models.Model):
 
         return new_reviews
 
+    def get_coord_reviewproject(self):
+        """Return a set of coordinates of this reviewproject.
+
+        Helper function to set where the leafletmap will be zoomed to.
+
+        :return: tuple of x, y coordinates in WSG84
+        """
+        # Try to get the first pipe coordinate
+        if len(self.reviews['pipes']) > 0:
+            if self.reviews['pipes'][0].get('Beginpunt x') and \
+                    self.reviews['pipes'][0].get('Beginpunt x'):
+                x = float(self.reviews['pipes'][0].get('Beginpunt x'))
+                y = float(self.reviews['pipes'][0].get('Beginpunt y'))
+                return coordinates.rd_to_wgs84(x, y)
+        # else try to get the first manhole coordinate
+        elif len(self.reviews['manholes']) > 0:
+            if self.reviews['manholes'][0].get('x') and \
+                    self.reviews['manholes'][0].get('y'):
+                x = float(self.reviews['manholes'][0].get('x'))
+                y = float(self.reviews['manholes'][0].get('y'))
+                return coordinates.rd_to_wgs84(x, y)
+        # else just center on the Netherlands
+        return (52.422, 5.268316940015781)
+
     def get_inspections(self, incl_completed=True):
         """Return all inspections
 
@@ -955,11 +999,17 @@ class ReviewProject(models.Model):
         :arg
             reviews: a dict with serializable objects.
         """
-        # TODO: validate json? json should be subset of reviews?
-        # Don't validate json here, do that in the forms validate()
-
         # TODO: store old json?
         self.reviews = reviews
+        self.save()
+
+    def update_shapefiles(self, shape_files):
+        """
+
+        :param shapefiles:
+        :return:
+        """
+        self.shape_files = shape_files
         self.save()
 
     def generate_geojson_reviews(self):

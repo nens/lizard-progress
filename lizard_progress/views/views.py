@@ -33,6 +33,8 @@ from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
+from django.views.decorators.csrf import csrf_exempt
+from django.views.static import serve
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
@@ -58,6 +60,7 @@ from lizard_progress.util import geo
 from lizard_progress.util import workspaces
 from lizard_progress.forms import NewReviewProjectForm
 from lizard_progress.forms import UploadReviews
+from lizard_progress.forms import UploadShapefiles
 
 logger = logging.getLogger(__name__)
 
@@ -311,7 +314,8 @@ class ReviewProjectMixin(object):
 
     def dispatch(self, request, *args, **kwargs):
         self.all_review_projects = ReviewProject.objects.filter(
-            organization=self.organization)
+            organization=self.organization) | ReviewProject.objects.filter(
+                        contractor=self.organization)
         self.reviewproject_id = kwargs.get('review_id')
         if self.reviewproject_id:
             try:
@@ -324,6 +328,7 @@ class ReviewProjectMixin(object):
             # Thus a ReviewProject cannot be split up in multiple parts to be
             # reviewed.
             if has_access_reviewproject(project=self.reviewproject,
+                                        contractor=self.reviewproject.contractor,
                                         userprofile=self.profile):
                 self.has_full_access = has_access_reviewproject(
                     project=self.reviewproject,
@@ -1064,8 +1069,11 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
     template_name = 'lizard_progress/reviewproject.html'
 
     def get(self, request, *args, **kwargs):
-        if not hasattr(self, 'form'):
-            self.form = forms.UploadReviews()
+        if not hasattr(self, 'upload_reviews_form'):
+            self.upload_reviews_form = forms.UploadReviews()
+        if not hasattr(self, 'upload_shapefiles_form'):
+            self.upload_shapefiles_form = forms.UploadShapefiles()
+
         return super(ReviewProjectView, self).get(request, *args, **kwargs)
 
     @property
@@ -1074,18 +1082,31 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         # TODO: Implement if we want to add breadcrumbs
         pass
 
+    @csrf_exempt
     def post(self, request, *args, **kwargs):
-        # Upload new reviews
-
         if not self.reviewproject.can_upload(self.user):
             raise PermissionDenied()
 
-        self.form = UploadReviews(request.POST, request.FILES)
-        if not self.form.is_valid():
-            return self.get(request, *args, **kwargs)
+        if 'Upload reviews' in request.POST:
+            # Upload new reviews:
+            self.upload_reviews_form = UploadReviews(request.POST,
+                                                     request.FILES)
+            if not self.upload_reviews_form.is_valid():
+                return self.get(request, *args, **kwargs)
 
-        cleaned_json_file = self.form.cleaned_data['reviews']
-        self.reviewproject.update_reviews_from_json(cleaned_json_file)
+            cleaned_json_file = self.upload_reviews_form.cleaned_data['reviews']
+            self.reviewproject.update_reviews_from_json(cleaned_json_file)
+
+        if 'Upload shapefiles' in request.POST:
+            # Upload new shapefiles:
+            self.upload_shapefiles_form = forms.UploadShapefiles(request.POST,
+                                                                 request.FILES)
+            if not self.upload_shapefiles_form.is_valid():
+                return self.get(request, *args, **kwargs)
+
+            self.reviewproject.shape_files = self.upload_shapefiles_form.cleaned_data['shape_files']
+            self.reviewproject.save()
+
         return HttpResponseRedirect(request.path)
 
 
@@ -1093,11 +1114,45 @@ class DownloadReviewProjectReviewsView(KickOutMixin, ReviewProjectMixin,
                                        TemplateView):
 
     def get(self, request, *args, **kwargs):
-        # TODO: is this safe?
-        reviewProject = ReviewProject.objects.get(id=self.reviewproject_id)
-        reviews = reviewProject.reviews
-        return HttpResponse(json.dumps(reviews, indent=2),
-                            content_type="application/json")
+        reviewproject = ReviewProject.objects.get(id=self.reviewproject_id)
+        reviews = reviewproject.reviews
+        response = HttpResponse(json.dumps(reviews, indent=2),
+                                content_type="application/json")
+        response['Content-Disposition'] = \
+            'attachment; filename="{reviewproject}-reviews.json"'.format(
+                reviewproject=reviewproject.name
+            )
+        return response
+
+
+class DownloadReviewProjectShapefilesView(KickOutMixin, ReviewProjectMixin,
+                                          TemplateView):
+
+    def get(self, request, *args, **kwargs):
+        reviewproject = ReviewProject.objects.get(id=self.reviewproject_id)
+        path = reviewproject.shape_files.path
+        filename = os.path.basename(path)
+
+        if settings.DEBUG or not platform.system() == 'Linux' or "+" in \
+                path:
+            logger.debug(
+                "With DEBUG off, we'd serve the programfile via webserver.")
+            logger.debug(
+                "Instead, we let Django serve {}.\n".format(path))
+            return serve(request, directories.absolute(path), '/')
+
+        response = HttpResponse()
+        response['X-Sendfile'] = directories.absolute(path)  # Apache
+        response['X-Accel-Redirect'] = os.path.join(
+            '/protected', path)  # Nginx
+        response['Content-Disposition'] = (
+            'attachment; filename="{filename}"'.format(filename=filename))
+
+        # Unset the Content-Type as to allow for the webserver
+        # to determine it.
+        response['Content-Type'] = ''
+
+        return response
 
 
 class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
@@ -1120,7 +1175,7 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
             return self.get(request, *args, **kwargs)
 
         try:
-            # TODO: add (inspection)project-field
+            # url = request.get_host()
             ribx_file = self.form.cleaned_data['ribx']
             filler_file = self.form.cleaned_data['filler_file']
             contractor = self.form.cleaned_data['contractor']
@@ -1129,7 +1184,8 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
                 ribx_file=ribx_file,
                 organization=self.organization,
                 contractor=contractor,
-                inspection_filler=filler_file
+                inspection_filler=filler_file,
+                request=request
             )
 
             rel_dest_folder = directories.rel_reviewproject_dir(project_review)

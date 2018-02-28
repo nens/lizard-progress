@@ -150,7 +150,8 @@ class TestReviewProjectViews(FixturesTestCase):
         response = None
         with open(simple_review_path, 'r') as json_file:
             response = self.client.post(url,
-                                        {'reviews': json_file})
+                                        {'reviews': json_file,
+                                         'Upload reviews': ''})
 
         self.assertEquals(response.status_code, 302)
         updated_review = models.ReviewProject.objects.get(id=self.reviewproject.id)
@@ -166,11 +167,13 @@ class TestReviewProjectViews(FixturesTestCase):
                                  'invalid.json')
         response = None
         with open(test_file, 'r') as json_file:
+            # Upload reviews
             response = self.client.post(url,
-                                        {'reviews': json_file})
+                                        {'reviews': json_file,
+                                         'Upload reviews': ''})
 
-        self.assertEquals(response.status_code, 200)
-        self.assertTrue(response.context_data['view'].form.errors)
+            self.assertEquals(response.status_code, 200)
+            self.assertTrue(response.context_data['view'].upload_reviews_form.errors)
 
     def test_post_new_reviewproject_with_contractor(self):
         filler_file_path = os.path.join('lizard_progress',
@@ -335,18 +338,22 @@ class TestUploadReviewProjectViews(FixturesTestCase):
     def test_manager_upload_reviews(self):
         response = self.manager_client.post(
             reverse('lizard_progress_reviewproject',
-                    kwargs={'review_id': self.reviewproject.id}))
+                    kwargs={'review_id': self.reviewproject.id}),
+            {'Upload reviews': ''})
         self.assertEqual(200, response.status_code)
 
     def test_reviewer_upload_reviews(self):
         response = self.reviewer_client.post(
             reverse('lizard_progress_reviewproject',
-                    kwargs={'review_id': self.reviewproject.id}))
+                    kwargs={'review_id': self.reviewproject.id}),
+            {'Upload reviews': ''}
+        )
         self.assertEqual(200, response.status_code)
 
     def test_random_upload_reviews(self):
         response = self.random_client.post(
             reverse('lizard_progress_reviewproject',
-                    kwargs={'review_id': self.reviewproject.id}))
+                    kwargs={'review_id': self.reviewproject.id}),
+            {'Upload reviews': ''})
         self.assertEqual(302, response.status_code)
         self.assertTrue('/accounts/login/' in response.url)

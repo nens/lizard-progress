@@ -355,5 +355,13 @@ class UploadReviews(forms.Form):
             raise ValidationError('Invalid JSON: {}'.format(e))
 
 
+class UploadShapefiles(forms.ModelForm):
+
+    class Meta:
+        model = models.ReviewProject
+        fields = ['shape_files']
+
+    def __init__(self, *args, **kwargs):
+        super(UploadShapefiles  , self).__init__(*args, **kwargs)
 
 

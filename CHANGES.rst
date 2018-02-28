@@ -1,8 +1,8 @@
 Changelog of lizard-progress
 ===================================================
 
-4.0.1 (unreleased)
-------------------
+4.1 (2018-02-28)
+----------------
 
 - Beoordelingstool fixes.
 

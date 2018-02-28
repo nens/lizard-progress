@@ -84,8 +84,7 @@ class AcceptedFileAdmin(admin.ModelAdmin):
 
 
 class ReviewProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'organization', 'contractor', 'project',
-                    'ribx_file', 'shape_files', 'inspection_filler')
+    list_display = ('name', 'organization', 'contractor', 'project')
     search_fields = ['name', 'organization', 'contractor', 'project']
 
 

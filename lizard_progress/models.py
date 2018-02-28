@@ -771,7 +771,7 @@ class ReviewProject(models.Model):
     def create_from_ribx(cls, name, ribx_file, organization, contractor=None,
                          project=None,
                          inspection_filler=None,
-                         url=None):
+                         request=None):
         """Create and return ReviewProject from ribx file
 
         Go over all inspections (pipes and manholes) in the ribx-file and
@@ -802,8 +802,11 @@ class ReviewProject(models.Model):
         root = tree.getroot()
 
         project_url = ''
-        if url:
-            project_url = str(url+'/us/reviews/{pk}').format(pk=project_review.pk)
+        if request:
+            location = reverse('lizard_progress_reviewproject',
+                    kwargs={'review_id': project_review.id, })
+            project_url = request.build_absolute_uri(location)
+
         reviews = {
             'project' : {
                 'name': name,
@@ -945,7 +948,7 @@ class ReviewProject(models.Model):
 
         return new_reviews
 
-    def get_map_view(self):
+    def get_coord_reviewproject(self):
         """Return a set of coordinates of this reviewproject.
 
         Helper function to set where the leafletmap will be zoomed to.

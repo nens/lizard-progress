@@ -34,6 +34,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
 from django.views.decorators.csrf import csrf_exempt
+from django.views.static import serve
 
 from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
@@ -1081,6 +1082,7 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
         # TODO: Implement if we want to add breadcrumbs
         pass
 
+    @csrf_exempt
     def post(self, request, *args, **kwargs):
         if not self.reviewproject.can_upload(self.user):
             raise PermissionDenied()
@@ -1111,7 +1113,6 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
 class DownloadReviewProjectReviewsView(KickOutMixin, ReviewProjectMixin,
                                        TemplateView):
 
-    @csrf_exempt
     def get(self, request, *args, **kwargs):
         reviewproject = ReviewProject.objects.get(id=self.reviewproject_id)
         reviews = reviewproject.reviews
@@ -1127,14 +1128,30 @@ class DownloadReviewProjectReviewsView(KickOutMixin, ReviewProjectMixin,
 class DownloadReviewProjectShapefilesView(KickOutMixin, ReviewProjectMixin,
                                           TemplateView):
 
-    # TODO: How to serve static files?
-    @csrf_exempt
     def get(self, request, *args, **kwargs):
         reviewproject = ReviewProject.objects.get(id=self.reviewproject_id)
-        shapefiles = reviewproject.shape_files
-        response = HttpResponse(shapefiles,
-                                content_type="application/zip")
-        response['Content-Disposition'] = 'attachment'
+        path = reviewproject.shape_files.path
+        filename = os.path.basename(path)
+
+        if settings.DEBUG or not platform.system() == 'Linux' or "+" in \
+                path:
+            logger.debug(
+                "With DEBUG off, we'd serve the programfile via webserver.")
+            logger.debug(
+                "Instead, we let Django serve {}.\n".format(path))
+            return serve(request, directories.absolute(path), '/')
+
+        response = HttpResponse()
+        response['X-Sendfile'] = directories.absolute(path)  # Apache
+        response['X-Accel-Redirect'] = os.path.join(
+            '/protected', path)  # Nginx
+        response['Content-Disposition'] = (
+            'attachment; filename="{filename}"'.format(filename=filename))
+
+        # Unset the Content-Type as to allow for the webserver
+        # to determine it.
+        response['Content-Type'] = ''
+
         return response
 
 
@@ -1158,7 +1175,7 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
             return self.get(request, *args, **kwargs)
 
         try:
-            url = request.get_host()
+            # url = request.get_host()
             ribx_file = self.form.cleaned_data['ribx']
             filler_file = self.form.cleaned_data['filler_file']
             contractor = self.form.cleaned_data['contractor']
@@ -1168,7 +1185,7 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
                 organization=self.organization,
                 contractor=contractor,
                 inspection_filler=filler_file,
-                url=url
+                request=request
             )
 
             rel_dest_folder = directories.rel_reviewproject_dir(project_review)

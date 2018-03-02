@@ -12,7 +12,11 @@
     <progress value={{ view.reviewproject.calc_progress }}  max="100"></progress>
 
     <a href="download_shapefile">
-      <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
+      <button type="button" class="btn btn-primary btn-md pull-right"
+              {% if not view.reviewproject.shape_files %}
+                disabled title="No shapefiles available"
+              {% endif %}
+              style="padding:9px;margin-right:15px">
         Download shapefiles
       </button>
     </a>

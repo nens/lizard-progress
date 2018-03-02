@@ -4,7 +4,8 @@ Changelog of lizard-progress
 4.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Disable 'download shapefiles' button in *beoordelingstool* if no shapefiles
+  have been uploaded yet.
 
 
 4.1 (2018-02-28)

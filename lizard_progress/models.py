@@ -1077,16 +1077,18 @@ class ReviewProject(models.Model):
                                       properties={"completion": completion})
             features.append(feature)
 
+        # Add inspections as points to the feature collections, comment out
+        # because the number of inspection points can become very large.
         # Pipe inscpections (ZC)
-        for pipe in self.reviews['pipes']:
-            for zc in pipe['ZC']:
-                x, y = zc['x'], zc['y']
-                coord = coordinates.rd_to_wgs84(x, y)
-                geom = geojson.Point(coord)
-                completion = self._calc_progress_inspection(zc)
-                feature = geojson.Feature(geometry=geom,
-                                          properties={"completion": completion})
-                features.append(feature)
+        # for pipe in self.reviews['pipes']:
+        #     for zc in pipe['ZC']:
+        #         x, y = zc['x'], zc['y']
+        #         coord = coordinates.rd_to_wgs84(x, y)
+        #         geom = geojson.Point(coord)
+        #         completion = self._calc_progress_inspection(zc)
+        #         feature = geojson.Feature(geometry=geom,
+        #                                   properties={"completion": completion})
+        #         features.append(feature)
 
         return geojson.FeatureCollection(features)
 

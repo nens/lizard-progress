@@ -1,8 +1,8 @@
 Changelog of lizard-progress
 ===================================================
 
-4.2 (unreleased)
-----------------
+4.1.2 (2018-03-05)
+------------------
 
 - Improved speed of review page: don't show the individual measurement points
   anymore in the inline geojson.

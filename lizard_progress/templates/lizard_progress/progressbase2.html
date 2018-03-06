@@ -22,15 +22,15 @@
     {{ STATIC_URL }}lizard_progress/fonts/open-sans/open-sans.css">
     <link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/fonts/font-awesome/4.3.0/css/font-awesome.min.css">
     <link rel="stylesheet"
-      href="{{ STATIC_URL }}lizard_progress/bower_components/sweetalert/dist/sweetalert.css" />      
+      href="{{ STATIC_URL }}lizard_progress/bower_components/sweetalert/dist/sweetalert.css" />
     <link rel="stylesheet"
-      href="{{ STATIC_URL }}lizard_progress/sortable-theme-light.css" />          
+      href="{{ STATIC_URL }}lizard_progress/sortable-theme-light.css" />
     <link rel="stylesheet"
-      href="{{ STATIC_URL }}lizard_progress/sortable-theme-dark.css" />                
+      href="{{ STATIC_URL }}lizard_progress/sortable-theme-dark.css" />
           <link rel="stylesheet"
-      href="{{ STATIC_URL }}lizard_progress/sortable-theme-bootstrap.css" />                
+      href="{{ STATIC_URL }}lizard_progress/sortable-theme-bootstrap.css" />
     <link rel="stylesheet"
-      href="{{ STATIC_URL }}lizard_progress/stylesheets/screen.css" />   
+      href="{{ STATIC_URL }}lizard_progress/stylesheets/screen.css" />
     <link type="text/css"
           href="{{ STATIC_URL }}jqueryui/smoothness/jquery-ui.css"
           rel="stylesheet"
@@ -72,12 +72,12 @@
                   {% if view.user_has_manager_role %}
                   <li><a href="/us/archive/">Archief</a></li>
                   {% endif %}
-                  <li><a href="{{ STATIC_URL }}lizard_progress/Gebruikershandleiding_Uploadservice_v9 Riolering.pdf" target="_blank">Handleiding riolering</a></li>
-                  <li><a href="{{ STATIC_URL }}lizard_progress/Gebruikershandleiding_Uploadservice_v9 Dwarsprofielen.pdf" target="_blank">Handleiding dwarsprofielen</a></li>
+                  <li><a href="{{ STATIC_URL }}lizard_progress/Gebruikershandleiding_Uploadservice_v10 Riolering.pdf" target="_blank">Handleiding riolering</a></li>
+                  <li><a href="{{ STATIC_URL }}lizard_progress/Gebruikershandleiding_Uploadservice_v10 Dwarsprofielen.pdf" target="_blank">Handleiding dwarsprofielen</a></li>
                   {% if view.user_is_manager %}
                   <li role="separator" class="divider"></li>
                   <li><a href="{% url "lizard_progress_newproject" %}">+ Project toevoegen</a></li>
-                  {% endif %}                  
+                  {% endif %}
                   <li role="separator" class="divider"></li>
                   <li><a href="/accounts/logout">Uitloggen</a></li>
                 </ul>
@@ -94,17 +94,17 @@
     </div>
 
 
-    {% block content %}    
+    {% block content %}
     {% endblock content %}
 
     <div class="container">
     <div class="row">
       <div class="col-md-12">
         <hr size="1" noshade />
-        <p class="text-muted pull-right small">&copy;&nbsp;Lizard 2015</p>    
+        <p class="text-muted pull-right small">&copy;&nbsp;Lizard 2015</p>
       </div>
     </div>
-    
+
 
 
    {% if messages %}
@@ -125,7 +125,7 @@
         </div>
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
-  </div><!-- /.modal --> 
+  </div><!-- /.modal -->
   {% endif %}
 
 
@@ -136,7 +136,7 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="{{ STATIC_URL }}lizard_progress/javascripts/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src="{{ STATIC_URL }}lizard_progress/javascripts/ajax/libs/holder/2.8.0/holder.js"></script>
-    
+
     <script src="{{ STATIC_URL }}jqueryui/jquery-ui.js"></script>
     <script src="{{ STATIC_URL }}lizard_progress/bower_components/sweetalert/dist/sweetalert.min.js"></script>
     <script src="{{ STATIC_URL }}lizard_progress/sortable.min.js"></script>
@@ -153,7 +153,7 @@
     $('.project.projecttoggle > i').on('click', function(e) {
       e.preventDefault();
       $('.projectswitcher').toggle();
-    });  
+    });
     $(document).mouseup(function (e) {
         var container = $(".projectswitcher");
         if (!container.is(e.target) // if the target of the click isn't the container...
@@ -217,9 +217,7 @@ $(document).ajaxSend(function (event, xhr, settings) {
     if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
         xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
     }
-});    
+});
     </script>
   </body>
 </html>
-
-

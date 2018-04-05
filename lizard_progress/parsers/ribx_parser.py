@@ -36,27 +36,12 @@ logger = logging.getLogger(__name__)
 
 
 def _get_log_content(record_id):
-    """Do a request to the GWSW API and get the response.
-
-    Raises:
-        ValueError: if the get response isn't proper JSON
-        KeyError: if the JSON doesn't contain the 'logcontent' key
     """
-    r_getlog = requests.get(settings.GWSW_GETLOG_URL % record_id)
-    j = json.loads(r_getlog.text)
-    if 'logcontent' not in j:
-        logger.info("key logcontent not found in GWSW response. Keys: %r",
-                    j.keys())
-        return None
-    log_content = j.get('logcontent')
-    try:
-        if ''.join(log_content) == '':
-            return None
-    except:
-        logger.warn("log_content is no list anymore: %r",
-                    log_content)
-        return log_content
-    return log_content
+    Return the logcontent as dict or None.
+    This one actually fetches the log from the GWSW API.
+    """
+    data = requests.get(settings.GWSW_GETLOG_URL % record_id).json()
+    return data.get('logcontent')
 
 
 def get_log_content(filename, retries=10, initial_wait=2):
@@ -85,29 +70,18 @@ def get_log_content(filename, retries=10, initial_wait=2):
 
 
 def parse_log_content(log_content):
-    """Parse a log content, which is a list of strings.
+    """
+    Return list of dicts containing log records.
 
-    Example line:
-    'Regel[93] - Fout*: verplicht <ABP> element voor deze <ZB_A> ontbreekt.'
+    Only includes records that have 'type' == 'fout'.
     """
     errors = []
-    for line in log_content:
-        if line.lower().startswith('regel'):
-            try:
-                l, msg = line.split('-', 1)
-            except ValueError:
-                logger.exception("Can't split correctly: %s", line)
-                continue
-            try:
-                line_no = int(l.strip()[6:-1])
-            except ValueError:
-                logger.exception("Can't convert line number: %s", l)
-                continue
-            error = {
-                'line': line_no,
-                'message': 'GWSW' + msg
-                }
-            errors.append(error)
+    for record in log_content:
+        if record['type'] == 'fout':
+            errors.append({
+                'line': int(record['regelnummer']),
+                'message': 'GWSW: ' + record['bericht'],
+            })
     return errors
 
 

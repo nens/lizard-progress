@@ -152,8 +152,9 @@ class TestReviewProject(FixturesTestCase):
                                                    self.ribx_file,
                                                    self.organization)
         geojson = pr.generate_feature_collection()
+
         self.assertTrue(geojson.is_valid)
-        self.assertEquals(len(geojson.features), 690)
+        self.assertEquals(len(geojson.features), 10)
 
     def _calc_progress_manhole(self, manhole):
         progress = self.rp._calc_progress_manhole(manhole)

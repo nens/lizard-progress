@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.1.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixed GWSW logparsing.
 
 
 4.1.2 (2018-03-05)

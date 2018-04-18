@@ -39,6 +39,20 @@ class MockRibx(object):
         self.drains = []
 
 
+class TestLogContentParser(TestCase):
+    def test_parse_log_content(self):
+        # content without error
+        content = [{'type': 'commentaar'}]
+        errors = ribx_parser.parse_log_content(content)
+        self.assertEqual(errors, [])
+
+        # content with error
+        content = [{'type': 'fout', 'bericht': 'test', 'regelnummer': '7'}]
+        expected = [{'line': 7, u'message': 'GWSW: test'}]
+        errors = ribx_parser.parse_log_content(content)
+        self.assertEqual(errors, expected)
+
+
 class TestRibxParser(FixturesTestCase):
     def setUp(self):
         self.mtype = test_models.AvailableMeasurementTypeF.create(

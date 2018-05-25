@@ -58,11 +58,10 @@
         'style': styler
       }
 
+      {% if view.reviewproject.feature_collection_geojson %}
       var geojsonLayer = L.geoJSON([], geojsonLayerOptions).addTo(mymap);
-      geojsonLayer.addData({{ view.reviewproject.generate_feature_collection|safe }});
-
+      geojsonLayer.addData({{ view.reviewproject.feature_collection_geojson|safe }});
+      {% endif %}
     </script>
 
 {% endblock content %}
-
-

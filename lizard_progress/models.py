@@ -867,12 +867,21 @@ class ReviewProject(models.Model):
                     result['Eindpunt CRS'] = elem.getchildren()[0].attrib[
                         'srsName']
                 elif elem.tag == 'ZC':
-                    result['ZC'].append(self._parse_zc(elem, result))
+                    zc_measurement = self._parse_zc(elem, result)
+                    if self.is_relevant_measurement(zc_measurement):
+                        result['ZC'].append(zc_measurement)
                 else:
                     result[elem.tag] = elem.text
         result[self.HERSTELMAATREGEL] = ''
         result[self.OPMERKING] = ''
         return result
+
+    def is_relevant_measurement(self, zc_measurement):
+        # Skip all measurements of inclination angle
+        # They have <A>BXA</A> (measurement) and <B>J</B> or <B>K</B>.
+        if zc_measurement['A'] == 'BXA' and zc_measurement['B'] in 'JK':
+            return False
+        return True
 
     def _parse_zb_c(self, zb_c):
         """Parse a zb_c (manhole) and extract all relevant info (as stated in

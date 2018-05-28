@@ -827,7 +827,7 @@ class ReviewProject(models.Model):
 
         # Setup using RIBX asynchronously, to prevent timeouts
         tasks.setup_project_using_ribx_task.delay(
-            review_project.id,
+            project_review.id,
             project_url,
             abs_ribx_path,
             abs_filler_path)

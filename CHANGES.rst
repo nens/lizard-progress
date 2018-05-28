@@ -4,7 +4,10 @@ Changelog of lizard-progress
 4.1.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Generate GEOJson for review projects in a task, save it on the model.
+
+- Ignore all inclination angle measurements on import, for speed (saves
+  90% of the JSON size).
 
 
 4.1.3 (2018-04-18)

@@ -680,6 +680,8 @@ class ReviewProject(models.Model):
         blank=True)
     # All performed inspections and their reviews, reviews might be empty
     reviews = JSONField(null=True, blank=True)
+    # Calculated feature collection (happens in a task).
+    feature_collection_geojson = models.TextField(null=True, blank=True)
 
     HERSTELMAATREGEL = 'Herstelmaatregel'
     OPMERKING = 'Opmerking'
@@ -830,12 +832,19 @@ class ReviewProject(models.Model):
         if inspection_filler:
             rules = filler.parse_insp_filler(inspection_filler)
             rule_tree = filler.build_rule_tree(rules)
-            project_review.reviews = filler.apply_rules(rule_tree, reviews)
+            the_reviews = filler.apply_rules(rule_tree, reviews)
         else:
-            project_review.reviews = reviews
+            the_reviews = reviews
 
-        project_review.save()
+        project_review.set_reviews(the_reviews)  # Saves
+
         return project_review
+
+    def set_reviews(self, the_reviews):
+        self.reviews = the_reviews
+        self.save()
+        from lizard_progress.tasks import calculate_reviewproject_feature_collection
+        calculate_reviewproject_feature_collection.delay(self.pk)
 
     def _parse_zb_a(self, zb_a):
         """Parse a zb_a (pipe) and extract all relevant info (as stated in the
@@ -990,28 +999,6 @@ class ReviewProject(models.Model):
         """
         pass
 
-    def generate_json_from_reviews(self, reviews):
-        """Generate a json-file from all inspections.
-
-         This includes completed and incompleted inspections.
-         """
-        return json.dumps(reviews, indent=2, sort_keys=True)
-
-
-    def update_reviews_from_json(self, reviews):
-        """Read json-file containing the inspections and corresponding
-        reviews. Update the reviews of this ReviewProject.
-
-        Not all inspections have to be reviewed, i.e. this can be used as an
-        intermediate update to save all performed reviews.
-
-        :arg
-            reviews: a dict with serializable objects.
-        """
-        # TODO: store old json?
-        self.reviews = reviews
-        self.save()
-
     def update_shapefiles(self, shape_files):
         """
 
@@ -1099,7 +1086,10 @@ class ReviewProject(models.Model):
         #                                   properties={"completion": completion})
         #         features.append(feature)
 
-        return geojson.FeatureCollection(features)
+        self.feature_collection_geojson = geojson.dumps(
+            geojson.FeatureCollection(features),
+            sort_keys=True)
+        self.save()
 
 
 class AcceptedFile(models.Model):

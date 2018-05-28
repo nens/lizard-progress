@@ -1095,7 +1095,7 @@ class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
                 return self.get(request, *args, **kwargs)
 
             cleaned_json_file = self.upload_reviews_form.cleaned_data['reviews']
-            self.reviewproject.update_reviews_from_json(cleaned_json_file)
+            self.reviewproject.set_reviews(cleaned_json_file)
 
         if 'Upload shapefiles' in request.POST:
             # Upload new shapefiles:

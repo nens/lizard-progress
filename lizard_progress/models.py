@@ -785,7 +785,8 @@ class ReviewProject(models.Model):
     def create_from_ribx(cls, name, ribx_file, organization, contractor=None,
                          project=None,
                          inspection_filler=None,
-                         request=None):
+                         request=None,
+                         move=True):
         """Create and return ReviewProject from ribx file
 
         Go over all inspections (pipes and manholes) in the ribx-file and
@@ -811,14 +812,18 @@ class ReviewProject(models.Model):
         )
         project_review.set_slug_and_save()
 
-        rel_dest_folder = directories.rel_reviewproject_dir(project_review)
-        abs_dest_folder = directories.absolute(rel_dest_folder)
-        abs_ribx_path = handle_uploaded_file(ribx_file, abs_dest_folder)
+        if move:
+            rel_dest_folder = directories.rel_reviewproject_dir(project_review)
+            abs_dest_folder = directories.absolute(rel_dest_folder)
+            abs_ribx_path = handle_uploaded_file(ribx_file, abs_dest_folder)
 
-        if inspection_filler:
-            abs_filler_path = handle_uploaded_file(inspection_filler, abs_dest_folder)
+            if inspection_filler:
+                abs_filler_path = handle_uploaded_file(inspection_filler, abs_dest_folder)
+            else:
+                abs_filler_path = None
         else:
-            abs_filler_path = None
+            abs_ribx_path = ribx_file
+            abs_filler_path = inspection_filler
 
         project_url = ''
         if request:
@@ -1108,19 +1113,6 @@ class ReviewProject(models.Model):
             feature = geojson.Feature(geometry=geom,
                                       properties={"completion": completion})
             features.append(feature)
-
-        # Add inspections as points to the feature collections, comment out
-        # because the number of inspection points can become very large.
-        # Pipe inscpections (ZC)
-        # for pipe in self.reviews['pipes']:
-        #     for zc in pipe['ZC']:
-        #         x, y = zc['x'], zc['y']
-        #         coord = coordinates.rd_to_wgs84(x, y)
-        #         geom = geojson.Point(coord)
-        #         completion = self._calc_progress_inspection(zc)
-        #         feature = geojson.Feature(geometry=geom,
-        #                                   properties={"completion": completion})
-        #         features.append(feature)
 
         self.feature_collection_geojson = geojson.dumps(
             geojson.FeatureCollection(features),

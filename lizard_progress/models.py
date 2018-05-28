@@ -635,6 +635,15 @@ class Project(ProjectActivityMixin, models.Model):
         self.save()
 
 
+def handle_uploaded_file(file, dest):
+    """Write the file to destination folder"""
+    dest_file = os.path.join(dest, file.name)
+    with open(dest_file, 'wb+') as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
+    return dest_file
+
+
 class ReviewProject(models.Model):
     """ReviewProject reviews completed projects.
 
@@ -799,9 +808,14 @@ class ReviewProject(models.Model):
         )
         project_review.set_slug_and_save()
 
-        parser = etree.XMLParser()
-        tree = etree.parse(ribx_file)
-        root = tree.getroot()
+        rel_dest_folder = directories.rel_reviewproject_dir(project_review)
+        abs_dest_folder = directories.absolute(rel_dest_folder)
+        abs_ribx_path = handle_uploaded_file(ribx_file, abs_dest_folder)
+
+        if filler_file:
+            abs_filler_path = handle_uploaded_file(filler_file, abs_dest_folder)
+        else:
+            abs_filler_path = None
 
         project_url = ''
         if request:
@@ -809,10 +823,26 @@ class ReviewProject(models.Model):
                     kwargs={'review_id': project_review.id, })
             project_url = request.build_absolute_uri(location)
 
+        from . import tasks
+
+        # Setup using RIBX asynchronously, to prevent timeouts
+        tasks.setup_project_using_ribx_task.delay(
+            review_project.id,
+            project_url,
+            abs_ribx_path,
+            abs_filler_path)
+
+        return project_review
+
+    def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path):
+        parser = etree.XMLParser()
+        tree = etree.parse(abs_ribx_path)
+        root = tree.getroot()
+
         reviews = {
             'project' : {
-                'name': name,
-                'slug': project_review.slug,
+                'name': self.name,
+                'slug': self.slug,
                 'url': project_url
             },
             'pipes': [],
@@ -821,24 +851,22 @@ class ReviewProject(models.Model):
 
         for elem in root.iter('ZB_A'):
             # pipes
-            pipe = project_review._parse_zb_a(elem)
+            pipe = self._parse_zb_a(elem)
             reviews['pipes'].append(pipe)
         for elem in root.iter('ZB_C'):
             # manholes
-            manhole = project_review._parse_zb_c(elem)
+            manhole = self._parse_zb_c(elem)
             reviews['manholes'].append(manhole)
 
         # apply inspection_filler if we specify one
-        if inspection_filler:
-            rules = filler.parse_insp_filler(inspection_filler)
+        if abs_filler_path:
+            rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
             rule_tree = filler.build_rule_tree(rules)
             the_reviews = filler.apply_rules(rule_tree, reviews)
         else:
             the_reviews = reviews
 
-        project_review.set_reviews(the_reviews)  # Saves
-
-        return project_review
+        self.set_reviews(the_reviews)  # Saves
 
     def set_reviews(self, the_reviews):
         self.reviews = the_reviews

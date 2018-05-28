@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.1.4 (unreleased)
+4.1.4 (2018-05-28)
 ------------------
 
 - Generate GEOJson for review projects in a task, save it on the model.

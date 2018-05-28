@@ -812,8 +812,8 @@ class ReviewProject(models.Model):
         abs_dest_folder = directories.absolute(rel_dest_folder)
         abs_ribx_path = handle_uploaded_file(ribx_file, abs_dest_folder)
 
-        if filler_file:
-            abs_filler_path = handle_uploaded_file(filler_file, abs_dest_folder)
+        if inspection_filler:
+            abs_filler_path = handle_uploaded_file(inspection_filler, abs_dest_folder)
         else:
             abs_filler_path = None
 

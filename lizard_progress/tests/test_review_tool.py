@@ -103,9 +103,14 @@ class TestReviewProject(FixturesTestCase):
         self.assertTrue(inspection.has_key('Opmerking'))
 
     def test_create_from_ribx(self):
-        pr = models.ReviewProject.create_from_ribx(self.name,
-                                                   self.ribx_file,
-                                                   self.organization)
+        with self.settings(CELERY_ALWAYS_EAGER=True,
+                           CELERY_EAGER_PROPAGATES_EXCEPTIONS=True):
+            pr = models.ReviewProject.create_from_ribx(self.name,
+                                                       self.ribx_file,
+                                                       self.organization,
+                                                       move=False)
+        pr = models.ReviewProject.objects.get(pk=pr.pk)  # Refresh
+
         reviews = pr.reviews
         pipes = reviews['pipes']
         man_holes = reviews['manholes']
@@ -124,33 +129,53 @@ class TestReviewProject(FixturesTestCase):
         # self.assertTrue(set(man_holes[0].keys()).issubset(pr.ZB_C_FIELDS))
 
     def test__manholes_to_points(self):
-        pr = models.ReviewProject.create_from_ribx(self.name,
-                                                   self.single_manhole,
-                                                   self.organization)
+        with self.settings(CELERY_ALWAYS_EAGER=True,
+                           CELERY_EAGER_PROPAGATES_EXCEPTIONS=True):
+            pr = models.ReviewProject.create_from_ribx(self.name,
+                                                       self.single_manhole,
+                                                       self.organization,
+                                                       move=False)
+        pr = models.ReviewProject.objects.get(pk=pr.pk)  # Refresh
+
         geo_manholes = pr._manholes_to_points()
         self.assertTrue(geo_manholes.is_valid)
         self.assertEquals(len(geo_manholes.get('coordinates')), 1)
 
     def test__pipes_to_lines(self):
-        pr = models.ReviewProject.create_from_ribx(self.name,
-                                                   self.single_pipe,
-                                                   self.organization)
+        with self.settings(CELERY_ALWAYS_EAGER=True,
+                           CELERY_EAGER_PROPAGATES_EXCEPTIONS=True):
+            pr = models.ReviewProject.create_from_ribx(self.name,
+                                                       self.single_pipe,
+                                                       self.organization,
+                                                       move=False)
+        pr = models.ReviewProject.objects.get(pk=pr.pk)  # Refresh
+
         geo_pipes = pr._pipes_to_lines()
         self.assertTrue(geo_pipes.is_valid)
 
     def test_generate_geojson_reviews(self):
-        pr = models.ReviewProject.create_from_ribx(self.name,
-                                                   self.ribx_file,
-                                                   self.organization)
+        with self.settings(CELERY_ALWAYS_EAGER=True,
+                           CELERY_EAGER_PROPAGATES_EXCEPTIONS=True):
+            pr = models.ReviewProject.create_from_ribx(self.name,
+                                                       self.ribx_file,
+                                                       self.organization,
+                                                       move=False)
+        pr = models.ReviewProject.objects.get(pk=pr.pk)  # Refresh
+
         geojson = pr.generate_geojson_reviews()
         self.assertTrue(geojson.is_valid)
         self.assertEquals(len(geojson['geometries'][0]['coordinates']), 6)
         self.assertEquals(len(geojson['geometries'][1]['coordinates']), 4)
 
     def test_generate_feature_collection(self):
-        pr = models.ReviewProject.create_from_ribx(self.name,
-                                                   self.ribx_file,
-                                                   self.organization)
+        with self.settings(CELERY_ALWAYS_EAGER=True,
+                           CELERY_EAGER_PROPAGATES_EXCEPTIONS=True):
+            pr = models.ReviewProject.create_from_ribx(self.name,
+                                                       self.ribx_file,
+                                                       self.organization,
+                                                       move=False)
+        pr = models.ReviewProject.objects.get(pk=pr.pk)  # Refresh
+
         pr.generate_feature_collection()
         geojson = json.loads(pr.feature_collection_geojson)
         self.assertEquals(len(geojson['features']), 10)

@@ -70,3 +70,15 @@ def calculate_reviewproject_feature_collection(project_id):
         project.generate_feature_collection()
     except ReviewProject.DoesNotExist:
         pass  # Well then this doesn't matter anymore does it.
+
+
+@task
+def setup_project_using_ribx_task(
+        project_id, project_url, abs_ribx_path, abs_filler_path):
+    try:
+        from lizard_progress.models import ReviewProject
+        project = ReviewProject.objects.get(pk=project_id)
+        project.setup_project_using_ribx(
+            project_url, abs_ribx_path, abs_filler_path)
+    except ReviewProject.DoesNotExist:
+        pass  # Well then this doesn't matter anymore does it.

@@ -1188,25 +1188,12 @@ class NewReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
                 request=request
             )
 
-            rel_dest_folder = directories.rel_reviewproject_dir(project_review)
-            abs_dest_folder = directories.absolute(rel_dest_folder)
-            handle_uploaded_file(ribx_file, abs_dest_folder)
-            if filler_file:
-                handle_uploaded_file(filler_file, abs_dest_folder)
         except:
             # If something goes wrong, don't save anything, revert all back
             # TODO: revert everyting
             raise
 
         return HttpResponseRedirect('/us/reviews/')
-
-
-def handle_uploaded_file(file, dest):
-    """Write the file to destination folder"""
-    dest_file = os.path.join(dest, file.name)
-    with open(dest_file, 'wb+') as destination:
-        for chunk in file.chunks():
-            destination.write(chunk)
 
 
 def multiproject_crosssection_graph(request, organization_id, location_id):

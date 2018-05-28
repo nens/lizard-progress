@@ -635,6 +635,15 @@ class Project(ProjectActivityMixin, models.Model):
         self.save()
 
 
+def handle_uploaded_file(file, dest):
+    """Write the file to destination folder"""
+    dest_file = os.path.join(dest, file.name)
+    with open(dest_file, 'wb+') as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
+    return dest_file
+
+
 class ReviewProject(models.Model):
     """ReviewProject reviews completed projects.
 
@@ -726,6 +735,9 @@ class ReviewProject(models.Model):
         Assumes each manhole and pipe weights the same independent of the
         number of reviews it has.
         """
+        if not self.reviews:
+            return 0
+
         completion = []
         for manhole in self.reviews['manholes']:
             completion.append(self._calc_progress_manhole(manhole))
@@ -773,7 +785,8 @@ class ReviewProject(models.Model):
     def create_from_ribx(cls, name, ribx_file, organization, contractor=None,
                          project=None,
                          inspection_filler=None,
-                         request=None):
+                         request=None,
+                         move=True):
         """Create and return ReviewProject from ribx file
 
         Go over all inspections (pipes and manholes) in the ribx-file and
@@ -799,9 +812,18 @@ class ReviewProject(models.Model):
         )
         project_review.set_slug_and_save()
 
-        parser = etree.XMLParser()
-        tree = etree.parse(ribx_file)
-        root = tree.getroot()
+        if move:
+            rel_dest_folder = directories.rel_reviewproject_dir(project_review)
+            abs_dest_folder = directories.absolute(rel_dest_folder)
+            abs_ribx_path = handle_uploaded_file(ribx_file, abs_dest_folder)
+
+            if inspection_filler:
+                abs_filler_path = handle_uploaded_file(inspection_filler, abs_dest_folder)
+            else:
+                abs_filler_path = None
+        else:
+            abs_ribx_path = ribx_file
+            abs_filler_path = inspection_filler
 
         project_url = ''
         if request:
@@ -809,10 +831,26 @@ class ReviewProject(models.Model):
                     kwargs={'review_id': project_review.id, })
             project_url = request.build_absolute_uri(location)
 
+        from . import tasks
+
+        # Setup using RIBX asynchronously, to prevent timeouts
+        tasks.setup_project_using_ribx_task.delay(
+            project_review.id,
+            project_url,
+            abs_ribx_path,
+            abs_filler_path)
+
+        return project_review
+
+    def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path):
+        parser = etree.XMLParser()
+        tree = etree.parse(abs_ribx_path)
+        root = tree.getroot()
+
         reviews = {
             'project' : {
-                'name': name,
-                'slug': project_review.slug,
+                'name': self.name,
+                'slug': self.slug,
                 'url': project_url
             },
             'pipes': [],
@@ -821,30 +859,33 @@ class ReviewProject(models.Model):
 
         for elem in root.iter('ZB_A'):
             # pipes
-            pipe = project_review._parse_zb_a(elem)
+            pipe = self._parse_zb_a(elem)
             reviews['pipes'].append(pipe)
         for elem in root.iter('ZB_C'):
             # manholes
-            manhole = project_review._parse_zb_c(elem)
+            manhole = self._parse_zb_c(elem)
             reviews['manholes'].append(manhole)
 
         # apply inspection_filler if we specify one
-        if inspection_filler:
-            rules = filler.parse_insp_filler(inspection_filler)
+        if abs_filler_path:
+            rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
             rule_tree = filler.build_rule_tree(rules)
             the_reviews = filler.apply_rules(rule_tree, reviews)
         else:
             the_reviews = reviews
 
-        project_review.set_reviews(the_reviews)  # Saves
+        self.set_reviews(the_reviews, from_task=True)  # Saves
 
-        return project_review
-
-    def set_reviews(self, the_reviews):
+    def set_reviews(self, the_reviews, from_task=False):
         self.reviews = the_reviews
         self.save()
-        from lizard_progress.tasks import calculate_reviewproject_feature_collection
-        calculate_reviewproject_feature_collection.delay(self.pk)
+
+        # Run the calculation async; except if we already are.
+        if from_task:
+            self.generate_feature_collection()
+        else:
+            from lizard_progress.tasks import calculate_reviewproject_feature_collection
+            calculate_reviewproject_feature_collection.delay(self.pk)
 
     def _parse_zb_a(self, zb_a):
         """Parse a zb_a (pipe) and extract all relevant info (as stated in the
@@ -1072,19 +1113,6 @@ class ReviewProject(models.Model):
             feature = geojson.Feature(geometry=geom,
                                       properties={"completion": completion})
             features.append(feature)
-
-        # Add inspections as points to the feature collections, comment out
-        # because the number of inspection points can become very large.
-        # Pipe inscpections (ZC)
-        # for pipe in self.reviews['pipes']:
-        #     for zc in pipe['ZC']:
-        #         x, y = zc['x'], zc['y']
-        #         coord = coordinates.rd_to_wgs84(x, y)
-        #         geom = geojson.Point(coord)
-        #         completion = self._calc_progress_inspection(zc)
-        #         feature = geojson.Feature(geometry=geom,
-        #                                   properties={"completion": completion})
-        #         features.append(feature)
 
         self.feature_collection_geojson = geojson.dumps(
             geojson.FeatureCollection(features),

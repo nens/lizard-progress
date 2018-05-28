@@ -735,6 +735,9 @@ class ReviewProject(models.Model):
         Assumes each manhole and pipe weights the same independent of the
         number of reviews it has.
         """
+        if not self.reviews:
+            return 0
+
         completion = []
         for manhole in self.reviews['manholes']:
             completion.append(self._calc_progress_manhole(manhole))
@@ -866,13 +869,18 @@ class ReviewProject(models.Model):
         else:
             the_reviews = reviews
 
-        self.set_reviews(the_reviews)  # Saves
+        self.set_reviews(the_reviews, from_task=True)  # Saves
 
-    def set_reviews(self, the_reviews):
+    def set_reviews(self, the_reviews, from_task=False):
         self.reviews = the_reviews
         self.save()
-        from lizard_progress.tasks import calculate_reviewproject_feature_collection
-        calculate_reviewproject_feature_collection.delay(self.pk)
+
+        # Run the calculation async; except if we already are.
+        if from_task:
+            self.generate_feature_collection()
+        else:
+            from lizard_progress.tasks import calculate_reviewproject_feature_collection
+            calculate_reviewproject_feature_collection.delay(self.pk)
 
     def _parse_zb_a(self, zb_a):
         """Parse a zb_a (pipe) and extract all relevant info (as stated in the

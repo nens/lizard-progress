@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.2.0 (unreleased)
+4.1.5 (2018-05-28)
 ------------------
 
 - Make creating a review project async as well.

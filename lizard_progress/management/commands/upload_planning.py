@@ -32,8 +32,12 @@ class Command(BaseCommand):
                 "Number of arguments incorrect. Use --help for more "
                 "information"
             )
-
         activity = models.Activity.objects.get(pk=int(activity_id))
+
+        self.stdout.write(
+            "Processing activity '%s' and ribx path '%s'" % (
+                activity, ribxpath)
+        )
 
         locations_from_ribx = dict(
             PlanningView.get_locations_from_ribx(activity, ribxpath))
@@ -47,3 +51,5 @@ class Command(BaseCommand):
 
             PlanningView.process_ribx_locations(
                 activity, locations_from_ribx, ribxpath, existing_measurements)
+
+        self.stdout.write('Done')

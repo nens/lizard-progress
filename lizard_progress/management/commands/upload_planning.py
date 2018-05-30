@@ -3,7 +3,7 @@
 
 """Upload (ribx) planning.
 
-This command if used typically if the file is too large to be uploaded
+This command is typically used if the file is too large to be uploaded
 via the site.
 
 NOTE: shapefile not supported at the moment, only ribx.

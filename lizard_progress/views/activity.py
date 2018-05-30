@@ -540,6 +540,7 @@ class PlanningView(ActivityView):
 
             for message in msgs:
                 error_msg_callback(message)
+
             return
 
         for pipe in pipes:
@@ -564,8 +565,7 @@ class PlanningView(ActivityView):
 
         msg_callback(
             'Bestand OK, {} pipes {} manholes {} drains'
-            .format(len(pipes), len(manholes), len(ribx.drains))
-        )
+            .format(len(pipes), len(manholes), len(ribx.drains)))
 
     def __existing_measurements(self):
         return models.Measurement.objects.filter(

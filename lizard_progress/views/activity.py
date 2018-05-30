@@ -259,56 +259,15 @@ class PlanningView(ActivityView):
 
     def post_ribx(self, request, *args, **kwargs):
         ribxpath = self.__save_uploaded_ribx(request)
-
         locations_from_ribx = dict(
-            self.__locations_from_ribx(ribxpath, request))
+            self.get_locations_from_ribx(ribxpath, self.activity, request)
+        )
+
         if locations_from_ribx:
-            # For drains
-            care_about_ownership = self.config_value(
-                'ignore_drains_with_other_owners')
-
-            existing_measurements = list(
-                self.__existing_measurements())
-
-            locations_with_measurements = set(
-                existing_measurement.location.location_code
-                for existing_measurement in existing_measurements)
-
-            # Remove not needed scheduled measurements
-            models.Location.objects.filter(
-                activity=self.activity).exclude(
-                location_code__in=locations_with_measurements).delete()
-
-            new_locations = [
-                models.Location(
-                    location_code=location_code,
-                    activity=self.activity,
-                    location_type=loctype,
-                    is_point=loctype != models.Location.LOCATION_TYPE_PIPE,
-                    not_part_of_project=(
-                        not_owned_by_organisation if care_about_ownership
-                        else False),
-                    the_geom=(geo.osgeo_3d_line_to_2d_wkt(geom)
-                              if loctype == models.Location.LOCATION_TYPE_PIPE
-                              else geo.osgeo_3d_point_to_2d_wkt(geom)))
-
-                for (location_code,
-                     (geom, loctype, not_owned_by_organisation)) in
-                locations_from_ribx.iteritems()
-
-                if location_code not in locations_with_measurements
-            ]
-
-            models.Location.objects.bulk_create(new_locations)
-
-            # Move RIBX file to project files
-            newribxpath = os.path.join(
-                directories.abs_project_files_dir(self.activity.project),
-                os.path.basename(ribxpath)
-            )
-            if os.path.exists(newribxpath):
-                os.remove(newribxpath)
-            shutil.move(ribxpath, newribxpath)
+            existing_measurements = list(self.__existing_measurements())
+            self.process_ribx_locations(
+                self.activity, locations_from_ribx, ribxpath,
+                existing_measurements)
 
             return HttpResponseRedirect(
                 reverse('lizard_progress_dashboardview', kwargs={
@@ -320,6 +279,53 @@ class PlanningView(ActivityView):
                     'project_slug': self.project.slug,
                     'activity_id': self.activity_id
                 }))
+
+    @staticmethod
+    def process_ribx_locations(
+            activity, locations_from_ribx, ribxpath, existing_measurements):
+        # For drains
+        care_about_ownership = activity.config_value(
+            'ignore_drains_with_other_owners')
+
+        locations_with_measurements = set(
+            existing_measurement.location.location_code
+            for existing_measurement in existing_measurements)
+
+        # Remove not needed scheduled measurements
+        models.Location.objects.filter(
+            activity=activity).exclude(
+            location_code__in=locations_with_measurements).delete()
+
+        new_locations = [
+            models.Location(
+                location_code=location_code,
+                activity=activity,
+                location_type=loctype,
+                is_point=loctype != models.Location.LOCATION_TYPE_PIPE,
+                not_part_of_project=(
+                    not_owned_by_organisation if care_about_ownership
+                    else False),
+                the_geom=(geo.osgeo_3d_line_to_2d_wkt(geom)
+                          if loctype == models.Location.LOCATION_TYPE_PIPE
+                          else geo.osgeo_3d_point_to_2d_wkt(geom)))
+
+            for (location_code,
+                 (geom, loctype, not_owned_by_organisation)) in
+            locations_from_ribx.iteritems()
+
+            if location_code not in locations_with_measurements
+        ]
+
+        models.Location.objects.bulk_create(new_locations)
+
+        # Move RIBX file to project files
+        newribxpath = os.path.join(
+            directories.abs_project_files_dir(activity.project),
+            os.path.basename(ribxpath)
+        )
+        if os.path.exists(newribxpath):
+            os.remove(newribxpath)
+        shutil.move(ribxpath, newribxpath)
 
     def post_shapefile(self, request, *args, **kwargs):
         shapefilepath = self.__save_uploaded_files(request)
@@ -469,24 +475,21 @@ class PlanningView(ActivityView):
     def config_value(self, key):
         return self.activity.config_value(key)
 
-    def __locations_from_ribx(self, ribxpath, request):
+    @staticmethod
+    def get_locations_from_ribx(ribxpath, activity, request=None):
         """Get pipe, manhole, drain locations from ribxpath and generate them
         as (piperef, (geom, location_type)) tuples.
 
         """
-
         # Use these to check whether locations are inside extent
-        min_x = self.config_value('minimum_x_coordinate')
-        max_x = self.config_value('maximum_x_coordinate')
-        min_y = self.config_value('minimum_y_coordinate')
-        max_y = self.config_value('maximum_y_coordinate')
-
-        ribx, errors = parsers.parse(
-            ribxpath, parsers.Mode.PREINSPECTION)
-
+        min_x = activity.config_value('minimum_x_coordinate')
+        max_x = activity.config_value('maximum_x_coordinate')
+        min_y = activity.config_value('minimum_y_coordinate')
+        max_y = activity.config_value('maximum_y_coordinate')
         # For drains
-        eaq_code = self.config_value('owner_organisation_eaq_code')
+        eaq_code = activity.config_value('owner_organisation_eaq_code')
 
+        ribx, errors = parsers.parse(ribxpath, parsers.Mode.PREINSPECTION)
         pipes = ribx.inspection_pipes + ribx.cleaning_pipes
         manholes = ribx.inspection_manholes + ribx.cleaning_manholes
 
@@ -518,9 +521,13 @@ class PlanningView(ActivityView):
                     continue
 
         if errors:
-            messages.add_message(
-                request, messages.ERROR,
-                'Er is niets opgeslagen vanwege fouten in het bestand:')
+            if request:
+                messages.add_message(
+                    request, messages.ERROR,
+                    'Er is niets opgeslagen vanwege fouten in het bestand:')
+            else:
+                logger.error(
+                    'Er is niets opgeslagen vanwege fouten in het bestand:')
 
             msgs = [
                 'Fout op regel {}: {}'.format(error['line'], error['message'])
@@ -530,9 +537,12 @@ class PlanningView(ActivityView):
                 msgs = msgs[:20] + [
                     'En nog {} andere fouten.'.format(len(msgs) - 20)]
 
-            for message in msgs:
-                messages.add_message(request, messages.ERROR, message)
-
+            if request:
+                for message in msgs:
+                    messages.add_message(request, messages.ERROR, message)
+            else:
+                for message in msgs:
+                    logger.error(message)
             return
 
         for pipe in pipes:
@@ -555,10 +565,16 @@ class PlanningView(ActivityView):
                    (drain.geom, models.Location.LOCATION_TYPE_DRAIN,
                     not owned_by_organisation))
 
-        messages.add_message(
-            request, messages.INFO,
-            'Bestand OK, {} pipes {} manholes {} drains'
-            .format(len(pipes), len(manholes), len(ribx.drains)))
+        if request:
+            messages.add_message(
+                request, messages.INFO,
+                'Bestand OK, {} pipes {} manholes {} drains'
+                .format(len(pipes), len(manholes), len(ribx.drains)))
+        else:
+            logger.info(
+                'Bestand OK, {} pipes {} manholes {} drains'
+                .format(len(pipes), len(manholes), len(ribx.drains))
+            )
 
     def __existing_measurements(self):
         return models.Measurement.objects.filter(

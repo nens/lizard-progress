@@ -259,8 +259,13 @@ class PlanningView(ActivityView):
 
     def post_ribx(self, request, *args, **kwargs):
         ribxpath = self.__save_uploaded_ribx(request)
+
         locations_from_ribx = dict(
-            self.get_locations_from_ribx(self.activity, ribxpath, request)
+            self.get_locations_from_ribx(
+                self.activity, ribxpath,
+                lambda msg: messages.add_message(request, messages.INFO, msg),
+                lambda msg: messages.add_message(request, messages.ERROR, msg)
+            )
         )
 
         if locations_from_ribx:
@@ -476,7 +481,8 @@ class PlanningView(ActivityView):
         return self.activity.config_value(key)
 
     @staticmethod
-    def get_locations_from_ribx(activity, ribxpath, request=None):
+    def get_locations_from_ribx(
+            activity, ribxpath, msg_callback, error_msg_callback):
         """Get pipe, manhole, drain locations from ribxpath and generate them
         as (piperef, (geom, location_type)) tuples.
 
@@ -521,13 +527,8 @@ class PlanningView(ActivityView):
                     continue
 
         if errors:
-            if request:
-                messages.add_message(
-                    request, messages.ERROR,
-                    'Er is niets opgeslagen vanwege fouten in het bestand:')
-            else:
-                logger.error(
-                    'Er is niets opgeslagen vanwege fouten in het bestand:')
+            error_msg_callback(
+                'Er is niets opgeslagen vanwege fouten in het bestand:')
 
             msgs = [
                 'Fout op regel {}: {}'.format(error['line'], error['message'])
@@ -537,12 +538,8 @@ class PlanningView(ActivityView):
                 msgs = msgs[:20] + [
                     'En nog {} andere fouten.'.format(len(msgs) - 20)]
 
-            if request:
-                for message in msgs:
-                    messages.add_message(request, messages.ERROR, message)
-            else:
-                for message in msgs:
-                    logger.error(message)
+            for message in msgs:
+                error_msg_callback(message)
             return
 
         for pipe in pipes:
@@ -565,16 +562,10 @@ class PlanningView(ActivityView):
                    (drain.geom, models.Location.LOCATION_TYPE_DRAIN,
                     not owned_by_organisation))
 
-        if request:
-            messages.add_message(
-                request, messages.INFO,
-                'Bestand OK, {} pipes {} manholes {} drains'
-                .format(len(pipes), len(manholes), len(ribx.drains)))
-        else:
-            logger.info(
-                'Bestand OK, {} pipes {} manholes {} drains'
-                .format(len(pipes), len(manholes), len(ribx.drains))
-            )
+        msg_callback(
+            'Bestand OK, {} pipes {} manholes {} drains'
+            .format(len(pipes), len(manholes), len(ribx.drains))
+        )
 
     def __existing_measurements(self):
         return models.Measurement.objects.filter(

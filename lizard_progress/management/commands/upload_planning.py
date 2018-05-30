@@ -28,7 +28,10 @@ class Command(BaseCommand):
         try:
             activity_id, ribxpath = args
         except ValueError:
-            raise CommandError("Number of arguments incorrect.")
+            raise CommandError(
+                "Number of arguments incorrect. Use --help for more "
+                "information"
+            )
 
         activity = models.Activity.objects.get(pk=int(activity_id))
 

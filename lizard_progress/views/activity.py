@@ -260,7 +260,7 @@ class PlanningView(ActivityView):
     def post_ribx(self, request, *args, **kwargs):
         ribxpath = self.__save_uploaded_ribx(request)
         locations_from_ribx = dict(
-            self.get_locations_from_ribx(ribxpath, self.activity, request)
+            self.get_locations_from_ribx(self.activity, ribxpath, request)
         )
 
         if locations_from_ribx:
@@ -476,7 +476,7 @@ class PlanningView(ActivityView):
         return self.activity.config_value(key)
 
     @staticmethod
-    def get_locations_from_ribx(ribxpath, activity, request=None):
+    def get_locations_from_ribx(activity, ribxpath, request=None):
         """Get pipe, manhole, drain locations from ribxpath and generate them
         as (piperef, (geom, location_type)) tuples.
 

@@ -36,7 +36,7 @@ class Command(BaseCommand):
         activity = models.Activity.objects.get(pk=int(activity_id))
 
         locations_from_ribx = dict(
-            PlanningView.get_locations_from_ribx(ribxpath, activity))
+            PlanningView.get_locations_from_ribx(activity, ribxpath))
 
         if locations_from_ribx:
             existing_measurements = list(

@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-3.20.3 (unreleased)
+3.20.3 (2018-06-01)
 -------------------
 
 - Set LENGTH_MULTIPLIER in RIBX angle measurement check

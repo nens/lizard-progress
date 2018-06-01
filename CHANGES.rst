@@ -4,7 +4,8 @@ Changelog of lizard-progress
 3.20.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Set LENGTH_MULTIPLIER in RIBX angle measurement check
+  to 4 for Almere.
 
 
 3.20.2 (2018-04-25)

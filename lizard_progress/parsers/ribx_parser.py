@@ -231,7 +231,7 @@ class RibxParser(ProgressParser):
         # "Hellinghoek" checks
         MINIMUM_LENGTH_FOR_CHECK = 3.0
         LENGTH_ADJUSTMENT = 3.0
-        LENGTH_MULTIPLIER = 6
+        LENGTH_MULTIPLIER = 4
 
         for inspection_pipe in ribx.inspection_pipes:
             # Note: abbreviated 'observation' to 'obs' in the code below.

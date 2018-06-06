@@ -4,6 +4,8 @@ Changelog of lizard-progress
 4.1.6 (unreleased)
 ------------------
 
+- feature_collection_geojson used in calc_progress().
+
 - Set LENGTH_MULTIPLIER in RIBX angle measurement check
   to 4 for Almere.
 

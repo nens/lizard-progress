@@ -738,12 +738,14 @@ class ReviewProject(models.Model):
         if not self.reviews:
             return 0
 
+        if not self.feature_collection_geojson:
+            logger.warning('Feature collection for reviewproject {} has not been calculated yet.'.format(self.id))
+            return 'n/a'
+
         completion = []
-        for manhole in self.reviews['manholes']:
-            completion.append(self._calc_progress_manhole(manhole))
-        for pipe in self.reviews['pipes']:
-            completion.append(self._calc_progress_pipe(pipe))
-        return int(round(sum(completion) / len(completion)))
+        for feat in json.loads(self.feature_collection_geojson)['features']:
+            completion.append(feat['properties']['completion'])
+        return (int(round(sum(completion) / len(completion))) if completion else 0)
 
     def _calc_progress_manhole(self, manhole):
         """Return a float indicating how % much the manhole has been reviewed

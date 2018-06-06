@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.1.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- feature_collection_geojson used in calc_progress().
 
 
 4.1.5 (2018-05-28)

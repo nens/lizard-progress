@@ -315,7 +315,7 @@ class ReviewProjectMixin(object):
     def dispatch(self, request, *args, **kwargs):
         self.all_review_projects = ReviewProject.objects.filter(
             organization=self.organization) | ReviewProject.objects.filter(
-                        contractor=self.organization)
+                contractor=self.organization)
         self.reviewproject_id = kwargs.get('review_id')
         if self.reviewproject_id:
             try:

@@ -4,7 +4,11 @@ Changelog of lizard-progress
 4.1.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add ``upload_planning`` management command (a temporary solution to files
+  too large to be uploaded via the site).
+
+- Some refactoring in PlanningView to make some methods static and callable
+  from elsewhere.
 
 
 4.1.6 (2018-06-06)

@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.1.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added progress field in ReviewProject + migration file.
 
 
 4.1.6 (2018-06-06)

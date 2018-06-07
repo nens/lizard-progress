@@ -692,6 +692,10 @@ class ReviewProject(models.Model):
     # Calculated feature collection (happens in a task).
     feature_collection_geojson = models.TextField(null=True, blank=True)
 
+    # Whenever a review is uploaded, total progress of the project will be
+    # (re)caclulated based on the review
+    progress = models.IntegerField(default=0)
+
     HERSTELMAATREGEL = 'Herstelmaatregel'
     OPMERKING = 'Opmerking'
     # Fields which will be extracted from the Ribx
@@ -711,7 +715,6 @@ class ReviewProject(models.Model):
                    'CCC', 'CCD', 'CCG', 'CCK', 'CCL', 'CCM', 'CCN', 'CCO',
                    'CCP', 'CCQ', 'CCR', 'CCS', 'CCT', 'CDA', 'CDB', 'CDC',
                    'CDD', 'CDE', 'CXA', 'CXB', 'CXC', 'CXD', 'CXE']
-
 
     def is_manager(self, user):
         profile = UserProfile.get_by_user(user)
@@ -734,13 +737,15 @@ class ReviewProject(models.Model):
 
         Assumes each manhole and pipe weights the same independent of the
         number of reviews it has.
+
+        Note: needs feature_collection_geojson being generated from the current reviews.
         """
         if not self.reviews:
             return 0
 
         if not self.feature_collection_geojson:
             logger.warning('Feature collection for reviewproject {} has not been calculated yet.'.format(self.id))
-            return 'n/a'
+            return 0
 
         completion = []
         for feat in json.loads(self.feature_collection_geojson)['features']:
@@ -752,7 +757,7 @@ class ReviewProject(models.Model):
 
         Because there is only 1 thing to review for a manhole, it either returns
         0 or 100"""
-        return float(bool(manhole[self.HERSTELMAATREGEL])) * 100
+        return 0 if not manhole[self.HERSTELMAATREGEL] else 100
 
     def _calc_progress_pipe(self, pipe):
         """Return a float indicating how % much the pipe has been reviewed"""
@@ -879,6 +884,7 @@ class ReviewProject(models.Model):
         self.set_reviews(the_reviews, from_task=True)  # Saves
 
     def set_reviews(self, the_reviews, from_task=False):
+        logger.debug('Entered  set_reviews')
         self.reviews = the_reviews
         self.save()
 
@@ -1087,8 +1093,14 @@ class ReviewProject(models.Model):
         Each feature gets a set of properties:
             - Completion: float between 0-1, indicating how much it has been
             reviews (manhole is either 0 or 1, but pipes can contain many
-            reviews."""
+            reviews.
+
+        Total progress will be calculated as the mean of all features' progress.
+        """
         features = []
+        progress_tot = 0
+        # total number of measure points (manholes and pipes )
+        cnt = 0
 
         # manholes
         for manhole in self.reviews['manholes']:
@@ -1096,6 +1108,8 @@ class ReviewProject(models.Model):
             coord = coordinates.rd_to_wgs84(x, y)
             geom = geojson.Point(coord)
             completion = self._calc_progress_manhole(manhole)
+            progress_tot += completion
+            cnt += 1
             feature = geojson.Feature(geometry=geom,
                                       properties={"completion": completion})
             features.append(feature)
@@ -1111,10 +1125,13 @@ class ReviewProject(models.Model):
             geom = geojson.LineString([start, end])
 
             completion = self._calc_progress_pipe(pipe)
-
+            progress_tot += completion
+            cnt += 1
             feature = geojson.Feature(geometry=geom,
                                       properties={"completion": completion})
             features.append(feature)
+
+        self.progress = 100 * progress_tot / cnt
 
         self.feature_collection_geojson = geojson.dumps(
             geojson.FeatureCollection(features),

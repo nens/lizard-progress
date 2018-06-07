@@ -64,6 +64,7 @@ def archive_task(project_id):
 
 @task
 def calculate_reviewproject_feature_collection(project_id):
+    logger.debug('Entered calculate_reviewproject_feature_collection task, project {}'.format(project_id))
     try:
         from lizard_progress.models import ReviewProject
         project = ReviewProject.objects.get(pk=project_id)

@@ -6,6 +6,7 @@ Changelog of lizard-progress
 
 
 - Added progress field in ReviewProject + migration file.
+
 - Removed progress test
 
 - Add ``upload_planning`` management command (a temporary solution to files

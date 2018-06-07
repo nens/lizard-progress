@@ -1131,7 +1131,7 @@ class ReviewProject(models.Model):
                                       properties={"completion": completion})
             features.append(feature)
 
-        self.progress = 100 * progress_tot / cnt
+        self.progress = progress_tot / cnt
 
         self.feature_collection_geojson = geojson.dumps(
             geojson.FeatureCollection(features),

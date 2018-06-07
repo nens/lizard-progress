@@ -5,6 +5,7 @@ Changelog of lizard-progress
 ------------------
 
 - Added progress field in ReviewProject + migration file.
+- Removed progress test
 
 
 4.1.6 (2018-06-06)

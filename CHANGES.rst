@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.1.8 (unreleased)
+4.1.8 (2018-06-07)
 ------------------
 
 - Fix circular import in upload_planning command.

@@ -17,7 +17,6 @@ from __future__ import division
 
 from django.core.management.base import BaseCommand, CommandError
 from lizard_progress import models
-from lizard_progress.views.activity import PlanningView
 
 
 class Command(BaseCommand):
@@ -39,6 +38,7 @@ class Command(BaseCommand):
                 activity, ribxpath)
         )
 
+        from lizard_progress.views.activity import PlanningView
         locations_from_ribx = dict(
             PlanningView.get_locations_from_ribx(
                 activity, ribxpath, self.stdout.write, self.stdout.write)

@@ -744,7 +744,7 @@ class ReviewProject(models.Model):
             return 0
 
         if not self.feature_collection_geojson:
-            logger.warning('Feature collection for reviewproject {} has not been calculated yet.'.format(self.id))
+            # TODO: return a 'n/a' or so rather than 0
             return 0
 
         completion = []

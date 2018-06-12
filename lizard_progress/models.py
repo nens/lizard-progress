@@ -35,7 +35,6 @@ from lizard_progress.util import directories
 from lizard_progress.util import geo
 from lizard_progress.util import filler
 
-from osgeo import osr
 from lizard_map import coordinates
 
 import geojson
@@ -48,12 +47,8 @@ import os
 import random
 import shutil
 import string
-import csv
-import math
 
 from lxml import etree
-import ribxlib
-import itertools
 
 RDNEW = 28992
 SRID = RDNEW
@@ -437,7 +432,6 @@ class ProjectActivityMixin(object):
         else:
             raise ValueError("This mixin only works with Project/Activity")
         latest_log = UploadLog.latest_for_project(project)
-        print(latest_log)
         return latest_log[0] if latest_log else None
 
     @staticmethod
@@ -451,27 +445,20 @@ class ProjectActivityMixin(object):
 
     @property
     def pie(self):
-        try:
-            x = self.percentage_done
-        except:
-            logger.debug('Database error.')
-            x = "N/A"  # Ugly hack to catch all empty database related errors.
-        if x == "N/A":
-            return "pienan"
-        elif x == 0:
-            return "pie000"
-        elif x < 12.5:
-            return "pie012"
-        elif x >= 100:
-            return "pie100"
-        elif x > 87.5:
-            return "pie087"
-        else:
-            try:
-                return self.piedict[int(round(x/12.5))]
-            except:
-                return "ERROR-percentage-done-is---{}".format(x)
 
+        done = int(12.5 * int((self.percentage_done / 12.5)))
+
+        try:
+            res = ''.join(('pie', '{:03d}'.format(done))) if done >= 0 else 'pienan'
+            if isinstance(self, Project):
+                project = self
+            elif isinstance(self, Activity):
+                project = self.project
+            return res
+        except Exception as e:
+            logger.debug('pie caused an exception {} with percentage_done={}'
+                         .format(str(e), self.percentage_done))
+            return "ERROR-percentage-done-is---{}".format(self.percentage_done)
 
 class AnnotatedProjectManager(models.Manager):
     """Special manager that adds often-used annotations
@@ -539,12 +526,12 @@ class Project(ProjectActivityMixin, models.Model):
             activity__project=self, complete=True,
             not_part_of_project=False).count()
 
-    @property
+    @cached_property
     def percentage_done(self):
         return self.percentage(self.number_of_locations(),
                                self.number_of_complete_locations())
 
-    @property
+    @cached_property
     def is_simple(self):
         return bool(self.project_type and self.project_type.simple_upload)
 
@@ -1688,7 +1675,7 @@ class Activity(ProjectActivityMixin, models.Model):
             return self.percentage(self.num_locations(),
                                    self.num_complete_locations())
         else:
-            return "N/A"
+            return -1
 
 
 class ExpectedAttachment(models.Model):

@@ -410,16 +410,6 @@ def current_files(measurements):
 
 
 class ProjectActivityMixin(object):
-    piedict = {
-        1: "pie012",
-        2: "pie025",
-        3: "pie037",
-        4: "pie050",
-        5: "pie062",
-        6: "pie075",
-        7: "pie087"
-    }
-
     @cached_property
     def latest_log(self):
         """Return the UploadedLog belonging to this activity with the
@@ -449,16 +439,12 @@ class ProjectActivityMixin(object):
         done = int(12.5 * int((self.percentage_done / 12.5)))
 
         try:
-            res = ''.join(('pie', '{:03d}'.format(done))) if done >= 0 else 'pienan'
-            if isinstance(self, Project):
-                project = self
-            elif isinstance(self, Activity):
-                project = self.project
-            return res
+            return ''.join(('pie', '{:03d}'.format(done))) if (done >= 0) else 'piena'
         except Exception as e:
             logger.debug('pie caused an exception {} with percentage_done={}'
                          .format(str(e), self.percentage_done))
             return "ERROR-percentage-done-is---{}".format(self.percentage_done)
+
 
 class AnnotatedProjectManager(models.Manager):
     """Special manager that adds often-used annotations
@@ -1518,6 +1504,7 @@ class Activity(ProjectActivityMixin, models.Model):
             self.project.is_manager(user) or
             self.contractor == Organization.get_by_user(user))
 
+    @cached_property
     def num_locations(self):
         return self.location_set.filter(
             not_part_of_project=False).count()
@@ -1525,10 +1512,12 @@ class Activity(ProjectActivityMixin, models.Model):
     def has_locations(self):
         return self.location_set.filter(not_part_of_project=False).exists()
 
+    @cached_property
     def num_complete_locations(self):
         return self.location_set.filter(
             complete=True, not_part_of_project=False).count()
 
+    @cached_property
     def num_measurements(self):
         return Measurement.objects.filter(
             location__activity=self,

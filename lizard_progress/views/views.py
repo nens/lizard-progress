@@ -120,6 +120,7 @@ class ProjectsMixin(object):
 
         return super(ProjectsMixin, self).get(request, *args, **kwargs)
 
+    @cached_property
     def projects(self):
         """Returns a list of projects the current user has access to."""
         if settings.DEBUG:
@@ -230,7 +231,7 @@ class ProjectsMixin(object):
                                                                   inspect.stack()[1][3]))
 
         # TODO: refactor this. Too many separate database queries.
-        for project in self.projects():
+        for project in self.projects:
             mtypes = project.activity_set.all().distinct(
                 "measurement_type").values_list('measurement_type__name',
                                                 flat=True)

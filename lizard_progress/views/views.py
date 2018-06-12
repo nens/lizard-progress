@@ -55,6 +55,8 @@ from lizard_progress.models import Project
 from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
 from lizard_progress.models import has_access_reviewproject
+from lizard_progress.models import Activity
+from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
 from lizard_progress.util import workspaces
@@ -118,10 +120,14 @@ class ProjectsMixin(object):
             if not value[0] == self.orderby
         }
 
+        try:
+            getattr(self, 'projects')
+        except AttributeError:
+            self.projects = self.generate_project_list()
+
         return super(ProjectsMixin, self).get(request, *args, **kwargs)
 
-    @cached_property
-    def projects(self):
+    def generate_project_list(self):
         """Returns a list of projects the current user has access to."""
         if settings.DEBUG:
             import inspect
@@ -225,17 +231,36 @@ class ProjectsMixin(object):
 
     @property
     def projects_requests(self):
-        if settings.DEBUG:
-            import inspect
-            logger.debug('  **** Entered {} called by {}.'.format(inspect.stack()[0][3],
-                                                                  inspect.stack()[1][3]))
+        # Goal is the following query:
+        # select distinct p.id as project, count(a.id) as num_requests, array_agg(m.name) as mtypes
+        # from lizard_progress_project p
+        # inner join lizard_progress_activity a on a.project_id = p.id
+        # inner join changerequests_request r on r.activity_id =a.id
+        # inner join lizard_progress_availablemeasurementtype m on m.id = a.measurement_type_id
+        # group by p.id
 
         # TODO: refactor this. Too many separate database queries.
+
+        activities = Activity.objects.filter(project__in=self.projects)\
+                                     .prefetch_related('measurement_type', 'project')
+
+        avalues = activities.values('project', 'measurement_type')
+
+        mtypesqs = AvailableMeasurementType.objects.filter(id__in=avalues.values_list('measurement_type_id', flat=True))
+
+        # probably still optimizable
         for project in self.projects:
-            mtypes = project.activity_set.all().distinct(
-                "measurement_type").values_list('measurement_type__name',
-                                                flat=True)
+            mtypes = [m.name for m in mtypesqs if m.id in [_['measurement_type']
+                                                           for _ in avalues if _['project'] == project.id]]
+
             yield project, self.num_project_requests(project), mtypes
+
+        # # before:
+        # for project in self.projects:
+        #    mtypes = project.activity_set.all()\
+        #                                 .distinct('measurement_type')\
+        #                                 .values_list('measurement_type__name', flat=True)
+        #    yield project, self.num_project_requests(project), mtypes
 
     def num_project_requests(self, project):
         # TODO: refactor with database-level annotations/aggregations.

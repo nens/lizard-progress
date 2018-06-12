@@ -60,7 +60,6 @@ from lizard_progress.util import geo
 from lizard_progress.util import workspaces
 from lizard_progress.forms import NewReviewProjectForm
 from lizard_progress.forms import UploadReviews
-from lizard_progress.forms import UploadShapefiles
 
 logger = logging.getLogger(__name__)
 
@@ -109,41 +108,45 @@ class ProjectsMixin(object):
             ProjectsMixin, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        order = request.GET.get('orderby')
-        try:
-            self.orderby = self.sortparams[order][0]
-        except KeyError:
-            order = "mostrecent"
-            self.orderby = self.sortparams[order][0]
+        order = request.GET.get('orderby', self.sortparams.keys()[0])
+
+        self.orderby = self.sortparams[order][0]
         self.order = self.sortparams[order][1]
+
         self.orderchoices = {
             key: value[0] for key, value in self.sortparams.iteritems()
             if not value[0] == self.orderby
         }
+
         return super(ProjectsMixin, self).get(request, *args, **kwargs)
 
     def projects(self):
         """Returns a list of projects the current user has access to."""
-        projecttable = Project.objects.select_related(
-            'organization', 'project_type').prefetch_related(
-            'activity_set__contractor').filter(is_archived=False)
-        NAs = []
-        notNAs = []
-        for project in projecttable:
-            if getattr(project, self.order[0]) == "N/A":
-                NAs.append(project)
-            else:
-                notNAs.append(project)
+        if settings.DEBUG:
+            import inspect
+            logger.debug('  **** Entered {} called by {}.'.format(inspect.stack()[0][3],
+                                                                  inspect.stack()[1][3]))
+
+        projecttable = list(filter(
+            lambda p: has_access(project=p, userprofile=self.profile),
+            Project.objects.select_related(
+                'organization', 'project_type').prefetch_related(
+                    'activity_set__contractor').filter(is_archived=False)
+        ))
+
+        NAs = [p for p in projecttable if getattr(p, self.order[0]) == "N/A"]
+        notNAs = [p for p in projecttable if p not in NAs]
+
         sortedprojects = sorted(notNAs, reverse=self.order[1],
                                 key=lambda a: getattr(a, self.order[0]))
+
+        # Append keyless elements if ASC, otherwise insert
         if self.order[1]:
             sortedprojects += NAs
         else:
             sortedprojects = NAs + sortedprojects
-        projects = []
-        for project in sortedprojects:
-            if has_access(project=project, userprofile=self.profile):
-                projects.append(project)
+
+        projects = sortedprojects
         return projects
 
     def activities(self):
@@ -151,7 +154,6 @@ class ProjectsMixin(object):
         it that this user has access to."""
         if not self.project:
             return
-
         for activity in self.project.activity_set.all():
             if has_access(
                     project=self.project,
@@ -183,7 +185,7 @@ class ProjectsMixin(object):
             self.profile and
             self.profile.has_role(models.UserRole.ROLE_UPLOADER))
 
-    @property
+    @cached_property
     def total_requests(self):
         from lizard_progress.changerequests.models import Request
         if self.user_has_manager_role():
@@ -222,6 +224,11 @@ class ProjectsMixin(object):
 
     @property
     def projects_requests(self):
+        if settings.DEBUG:
+            import inspect
+            logger.debug('  **** Entered {} called by {}.'.format(inspect.stack()[0][3],
+                                                                  inspect.stack()[1][3]))
+
         # TODO: refactor this. Too many separate database queries.
         for project in self.projects():
             mtypes = project.activity_set.all().distinct(
@@ -566,16 +573,16 @@ class DashboardView(ProjectsView):
     template_name = 'lizard_progress/dashboard.html'
     active_menu = "dashboard"
 
-    @property
+    @cached_property
     def total_activities(self):
         # import pdb;pdb.set_trace()
         return self.project.activity_set.count()
 
-    @property
+    @cached_property
     def num_open_requests(self):
         return self.project.num_open_requests
 
-    @property
+    @cached_property
     def breadcrumbs(self):
         """Breadcrumbs for this page."""
 
@@ -751,7 +758,6 @@ def dashboard_graph(
 
     def subplot_generator(images):
         """Yields matplotlib subplot placing numbers"""
-
         # Maybe we can make this smarter later on
         rows = 1
         cols = images

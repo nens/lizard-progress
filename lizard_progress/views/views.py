@@ -134,11 +134,12 @@ class ProjectsMixin(object):
             logger.debug('  **** Entered {} called by {}.'.format(inspect.stack()[0][3],
                                                                   inspect.stack()[1][3]))
 
+        prof = self.profile
         projecttable = list(filter(
-            lambda p: has_access(project=p, userprofile=self.profile),
-            Project.objects.select_related(
-                'organization', 'project_type').prefetch_related(
-                    'activity_set__contractor').filter(is_archived=False)
+            lambda p: has_access(project=p, userprofile=prof),
+            Project.objects.prefetch_related(
+                'organization', 'project_type', 'activity_set__contractor')
+            .filter(is_archived=False)
         ))
 
         NAs = [p for p in projecttable if getattr(p, self.order[0]) == "N/A"]
@@ -156,6 +157,7 @@ class ProjectsMixin(object):
         projects = sortedprojects
         return projects
 
+    @cached_property
     def activities(self):
         """If there is a current project, generate the activities inside
         it that this user has access to."""
@@ -196,17 +198,21 @@ class ProjectsMixin(object):
     def total_requests(self):
         from lizard_progress.changerequests.models import Request
         if self.user_has_manager_role():
-            return Request.objects.filter(
-                request_status=Request.REQUEST_STATUS_OPEN,
-                activity__project__organization=self.profile.organization,
-                activity__project__is_archived=False
-            ).count()
+            if 'tot_requests' not in self.request.session:
+                self.request.session['tot_requests'] = Request.objects.filter(
+                    request_status=Request.REQUEST_STATUS_OPEN,
+                    activity__project__organization=self.profile.organization,
+                    activity__project__is_archived=False
+                ).count()
+                return self.request.session['tot_requests']
         else:
-            return Request.objects.filter(
-                request_status=Request.REQUEST_STATUS_OPEN,
-                activity__contractor=self.profile.organization,
-                activity__project__is_archived=False
-            ).count()
+            if 'tot_requests' not in self.request.session:
+                self.request.session['tot_requests'] = Request.objects.filter(
+                    request_status=Request.REQUEST_STATUS_OPEN,
+                    activity__contractor=self.profile.organization,
+                    activity__project__is_archived=False
+                ).count()
+                return self.request.session['tot_requests']
 
     def total_activity_requests(self, activity):
         from lizard_progress.changerequests.models import Request
@@ -223,10 +229,11 @@ class ProjectsMixin(object):
                 activity=activity
             ).count()
 
-    @property
+    @cached_property
     def activity_requests(self):
+        logger.debug('here')
         # TODO: refactor this. Too many separate database queries.
-        for activity in self.activities():
+        for activity in self.activities:
             yield activity, self.total_activity_requests(activity)
 
     @property
@@ -798,10 +805,10 @@ def dashboard_graph(
     subplots = subplot_generator(1)
 
     # Profiles to be measured
-    total = activity.num_locations()
+    total = activity.num_locations
 
     # Measured profiles
-    done = activity.num_complete_locations()
+    done = activity.num_complete_locations
 
     todo = total - done
     x = [done, todo]

@@ -441,7 +441,7 @@ class ProjectActivityMixin(object):
                 (100 * part) / total)
             return int(percentage)
         except ZeroDivisionError:
-            return "N/A"
+            return -1
 
     @property
     def pie(self):
@@ -518,9 +518,11 @@ class Project(ProjectActivityMixin, models.Model):
     def specifics(self, activity=None):
         return lizard_progress.specifics.Specifics(self, activity)
 
+    @cached_property
     def number_of_locations(self):
         return self.counted_number_of_locations
 
+    @cached_property
     def number_of_complete_locations(self):
         return Location.objects.filter(
             activity__project=self, complete=True,
@@ -528,8 +530,8 @@ class Project(ProjectActivityMixin, models.Model):
 
     @cached_property
     def percentage_done(self):
-        return self.percentage(self.number_of_locations(),
-                               self.number_of_complete_locations())
+        return self.percentage(self.number_of_locations,
+                               self.number_of_complete_locations)
 
     @cached_property
     def is_simple(self):

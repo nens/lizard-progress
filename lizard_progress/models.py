@@ -562,7 +562,7 @@ class Project(ProjectActivityMixin, models.Model):
 
         return Hydrovak.reload_from(self, shapefiles[0])
 
-    @property
+    @cached_property
     def num_open_requests(self):
         from lizard_progress.changerequests.models import Request
         return Request.objects.filter(

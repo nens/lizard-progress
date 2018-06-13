@@ -431,7 +431,7 @@ class ProjectActivityMixin(object):
                 (100 * part) / total)
             return int(percentage)
         except ZeroDivisionError:
-            return -1
+            return 'N/A'
 
     @property
     def pie(self):
@@ -439,7 +439,7 @@ class ProjectActivityMixin(object):
         done = int(12.5 * int((self.percentage_done / 12.5)))
 
         try:
-            return ''.join(('pie', '{:03d}'.format(done))) if (done >= 0) else 'piena'
+            return ''.join(('pie', '{:03d}'.format(done))) if (done != 'N/A') else 'pienan'
         except Exception as e:
             logger.debug('pie caused an exception {} with percentage_done={}'
                          .format(str(e), self.percentage_done))
@@ -719,7 +719,7 @@ class ReviewProject(models.Model):
             return 0
 
         if not self.feature_collection_geojson:
-            # TODO: return a 'n/a' or so rather than 0
+            # TODO: return a 'N/A' or so rather than 0
             return 0
 
         completion = []
@@ -1666,7 +1666,7 @@ class Activity(ProjectActivityMixin, models.Model):
             return self.percentage(self.num_locations(),
                                    self.num_complete_locations())
         else:
-            return -1
+            return 'N/A'
 
 
 class ExpectedAttachment(models.Model):

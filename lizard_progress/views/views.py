@@ -129,18 +129,10 @@ class ProjectsMixin(object):
 
     def generate_project_list(self):
         """Returns a list of projects the current user has access to."""
-        if settings.DEBUG:
-            import inspect
-            logger.debug('  **** Entered {} called by {}.'.format(inspect.stack()[0][3],
-                                                                  inspect.stack()[1][3]))
 
-        prof = self.profile
-        projecttable = list(filter(
-            lambda p: has_access(project=p, userprofile=prof),
-            Project.objects.prefetch_related(
-                'organization', 'project_type', 'activity_set__contractor')
-            .filter(is_archived=False)
-        ))
+        projecttable = [p for p in Project.objects.prefetch_related(
+            'organization', 'project_type', 'activity_set__contractor', 'activity_set__measurement_type')
+            .filter(is_archived=False) if has_access(project=p, userprofile=self.profile)]
 
         NAs = [p for p in projecttable if getattr(p, self.order[0]) == "N/A"]
         notNAs = [p for p in projecttable if p not in NAs]
@@ -174,12 +166,9 @@ class ProjectsMixin(object):
         """Returns a list of archived projects the current user has
         access to."""
 
-        projects = []
-        for project in Project.objects.filter(is_archived=True):
-            if has_access(self.request.user, project):
-                projects.append(project)
-        return projects
+        return [p for p in Project.objects.filter(is_archived=True) if has_access(self.request.user, p)]
 
+    @cached_property
     def organization(self):
         """Return organization name of current user."""
         return self.profile and self.profile.organization.name
@@ -189,6 +178,7 @@ class ProjectsMixin(object):
             return False
         return self.project.can_upload(self.request.user)
 
+    @cached_property
     def user_has_uploader_role(self):
         return (
             self.profile and
@@ -231,7 +221,6 @@ class ProjectsMixin(object):
 
     @cached_property
     def activity_requests(self):
-        logger.debug('here')
         # TODO: refactor this. Too many separate database queries.
         for activity in self.activities:
             yield activity, self.total_activity_requests(activity)
@@ -246,19 +235,18 @@ class ProjectsMixin(object):
         # inner join lizard_progress_availablemeasurementtype m on m.id = a.measurement_type_id
         # group by p.id
 
-        # TODO: refactor this. Too many separate database queries.
-
         activities = Activity.objects.filter(project__in=self.projects)\
-                                     .prefetch_related('measurement_type', 'project')
+                                     .prefetch_related('measurement_type')
 
         avalues = activities.values('project', 'measurement_type')
 
-        mtypesqs = AvailableMeasurementType.objects.filter(id__in=avalues.values_list('measurement_type_id', flat=True))
+        mtypes = AvailableMeasurementType.objects.filter(id__in=avalues.values_list('measurement_type_id', flat=True))
 
+        mtvalues = mtypes.values('id', 'name')
         # probably still optimizable
         for project in self.projects:
-            mtypes = [m.name for m in mtypesqs if m.id in [_['measurement_type']
-                                                           for _ in avalues if _['project'] == project.id]]
+            mtypes = [m['name'] for m in mtvalues if m['id'] in [_['measurement_type']
+                                                                 for _ in avalues if _['project'] == project.id]]
 
             yield project, self.num_project_requests(project), mtypes
 

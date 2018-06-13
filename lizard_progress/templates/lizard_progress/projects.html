@@ -170,19 +170,18 @@ $( window ).resize(function() {
 
                           <p class="project-description"></p>
                         <div class="col-md-4 col-sm-4 col-xs4 stats">
-                            <ul>{% with ncl=project.number_of_complete_locations p_perc_done=project.percentage_done p_pie=project.pie %}
+                            <ul>{% with ncl=project.number_of_complete_locations p_perc_done=project.percentage_done p_pie=project.pie p_numloc=project.number_of_locations %}
                             <li><span><span class="hidden-xs">Locaties compleet:</span>
-                                {{ncl}}x</span></li>
+                                {% if p_perc_done != 'N/A' %} {{ncl}} van {{p_numloc}} {%else%} N/A {%endif%}</span></li>
                             <li>
-                              <div class="hidden-xs hidden-sm pie-md
-                              {{ p_pie }}" data-toggle="tooltip"
+                              <div class="hidden-xs hidden-sm pie-md {{ p_pie }}" data-toggle="tooltip"
                                    title="{{ p_perc_done }}
-                                   {% if p_perc_done != -1 %}
+                                   {% if p_perc_done != 'N/A' %}
                                    % compleet: {{ncl}}
                                     locaties compleet
-                                    van {{ project.number_of_locations }}
+                                    van {{ p_numloc }}
                                     locaties in totaal.
-                                   {% endif %}
+					  {% endif %}
                                    "></div>
                               <div class="hidden-md hidden-lg pie-sm {{ p_pie }}"></div>
                             </li>

@@ -436,10 +436,10 @@ class ProjectActivityMixin(object):
     @property
     def pie(self):
 
-        done = int(12.5 * int((self.percentage_done / 12.5)))
+        done = self.percentage_done
 
         try:
-            return ''.join(('pie', '{:03d}'.format(done))) if (done != 'N/A') else 'pienan'
+            return ''.join(('pie', '{:03d}'.format(int(12.5 * int((done / 12.5)))))) if (done != 'N/A') else 'pienan'
         except Exception as e:
             logger.debug('pie caused an exception {} with percentage_done={}'
                          .format(str(e), self.percentage_done))

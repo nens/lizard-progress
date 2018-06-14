@@ -481,6 +481,10 @@ class InlineMapView(View):
     template_name = 'lizard_progress/map_inline.html'
 
 
+class InlineMapViewNew(View):
+    template_name = 'lizard_progress/map_inline_new.html'
+
+
 class MapView(View, AppView):
     """View that can show a project's locations as map layers."""
     template_name = 'lizard_progress/map.html'

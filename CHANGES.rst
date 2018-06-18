@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.1.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added some performance improvements for the startpage (projects). More caching, less repetitive calculations.
 
 
 4.1.8 (2018-06-07)

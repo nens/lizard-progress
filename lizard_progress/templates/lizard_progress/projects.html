@@ -170,40 +170,40 @@ $( window ).resize(function() {
 
                           <p class="project-description"></p>
                         <div class="col-md-4 col-sm-4 col-xs4 stats">
-                          <ul>
-                            <li><span><span class="hidden-xs">Locaties
-                                compleet:</span>
-                                {{ project.number_of_complete_locations }}x</span></li>
+                            <ul>{% with ncl=project.number_of_complete_locations p_perc_done=project.percentage_done p_pie=project.pie p_numloc=project.number_of_locations %}
+                            <li><span><span class="hidden-xs">Locaties compleet:</span>
+                                {% if p_perc_done != 'N/A' %} {{ncl}} van {{p_numloc}} {%else%} N/A {%endif%}</span></li>
                             <li>
-                              <div class="hidden-xs hidden-sm pie-md
-                              {{ project.pie }}" data-toggle="tooltip"
-                                   title="{{ project.percentage_done }}
-                                   {% if project.percentage_done != 'N/A' %}
-                                   % compleet: {{ project.number_of_complete_locations }}
+                              <div class="hidden-xs hidden-sm pie-md {{ p_pie }}" data-toggle="tooltip"
+                                   title="{{ p_perc_done }}
+                                   {% if p_perc_done != 'N/A' %}
+                                   % compleet: {{ncl}}
                                     locaties compleet
-                                    van {{ project.number_of_locations }}
+                                    van {{ p_numloc }}
                                     locaties in totaal.
-                                   {% endif %}
+					  {% endif %}
                                    "></div>
-                              <div class="hidden-md hidden-lg pie-sm {{ project.pie }}"></div>
+                              <div class="hidden-md hidden-lg pie-sm {{ p_pie }}"></div>
                             </li>
+			    {% endwith %}
                           </ul>
                         </div>
                   </div>
 
                     <div class="row">
                       <div class="col-md-12">
-                        {% with log=project.latest_log %}
+                          {% with log=project.latest_log %}
+			  {% with log_nmeas=log.num_measurements la=log.activity %}
                           {% if log %}
                             <ul class="list-inline">
                               <li style="color:#494949 !important" class="project-latest">Laatste upload: {{ log.when|timesince }} geleden</li>
-                              {% if log.activity.measurement_type %}
-                                  <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe">met type: {{ log.activity.measurement_type }}</span></li>
+                              {% if la.measurement_type %}
+                                  <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe">met type: {{ la.measurement_type }}</span></li>
                               {% endif %}
-                              {% if log.activity.contractor %}
-                                  <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe">door: {{ log.activity.contractor }}</span></li>
+                              {% if la.contractor %}
+                                  <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe">door: {{ la.contractor }}</span></li>
                               {% endif %}
-                                <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe">met: {{ log.num_measurements }} meting{% if log.num_measurements == 0 or log.num_measurements > 1 %}en{% endif %}</span></li>
+                                <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe">met: {{ log_nmeas }} meting{% if log_nmeas == 0 or log_nmeas > 1 %}en{% endif %}</span></li>
                               {% if project.project_type %}
                               <li style="color:#494949 !important" class="project-latest"><span class="inline-pipe"><strong>Projecttype: {{ project.project_type }}</strong></span></li>
                               {% endif %}
@@ -211,6 +211,7 @@ $( window ).resize(function() {
                             {% else %}
                               <p style="color:#494949 !important" class="project-no-latest">(Er is nog geen laatste upload.)</p>
                           {%  endif %}
+                        {% endwith %}
                         {% endwith %}
                       </div>
                     </div>

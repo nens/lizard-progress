@@ -34,8 +34,8 @@ from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
 from lizard_progress.util import filler
+from lizard_progress.util.autoreviewer import AutoReviewer
 
-from osgeo import osr
 from lizard_map import coordinates
 
 import geojson
@@ -48,12 +48,8 @@ import os
 import random
 import shutil
 import string
-import csv
-import math
 
 from lxml import etree
-import ribxlib
-import itertools
 
 RDNEW = 28992
 SRID = RDNEW
@@ -849,7 +845,7 @@ class ReviewProject(models.Model):
 
         return project_review
 
-    def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path):
+    def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path, arFilterFile):
         parser = etree.XMLParser()
         tree = etree.parse(abs_ribx_path)
         root = tree.getroot()
@@ -878,6 +874,9 @@ class ReviewProject(models.Model):
             rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
             rule_tree = filler.build_rule_tree(rules)
             the_reviews = filler.apply_rules(rule_tree, reviews)
+
+            ar = AutoReviewer(arFilterFile)
+            the_reviews = ar.run(reviews)
         else:
             the_reviews = reviews
 

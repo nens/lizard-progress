@@ -55,12 +55,13 @@ from lizard_progress.models import Project
 from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
 from lizard_progress.models import has_access_reviewproject
+from lizard_progress.models import Activity
+from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
 from lizard_progress.util import workspaces
 from lizard_progress.forms import NewReviewProjectForm
 from lizard_progress.forms import UploadReviews
-from lizard_progress.forms import UploadShapefiles
 
 logger = logging.getLogger(__name__)
 
@@ -109,49 +110,51 @@ class ProjectsMixin(object):
             ProjectsMixin, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        order = request.GET.get('orderby')
-        try:
-            self.orderby = self.sortparams[order][0]
-        except KeyError:
-            order = "mostrecent"
-            self.orderby = self.sortparams[order][0]
+        order = request.GET.get('orderby', self.sortparams.keys()[0])
+
+        self.orderby = self.sortparams[order][0]
         self.order = self.sortparams[order][1]
+
         self.orderchoices = {
             key: value[0] for key, value in self.sortparams.iteritems()
             if not value[0] == self.orderby
         }
+
+        try:
+            getattr(self, 'projects')
+        except AttributeError:
+            self.projects = self.generate_project_list()
+
         return super(ProjectsMixin, self).get(request, *args, **kwargs)
 
-    def projects(self):
+    def generate_project_list(self):
         """Returns a list of projects the current user has access to."""
-        projecttable = Project.objects.select_related(
-            'organization', 'project_type').prefetch_related(
-            'activity_set__contractor').filter(is_archived=False)
-        NAs = []
-        notNAs = []
-        for project in projecttable:
-            if getattr(project, self.order[0]) == "N/A":
-                NAs.append(project)
-            else:
-                notNAs.append(project)
+
+        projecttable = [p for p in Project.objects.prefetch_related(
+            'organization', 'project_type', 'activity_set__contractor', 'activity_set__measurement_type')
+            .filter(is_archived=False) if has_access(project=p, userprofile=self.profile)]
+
+        NAs = [p for p in projecttable if getattr(p, self.order[0]) == "N/A"]
+        notNAs = [p for p in projecttable if p not in NAs]
+
         sortedprojects = sorted(notNAs, reverse=self.order[1],
                                 key=lambda a: getattr(a, self.order[0]))
+
+        # Append keyless elements if ASC, otherwise insert
         if self.order[1]:
             sortedprojects += NAs
         else:
             sortedprojects = NAs + sortedprojects
-        projects = []
-        for project in sortedprojects:
-            if has_access(project=project, userprofile=self.profile):
-                projects.append(project)
+
+        projects = sortedprojects
         return projects
 
+    @cached_property
     def activities(self):
         """If there is a current project, generate the activities inside
         it that this user has access to."""
         if not self.project:
             return
-
         for activity in self.project.activity_set.all():
             if has_access(
                     project=self.project,
@@ -163,12 +166,9 @@ class ProjectsMixin(object):
         """Returns a list of archived projects the current user has
         access to."""
 
-        projects = []
-        for project in Project.objects.filter(is_archived=True):
-            if has_access(self.request.user, project):
-                projects.append(project)
-        return projects
+        return [p for p in Project.objects.filter(is_archived=True) if has_access(self.request.user, p)]
 
+    @cached_property
     def organization(self):
         """Return organization name of current user."""
         return self.profile and self.profile.organization.name
@@ -178,26 +178,31 @@ class ProjectsMixin(object):
             return False
         return self.project.can_upload(self.request.user)
 
+    @cached_property
     def user_has_uploader_role(self):
         return (
             self.profile and
             self.profile.has_role(models.UserRole.ROLE_UPLOADER))
 
-    @property
+    @cached_property
     def total_requests(self):
         from lizard_progress.changerequests.models import Request
         if self.user_has_manager_role():
-            return Request.objects.filter(
-                request_status=Request.REQUEST_STATUS_OPEN,
-                activity__project__organization=self.profile.organization,
-                activity__project__is_archived=False
-            ).count()
+            if 'tot_requests' not in self.request.session:
+                self.request.session['tot_requests'] = Request.objects.filter(
+                    request_status=Request.REQUEST_STATUS_OPEN,
+                    activity__project__organization=self.profile.organization,
+                    activity__project__is_archived=False
+                ).count()
+                return self.request.session['tot_requests']
         else:
-            return Request.objects.filter(
-                request_status=Request.REQUEST_STATUS_OPEN,
-                activity__contractor=self.profile.organization,
-                activity__project__is_archived=False
-            ).count()
+            if 'tot_requests' not in self.request.session:
+                self.request.session['tot_requests'] = Request.objects.filter(
+                    request_status=Request.REQUEST_STATUS_OPEN,
+                    activity__contractor=self.profile.organization,
+                    activity__project__is_archived=False
+                ).count()
+                return self.request.session['tot_requests']
 
     def total_activity_requests(self, activity):
         from lizard_progress.changerequests.models import Request
@@ -214,20 +219,43 @@ class ProjectsMixin(object):
                 activity=activity
             ).count()
 
-    @property
+    @cached_property
     def activity_requests(self):
         # TODO: refactor this. Too many separate database queries.
-        for activity in self.activities():
+        for activity in self.activities:
             yield activity, self.total_activity_requests(activity)
 
     @property
     def projects_requests(self):
-        # TODO: refactor this. Too many separate database queries.
-        for project in self.projects():
-            mtypes = project.activity_set.all().distinct(
-                "measurement_type").values_list('measurement_type__name',
-                                                flat=True)
+        # Goal is the following query:
+        # select distinct p.id as project, count(a.id) as num_requests, array_agg(m.name) as mtypes
+        # from lizard_progress_project p
+        # inner join lizard_progress_activity a on a.project_id = p.id
+        # inner join changerequests_request r on r.activity_id =a.id
+        # inner join lizard_progress_availablemeasurementtype m on m.id = a.measurement_type_id
+        # group by p.id
+
+        activities = Activity.objects.filter(project__in=self.projects)\
+                                     .prefetch_related('measurement_type')
+
+        avalues = activities.values('project', 'measurement_type')
+
+        mtypes = AvailableMeasurementType.objects.filter(id__in=avalues.values_list('measurement_type_id', flat=True))
+
+        mtvalues = mtypes.values('id', 'name')
+        # probably still optimizable
+        for project in self.projects:
+            mtypes = [m['name'] for m in mtvalues if m['id'] in [_['measurement_type']
+                                                                 for _ in avalues if _['project'] == project.id]]
+
             yield project, self.num_project_requests(project), mtypes
+
+        # # before:
+        # for project in self.projects:
+        #    mtypes = project.activity_set.all()\
+        #                                 .distinct('measurement_type')\
+        #                                 .values_list('measurement_type__name', flat=True)
+        #    yield project, self.num_project_requests(project), mtypes
 
     def num_project_requests(self, project):
         # TODO: refactor with database-level annotations/aggregations.
@@ -566,16 +594,16 @@ class DashboardView(ProjectsView):
     template_name = 'lizard_progress/dashboard.html'
     active_menu = "dashboard"
 
-    @property
+    @cached_property
     def total_activities(self):
         # import pdb;pdb.set_trace()
         return self.project.activity_set.count()
 
-    @property
+    @cached_property
     def num_open_requests(self):
         return self.project.num_open_requests
 
-    @property
+    @cached_property
     def breadcrumbs(self):
         """Breadcrumbs for this page."""
 
@@ -751,7 +779,6 @@ def dashboard_graph(
 
     def subplot_generator(images):
         """Yields matplotlib subplot placing numbers"""
-
         # Maybe we can make this smarter later on
         rows = 1
         cols = images
@@ -766,10 +793,10 @@ def dashboard_graph(
     subplots = subplot_generator(1)
 
     # Profiles to be measured
-    total = activity.num_locations()
+    total = activity.num_locations
 
     # Measured profiles
-    done = activity.num_complete_locations()
+    done = activity.num_complete_locations
 
     todo = total - done
     x = [done, todo]

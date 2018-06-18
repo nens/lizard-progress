@@ -411,16 +411,6 @@ def current_files(measurements):
 
 
 class ProjectActivityMixin(object):
-    piedict = {
-        1: "pie012",
-        2: "pie025",
-        3: "pie037",
-        4: "pie050",
-        5: "pie062",
-        6: "pie075",
-        7: "pie087"
-    }
-
     @cached_property
     def latest_log(self):
         """Return the UploadedLog belonging to this activity with the
@@ -433,7 +423,6 @@ class ProjectActivityMixin(object):
         else:
             raise ValueError("This mixin only works with Project/Activity")
         latest_log = UploadLog.latest_for_project(project)
-        print(latest_log)
         return latest_log[0] if latest_log else None
 
     @staticmethod
@@ -443,30 +432,19 @@ class ProjectActivityMixin(object):
                 (100 * part) / total)
             return int(percentage)
         except ZeroDivisionError:
-            return "N/A"
+            return 'N/A'
 
     @property
     def pie(self):
+
+        done = self.percentage_done
+
         try:
-            x = self.percentage_done
-        except:
-            logger.debug('Database error.')
-            x = "N/A"  # Ugly hack to catch all empty database related errors.
-        if x == "N/A":
-            return "pienan"
-        elif x == 0:
-            return "pie000"
-        elif x < 12.5:
-            return "pie012"
-        elif x >= 100:
-            return "pie100"
-        elif x > 87.5:
-            return "pie087"
-        else:
-            try:
-                return self.piedict[int(round(x/12.5))]
-            except:
-                return "ERROR-percentage-done-is---{}".format(x)
+            return ''.join(('pie', '{:03d}'.format(int(12.5 * int((done / 12.5)))))) if (done != 'N/A') else 'pienan'
+        except Exception as e:
+            logger.debug('pie caused an exception {} with percentage_done={}'
+                         .format(str(e), self.percentage_done))
+            return "ERROR-percentage-done-is---{}".format(self.percentage_done)
 
 
 class AnnotatedProjectManager(models.Manager):
@@ -527,20 +505,22 @@ class Project(ProjectActivityMixin, models.Model):
     def specifics(self, activity=None):
         return lizard_progress.specifics.Specifics(self, activity)
 
+    @cached_property
     def number_of_locations(self):
         return self.counted_number_of_locations
 
+    @cached_property
     def number_of_complete_locations(self):
         return Location.objects.filter(
             activity__project=self, complete=True,
             not_part_of_project=False).count()
 
-    @property
+    @cached_property
     def percentage_done(self):
-        return self.percentage(self.number_of_locations(),
-                               self.number_of_complete_locations())
+        return self.percentage(self.number_of_locations,
+                               self.number_of_complete_locations)
 
-    @property
+    @cached_property
     def is_simple(self):
         return bool(self.project_type and self.project_type.simple_upload)
 
@@ -569,7 +549,7 @@ class Project(ProjectActivityMixin, models.Model):
 
         return Hydrovak.reload_from(self, shapefiles[0])
 
-    @property
+    @cached_property
     def num_open_requests(self):
         from lizard_progress.changerequests.models import Request
         return Request.objects.filter(
@@ -740,7 +720,7 @@ class ReviewProject(models.Model):
             return 0
 
         if not self.feature_collection_geojson:
-            # TODO: return a 'n/a' or so rather than 0
+            # TODO: return a 'N/A' or so rather than 0
             return 0
 
         completion = []
@@ -1528,6 +1508,7 @@ class Activity(ProjectActivityMixin, models.Model):
             self.project.is_manager(user) or
             self.contractor == Organization.get_by_user(user))
 
+    @cached_property
     def num_locations(self):
         return self.location_set.filter(
             not_part_of_project=False).count()
@@ -1535,10 +1516,12 @@ class Activity(ProjectActivityMixin, models.Model):
     def has_locations(self):
         return self.location_set.filter(not_part_of_project=False).exists()
 
+    @cached_property
     def num_complete_locations(self):
         return self.location_set.filter(
             complete=True, not_part_of_project=False).count()
 
+    @cached_property
     def num_measurements(self):
         return Measurement.objects.filter(
             location__activity=self,
@@ -1687,7 +1670,7 @@ class Activity(ProjectActivityMixin, models.Model):
             return self.percentage(self.num_locations(),
                                    self.num_complete_locations())
         else:
-            return "N/A"
+            return 'N/A'
 
 
 class ExpectedAttachment(models.Model):

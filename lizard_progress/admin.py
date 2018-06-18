@@ -60,6 +60,9 @@ class UploadedFileErrorAdmin(admin.ModelAdmin):
 
 
 class ProjectAdmin(admin.ModelAdmin):
+    def get_query_set(self, request):
+        return models.Project.objects.select_related('organization')
+
     list_display = ('name', 'slug', 'organization', 'is_archived')
     search_fields = ['name', 'slug', 'organization__name']
     list_filter = ['organization__name']

@@ -468,7 +468,7 @@ class Project(ProjectActivityMixin, models.Model):
     project_type = models.ForeignKey(ProjectType, null=True, blank=True)
     created_at = models.DateTimeField(default=datetime.datetime.now)
 
-    objects = AnnotatedProjectManager()
+    annotated_objects = AnnotatedProjectManager()
 
     class Meta:
         ordering = ('name',)

@@ -424,7 +424,6 @@ class KickOutMixin(object):
         self.user = request.user
         self.profile = models.UserProfile.get_by_user(self.user)
         self.organization = getattr(self.profile, 'organization', None)
-        logger.debug('org' + str(self.organization))
         if not self.organization:
             auth.logout(request)
             return http.HttpResponseRedirect('/')

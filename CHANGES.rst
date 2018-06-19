@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.1.10 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Hotfix Upload button.
 
 
 4.1.9 (2018-06-18)

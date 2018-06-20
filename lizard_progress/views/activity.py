@@ -86,7 +86,7 @@ class ActivityMixin(object):
         project owning organisation is the same as this organization.
         """
         is_contracted_uploader = (
-            self.user_has_uploader_role() and
+            self.user_has_uploader_role and
             self.activity.contractor == self.organization)
         is_project_owner_in_simple_project = (
             self.activity.project.organization == self.organization and

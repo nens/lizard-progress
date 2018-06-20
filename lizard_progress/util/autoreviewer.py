@@ -43,6 +43,7 @@ ACTION_CODES = {'warn': 'Waarschuwing',
 
 import re
 import pandas as pd
+import json
 
 
 def _parse_content(s):
@@ -311,19 +312,36 @@ class FilterTable(object):
             if res in ACTION_CODES.keys():
                 return res
 
-    def apply_to_json(self, zc):
-        if zc['Herstelmaatregel'] != '':
-            return zc
+    def apply_to_reviews(self, dic):
 
-        for r in self.rules:
-            o = Observation()
-            for k in zc.keys():
-                o.add_field(Field(k, zc.get(k)))
+        import logging
+        logger = logging.getLogger(__name__)
 
-            res = r.apply_to(o)
-            if res in ACTION_CODES.keys():
-                zc['Herstelmaatregel'] = ACTION_CODES[res]
-                return zc
+        pipe_idx = 0
+        for pipe in dic['pipes']:
+
+            if 'ZC' in pipe:
+
+                zc_idx = 0
+
+                for zc in pipe['ZC']:
+
+                    if 'Herstelmaatregel' in zc and zc['Herstelmaatregel'] != '':
+                        continue
+
+                    obs = Observation()
+                    for k in zc.keys():
+                        obs.add_field(Field(k, zc.get(k)))
+
+                    res = self.test_observation(obs)
+                    if res in ACTION_CODES.keys():
+                        dic['pipes'][pipe_idx]['ZC'][zc_idx]['Herstelmaatregel'] = ACTION_CODES[res]
+
+                    zc_idx += 1
+
+            pipe_idx += 1
+
+        return dic
 
     def create_from_excel(self, f):
         names = ['HoofdcodeTag', 'HoofdcodeVal',
@@ -331,7 +349,13 @@ class FilterTable(object):
                  'Kar2Tag', 'Kar2Val', 'Kwant1',
                  'Omtrek', 'Waarschuwing', 'Ingrijp']
 
-        df = pd.read_excel(f, index_col=None)
+        df = None
+        try:
+            df = pd.read_excel(f, index_col=None)
+        except TypeError:
+            # pandas<=
+            df = pd.read_excel(f, 0, index_col=None)
+
         df = df.dropna(subset=df.columns[-2:], how='all').fillna('')
 
         for i, r in df.iterrows():
@@ -356,11 +380,12 @@ class FilterTable(object):
 class AutoReviewer(object):
 
     def __init__(self, filterfile_in):
+        self.filterFile = filterfile_in
         self.filterTable = FilterTable()
         self.filterTable.create_from_excel(filterfile_in)
 
     def run(self, json_in):
-        json_out = self.filterTable.apply_to_json(json_in)
+        json_out = self.filterTable.apply_to_reviews(json_in)
         return json_out
 
 
@@ -368,10 +393,13 @@ if __name__ == '__main__':
 
     o2 = Observation([Field('A', 'BAO'), Field('B', 'C'), Field('G', '0')])
     r1o1 = Observation([Field('A', 'BAA'), Field('D', '6')])
-    f = 'filter_complete_valid.xlsx'
+    f = '/tmp/filter_complete_valid.xlsx'
 
     ar = AutoReviewer(f)
 
-    res = ar.run('complex_review.json')
+    res = 'not ready'
+    with open('/tmp/review_uncompleted.json') as f:
+        data = json.load(f)
+        res = ar.run(data)
     print(res)
     # print(ar.filterTable.test_observation(r1o1))

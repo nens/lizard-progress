@@ -817,15 +817,19 @@ class ReviewProject(models.Model):
         from . import tasks
 
         # Setup using RIBX asynchronously, to prevent timeouts
-        tasks.setup_project_using_ribx_task.delay(
-            project_review.id,
-            project_url,
-            abs_ribx_path,
-            abs_filler_path)
+        if settings.DEBUG:
+            project_review.setup_project_using_ribx(project_url, abs_ribx_path, abs_filler_path)
+        else:
+            tasks.setup_project_using_ribx_task.delay(
+                project_review.id,
+                project_url,
+                abs_ribx_path,
+                abs_filler_path)
 
         return project_review
 
-    def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path, arFilterFile):
+    def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path):
+        logger.debug(' **** >>>>  Entered  setup_project_using_ribx')
         parser = etree.XMLParser()
         tree = etree.parse(abs_ribx_path)
         root = tree.getroot()
@@ -849,18 +853,19 @@ class ReviewProject(models.Model):
             manhole = self._parse_zb_c(elem)
             reviews['manholes'].append(manhole)
 
+        the_reviews = reviews
+
         # apply inspection_filler if we specify one
         if abs_filler_path:
-            rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
-            rule_tree = filler.build_rule_tree(rules)
-            the_reviews = filler.apply_rules(rule_tree, reviews)
+            # rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
+            # rule_tree = filler.build_rule_tree(rules)
+            # the_reviews = filler.apply_rules(rule_tree, reviews)
 
-            ar = AutoReviewer(arFilterFile)
+            self.inspection_filler = abs_filler_path
+            ar = AutoReviewer(abs_filler_path)
             the_reviews = ar.run(reviews)
-        else:
-            the_reviews = reviews
 
-        self.set_reviews(the_reviews, from_task=True)  # Saves
+        self.set_reviews(the_reviews, from_task=False)  # Saves
 
     def set_reviews(self, the_reviews, from_task=False):
         logger.debug('Entered  set_reviews')
@@ -971,28 +976,6 @@ class ReviewProject(models.Model):
         result[self.HERSTELMAATREGEL] = ''
         result[self.OPMERKING] = ''
         return result
-
-    # TODO: NOT USED ANYWHERE, nor tested, should probably remove this
-    def apply_inspection_filler(self,
-                                inspection_filler=None,
-                                delimiter=str(',')):
-        """Apply the inspection filler to the inspections of this reviewproject
-
-        :arg
-            inspection_filler (string): the path location of the inspection
-                filler
-            delimiter (str): one-character string used to separate fields.
-        :return
-            Reviews updated according to the rules defined in the inspection_filler.
-        """
-        if inspection_filler is None:
-            inspection_filler = self.inspection_filler
-
-        flat_rules = filler.parse_insp_filter(inspection_filler)
-        rule_tree = filler.build_rule_tree(flat_rules)
-        new_reviews = filler.apply_rules(rule_tree, reviews)
-
-        return new_reviews
 
     def get_coord_reviewproject(self):
         """Return a set of coordinates of this reviewproject.

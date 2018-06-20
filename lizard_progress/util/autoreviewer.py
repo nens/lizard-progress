@@ -81,7 +81,7 @@ def _eval(val, op, thr):
 
 
 def _parse_content(s):
-    if str(s).strip() == '' or s is None:
+    if not s or not str(s).strip():
         return None, None
 
     oper = '=='
@@ -91,7 +91,7 @@ def _parse_content(s):
                 .replace('of', ',')
 
     # special case: any content should trigger
-    if 'alle' in val:
+    if 'alle' in val or val == '*':
         val = '*'
         oper = 'or'
         return val, oper
@@ -155,11 +155,13 @@ class Field(object):
         self.tag = _parse_tag(tag)['tag']
 
         val, oper = _parse_content(value)
+
         try:
             val = float(val)
             self.numeric = True
         except (ValueError, TypeError):
             self.numeric = False
+
         self.content = val
 
     def __str__(self):
@@ -413,14 +415,21 @@ class AutoReviewer(object):
         json_out = self.filterTable.apply_to_reviews(json_in)
         return json_out
 
+    def count_rules(self):
+        return len([r for r in self.filterTable.rules if r.is_valid()])
+
 
 if __name__ == '__main__':
 
     f = '/tmp/filter_complete_valid.xlsx'
 
     ar = AutoReviewer(f)
+    print(ar.count_rules())
+    
     o2 = Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '10')])
     o3 = Observation([Field('A', 'BAF'), Field('B', 'E'), Field('C', 'Z')])
 
     res = ar.filterTable.test_observation(o2)
+    print(res)
     res = ar.filterTable.test_observation(o3)
+    print(res)

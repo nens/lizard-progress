@@ -43,23 +43,57 @@ ACTION_CODES = {'warn': 'Waarschuwing',
 
 import re
 import pandas as pd
-import json
+import operator
+
+
+def _eval(val, op, thr):
+
+    ops = {'<': operator.lt,
+           '<=': operator.le,
+           '==': operator.eq,
+           '=': operator.eq,
+           '>=': operator.ge,
+           '>': operator.gt,
+           None: operator.eq,
+           'or': operator.or_,
+           'in': operator.contains}
+
+    _val = val
+    _thr = thr
+
+    try:
+        _val = float(val)
+        _thr = float(thr)
+    except ValueError:
+        pass
+
+    try:
+        if op == 'in':
+            # contains reverses the operands
+            res = bool(ops[op](_thr, _val))
+        else:
+            res = bool(ops[op](_val, _thr))
+
+    except TypeError:
+        res = False
+
+    return res
 
 
 def _parse_content(s):
     if str(s).strip() == '' or s is None:
         return None, None
 
+    oper = '=='
     # Get rid of conjunctions
     val = str(s).strip()\
                 .replace('en', ',')\
                 .replace('of', ',')
-    oper = None
 
     # special case: any content should trigger
     if 'alle' in val:
-        val = 'not None'
-        oper = 'is'
+        val = '*'
+        oper = 'or'
         return val, oper
 
     # Looks like a list
@@ -73,22 +107,19 @@ def _parse_content(s):
     for op in ['>=', '<=', '<', '>', '=', '==']:
         if op in val:
             oper = op
-            if op == '=':
-                oper = '=='
             val = val.replace(op, '').strip()
             break
 
     # if no operator specified for a single value, use '=='
     if val and (oper is None):
         oper = '=='
+
     return val, oper
 
 
 def _is_xml_element(s):
-    """ Returns True if input has the form <tag>content</tag>, content may be empty
-    args:
-       s: string
-    returns: Boolean
+    """ Returns True if input has the form <tag>content</tag>, content may be empty.
+        Used to separate tags from content in the input filter file.
     """
     if s:
         return re.search(r'<([^>]+)>[\s\S]*?</\1>', s) is not None
@@ -123,13 +154,13 @@ class Field(object):
         # TODO: use re
         self.tag = _parse_tag(tag)['tag']
 
-        self.content, oper = _parse_content(value)
-
+        val, oper = _parse_content(value)
         try:
-            dummy = float(self.content)
+            val = float(val)
             self.numeric = True
         except (ValueError, TypeError):
             self.numeric = False
+        self.content = val
 
     def __str__(self):
         return str(''.join(('<', self.tag, '>',
@@ -143,7 +174,7 @@ class Field(object):
         if self.tag == other.tag:
             l1 = self.content if isinstance(self.content, list) else [self.content]
             l2 = other.content if isinstance(other.content, list) else [other.content]
-            return set(l1).intersection(l2)
+            return bool(set(l1).intersection(l2)) or self.content == '*' or other.content == '*'
         else:
             return False
 
@@ -219,16 +250,17 @@ class ObservationMask(Observation):
     def applies_to(self, obs):
         # checks if all non-trigger fields of the mask appear (with the same value) in the observation
         # and the trigger tag appears in the observation
-        return all([mf in obs for mf in self.fields if not mf.is_trigger()]) \
+        res = all([mf in obs for mf in self.fields if not mf.is_trigger()]) \
             and \
             self.get_trigger_field().tag in [f.tag for f in obs.fields]
+        return res
 
     def __str__(self):
         return super(ObservationMask, self).__str__()
 
 
 class Rule(object):
-    """Implements a single filter rule. (== one row in the imported file)"""
+    """Implements a single filter rule."""
 
     def __init__(self, mask, warn=None, intervene=None):
 
@@ -241,8 +273,10 @@ class Rule(object):
         self.warnExpr = None
         self.interveneExpr = None
 
-        if self.is_valid():
-            self.create()
+        if warn:
+            self.warnThreshold, self.warnOperator = _parse_content(warn)
+        if intervene:
+            self.interveneThreshold, self.interveneOperator = _parse_content(intervene)
 
     def is_valid(self):
         return (self.warnThreshold is not None or self.interveneThreshold is not None) and \
@@ -253,44 +287,25 @@ class Rule(object):
             return 'Invalid mask.'
 
         if self.mask.applies_to(observation):
-            if self.interveneOperator and\
-               self.interveneExpr(observation.get(self.mask.get_trigger_field().tag).content):
-                    return ACTION_CODES.keys()[1]
-            elif self.warnOperator:
-                if self.warnExpr(
-                        observation.get(self.mask.get_trigger_field().tag).content):
-                    return ACTION_CODES.keys()[0]
-            else:
-                return 'Not triggered'
-        else:
-            return 'Mask does not match'
 
-    def set_warn(self, s):
-        self.warnThreshold, self.warnOperator = _parse_content(s)
-        if self.mask.get_trigger_field().numeric:
-            self.warnExpr = lambda x: eval(str(x) + self.warnOperator + str(self.warnThreshold))
-        else:
-            q2 = '' if isinstance(self.warnThreshold, list) else '\''
-            self.warnExpr = lambda x: eval('\'' + str(x) + '\'' +
-                                           self.warnOperator + q2 + str(self.warnThreshold) + q2)
+            val = observation.get(self.mask.get_trigger_field().tag).content
+            res = _eval(val, self.interveneOperator, self.interveneThreshold)
+            if res:
+                return ACTION_CODES.keys()[1]
 
-    def set_intervene(self, s):
-        self.interveneThreshold, self.interveneOperator = _parse_content(s)
-        if self.mask.get_trigger_field().numeric:
-            self.interveneExpr = lambda x: eval(str(x) + self.interveneOperator + str(self.interveneThreshold))
-        else:
-            q2 = '' if isinstance(self.interveneThreshold, list) else '\''
-            self.interveneExpr = lambda x: eval('\'' + str(x) + '\'' +
-                                                self.interveneOperator + q2 + str(self.interveneThreshold) + q2)
+            val = observation.get(self.mask.get_trigger_field().tag).content
+            res = _eval(val, self.warnOperator, self.warnThreshold)
+            if res:
+                return ACTION_CODES.keys()[0]
 
-    def create(self):
-        self.set_warn(self.warnThreshold)
-        self.set_intervene(self.interveneThreshold)
+            return ''
+        else:
+            return 'Mask does not match observation'
 
     def __str__(self):
-        return(''.join((str(self.mask),
-                        ', warning: ', self.warnOperator or '', str(self.warnThreshold) or '-',
-                        ', intervention: ', self.interveneOperator or '', str(self.interveneThreshold) or '-')))
+        return(' '.join((str(self.mask),
+                         ', warning:', self.warnOperator or '', str(self.warnThreshold) or '-',
+                         ', intervention:', self.interveneOperator or '', str(self.interveneThreshold) or '-')))
 
 
 class FilterTable(object):
@@ -307,12 +322,15 @@ class FilterTable(object):
             self.rules.append(rule)
 
     def test_observation(self, observation):
+        res = None
         for r in self.rules:
             res = r.apply_to(observation)
             if res in ACTION_CODES.keys():
-                return res
+                break
+        return res
 
     def apply_to_reviews(self, dic):
+        """ Applies rules to a dictionary with reviews (uploadservice review json). """
 
         import logging
         logger = logging.getLogger(__name__)
@@ -337,6 +355,8 @@ class FilterTable(object):
                     if res in ACTION_CODES.keys():
                         dic['pipes'][pipe_idx]['ZC'][zc_idx]['Herstelmaatregel'] = ACTION_CODES[res]
 
+                    logger.debug(obs)
+                    logger.debug(res)
                     zc_idx += 1
 
             pipe_idx += 1
@@ -344,6 +364,11 @@ class FilterTable(object):
         return dic
 
     def create_from_excel(self, f):
+        """ Creates set of rules using the input excel file.
+        One row = one rule,
+        the rightmost tag must contail no value and will be considered the trigger.
+        """
+
         names = ['HoofdcodeTag', 'HoofdcodeVal',
                  'Kar1Tag', 'Kar1Val',
                  'Kar2Tag', 'Kar2Val', 'Kwant1',
@@ -353,7 +378,7 @@ class FilterTable(object):
         try:
             df = pd.read_excel(f, index_col=None)
         except TypeError:
-            # pandas<=
+            # pandas <= 0.22
             df = pd.read_excel(f, 0, index_col=None)
 
         df = df.dropna(subset=df.columns[-2:], how='all').fillna('')
@@ -391,15 +416,11 @@ class AutoReviewer(object):
 
 if __name__ == '__main__':
 
-    o2 = Observation([Field('A', 'BAO'), Field('B', 'C'), Field('G', '0')])
-    r1o1 = Observation([Field('A', 'BAA'), Field('D', '6')])
     f = '/tmp/filter_complete_valid.xlsx'
 
     ar = AutoReviewer(f)
+    o2 = Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '10')])
+    o3 = Observation([Field('A', 'BAF'), Field('B', 'E'), Field('C', 'Z')])
 
-    res = 'not ready'
-    with open('/tmp/review_uncompleted.json') as f:
-        data = json.load(f)
-        res = ar.run(data)
-    print(res)
-    # print(ar.filterTable.test_observation(r1o1))
+    res = ar.filterTable.test_observation(o2)
+    res = ar.filterTable.test_observation(o3)

@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.1.10 (unreleased)
+4.1.10 (2018-06-20)
 -------------------
 
 - Hotfix Upload button.

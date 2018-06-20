@@ -23,14 +23,17 @@ class TestAutoReviewer(FixturesTestCase):
 
         self.ar = AutoReviewer(self.filterfile)
 
-    def test_observation(self):
-
+    def test_count_rules(self):
         res = self.ar.count_rules()
         self.assertEquals(res, 20)
 
-        obs = Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '10')])
-        res = self.ar.filterTable.test_observation(obs)
-        self.assertEquals(res, 'intervene')
+    def test_observations(self):
+        # Let's start with single observations
+        test_cases = {Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '10')]): 'INTERVENE',
+                      Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
+                      Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'Z')]): 'WARN',
+                      Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
+        }
 
-        obs = Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')])
-        self.assertEquals(res, 'warn')
+        for obs, expected in test_cases:
+            self.assertEquals(self.ar.filterTable.test_observation(obs), expected)

@@ -38,8 +38,12 @@ as content.
 
 """
 
-ACTION_CODES = {'warn': 'Waarschuwing',
-                'intervene': 'Ingrijp'}
+ACTION_CODES = {'WARN': 'Waarschuwing',
+                'INTERVENE': 'Ingrijp'}
+
+MESSAGE_CODES = {'MASKINVALID': 'Invalid mask.',
+                 'NORULE': 'No applicable rules.',
+                 'NOACTION': 'Observation passes the filter with no action.'}
 
 import re
 import pandas as pd
@@ -47,7 +51,14 @@ import operator
 
 
 def _eval(val, op, thr):
-
+    """"Evaluates an expression with a binary operator.
+    IN
+    val: left operand
+    op: binary operator
+    thr: right operand
+    OUT:
+    evaluation result (bool)
+    """
     ops = {'<': operator.lt,
            '<=': operator.le,
            '==': operator.eq,
@@ -58,22 +69,18 @@ def _eval(val, op, thr):
            'or': operator.or_,
            'in': operator.contains}
 
-    _val = val
-    _thr = thr
-
     try:
-        _val = float(val)
-        _thr = float(thr)
+        val = float(val)
+        thr = float(thr)
     except ValueError:
         pass
 
     try:
         if op == 'in':
-            # contains reverses the operands
-            res = bool(ops[op](_thr, _val))
+            # 'contains' reverses the operands
+            res = bool(ops[op](thr, val))
         else:
-            res = bool(ops[op](_val, _thr))
-
+            res = bool(ops[op](val, thr))
     except TypeError:
         res = False
 
@@ -81,6 +88,14 @@ def _eval(val, op, thr):
 
 
 def _parse_content(s):
+    """Parces content of a table cell, returns its value and the operator in case the cell contains a condition.
+    IN
+    s: string
+    OUT:
+    val: parsed value as string
+    oper: operator if cell contains a (binary) expression
+    """
+
     if not s or not str(s).strip():
         return None, None
 
@@ -118,9 +133,9 @@ def _parse_content(s):
 
 
 def _is_xml_element(s):
-    """ Returns True if input has the form <tag>content</tag>, content may be empty.
-        Used to separate tags from content in the input filter file.
-    """
+    """ Returns True if input s has the form <tag>content</tag>, content may be empty.
+        Used to separate tags from content in the input filter file. """
+
     if s:
         return re.search(r'<([^>]+)>[\s\S]*?</\1>', s) is not None
     else:
@@ -129,8 +144,8 @@ def _is_xml_element(s):
 
 def _parse_tag(tag):
     """ Transforms a tag to a string, removing <, >, />, e. g. <A> </A> -> A, but also A -> A.
-    This allows tags of the form 'A' etc. to be used in the filter file.
-    """
+    This allows tags of the form 'A' etc. to be used in the filter file. """
+
     if '<' not in tag:
         return {'tag': tag, 'content': ''}
     else:
@@ -140,9 +155,7 @@ def _parse_tag(tag):
 
 class Field(object):
     """Represents a GWSW-ribx field (which in fact is a XML element) with its tag and content,
-    e. g. <A>1</A> will be represented by an instance of Field with .tag = 'A' and .content = '1'.
-
-    """
+    e. g. <A>1</A> will be represented by an instance of Field with .tag = 'A' and .content = '1'. """
 
     def __init__(self, tag, value=None):
 
@@ -196,9 +209,7 @@ class Field(object):
 
 
 class Observation(object):
-    """Represents an observation as a set of Field instances.
-
-    """
+    """Represents a single observation as a set of Field instances."""
 
     def __init__(self, *args, **kwargs):
         self.fields  = []
@@ -232,11 +243,10 @@ class Observation(object):
 
 
 class ObservationMask(Observation):
-    """Represents an observation mask: a set of Field instances to filter observations containig the
-    same elements as the mask. The only difference to Observation is that ObservationMask must
-    contain exactly one field with empty content. When testing an observation, its element with the
-    same tag as the empty element of the mask will be tested against the threshold values ('Waarschuwing', 'Ingrijp').
-    """
+    """Represents an observation mask: a set of Field instances to filter observations containig all
+    elements of the mask. The only difference to Observation is that ObservationMask must contain
+    exactly one field with empty content. The tag of this field will be used to select the element
+    from the tested observation to evaluate it and to trigger an autoreview ('Waarschuwing', 'Ingrijp')."""
 
     def is_valid(self):
         # mask is valid if all fields are complete or empty and there is exactly one trigger field
@@ -286,7 +296,7 @@ class Rule(object):
 
     def apply_to(self, observation):
         if not self.mask.is_valid():
-            return 'Invalid mask.'
+            return 'MASKINVALID'
 
         if self.mask.applies_to(observation):
 
@@ -300,24 +310,21 @@ class Rule(object):
             if res:
                 return ACTION_CODES.keys()[0]
 
-            return ''
+            return 'NOACTION'
         else:
-            return 'Mask does not match observation'
+            return 'NORULE'
 
     def __str__(self):
         return(' '.join((str(self.mask),
-                         ', warning:', self.warnOperator or '', str(self.warnThreshold) or '-',
-                         ', intervention:', self.interveneOperator or '', str(self.interveneThreshold) or '-')))
+                         ACTION_CODES[0], self.warnOperator or '', str(self.warnThreshold) or '-',
+                         ACTION_CODES[1], self.interveneOperator or '', str(self.interveneThreshold) or '-')))
 
 
 class FilterTable(object):
     """Implements a set of filter rules."""
 
-    def __init__(self, rules=[], csvfile=None):
+    def __init__(self, rules=[]):
         self.rules = rules
-
-        if csvfile:
-            self.parse(csvfile)
 
     def add_rule(self, rule):
         if rule.is_valid():
@@ -332,10 +339,7 @@ class FilterTable(object):
         return res
 
     def apply_to_reviews(self, dic):
-        """ Applies rules to a dictionary with reviews (uploadservice review json). """
-
-        import logging
-        logger = logging.getLogger(__name__)
+        """ Applies rules to a dictionary with reviews (uploadservice reviews json)."""
 
         pipe_idx = 0
         for pipe in dic['pipes']:
@@ -357,8 +361,6 @@ class FilterTable(object):
                     if res in ACTION_CODES.keys():
                         dic['pipes'][pipe_idx]['ZC'][zc_idx]['Herstelmaatregel'] = ACTION_CODES[res]
 
-                    logger.debug(obs)
-                    logger.debug(res)
                     zc_idx += 1
 
             pipe_idx += 1
@@ -424,12 +426,12 @@ if __name__ == '__main__':
     f = '/tmp/filter_complete_valid.xlsx'
 
     ar = AutoReviewer(f)
-    print(ar.count_rules())
-    
+
     o2 = Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '10')])
     o3 = Observation([Field('A', 'BAF'), Field('B', 'E'), Field('C', 'Z')])
+    o4 = Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')])
 
-    res = ar.filterTable.test_observation(o2)
+    res = ar.filterTable.test_observation(o4)
     print(res)
     res = ar.filterTable.test_observation(o3)
     print(res)

@@ -86,12 +86,12 @@ def _parse_content(s):
 
     oper = '=='
     # Get rid of conjunctions
-    val = str(s).strip()\
-                .replace('en', ',')\
-                .replace('of', ',')
+    val = str(s).strip().upper()\
+                        .replace('EN', ',')\
+                        .replace('OF', ',')
 
     # special case: any content should trigger
-    if 'alle' in val or val == '*':
+    if 'ALLE' in val or val == '*':
         val = '*'
         oper = 'or'
         return val, oper

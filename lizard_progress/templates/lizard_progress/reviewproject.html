@@ -21,13 +21,12 @@
       </button>
     </a>
 
-    {% if True %}
     <a href="download">
-      <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
-        Download reviews
-      </button>
+	<button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px"
+		{% if not view.reviewproject.reviews %}disabled{% endif %}>
+            Download reviews
+	</button>
     </a>
-    {% endif %}
     <form action="" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <p class="text-warning">{{ view.form.non_field_errors }}</p>

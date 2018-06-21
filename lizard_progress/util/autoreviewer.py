@@ -421,7 +421,7 @@ class AutoReviewer(object):
         return len([r for r in self.filterTable.rules if r.is_valid()])
 
 
-if __name__ == '__main__':
+"""if __name__ == '__main__':
 
     f = '/tmp/filter_complete_valid.xlsx'
 
@@ -435,3 +435,4 @@ if __name__ == '__main__':
     print(res)
     res = ar.filterTable.test_observation(o3)
     print(res)
+"""

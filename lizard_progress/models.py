@@ -864,7 +864,7 @@ class ReviewProject(models.Model):
             ar = AutoReviewer(abs_filler_path)
             the_reviews = ar.run(reviews)
 
-        self.set_reviews(the_reviews, from_task=False)  # Saves
+        self.set_reviews(the_reviews, from_task=True)  # Saves
 
     def set_reviews(self, the_reviews, from_task=False):
         self.reviews = the_reviews

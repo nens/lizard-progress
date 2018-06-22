@@ -92,8 +92,7 @@ class TestAutoReviewerObservation(FixturesTestCase):
                       Observation([Field('A', 'BBB'), Field('D', '4'), Field('F', '6')]): 'WARN',
                       Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
                       Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'Z')]): 'WARN',
-                      Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NOACTION',
-                      Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '1')]): 'NOACTION',
+                      Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
                       Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE'}
 
         for obs, expected in test_cases.items():

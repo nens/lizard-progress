@@ -108,7 +108,7 @@ def _parse_content(s):
     # special case: any content should trigger
     if 'ALLE' in val or val == '*':
         val = '*'
-        oper = 'or'
+        oper = 'and'
         return val, oper
 
     # Looks like a list
@@ -317,8 +317,8 @@ class Rule(object):
 
     def __str__(self):
         return(' '.join((str(self.mask),
-                         ACTION_CODES[0], self.warnOperator or '', str(self.warnThreshold) or '-',
-                         ACTION_CODES[1], self.interveneOperator or '', str(self.interveneThreshold) or '-')))
+                         ACTION_CODES.keys()[0], self.warnOperator or '', str(self.warnThreshold) or '-',
+                         ACTION_CODES.keys()[1], self.interveneOperator or '', str(self.interveneThreshold) or '-')))
 
 
 class FilterTable(object):
@@ -422,18 +422,30 @@ class AutoReviewer(object):
         return len([r for r in self.filterTable.rules if r.is_valid()])
 
 
-"""if __name__ == '__main__':
+if __name__ == '__main__':
 
-    f = '/tmp/filter_complete_valid.xlsx'
+    import os
+
+    f = os.path.join('lizard_progress',
+                     'util',
+                     'tests',
+                     'test_autoreviewer_files',
+                     'filter_complete_valid.xlsx')
 
     ar = AutoReviewer(f)
 
-    o2 = Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '10')])
-    o3 = Observation([Field('A', 'BAF'), Field('B', 'E'), Field('C', 'Z')])
-    o4 = Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')])
+    print(ar.filterTable)
 
-    res = ar.filterTable.test_observation(o4)
-    print(res)
-    res = ar.filterTable.test_observation(o3)
-    print(res)
-"""
+    test_cases = {Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '11')]): 'INTERVENE',
+                  Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
+                  Observation([Field('A', 'BBB'), Field('D', '6'), Field('F', '6')]): 'WARN',
+                  Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
+                  Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'Z')]): 'WARN',
+                  Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
+                  Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE'}
+
+    print('==========')
+    for obs, expected in test_cases.items():
+        res = ar.filterTable.test_observation(obs)
+        print(' '.join((str(obs), '->', res, '(expected:', expected, ')')))
+        assert(res == expected)

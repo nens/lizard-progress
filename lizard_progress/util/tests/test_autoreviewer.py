@@ -74,31 +74,6 @@ class TestAutoReviewerFromFile(FixturesTestCase):
         self.assertEquals(res, 20)
 
 
-class TestAutoReviewerObservation(FixturesTestCase):
-
-    def setUp(self):
-        self.filterfile = os.path.join('lizard_progress',
-                                       'util',
-                                       'tests',
-                                       'test_autoreviewer_files',
-                                       'filter_complete_valid.xlsx')
-
-        self.ar = AutoReviewer(self.filterfile)
-
-    def test_observations(self):
-        # Let's start with single observations
-        test_cases = {Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '11')]): 'INTERVENE',
-                      Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
-                      Observation([Field('A', 'BBB'), Field('D', '4'), Field('F', '6')]): 'WARN',
-                      Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
-                      Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'Z')]): 'WARN',
-                      Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
-                      Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE'}
-
-        for obs, expected in test_cases.items():
-            self.assertEquals(self.ar.filterTable.test_observation(obs), expected)
-
-
 class TestAutoReviewerRIBX(FixturesTestCase):
     def setUp(self):
         self.filterfile = os.path.join('lizard_progress',

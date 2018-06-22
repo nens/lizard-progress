@@ -82,7 +82,7 @@ class TestAutoReviewerObservation(FixturesTestCase):
                                        'test_autoreviewer_files',
                                        'filter_complete_valid.xlsx')
 
-        self.ar = AutoReviewer(self.ilterfile)
+        self.ar = AutoReviewer(self.filterfile)
 
     def test_observations(self):
         # Let's start with single observations
@@ -121,7 +121,7 @@ class TestAutoReviewerRIBX(FixturesTestCase):
                            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True):
             pr = ReviewProject.create_from_ribx('test RP name',
                                                 self.ribx,
-                                                'test organization name',
+                                                organization=self.organization,
                                                 inspection_filler=self.filterfile,
                                                 move=False)
 

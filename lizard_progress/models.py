@@ -33,7 +33,7 @@ from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
-from lizard_progress.util import filler
+# from lizard_progress.util import filler
 from lizard_progress.util.autoreviewer import AutoReviewer
 
 from lizard_map import coordinates
@@ -829,7 +829,6 @@ class ReviewProject(models.Model):
         return project_review
 
     def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path):
-        logger.debug(' **** >>>>  Entered  setup_project_using_ribx')
         parser = etree.XMLParser()
         tree = etree.parse(abs_ribx_path)
         root = tree.getroot()

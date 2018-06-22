@@ -112,6 +112,7 @@ def _parse_content(s):
         return val, oper
 
     # Looks like a list
+    # TODO: does the comma ever appear as the decimal separator?
     for delim in [',', ';', ' ']:
         if delim in val:
             val = list(map(lambda s: s.strip(), val.split(delim)))

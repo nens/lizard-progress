@@ -38,6 +38,7 @@ from lizard_progress.util.autoreviewer import AutoReviewer
 from lizard_progress.util.autoreviewer import Observation
 from lizard_progress.util.autoreviewer import Field
 from lizard_progress.models import ReviewProject
+from lizard_progress.models import Organization
 from lizard_progress.tests.test_models import OrganizationF
 from lizard_progress.tests.base import FixturesTestCase
 
@@ -95,7 +96,7 @@ class TestAutoReviewerObservation(FixturesTestCase):
                       Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '1')]): 'NOACTION',
                       Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE'}
 
-        for obs, expected in test_cases:
+        for obs, expected in test_cases.items():
             self.assertEquals(self.ar.filterTable.test_observation(obs), expected)
 
 
@@ -114,6 +115,10 @@ class TestAutoReviewerRIBX(FixturesTestCase):
                                  'tests',
                                  'test_autoreviewer_files',
                                  'testbestand_metingen.ribx')
+
+        self.organization = Organization.objects.create(
+            name='Test organization'
+        )
 
     def test_ribx_result(self):
         # test reviews based on a ribx file and a xlsx filter file

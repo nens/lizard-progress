@@ -87,7 +87,7 @@ class TestAutoReviewerObservation(FixturesTestCase):
 
     def test_observations(self):
         # Let's start with single observations
-        test_cases = {Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '10')]): 'INTERVENE',
+        test_cases = {Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '11')]): 'INTERVENE',
                       Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
                       Observation([Field('A', 'BBB'), Field('D', '4'), Field('F', '6')]): 'WARN',
                       Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
@@ -141,9 +141,9 @@ class TestAutoReviewerRIBX(FixturesTestCase):
             for zc in pipe['ZC']:
 
                 if zc['A'] == 'BAA':
-                    if zc['D'] > 10:
+                    if int(zc['D']) > 10:
                         self.assertEquals(zc['Herstelmaatregel'], 'Ingrijp')
-                    elif zc['D'] > 5:
+                    elif int(zc['D']) > 5:
                         self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
                     else:
                         self.assertEquals(zc['Herstelmaatregel'], '')

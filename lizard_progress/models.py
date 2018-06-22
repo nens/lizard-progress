@@ -736,7 +736,7 @@ class ReviewProject(models.Model):
 
     def _calc_progress_pipe(self, pipe):
         """Return a float indicating how % much the pipe has been reviewed"""
-        if pipe[self.HERSTELMAATREGEL] != '':
+        if not bool(pipe[self.HERSTELMAATREGEL]):
             return 100
         completed = sum(100 for zc in pipe['ZC'] if zc[self.HERSTELMAATREGEL])
         return completed / len(pipe['ZC'])
@@ -887,14 +887,14 @@ class ReviewProject(models.Model):
             if elem.tag in self.ZB_A_FIELDS:
                 if elem.tag in ['AAE']:
                     result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
-                    x, y = result[elem.tag] = elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    x, y = result[elem.tag] = elem.getchildren()[0].getchildren()[0].text.split()
                     result['Beginpunt x'] = x
                     result['Beginpunt y'] = y
                     result['Beginpunt CRS'] = elem.getchildren()[0].attrib[
                         'srsName']
                 elif elem.tag in ['AAG']:
                     x, y = result[elem.tag] = \
-                    elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    elem.getchildren()[0].getchildren()[0].text.split()
                     result['Eindpunt x'] = x
                     result['Eindpunt y'] = y
                     result['Eindpunt CRS'] = elem.getchildren()[0].attrib[
@@ -932,7 +932,7 @@ class ReviewProject(models.Model):
             if elem.tag in self.ZB_C_FIELDS:
                 if elem.tag in ['CAB']:
                     # result[elem.tag] = elem.getchildren()[0].getchildren()[0].text
-                    x, y = elem.getchildren()[0].getchildren()[0].text.split(' ')
+                    x, y = elem.getchildren()[0].getchildren()[0].text.split()
                     result['x'] = x
                     result['y'] = y
                     result['CRS'] = elem.getchildren()[0].attrib['srsName']
@@ -1079,7 +1079,12 @@ class ReviewProject(models.Model):
 
         # manholes
         for manhole in self.reviews['manholes']:
-            x, y = manhole['x'], manhole['y']
+            try:
+                x, y = manhole['x'], manhole['y']
+            except KeyError:
+                # some manholes are missing coordinates, we can't do anything
+                # for those
+                continue
             coord = coordinates.rd_to_wgs84(x, y)
             geom = geojson.Point(coord)
             completion = self._calc_progress_manhole(manhole)
@@ -1091,12 +1096,16 @@ class ReviewProject(models.Model):
 
         # pipes
         for pipe in self.reviews['pipes']:
-            start = [float(pipe['Beginpunt x']),
-                     float(pipe['Beginpunt y'])]
-            start = coordinates.rd_to_wgs84(start[0], start[1])
-            end = [float(pipe['Eindpunt x']),
-                   float(pipe['Eindpunt y'])]
-            end = coordinates.rd_to_wgs84(end[0], end[1])
+            try:
+                start = [float(pipe['Beginpunt x']),
+                         float(pipe['Beginpunt y'])]
+                start = coordinates.rd_to_wgs84(start[0], start[1])
+                end = [float(pipe['Eindpunt x']),
+                       float(pipe['Eindpunt y'])]
+                end = coordinates.rd_to_wgs84(end[0], end[1])
+            except KeyError:
+                # missing coordinates, can't create geojson...
+                continue
             geom = geojson.LineString([start, end])
 
             completion = self._calc_progress_pipe(pipe)

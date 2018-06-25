@@ -86,7 +86,7 @@ class AcceptedFileAdmin(admin.ModelAdmin):
 class ReviewProjectAdmin(admin.ModelAdmin):
     list_display = ('name', 'organization', 'contractor', 'project')
     search_fields = ['name', 'organization', 'contractor', 'project']
-    exclude = ['reviews']
+    exclude = ['reviews', 'feature_collection_geojson']
 
 
 class UserProfileAdmin(admin.ModelAdmin):

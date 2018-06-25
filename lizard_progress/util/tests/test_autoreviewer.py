@@ -75,6 +75,7 @@ class TestAutoReviewerFromFile(FixturesTestCase):
 
     def test_observations(self):
         test_cases = {Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '11')]): 'INTERVENE',
+                      Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '1')]): 'NOACTION',
                       Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
                       Observation([Field('A', 'BBB'), Field('D', '6'), Field('F', '6')]): 'WARN',
                       Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',

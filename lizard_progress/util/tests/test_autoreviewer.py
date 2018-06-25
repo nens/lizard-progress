@@ -45,6 +45,9 @@ from lizard_progress.tests.base import FixturesTestCase
 import os
 import factory
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class ReviewProjectF(factory.DjangoModelFactory):
     class Meta:
@@ -163,7 +166,8 @@ class TestAutoReviewerRIBX(FixturesTestCase):
                         self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
                     elif zc['B'] in 'CDEFGHI' and zc['C'] in 'CD':
                         self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
-                    elif bool(zc['B']) and zc['C'] in 'EZ':
+                    elif bool(zc.get('B')) and zc['C'] in 'EZ':
+                        logger.debug(zc.get('B') + zc['C'])
                         self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
                     else:
                         self.assertEquals(zc['Herstelmaatregel'], '')

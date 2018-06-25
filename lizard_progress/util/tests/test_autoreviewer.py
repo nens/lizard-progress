@@ -137,7 +137,7 @@ class TestAutoReviewerRIBX(FixturesTestCase):
                 if zc['A'] == 'BAA':
                     if int(zc['D']) >= 10:
                         self.assertEquals(zc['Herstelmaatregel'], 'Ingrijp')
-                    elif int(zc['D']) > 5:
+                    elif int(zc['D']) >= 5:
                         self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
                     else:
                         self.assertEquals(zc['Herstelmaatregel'], '')

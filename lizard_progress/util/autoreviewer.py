@@ -340,7 +340,7 @@ class FilterTable(object):
             self.rules.append(rule)
 
     def test_observation(self, observation):
-        res = None
+        res = 'NORULE'
         for r in self.rules:
             curr = r.apply_to(observation)
             if curr in ACTION_CODES.keys():

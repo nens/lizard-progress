@@ -343,7 +343,7 @@ class FilterTable(object):
         res = None
         for r in self.rules:
             res = r.apply_to(observation)
-            if res in ACTION_CODES.keys():
+            if res in ACTION_CODES.keys()[:2]:
                 break
         return res
 
@@ -447,7 +447,7 @@ if __name__ == '__main__':
         Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
         Observation([Field('A', 'BBB'), Field('D', '6'), Field('F', '6')]): 'NOACTION',
         Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
-        Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'E')]): 'WARN',
+        Observation([Field('A', 'BAF'), Field('B', 'I'), Field('C', 'E')]): 'WARN',
         Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
         Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE',
         Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '1')]): 'NOACTION'

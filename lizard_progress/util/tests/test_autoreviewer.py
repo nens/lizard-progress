@@ -74,14 +74,17 @@ class TestAutoReviewerFromFile(FixturesTestCase):
         self.assertEquals(res, 20)
 
     def test_observations(self):
-        test_cases = {Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '11')]): 'INTERVENE',
-                      Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '1')]): 'NOACTION',
-                      Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
-                      Observation([Field('A', 'BBB'), Field('D', '6'), Field('F', '6')]): 'WARN',
-                      Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
-                      Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'Z')]): 'WARN',
-                      Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
-                      Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE'}
+        test_cases = {
+            Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '1')]): 'NOACTION',
+            Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '11')]): 'INTERVENE',
+            Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
+            Observation([Field('A', 'BBB'), Field('D', '6'), Field('F', '6')]): 'NOACTION',
+            Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
+            Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'Z')]): 'WARN',
+            Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
+            Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE',
+            Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '1')]): 'NOACTION'
+        }
 
         for obs, expected in test_cases.items():
             res = self.ar.filterTable.test_observation(obs)

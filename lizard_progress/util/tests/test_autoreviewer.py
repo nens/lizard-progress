@@ -163,7 +163,7 @@ class TestAutoReviewerRIBX(FixturesTestCase):
                         self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
                     elif zc['B'] in 'CDEFGHI' and zc['C'] in 'CD':
                         self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
-                    elif zc['B'] is not None and zc['C'] in 'EZ':
+                    elif bool(zc['B']) and zc['C'] in 'EZ':
                         self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
                     else:
                         self.assertEquals(zc['Herstelmaatregel'], '')

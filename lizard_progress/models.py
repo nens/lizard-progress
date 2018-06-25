@@ -33,7 +33,8 @@ from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
-from lizard_progress.util import filler
+# from lizard_progress.util import filler
+from lizard_progress.util.autoreviewer import AutoReviewer
 
 from lizard_map import coordinates
 
@@ -504,17 +505,17 @@ class Project(ProjectActivityMixin, models.Model):
     def specifics(self, activity=None):
         return lizard_progress.specifics.Specifics(self, activity)
 
-    @cached_property
+    @property
     def number_of_locations(self):
         return self.counted_number_of_locations
 
-    @cached_property
+    @property
     def number_of_complete_locations(self):
         return Location.objects.filter(
             activity__project=self, complete=True,
             not_part_of_project=False).count()
 
-    @cached_property
+    @property
     def percentage_done(self):
         return self.percentage(self.number_of_locations,
                                self.number_of_complete_locations)
@@ -816,11 +817,14 @@ class ReviewProject(models.Model):
         from . import tasks
 
         # Setup using RIBX asynchronously, to prevent timeouts
-        tasks.setup_project_using_ribx_task.delay(
-            project_review.id,
-            project_url,
-            abs_ribx_path,
-            abs_filler_path)
+        if settings.DEBUG:
+            project_review.setup_project_using_ribx(project_url, abs_ribx_path, abs_filler_path)
+        else:
+            tasks.setup_project_using_ribx_task.delay(
+                project_review.id,
+                project_url,
+                abs_ribx_path,
+                abs_filler_path)
 
         return project_review
 
@@ -848,18 +852,21 @@ class ReviewProject(models.Model):
             manhole = self._parse_zb_c(elem)
             reviews['manholes'].append(manhole)
 
+        the_reviews = reviews
+
         # apply inspection_filler if we specify one
         if abs_filler_path:
-            rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
-            rule_tree = filler.build_rule_tree(rules)
-            the_reviews = filler.apply_rules(rule_tree, reviews)
-        else:
-            the_reviews = reviews
+            # rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
+            # rule_tree = filler.build_rule_tree(rules)
+            # the_reviews = filler.apply_rules(rule_tree, reviews)
+
+            self.inspection_filler = abs_filler_path
+            ar = AutoReviewer(abs_filler_path)
+            the_reviews = ar.run(reviews)
 
         self.set_reviews(the_reviews, from_task=True)  # Saves
 
     def set_reviews(self, the_reviews, from_task=False):
-        logger.debug('Entered  set_reviews')
         self.reviews = the_reviews
         self.save()
 
@@ -967,28 +974,6 @@ class ReviewProject(models.Model):
         result[self.HERSTELMAATREGEL] = ''
         result[self.OPMERKING] = ''
         return result
-
-    # TODO: NOT USED ANYWHERE, nor tested, should probably remove this
-    def apply_inspection_filler(self,
-                                inspection_filler=None,
-                                delimiter=str(',')):
-        """Apply the inspection filler to the inspections of this reviewproject
-
-        :arg
-            inspection_filler (string): the path location of the inspection
-                filler
-            delimiter (str): one-character string used to separate fields.
-        :return
-            Reviews updated according to the rules defined in the inspection_filler.
-        """
-        if inspection_filler is None:
-            inspection_filler = self.inspection_filler
-
-        flat_rules = filler.parse_insp_filter(inspection_filler)
-        rule_tree = filler.build_rule_tree(flat_rules)
-        new_reviews = filler.apply_rules(rule_tree, reviews)
-
-        return new_reviews
 
     def get_coord_reviewproject(self):
         """Return a set of coordinates of this reviewproject.
@@ -1521,7 +1506,7 @@ class Activity(ProjectActivityMixin, models.Model):
     def has_locations(self):
         return self.location_set.filter(not_part_of_project=False).exists()
 
-    @cached_property
+    @property
     def num_complete_locations(self):
         return self.location_set.filter(
             complete=True, not_part_of_project=False).count()
@@ -1672,8 +1657,8 @@ class Activity(ProjectActivityMixin, models.Model):
     @property
     def percentage_done(self):
         if self.has_locations():
-            return self.percentage(self.num_locations(),
-                                   self.num_complete_locations())
+            return self.percentage(self.num_locations,
+                                   self.num_complete_locations)
         else:
             return 'N/A'
 

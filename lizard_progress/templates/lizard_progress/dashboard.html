@@ -93,9 +93,9 @@ od3.update({{ view.num_open_requests }});
                         <div class="panel-body">                        
                           <div class="progress" style="background-color: #7C7C7C !important">
                               {% with a_perc_done=activity.percentage_done %}
-			      <div class="progress-bar" role="progressbar" aria-valuenow="{{ a_perc_done }}"
+			      <div class="progress-bar" role="progressbar" aria-valuenow="{{a_perc_done}}"
 				   aria-valuemin="0" aria-valuemax="100" style="width: {{ a_perc_done }}%;">
-                              {{ activity.percentage_done }}%
+                              {{ a_perc_done }}%
                               </div>
 			      {% endwith %}
                           </div>                          

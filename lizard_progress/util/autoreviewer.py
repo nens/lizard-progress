@@ -40,7 +40,7 @@ as content.
 
 ACTION_CODES = {'WARN': 'Waarschuwing',
                 'INTERVENE': 'Ingrijp',
-                'NOACTION': 'Observation passes the filter without triggering an action.'}
+                'NOACTION': ''}
 
 MESSAGE_CODES = {'MASKINVALID': 'Invalid mask.',
                  'NORULE': 'No applicable rules.'}

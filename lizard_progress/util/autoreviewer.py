@@ -72,7 +72,7 @@ def _eval(val, op, thr):
     try:
         val = float(val)
         thr = float(thr)
-    except ValueError:
+    except (ValueError, TypeError):
         pass
 
     try:
@@ -419,10 +419,37 @@ class FilterTable(object):
 
 class AutoReviewer(object):
 
-    def __init__(self, filterfile_in):
+    def __init__(self, filterfile_in=None):
         self.filterFile = filterfile_in
         self.filterTable = FilterTable()
-        self.filterTable.create_from_excel(filterfile_in)
+        if filterfile_in:
+            self.filterTable.create_from_excel(filterfile_in)
+        else:
+            # Default filter as discussed with Leo
+            # TODO: move this somewhere else
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAA'), Field('D', '')]), '>=5', '>=10'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAB'), Field('B', '')]), 'B, C'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAC'), Field('B', '')]), 'A', 'B, C'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAF'), Field('B', 'E,F,G,I'), Field('C', '')]), 'A'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAF'), Field('B', 'C,D,E,F,G,H,I'),
+                                                Field('C', '')]), 'B, C, D'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAF'), Field('B', '*'), Field('C', '')]), 'E, Z'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAG'), Field('D', '')]), '>=25'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAH'), Field('B', '')]), 'E, Z'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAI'), Field('B', 'A'), Field('C', '')]), 'B, C, D'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAJ'), Field('B', 'B'), Field('C', '')]), '10'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAK'), Field('B', '')]), 'A, B, C, E, F, G, H, I, J, K'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAO'), Field('G', '')]), None, '0'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BAP'), Field('G', '')]), None, '0'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BBA'), Field('B', '')]), 'A, B, C'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BBB'), Field('D', '')]), None, '>=10'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BBC'), Field('D', '')]), None, '>=10'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BBD'), Field('B', '')]), 'A, B, C, D, Z'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BBE'), Field('B', '')]), 'A, B, C, D, E, F, G, H, Z'))
+            self.add_rule(Rule(ObservationMask([Field('A', 'BBF'), Field('B', '')]), 'B', 'C, D'))
+
+    def add_rule(self, r):
+        self.filterTable.add_rule(r)
 
     def run(self, json_in):
         json_out = self.filterTable.apply_to_reviews(json_in)
@@ -439,7 +466,7 @@ if __name__ == '__main__':
     f = os.path.join('/tmp',
                      'filter_complete_valid.xlsx')
 
-    ar = AutoReviewer(f)
+    ar = AutoReviewer()
 
     print(ar.filterTable)
 

@@ -862,7 +862,10 @@ class ReviewProject(models.Model):
 
             self.inspection_filler = abs_filler_path
             ar = AutoReviewer(abs_filler_path)
-            the_reviews = ar.run(reviews)
+        else:
+            ar = AutoReviewer()
+
+        the_reviews = ar.run(reviews)
 
         self.set_reviews(the_reviews, from_task=True)  # Saves
 

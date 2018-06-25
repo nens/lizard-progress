@@ -39,11 +39,11 @@ as content.
 """
 
 ACTION_CODES = {'WARN': 'Waarschuwing',
-                'INTERVENE': 'Ingrijp'}
+                'INTERVENE': 'Ingrijp',
+                'NOACTION': 'Observation passes the filter without triggering an action.'}
 
 MESSAGE_CODES = {'MASKINVALID': 'Invalid mask.',
-                 'NORULE': 'No applicable rules.',
-                 'NOACTION': 'Observation passes the filter with no action.'}
+                 'NORULE': 'No applicable rules.'}
 
 import re
 import pandas as pd
@@ -88,7 +88,7 @@ def _eval(val, op, thr):
 
 
 def _parse_content(s):
-    """Parces content of a table cell, returns its value and the operator in case the cell contains a condition.
+    """Parses content of a table cell, returns its value and the operator in case the cell contains a condition.
     IN
     s: string
     OUT:
@@ -96,10 +96,12 @@ def _parse_content(s):
     oper: operator if cell contains a (binary) expression
     """
 
-    if not s or not str(s).strip():
+    if s is None or not str(s).strip():
         return None, None
 
+    # by default we compare with ==
     oper = '=='
+
     # Get rid of conjunctions
     val = str(s).strip().upper()\
                         .replace('EN', ',')\
@@ -129,6 +131,10 @@ def _parse_content(s):
     # if no operator specified for a single value, use '=='
     if val and (oper is None):
         oper = '=='
+    try:
+        val = float(val)
+    except ValueError:
+        pass
 
     return val, oper
 
@@ -180,7 +186,7 @@ class Field(object):
 
     def __str__(self):
         return str(''.join(('<', self.tag, '>',
-                            (str(self.content) if self.content else ''),
+                            (str(self.content) if self.content is not None else ''),
                             '</', self.tag, '>', ('*' if self.is_trigger() else ''))))
 
     def __eq__(self, other):
@@ -202,11 +208,12 @@ class Field(object):
         return not (bool(self.tag) or bool(self.content))
 
     def is_trigger(self):
-        return bool(self.tag) and not bool(self.content)
+        res = bool(self.tag) and self.content in ['', None]
+        return res
 
     def is_valid(self):
         # In general, tag may have value=None and non-unique tags
-        return self.is_complete() or self.is_empty() or self.is_trigger()
+        return self.is_complete() or self.is_trigger()
 
 
 class Observation(object):
@@ -221,7 +228,8 @@ class Observation(object):
         return ' '.join([str(f) for f in self.fields if not f.is_empty()])
 
     def __contains__(self, field):
-        return field.is_empty() or self.get(field.tag) == field
+        res = field.is_empty() or self.get_by_tag(field.tag) == field
+        return res
 
     def is_valid(self):
         # Observation must contain only tags with values
@@ -234,7 +242,7 @@ class Observation(object):
         if f.is_valid():
             self.fields.append(f)
 
-    def get(self, tag):
+    def get_by_tag(self, tag):
         """Returns field with the given tag if such a field exists in the observation,
         otherwise returns None."""
         try:
@@ -261,9 +269,9 @@ class ObservationMask(Observation):
         return triggers[0] if len(triggers) == 1 else False
 
     def applies_to(self, obs):
-        # checks if all non-trigger fields of the mask appear (with the same value) in the observation
+        # checks if all non-trigger fields of the mask appear (with the same content) in the observation
         # and the trigger tag appears in the observation
-        res = all([mf in obs for mf in self.fields if not mf.is_trigger()]) \
+        res = all([(mf in obs) for mf in self.fields if not mf.is_trigger()]) \
             and \
             self.get_trigger_field().tag in [f.tag for f in obs.fields]
         return res
@@ -301,12 +309,12 @@ class Rule(object):
 
         if self.mask.applies_to(observation):
 
-            val = observation.get(self.mask.get_trigger_field().tag).content
+            val = observation.get_by_tag(self.mask.get_trigger_field().tag).content
             res = _eval(val, self.interveneOperator, self.interveneThreshold)
             if res:
                 return ACTION_CODES.keys()[1]
 
-            val = observation.get(self.mask.get_trigger_field().tag).content
+            val = observation.get_by_tag(self.mask.get_trigger_field().tag).content
             res = _eval(val, self.warnOperator, self.warnThreshold)
             if res:
                 return ACTION_CODES.keys()[0]
@@ -426,23 +434,24 @@ if __name__ == '__main__':
 
     import os
 
-    f = os.path.join('lizard_progress',
-                     'util',
-                     'tests',
-                     'test_autoreviewer_files',
+    f = os.path.join('/tmp',
                      'filter_complete_valid.xlsx')
 
     ar = AutoReviewer(f)
 
     print(ar.filterTable)
 
-    test_cases = {Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '11')]): 'INTERVENE',
-                  Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
-                  Observation([Field('A', 'BBB'), Field('D', '6'), Field('F', '6')]): 'WARN',
-                  Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
-                  Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'Z')]): 'WARN',
-                  Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
-                  Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE'}
+    test_cases = {
+        Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '1')]): 'NOACTION',
+        Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '11')]): 'INTERVENE',
+        Observation([Field('A', 'BAA'), Field('B', 'Z'), Field('D', '6')]): 'WARN',
+        Observation([Field('A', 'BBB'), Field('D', '6'), Field('F', '6')]): 'NOACTION',
+        Observation([Field('A', 'BBB'), Field('D', '13'), Field('H', '6')]): 'INTERVENE',
+        Observation([Field('A', 'BAF'), Field('B', 'Z'), Field('C', 'Z')]): 'WARN',
+        Observation([Field('A', 'BZF'), Field('B', 'Z'), Field('C', 'Z')]): 'NORULE',
+        Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '0')]): 'INTERVENE',
+        Observation([Field('A', 'BAO'), Field('R', '0'), Field('G', '1')]): 'NOACTION'
+    }
 
     print('==========')
     for obs, expected in test_cases.items():

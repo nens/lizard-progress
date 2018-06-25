@@ -312,12 +312,12 @@ class Rule(object):
             val = observation.get_by_tag(self.mask.get_trigger_field().tag).content
             res = _eval(val, self.interveneOperator, self.interveneThreshold)
             if res:
-                return ACTION_CODES.keys()[1]
+                return 'INTERVENE'
 
             val = observation.get_by_tag(self.mask.get_trigger_field().tag).content
             res = _eval(val, self.warnOperator, self.warnThreshold)
             if res:
-                return ACTION_CODES.keys()[0]
+                return 'WARN'
 
             return 'NOACTION'
         else:
@@ -345,8 +345,8 @@ class FilterTable(object):
             curr = r.apply_to(observation)
             if curr in ACTION_CODES.keys():
                 res = curr
-                if curr in ACTION_CODES.keys()[:2]:
-                    break
+                if curr in ['WARN', 'INTERVENE']:
+                    return curr
         return res
 
     def apply_to_reviews(self, dic):

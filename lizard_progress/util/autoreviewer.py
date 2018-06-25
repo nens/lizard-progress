@@ -342,9 +342,11 @@ class FilterTable(object):
     def test_observation(self, observation):
         res = None
         for r in self.rules:
-            res = r.apply_to(observation)
-            if res in ACTION_CODES.keys()[:2]:
-                break
+            curr = r.apply_to(observation)
+            if curr in ACTION_CODES.keys():
+                res = curr
+                if curr in ACTION_CODES.keys()[:2]:
+                    break
         return res
 
     def apply_to_reviews(self, dic):

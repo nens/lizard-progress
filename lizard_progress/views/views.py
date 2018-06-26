@@ -484,6 +484,56 @@ class InlineMapView(View):
 class InlineMapViewNew(View):
     template_name = 'lizard_progress/map_inline_new.html'
 
+    def get(self, request, *args, **kwargs):
+        # import pdb; pdb.set_trace()
+        return super(InlineMapViewNew, self).get(request, *args, **kwargs)
+
+    def extent(self):
+        rd_extent = self.get_rd_extent()
+        logger.debug("InlineMapViewNew rd extent %s", rd_extent)
+        wgs_extent = geo.rd_to_wgs84_extent(rd_extent)
+        logger.debug("InlineMapViewNew new extent %s", wgs_extent)
+        return json.dumps(wgs_extent)
+
+    # TODO: remove
+    available_layers = []
+
+    def get_rd_extent(self, change_request=None, location_code=None):
+        """Compute the extent we want to zoom to, in RD."""
+
+        locations = Location.objects.filter(activity__project=self.project)
+        if location_code:
+            locations = locations.filter(location_code=location_code)
+
+        # Layers MAY define their own extent (used for the extents of
+        # change requests). Otherwise layer.extent will be None.
+        extra_extents = [layer.extent for layer in self.available_layers
+                         if layer.extent is not None]
+
+        if change_request:
+            extent = Request.objects.get(id=change_request).map_layer().extent
+        elif locations.exists():
+            # Start with this extent, add the extras to this
+            extent = locations.extent()
+        elif extra_extents:
+            # No locations, but extra extents: use the first as start extent
+            extent = extra_extents.pop()
+        else:
+            # There is nothing to zoom to...
+            return None
+
+        minx, miny, maxx, maxy = extent
+
+        # Combine extra extents
+        for extra_extent in extra_extents:
+            e_minx, e_miny, e_maxx, e_maxy = extra_extent
+            minx = min(minx, e_minx)
+            miny = min(miny, e_miny)
+            maxx = max(maxx, e_maxx)
+            maxy = max(maxy, e_maxy)
+
+        return (minx, miny, maxx, maxy)
+
 
 class MapView(View, AppView):
     """View that can show a project's locations as map layers."""

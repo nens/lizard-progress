@@ -37,11 +37,11 @@
                 </script>
 
                 <script>
-                    var extent = {{ view.extent|safe }};
+                    const extent = {{ view.extent|safe }};
                     console.log(extent)
                     //var mymap = L.map('map_new').setView([52.083, 5.117], 13);
-                    var mymap = L.map('map_new');
-                    var bounds = [
+                    const mymap = L.map('map_new');
+                    const bounds = [
                         [extent.top, extent.left],
                         [extent.bottom, extent.right]
                     ];

@@ -557,6 +557,7 @@ class InlineMapViewNew(View):
                 "information": loc.information,
                 "type": loc.location_type,
                 "code": loc.location_code,
+                "activity": loc.activity.name,
             }
 
             feat = geojson.Feature(

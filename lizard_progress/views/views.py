@@ -534,6 +534,38 @@ class InlineMapViewNew(View):
 
         return (minx, miny, maxx, maxy)
 
+    def locations_geojson(self):
+        """A FeatureCollection of locations."""
+        import geojson
+        geom_type_map = {
+            Location.LOCATION_TYPE_POINT: geojson.Point,
+            Location.LOCATION_TYPE_PIPE: geojson.LineString,
+            Location.LOCATION_TYPE_MANHOLE: geojson.Point,
+            Location.LOCATION_TYPE_DRAIN: geojson.Point,
+        }
+        features = []
+        for loc in Location.objects.filter(
+                activity__project=self.project):
+            the_geom = loc.the_geom
+            the_geom.transform(4326)
+            geom_tup = loc.the_geom.tuple
+            geojson_class = geom_type_map[loc.location_type]
+            geom = geojson_class(geom_tup)
+
+            properties = {
+                "complete": loc.complete,
+                "information": loc.information,
+                "type": loc.location_type,
+                "code": loc.location_code,
+            }
+
+            feat = geojson.Feature(
+                # TODO: id?
+                geometry=geom, properties=properties)
+            features.append(feat)
+        collection = geojson.FeatureCollection(features)
+        return geojson.dumps(collection)
+
 
 class MapView(View, AppView):
     """View that can show a project's locations as map layers."""

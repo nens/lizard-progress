@@ -536,36 +536,32 @@ class InlineMapViewNew(View):
 
     def locations_geojson(self):
         """A FeatureCollection of locations."""
+        from django.db import connection
         import geojson
-        geom_type_map = {
-            Location.LOCATION_TYPE_POINT: geojson.Point,
-            Location.LOCATION_TYPE_PIPE: geojson.LineString,
-            Location.LOCATION_TYPE_MANHOLE: geojson.Point,
-            Location.LOCATION_TYPE_DRAIN: geojson.Point,
-        }
-        features = []
-        for loc in Location.objects.filter(
-                activity__project=self.project):
-            the_geom = loc.the_geom
-            the_geom.transform(4326)
-            geom_tup = loc.the_geom.tuple
-            geojson_class = geom_type_map[loc.location_type]
-            geom = geojson_class(geom_tup)
 
-            properties = {
-                "complete": loc.complete,
-                "information": loc.information,
-                "type": loc.location_type,
-                "code": loc.location_code,
-                "activity": loc.activity.name,
-            }
+        with connection.cursor() as cursor:
+            q = """select json_build_object(
+            'type', 'Feature',
+            'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
+            'properties', json_build_object(
+            'activity', a.name,
+            'code', l.location_code,
+            'type', l.location_type,
+            'planned_date', l.planned_date,
+            'complete', l.complete,
+            'measured_date', l.measured_date)::json
+            ) as features
+            from public.lizard_progress_location l
+            inner join lizard_progress_activity a on a.id = l.activity_id
+            where l.activity_id in ({});"""\
+                .format(', '.join(map(str, Activity.objects.filter(project=self.project)
+                                      .values_list('id', flat=True))))
 
-            feat = geojson.Feature(
-                # TODO: id?
-                geometry=geom, properties=properties)
-            features.append(feat)
-        collection = geojson.FeatureCollection(features)
-        return geojson.dumps(collection)
+            cursor.execute(q)
+            features = [json.loads(r[0]) for r in cursor.fetchall()]
+            cursor.close()
+
+        return (json.dumps(geojson.FeatureCollection(features)))
 
 
 class MapView(View, AppView):

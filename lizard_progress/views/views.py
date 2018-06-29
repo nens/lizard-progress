@@ -544,16 +544,19 @@ class InlineMapViewNew(View):
             'type', 'Feature',
             'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
             'properties', json_build_object(
-            'activity', a.name,
             'code', l.location_code,
+            'activity', a.name,
+            'contractor', array_agg(o.name),
             'type', l.location_type,
             'planned_date', l.planned_date,
             'complete', l.complete,
-            'measured_date', l.measured_date)::json
-            ) as features
+            'measured_date', l.measured_date
+            )) as features
             from public.lizard_progress_location l
             inner join lizard_progress_activity a on a.id = l.activity_id
-            where l.activity_id in ({});"""\
+            inner join lizard_progress_organization o on o.id = a.contractor_id
+            where l.activity_id in ({})
+            group by l.id, a.id;"""\
                 .format(', '.join(map(str, Activity.objects.filter(project=self.project)
                                       .values_list('id', flat=True))))
 

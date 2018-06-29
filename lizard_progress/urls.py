@@ -119,6 +119,9 @@ project_urls = [
     url('^map/location_code/(?P<location_code>[^/]+)/$',
         login_required(InlineMapView.as_view()),
         name='lizard_progress_mapview_location_code'),
+    url('^map_new/location_code/(?P<location_code>[^/]+)/$',
+        login_required(InlineMapViewNew.as_view()),
+        name='lizard_progress_mapview_location_code'),
     # Dashboard page
     url('^dashboard/$', login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),

@@ -1,118 +1,46 @@
 {% extends "lizard_progress/progressbase2.html" %}
-
+{% load staticfiles %}
 {% block css %}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
       integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
       crossorigin=""/>
-    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
 {% endblock css %}
 
 {% block content %}
-    {% include "lizard_progress/projectswitcher.html" %}    
-    <div class="container" id="project-details">
-      <div class="row">
+{% include "lizard_progress/projectswitcher.html" %}    
+<div class="container" id="project-details">
+    <div class="row">
         <div class="col-md-11">
-          <div class="panel panel-default">
-            <div class="panel-heading clearfix">
-              <h3 class="panel-title pull-left" style="padding-top: 7.5px;"><i class="fa fa-globe"></i>&nbsp;Kaart {{ view.project.name }}</h3>
+            <div class="panel panel-default">
+		<div class="panel-heading clearfix">
+		    <h3 class="panel-title pull-left" style="padding-top: 7.5px;"><i class="fa fa-globe"></i>&nbsp;Kaart {{ view.project.name }}</h3>
 
-              <div class="btn-group pull-right" data-toggle="tooltip" data-placement="left" title="Bekijk grote kaart">
-                <a href="../mapinline/">
-                  <button class="btn btn-sm btn-default">
-                    <i class="fa fa-expand"></i>
-                  </button>
-                </a>
-              </div>
+		    <div class="btn-group pull-right" data-toggle="tooltip" data-placement="left" title="Bekijk grote kaart">
+			<a href="../mapinline/">
+			    <button class="btn btn-sm btn-default">
+				<i class="fa fa-expand"></i>
+			    </button>
+			</a>
+		    </div>
 
-              </div>
+		</div>
 
                 <div id="map_new" style="height: 800px"></div>
-              <!-- <div class="panel-body" style="padding:0 !important;"> -->
-                <!-- <iframe width="100%" height="800" src="{% url "lizard_progress_mapview" project_slug=view.project_slug %}"></iframe> -->
-                <!-- </div> -->
-
                 <!-- TODO: vendorize -->
                 <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
-                  integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
-                  crossorigin="">
+			integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+			crossorigin="">
                 </script>
                 <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
-
-                <script>
-                    const baseLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-                      attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-                      maxZoom: 22
-                    });
-                    const extent = {{ view.extent|safe }};
-                    //var mymap = L.map('map_new').setView([52.083, 5.117], 13);
-                    const mymap = L.map('map_new', {
-                      fullscreenControl: {
-                        // if true, fullscreen to page width and height
-                        pseudoFullscreen: true
-                      },
-                      //layers: [baseLayer],
-                      preferCanvas: true
-                    });
-                    const bounds = [
-                      [extent.top, extent.left],
-                      [extent.bottom, extent.right]
-                    ];
-                    mymap.fitBounds(bounds);
-                    baseLayer.addTo(mymap);
-
-                    function styler(feature) {
-                      if (feature.properties.complete === true) {
-                          return {color: "green", fillColor: 'green'};
-                      } else if(feature.properties.complete === false) {
-                          return {color: "red", fillColor: 'red' };
-                      } else {
-                        return {color: "orange", fillColor: 'orange'};
-                      }
-                    };
-
-                    var geojsonCircleOptions = {
-                      radius: 7,
-                      weight: 1,
-                      opacity: 1,
-                      fillOpacity: 0.3
-                    };
-
-                    function pointToLayer (feature, latlng) {
-                      return L.circleMarker(latlng, geojsonCircleOptions);
-                    }
-
-                    const geojsonLayerOptions = {
-                      pointToLayer: pointToLayer,
-                      style: styler,
-                      onEachFeature: function (feature, layer) {
-                        layer.bindPopup(
-                          '<p>'+JSON.stringify(feature.properties, null, 4)+'</p>' + '<p>');
-                      }
-                    }
-
-                    const _orderingTable = {LineString: 0, Point: 10};
-
-                    function renderingOrderComparator(featA, featB) {
-                      return _orderingTable[featA.geometry.type] - _orderingTable[featB.geometry.type];
-                    }
-                    var geoJsonDocument = {{ view.locations_geojson|safe }};
-                    // If we render using the Canvas, Points need to be rendered after LineStrings, or
-                    // else they become very difficult to click.
-                    geoJsonDocument.features.sort(renderingOrderComparator);
-                    var locationLayer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
-                    locationLayer.addTo(mymap);
-
-                    const baseMaps = {
-                      "Street map": baseLayer
-                    };
-                    const overlayMaps = {
-                      "Locations": locationLayer
-                    };
-                    L.control.layers(baseMaps, overlayMaps).addTo(mymap);
-                </script>
-        </div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="{% static 'lizard_progress/map_new.js' %}"></script>
+                <script> $(function(){ var gj = {{ view.locations_geojson|safe }};
+		     var extent = {{ view.extent|safe }}; 
+		     build_map(gj, extent);});</script>
+            </div>
         </div>
         {% include "lizard_progress/sidebar_include.html" with active="map_new" %}
-      </div>
     </div>
+</div>
 {% endblock %}

@@ -111,6 +111,8 @@ project_urls = [
         name='lizard_progress_inlinemapview'),
     url('^map_new/$', login_required(InlineMapViewNew.as_view()),
         name='lizard_progress_inlinemapview_new'),
+    url('^map_new/get_closest_to.*$', login_required(views.get_closest_to),
+        name='lizard_progress_get_closest_to'),
     url('^mapinline/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
     url('^map/change_request/(?P<change_request>[^/]+)/$',

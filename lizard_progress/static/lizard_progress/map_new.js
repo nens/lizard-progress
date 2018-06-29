@@ -3,7 +3,7 @@ function build_map(gj, extent) {
 	attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
 	maxZoom: 22
     });
-
+    const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk'};
     const mymap = L.map('map_new', {
 	fullscreenControl: {
             pseudoFullscreen: true
@@ -14,6 +14,8 @@ function build_map(gj, extent) {
 	[extent.top, extent.left],
 	[extent.bottom, extent.right]
     ];
+    const _orderingTable = {LineString: 0, Point: 10};
+
     mymap.fitBounds(bounds);
     baseLayer.addTo(mymap);
 
@@ -28,7 +30,7 @@ function build_map(gj, extent) {
     };
 
     var scale = L.control.scale().addTo(mymap);
-    const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk'};
+
     var geojsonCircleOptions = {
 	radius: 5,
 	weight: 1,
@@ -36,27 +38,21 @@ function build_map(gj, extent) {
 	fillOpacity: 0.5
     };
 
-    function pointToLayer (feature, latlng) {
+    function pointToLayer(feature, latlng){
 	return L.circleMarker(latlng, geojsonCircleOptions);
     }
     const geojsonLayerOptions = {
 	pointToLayer: pointToLayer,
 	style: styler,
-	onEachFeature: function (feature, layer) {
-
+	onEachFeature: function(feature, layer){
 	    var popupHTML = '<h3><b>' + ltypes[feature.properties.type] + ' '
 		+ feature.properties.code + '</b></h3>' 
 		+ 'Opdrachtnemer: ' + feature.properties.contractor 
 		+ '<br>Werkzaamheid: ' + feature.properties.activity;
-	    layer.bindPopup(
-		popupHTML
-	    );
+	    layer.bindPopup(popupHTML);
 	}
     }
-
-    const _orderingTable = {LineString: 0, Point: 10};
-
-    function renderingOrderComparator(featA, featB) {
+    function renderingOrderComparator(featA, featB){
 	return _orderingTable[featA.geometry.type] - _orderingTable[featB.geometry.type];
     }
     var geoJsonDocument = gj;
@@ -73,4 +69,43 @@ function build_map(gj, extent) {
 	"Locations": locationLayer
     };
     L.control.layers(baseMaps, overlayMaps).addTo(mymap);
+
+    function show_dialog(latlng, loc_info){
+	var popupHTML = '<h3><b>' + ltypes[loc_info.type] + ' '
+	    + loc_info.code + '</b></h3>' 
+	    + 'Opdrachtnemer: ' + loc_info.contractor 
+	    + '<br>Werkzaamheid: ' + loc_info.activity;
+	if ('files' in loc_info) {
+	    popupHTML += '<br><br>Bestanden:<br>';
+	    popupHTML += '<table><tr><th><b>Bestand</b></th><th><b>Upload</b></th></tr>';
+	    loc_info['files'].forEach(function(el){
+		var d = new Date(el.when);
+		popupHTML += '<tr><td>' + el.name + '</td><td>'
+		    + d.getDate() + '-' + d.getMonth() + '-' + d.getFullYear() + '</td></tr>';
+	    });
+	    popupHTML += '</table>';
+	} else {
+	    popupHTML += '<br><br>Er is voor deze locatie nog geen data aanwezig in het systeem.';
+	}
+	var popup = L.popup({'maxWidth': 500, 'autoClose': false})
+	    .setLatLng(latlng) //TODO has to be loc coordinates
+	    .setContent(popupHTML)
+	    .openOn(mymap);
+    }
+    function onMapClick(e) {
+	var popup = L.popup()
+	    .setLatLng(e.latlng) //TODO has to be loc coordinates
+	    .setContent('Zoeken naar de dichtsbijzijnde locatie...')
+	    .openOn(mymap);
+	$.ajax({
+	    type: 'get',
+	    url: 'get_closest_to',
+	    data: {'lat': e.latlng.lat, 'lng': e.latlng.lng},
+	    datatype: 'json',
+	    success: function(resp){show_dialog(e.latlng, resp);},
+	    error: function(jqXHR, textStatus, err){
+		console.log("ERR: " + jqXHR + ' ' + err + ', ' + textStatus);}
+	});
+    }
+    mymap.on('click', onMapClick);  
 }

@@ -26,6 +26,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db import connection
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -56,6 +57,7 @@ from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
 from lizard_progress.models import has_access_reviewproject
 from lizard_progress.models import Activity
+from lizard_progress.models import UploadLog
 from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
@@ -67,6 +69,16 @@ logger = logging.getLogger(__name__)
 
 
 UiView  # Don't delete, it is imported by ``views/activity.py``
+
+
+# Decorator serving to assure the request is a AJAX request
+def ajax_request(view):
+    def wrapper(request, *args, **kwargs):
+        if request.is_ajax():
+            return view(request, *args, **kwargs)
+        else:
+            raise PermissionDenied
+    return wrapper
 
 
 class ProjectsMixin(object):
@@ -536,7 +548,6 @@ class InlineMapViewNew(View):
 
     def locations_geojson(self):
         """A FeatureCollection of locations."""
-        from django.db import connection
         import geojson
 
         with connection.cursor() as cursor:
@@ -565,6 +576,46 @@ class InlineMapViewNew(View):
             cursor.close()
 
         return (json.dumps(geojson.FeatureCollection(features)))
+
+
+@login_required
+@ajax_request
+def get_closest_to(request, *args, **kwargs):
+    from datetime import datetime
+    lat = request.GET.get('lat', None)
+    lng = request.GET.get('lng', None)
+    radius = request.GET.get('radius', 500)
+
+    proj = Project.objects.get(slug=kwargs['project_slug'])
+    loc_ids = Location.objects.filter(activity__project=proj).values_list('id', flat=True)
+
+    # TODO: ORM-ize
+    q = """SELECT loc.id FROM lizard_progress_location loc
+    WHERE loc.id IN ({0})
+    AND (ST_Expand(loc.the_geom, {3}) &&
+    ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry)
+    ORDER BY ST_Distance(loc.the_geom,
+    ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry) ASC;"""\
+        .format(', '.join(map(str, loc_ids)), lng, lat, radius)
+
+    with connection.cursor() as cursor:
+        cursor.execute(q)
+        locs = [l[0] for l in cursor.fetchall()]
+        cursor.close()
+
+    nn = None
+    response = {}
+    if locs:
+        nn = Location.objects.get(id=locs[0])
+        uplog = UploadLog.objects.filter(activity=nn.activity)
+        response = {'type': nn.location_type,
+                    'code': nn.location_code,
+                    'activity': nn.activity.name,
+                    'contractor': nn.activity.contractor.name}
+        if uplog:
+            response['files'] = [{'name': ul.filename, 'when': str(ul.when)} for ul in uplog]
+
+    return HttpResponse(json.dumps(response), content_type="application/json")
 
 
 class MapView(View, AppView):

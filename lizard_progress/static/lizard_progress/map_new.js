@@ -54,6 +54,7 @@ function build_map(gj, extent) {
 	    layer.bindTooltip(popupHTML);
 	    layer.on('mouseover', function(e){setCurrLocId(feature.properties.loc_id);});
 	    layer.on('mouseout', function(e){setCurrLocId('');});
+	    layer.on('click', layer.closeTooltip);
 	}
     };
 
@@ -100,7 +101,7 @@ function build_map(gj, extent) {
 	} else {
 	    popupHTML += '<br><br>Er is voor deze locatie nog geen data aanwezig in het systeem.';
 	}
-	var popup = L.popup({'maxWidth': 500, 'autoClose': false})
+	var popup = L.popup({'maxWidth': 500, 'autoClose': true})
 	    .setLatLng(latlng) //TODO has to be loc coordinates
 	    .setContent(popupHTML)
 	    .openOn(mymap);
@@ -111,8 +112,8 @@ function build_map(gj, extent) {
 	    popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
 		.openOn(mymap);
 	} else {
-	    popup.setContent('Ophalen Locatiegegevens...')
-		.openOn(mymap);
+	    //popup.setContent('Ophalen Locatiegegevens...')
+		//.openOn(mymap);
 	}	    
 	$.ajax({
 	    type: 'get',

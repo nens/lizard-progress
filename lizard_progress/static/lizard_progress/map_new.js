@@ -1,36 +1,8 @@
-function setup_movable_dialog() {
-    // used by open_popup
-    $('body').append('<div id="movable-dialog"><div id="movable-dialog-content"></div></div>');
-    var options = {
-        autoOpen: false,
-        title: '',
-        width: 650,
-        height: 480,
-        zIndex: 10000,
-        close: function (event, ui) {
-            // clear contents on close
-            $('#movable-dialog-content').empty();
-        }
-    };
-
-    // make an exception for iPad
-    if (isAppleMobile) {
-        // dragging on touchscreens isn't practical
-        options.draggable = false;
-        // resizing neither
-        options.resizable = false;
-        // make width 90% of the entire window
-        options.width = $(window).width() * 0.9;
-        // make height 80% of the entire window
-        options.height = $(window).height() * 0.8;
-    }
-
-    $('#movable-dialog').dialog(options);
-}
 function build_map(gj, extent) {
     function setCurrLocId(id){window.currLocationId = id;}
     setCurrLocId('');
     const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk'};
+    const reqStatusColors = ["#000099", "#1b9387", "#da70d6"];
     const mymap = L.map('map_new', {
 	fullscreenControl: {
             pseudoFullscreen: true
@@ -53,33 +25,45 @@ function build_map(gj, extent) {
 	"Street map": baseLayer
     };
     baseLayer.addTo(mymap);
-
+    
     var scale = L.control.scale().addTo(mymap);
     const geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
+	    if (feature.properties.type == 'location') {
 	    return L.circleMarker(latlng, {
 		radius: 5,
 		weight: 1,
-		opacity: 1,
-		fillOpacity: 0.5
-	    });
+		opacity: .5,
+		fillOpacity: .5});
+	    } else {
+		var fillOpacity = feature.properties.status; 
+		return L.circleMarker(latlng, {
+		    radius: 5+2,
+		    weight: 3,
+		    opacity: 1,
+		    fillOpacity: fillOpacity});
+	    }		
 	},
 	style: function(feature) {
-	    if (feature.properties.complete === true) {
-		return {color: "green", fillColor: 'green'};
-	    } else if(feature.properties.complete === false) {
-		return {color: "red", fillColor: 'red' };
-	    } else if(true) {
-		return {color: "black", fillColor: 'black'};
-	    } else {
-		return {color: "orange", fillColor: 'orange'};
+	    var color = "black";
+	    if (feature.properties.type == 'location') {
+		if (feature.properties.complete === true) {
+		    color = "green";
+		} else if(feature.properties.complete === false) {
+		    color = "red";
+		} else {
+		    color = "orange";
+		}
+	    } else if (feature.properties.type == 'request') {
+		color = reqStatusColors[feature.properties.status - 1];
 	    }
+	    return {color: color, fillColor: color};
 	},
 	onEachFeature: function(feature, layer){
-	    /* showing essentioal information: location code, location type */
+	    /* Feature contain essential information only (location code, location type).
+	     More about a location is available onclick. */
 	    var popupHTML = ltypes[feature.properties.loc_type] + ' '
 		+ feature.properties.code;
-	    // setCurrLocId(feature.properties.loc_id);
 	    layer.bindTooltip(popupHTML);
 	    layer.on('mouseover', function(e){setCurrLocId(feature.properties.loc_id);});
 	    layer.on('mouseout', function(e){setCurrLocId('');});
@@ -107,6 +91,7 @@ function build_map(gj, extent) {
 	    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
 	    layer.addTo(mymap); /* show everything by default */
 	    overlayMaps[activityName] = layer;
+	    layer.bringToFront();
 	}
     }
 

@@ -550,32 +550,34 @@ class InlineMapViewNew(View):
         """A FeatureCollection of locations."""
         import geojson
 
+        activities = Activity.objects.filter(project=self.project).distinct()
+        layers = {}
         with connection.cursor() as cursor:
-            q = """select json_build_object(
-            'type', 'Feature',
-            'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
-            'properties', json_build_object(
-            'code', l.location_code,
-            'activity', a.name,
-            'contractor', array_agg(o.name),
-            'type', l.location_type,
-            'planned_date', l.planned_date,
-            'complete', l.complete,
-            'measured_date', l.measured_date
-            )) as features
-            from public.lizard_progress_location l
-            inner join lizard_progress_activity a on a.id = l.activity_id
-            inner join lizard_progress_organization o on o.id = a.contractor_id
-            where l.activity_id in ({})
-            group by l.id, a.id;"""\
-                .format(', '.join(map(str, Activity.objects.filter(project=self.project)
-                                      .values_list('id', flat=True))))
+            for a in activities:
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
+                'properties', json_build_object(
+                'code', l.location_code,
+                'activity', a.name,
+                'contractor', o.name,
+                'type', l.location_type,
+                'planned_date', l.planned_date,
+                'complete', l.complete,
+                'measured_date', l.measured_date
+                )) as features
+                from public.lizard_progress_location l
+                inner join lizard_progress_activity a on a.id = l.activity_id
+                inner join lizard_progress_organization o on o.id = a.contractor_id
+                where l.activity_id = {}""".format(str(a.id))
 
-            cursor.execute(q)
-            features = [json.loads(r[0]) for r in cursor.fetchall()]
+                cursor.execute(q)
+                features = [json.loads(r[0]) for r in cursor.fetchall()]
+                layers[a.name] = geojson.FeatureCollection(features)
             cursor.close()
 
-        return (json.dumps(geojson.FeatureCollection(features)))
+        res = json.dumps(layers)
+        return (res)
 
 
 @login_required

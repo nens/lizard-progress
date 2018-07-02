@@ -551,8 +551,11 @@ class InlineMapViewNew(View):
         import geojson
 
         activities = Activity.objects.filter(project=self.project).distinct()
+        chreqs = Request.objects.filter(activity__in=activities).distinct()
         layers = {}
+
         with connection.cursor() as cursor:
+            # Activities
             for a in activities:
                 q = """select json_build_object(
                 'type', 'Feature',
@@ -573,7 +576,29 @@ class InlineMapViewNew(View):
 
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
+                logger.debug(features)
                 layers[a.name] = geojson.FeatureCollection(features)
+
+            for cr in chreqs:
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'properties', json_build_object(
+                'type', l.location_type,
+                'code', cr.location_code,
+                'motivation', cr.motivation
+                )) as features
+                from changerequests_request cr
+                inner join lizard_progress_activity a on cr.activity_id = a.id
+                inner join lizard_progress_location l on cr.location_code = l.location_code
+                where cr.activity_id in ({})""".format(', '.join(
+                    map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                features = [json.loads(r[0]) for r in cursor.fetchall()]
+                logger.debug(features)
+                layers['Aanvragen'] = geojson.FeatureCollection(features)
+
             cursor.close()
 
         res = json.dumps(layers)

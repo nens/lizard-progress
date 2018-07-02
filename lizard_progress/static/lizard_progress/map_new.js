@@ -39,6 +39,8 @@ function build_map(gj, extent) {
 		return {color: "green", fillColor: 'green'};
 	    } else if(feature.properties.complete === false) {
 		return {color: "red", fillColor: 'red' };
+	    } else if(true) {
+		return {color: "black", fillColor: 'black'};
 	    } else {
 		return {color: "orange", fillColor: 'orange'};
 	    }
@@ -51,13 +53,21 @@ function build_map(gj, extent) {
     var overlayMaps = {};
     for (var activity in gj) {
 	var geoJsonDocument = gj[activity];
-	// If we render using the Canvas, Points need to be rendered after LineStrings, or
-	// else they become very difficult to click.
-	geoJsonDocument.features.sort(renderingOrderComparator);
-	var activityName = geoJsonDocument.features[0].properties.activity;
-	var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
-	layer.addTo(mymap); /* show everything by default */
-	overlayMaps[activityName] = layer;
+	if ('Aanvragen' != activity) {
+	    // If we render using the Canvas, Points need to be rendered after LineStrings, or
+	    // else they become very difficult to click.
+	    geoJsonDocument.features.sort(renderingOrderComparator);
+	    var activityName = geoJsonDocument.features[0].properties.activity;
+	    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
+	    layer.addTo(mymap); /* show everything by default */
+	    overlayMaps[activityName] = layer;
+	} else {
+	    var activityName = 'Aanvragen';
+	    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
+	    layer.addTo(mymap); /* show everything by default */
+	    overlayMaps[activityName] = layer;
+
+	}
     }
 
     L.control.layers([], overlayMaps).addTo(mymap);

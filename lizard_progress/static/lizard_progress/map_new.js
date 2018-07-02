@@ -1,4 +1,6 @@
 function build_map(gj, extent) {
+    function setCurrLocId(id){window.currLocationId = id;}
+    setCurrLocId('');
     const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk'};
     const mymap = L.map('map_new', {
 	fullscreenControl: {
@@ -24,7 +26,6 @@ function build_map(gj, extent) {
     baseLayer.addTo(mymap);
 
     var scale = L.control.scale().addTo(mymap);
-
     const geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    return L.circleMarker(latlng, {
@@ -44,8 +45,18 @@ function build_map(gj, extent) {
 	    } else {
 		return {color: "orange", fillColor: 'orange'};
 	    }
+	},
+	onEachFeature: function(feature, layer){
+	    /* showing essentioal information: location code, location type */
+	    var popupHTML = ltypes[feature.properties.type] + ' '
+		+ feature.properties.code;
+	    // setCurrLocId(feature.properties.loc_id);
+	    layer.bindTooltip(popupHTML);
+	    layer.on('mouseover', function(e){setCurrLocId(feature.properties.loc_id);});
+	    layer.on('mouseout', function(e){setCurrLocId('');});
 	}
     };
+
     function renderingOrderComparator(featA, featB){
 	return _orderingTable[featA.geometry.type] - _orderingTable[featB.geometry.type];
     }
@@ -95,19 +106,24 @@ function build_map(gj, extent) {
 	    .openOn(mymap);
     }
     function onMapClick(e) {
-	var popup = L.popup()
-	    .setLatLng(e.latlng) //TODO has to be loc coordinates
-	    .setContent('Zoeken naar de dichtsbijzijnde locatie...')
-	    .openOn(mymap);
+	var popup = L.popup().setLatLng(e.latlng);
+	if (!window.currLocationId) {
+	    popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
+		.openOn(mymap);
+	} else {
+	    popup.setContent('Ophalen Locatiegegevens...')
+		.openOn(mymap);
+	}	    
 	$.ajax({
 	    type: 'get',
 	    url: 'get_closest_to',
-	    data: {'lat': e.latlng.lat, 'lng': e.latlng.lng},
+	    data: {'lat': e.latlng.lat, 'lng': e.latlng.lng, 'locId': window.currLocationId},
 	    datatype: 'json',
 	    success: function(resp){show_dialog(e.latlng, resp);},
 	    error: function(jqXHR, textStatus, err){
 		console.log("ERR: " + jqXHR + ' ' + err + ', ' + textStatus);}
 	});
     }
+
     mymap.on('click', onMapClick);  
 }

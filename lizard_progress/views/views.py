@@ -561,6 +561,7 @@ class InlineMapViewNew(View):
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
                 'properties', json_build_object(
+                'loc_id', l.id,
                 'code', l.location_code,
                 'activity', a.name,
                 'contractor', o.name,
@@ -576,7 +577,6 @@ class InlineMapViewNew(View):
 
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
-                logger.debug(features)
                 layers[a.name] = geojson.FeatureCollection(features)
 
             for cr in chreqs:
@@ -586,7 +586,8 @@ class InlineMapViewNew(View):
                 'properties', json_build_object(
                 'type', l.location_type,
                 'code', cr.location_code,
-                'motivation', cr.motivation
+                'motivation', cr.motivation,
+                'status', cr.request_status
                 )) as features
                 from changerequests_request cr
                 inner join lizard_progress_activity a on cr.activity_id = a.id
@@ -596,7 +597,6 @@ class InlineMapViewNew(View):
 
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
-                logger.debug(features)
                 layers['Aanvragen'] = geojson.FeatureCollection(features)
 
             cursor.close()
@@ -608,13 +608,19 @@ class InlineMapViewNew(View):
 @login_required
 @ajax_request
 def get_closest_to(request, *args, **kwargs):
-    from datetime import datetime
     lat = request.GET.get('lat', None)
     lng = request.GET.get('lng', None)
+    loc_id = request.GET.get('locId', None)
     radius = request.GET.get('radius', 500)
 
-    proj = Project.objects.get(slug=kwargs['project_slug'])
-    loc_ids = Location.objects.filter(activity__project=proj).values_list('id', flat=True)
+    if not loc_id:
+        proj = Project.objects.get(slug=kwargs['project_slug'])
+        loc_ids = Location.objects.filter(activity__project=proj)\
+                                  .distinct()\
+                                  .values_list('id', flat=True)
+        cr_ids = Request.objects.filter(activity__project=proj)
+    else:
+        loc_ids = [loc_id]
 
     # TODO: ORM-ize
     q = """SELECT loc.id FROM lizard_progress_location loc

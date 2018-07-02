@@ -60,7 +60,7 @@ function build_map(gj, extent) {
 	overlayMaps[activityName] = layer;
     }
 
-    L.control.layers(baseMaps, overlayMaps).addTo(mymap);
+    L.control.layers([], overlayMaps).addTo(mymap);
 
     function show_dialog(latlng, loc_info){
 	var popupHTML = '<h3><b>' + ltypes[loc_info.type] + ' '

@@ -561,11 +561,12 @@ class InlineMapViewNew(View):
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
                 'properties', json_build_object(
+                'type', 'location',
                 'loc_id', l.id,
                 'code', l.location_code,
                 'activity', a.name,
                 'contractor', o.name,
-                'type', l.location_type,
+                'loc_type', l.location_type,
                 'planned_date', l.planned_date,
                 'complete', l.complete,
                 'measured_date', l.measured_date
@@ -584,7 +585,10 @@ class InlineMapViewNew(View):
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
                 'properties', json_build_object(
-                'type', l.location_type,
+                'type', 'request',
+                'req_id', cr.id,
+                'loc_type', l.location_type,
+                'loc_id', l.id,
                 'code', cr.location_code,
                 'motivation', cr.motivation,
                 'status', cr.request_status
@@ -613,6 +617,7 @@ def get_closest_to(request, *args, **kwargs):
     loc_id = request.GET.get('locId', None)
     radius = request.GET.get('radius', 500)
 
+    proj = Project.objects.get(slug=kwargs['project_slug'])
     if not loc_id:
         proj = Project.objects.get(slug=kwargs['project_slug'])
         loc_ids = Location.objects.filter(activity__project=proj)\
@@ -641,10 +646,20 @@ def get_closest_to(request, *args, **kwargs):
     if locs:
         nn = Location.objects.get(id=locs[0])
         uplog = UploadLog.objects.filter(activity=nn.activity)
-        response = {'type': nn.location_type,
-                    'code': nn.location_code,
-                    'activity': nn.activity.name,
-                    'contractor': nn.activity.contractor.name}
+        response = {
+            'type': 'location',
+            'loc_type': nn.location_type,
+            'code': nn.location_code,
+            'activity': nn.activity.name,
+            'contractor': nn.activity.contractor.name,
+            'requests': [{'id': cr.id,
+                          'req_type': Request.TYPES[cr.request_type],
+                          'motivation': cr.motivation,
+                          'url': '/us/projects/{0}/{1}/changerequests/detail/{2}/'
+                          .format(proj.slug, str(nn.activity_id), str(cr.id)),
+                          'status': Request.STATUSES[cr.request_status]}
+                         for cr in Request.objects.filter(location_code=nn.location_code).distinct()]
+        }
         if uplog:
             response['files'] = [{'name': ul.filename, 'when': str(ul.when)} for ul in uplog]
 

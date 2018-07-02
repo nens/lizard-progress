@@ -1,3 +1,32 @@
+function setup_movable_dialog() {
+    // used by open_popup
+    $('body').append('<div id="movable-dialog"><div id="movable-dialog-content"></div></div>');
+    var options = {
+        autoOpen: false,
+        title: '',
+        width: 650,
+        height: 480,
+        zIndex: 10000,
+        close: function (event, ui) {
+            // clear contents on close
+            $('#movable-dialog-content').empty();
+        }
+    };
+
+    // make an exception for iPad
+    if (isAppleMobile) {
+        // dragging on touchscreens isn't practical
+        options.draggable = false;
+        // resizing neither
+        options.resizable = false;
+        // make width 90% of the entire window
+        options.width = $(window).width() * 0.9;
+        // make height 80% of the entire window
+        options.height = $(window).height() * 0.8;
+    }
+
+    $('#movable-dialog').dialog(options);
+}
 function build_map(gj, extent) {
     function setCurrLocId(id){window.currLocationId = id;}
     setCurrLocId('');
@@ -48,7 +77,7 @@ function build_map(gj, extent) {
 	},
 	onEachFeature: function(feature, layer){
 	    /* showing essentioal information: location code, location type */
-	    var popupHTML = ltypes[feature.properties.type] + ' '
+	    var popupHTML = ltypes[feature.properties.loc_type] + ' '
 		+ feature.properties.code;
 	    // setCurrLocId(feature.properties.loc_id);
 	    layer.bindTooltip(popupHTML);
@@ -59,7 +88,7 @@ function build_map(gj, extent) {
     };
 
     function renderingOrderComparator(featA, featB){
-	return _orderingTable[featA.geometry.type] - _orderingTable[featB.geometry.type];
+	return _orderingTable[featA.geometry.loc_type] - _orderingTable[featB.geometry.loc_type];
     }
 
     var overlayMaps = {};
@@ -78,14 +107,15 @@ function build_map(gj, extent) {
 	    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
 	    layer.addTo(mymap); /* show everything by default */
 	    overlayMaps[activityName] = layer;
-
 	}
     }
 
     L.control.layers([], overlayMaps).addTo(mymap);
 
     function show_dialog(latlng, loc_info){
-	var popupHTML = '<h3><b>' + ltypes[loc_info.type] + ' '
+	//setup_movable_dialog();
+	
+	var popupHTML = '<h3><b>' + ltypes[loc_info.loc_type] + ' '
 	    + loc_info.code + '</b></h3>' 
 	    + 'Opdrachtnemer: ' + loc_info.contractor 
 	    + '<br>Werkzaamheid: ' + loc_info.activity;
@@ -95,9 +125,32 @@ function build_map(gj, extent) {
 	    loc_info['files'].forEach(function(el){
 		var d = new Date(el.when);
 		popupHTML += '<tr><td>' + el.name + '</td><td>'
-		    + d.getDate() + '-' + d.getMonth() + '-' + d.getFullYear() + '</td></tr>';
+		    + d.getDate() + '-' + d.getMonth()+1 + '-' + d.getFullYear() + '</td></tr>';
 	    });
 	    popupHTML += '</table>';
+	    if (loc_info.requests.length > 0) {
+		for (var cr in loc_info.requests) {
+		    var req = loc_info.requests[cr];
+		    popupHTML += '<h3>Aanvraag (' + req['status'] + ')</h3><br>';
+		    popupHTML += '<a href=' + req['url']
+			+ '>Klik hier voor meer details (aanvraagpagina)</a><br>'
+			+ '<dl class="dl-horizontal">'
+			+ '<dt>Type<dt><dd>' + req['req_type'] + '</dd>'
+			+ '<dt>Locatie<dt><dd>' + loc_info['code'] + '</dd>'
+			+ '<dt>Werkzaamheid<dt><dd>' + loc_info['activity'] + '</dd>'
+			+ '<dt>Motivatie</dt><dd>' + req['motivation'] + '</dd></dl>'
+		    	+ '<dt>Goedkeuring</dt><dd>'
+			+ '<dd><form action="' + req['url'] + '/acceptance" method="post">'
+			+ '<input name="csrfmiddlewaretoken" value="QXoOefkj5e25nCahMiTWp4l05HnXrfOe" type="hidden">' 
+			+ '<input name="wantoutputas" value="json" type="hidden">'
+			+ '<input name="accept" id="hidden-accept" value="" type="hidden">'
+			+ '<input name="refuse" id="hidden-refuse" value="" type="hidden">'
+			+ '<button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-accept" class="btn btn-success ajaxsubmit">Goedkeuren</button>'
+			+ '<br><button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-refuse" class="btn btn-danger ajaxsubmit">Afkeuren</button>'
+		    + 'Reden: <input name="reason" value="" type="text">'
+			+ '<br><span style="color: red" id="submit-errors"></span>';
+		}
+	    }
 	} else {
 	    popupHTML += '<br><br>Er is voor deze locatie nog geen data aanwezig in het systeem.';
 	}

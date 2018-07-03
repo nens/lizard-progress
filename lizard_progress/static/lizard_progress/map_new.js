@@ -33,21 +33,21 @@ function build_map(gj, extent) {
 	    return L.circleMarker(latlng, {
 		radius: 5,
 		weight: 1,
-		opacity: .5,
-		fillOpacity: .5});
+		opacity: .4,
+		fillOpacity: .4});
 	    } else {
 		var fillOpacity = feature.properties.status; 
 		return L.circleMarker(latlng, {
 		    radius: 5+2,
 		    weight: 3,
-		    opacity: 1,
-		    fillOpacity: fillOpacity});
+		    opacity: .4,
+		    fillOpacity: .4});
 	    }		
 	},
 	style: function(feature) {
 	    var color = "black";
 	    if (feature.properties.type == 'location') {
-		if (feature.properties.complete === true) {
+		if (feature.properties.complete) {
 		    color = "green";
 		} else if(feature.properties.complete === false) {
 		    color = "red";
@@ -101,9 +101,9 @@ function build_map(gj, extent) {
 	//setup_movable_dialog();
 	
 	var popupHTML = '<h3><b>' + ltypes[loc_info.loc_type] + ' '
-	    + loc_info.code + '</b></h3>' 
-	    + 'Opdrachtnemer: ' + loc_info.contractor 
-	    + '<br>Werkzaamheid: ' + loc_info.activity;
+	    + loc_info.code + '</b></h3> '
+	    + 'Opdrachtnemer: ' + loc_info.activities[0].contractor /* TODO: probably a tab per activity */
+	    + '<br>Werkzaamheid: ' + loc_info.activities[0].name;
 	if ('files' in loc_info) {
 	    popupHTML += '<br><br>Bestanden:<br>';
 	    popupHTML += '<table><tr><th><b>Bestand</b></th><th><b>Upload</b></th></tr>';
@@ -113,32 +113,34 @@ function build_map(gj, extent) {
 		    + d.getDate() + '-' + d.getMonth()+1 + '-' + d.getFullYear() + '</td></tr>';
 	    });
 	    popupHTML += '</table>';
-	    if (loc_info.requests.length > 0) {
-		for (var cr in loc_info.requests) {
-		    var req = loc_info.requests[cr];
-		    popupHTML += '<h3>Aanvraag (' + req['status'] + ')</h3><br>';
-		    popupHTML += '<a href=' + req['url']
-			+ '>Klik hier voor meer details (aanvraagpagina)</a><br>'
-			+ '<dl class="dl-horizontal">'
-			+ '<dt>Type<dt><dd>' + req['req_type'] + '</dd>'
-			+ '<dt>Locatie<dt><dd>' + loc_info['code'] + '</dd>'
-			+ '<dt>Werkzaamheid<dt><dd>' + loc_info['activity'] + '</dd>'
-			+ '<dt>Motivatie</dt><dd>' + req['motivation'] + '</dd></dl>'
-		    	+ '<dt>Goedkeuring</dt><dd>'
-			+ '<dd><form action="' + req['url'] + '/acceptance" method="post">'
-			+ '<input name="csrfmiddlewaretoken" value="QXoOefkj5e25nCahMiTWp4l05HnXrfOe" type="hidden">' 
-			+ '<input name="wantoutputas" value="json" type="hidden">'
-			+ '<input name="accept" id="hidden-accept" value="" type="hidden">'
-			+ '<input name="refuse" id="hidden-refuse" value="" type="hidden">'
-			+ '<button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-accept" class="btn btn-success ajaxsubmit">Goedkeuren</button>'
-			+ '<br><button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-refuse" class="btn btn-danger ajaxsubmit">Afkeuren</button>'
-		    + 'Reden: <input name="reason" value="" type="text">'
-			+ '<br><span style="color: red" id="submit-errors"></span>';
-		}
-	    }
 	} else {
 	    popupHTML += '<br><br>Er is voor deze locatie nog geen data aanwezig in het systeem.';
 	}
+	
+	if (loc_info.requests.length > 0) {
+	    for (var cr in loc_info.requests) {
+		var req = loc_info.requests[cr];
+		popupHTML += '<h3>Aanvraag (' + req['status'] + ')</h3><br>';
+		popupHTML += '<a href=' + req['url']
+		    + '>Klik hier voor meer details (aanvraagpagina)</a><br>'
+		    + '<dl class="dl-horizontal">'
+		    + '<dt>Type<dt><dd>' + req['req_type'] + '</dd>'
+		    + '<dt>Locatie<dt><dd>' + loc_info['code'] + '</dd>'
+		    + '<dt>Werkzaamheid<dt><dd>' + req['activity'] + '</dd>'
+		    + '<dt>Motivatie</dt><dd>' + req['motivation'] + '</dd></dl>'
+		    + '<dt>Goedkeuring</dt><dd>'
+		    + '<dd><form action="' + req['url'] + '/acceptance" method="post">'
+		    + '<input name="csrfmiddlewaretoken" value="QXoOefkj5e25nCahMiTWp4l05HnXrfOe" type="hidden">' 
+		    + '<input name="wantoutputas" value="json" type="hidden">'
+		    + '<input name="accept" id="hidden-accept" value="" type="hidden">'
+		    + '<input name="refuse" id="hidden-refuse" value="" type="hidden">'
+		    + '<button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-accept" class="btn btn-success ajaxsubmit">Goedkeuren</button>'
+		    + '<br><button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-refuse" class="btn btn-danger ajaxsubmit">Afkeuren</button>'
+		    + 'Reden: <input name="reason" value="" type="text">'
+		    + '<br><span style="color: red" id="submit-errors"></span>';
+	    }
+	}
+	
 	var popup = L.popup({'maxWidth': 500, 'autoClose': true})
 	    .setLatLng(latlng) //TODO has to be loc coordinates
 	    .setContent(popupHTML)

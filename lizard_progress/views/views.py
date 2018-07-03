@@ -52,6 +52,7 @@ from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.models import Location
 from lizard_progress.models import MeasurementTypeAllowed
+from lizard_progress.models import Measurement
 from lizard_progress.models import Project
 from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
@@ -643,25 +644,37 @@ def get_closest_to(request, *args, **kwargs):
 
     nn = None
     response = {}
+
     if locs:
+        # We take the closest; in the next step we will select all locations with the same code
         nn = Location.objects.get(id=locs[0])
-        uplog = UploadLog.objects.filter(activity=nn.activity)
+        nn = Location.objects.filter(location_code=nn.location_code)
+
+        # In general, there could be more than one activity booked for a location.
+        # The pairs (location, activity) appear as multiple instances of the Location class.
+        acts = Activity.objects.filter(id__in=nn.values_list('activity_id'))
+
         response = {
             'type': 'location',
-            'loc_type': nn.location_type,
-            'code': nn.location_code,
-            'activity': nn.activity.name,
-            'contractor': nn.activity.contractor.name,
+            'loc_type': nn[0].location_type,
+            'code': nn[0].location_code,
+            'activities': [{'name': a.name,
+                            'contractor': a.contractor.name,
+                            # 'uploads': UploadLog.objects.filter(activity=a),
+                            'files': [
+                                {'name': m.rel_file_path,
+                                 'when': str(m.date)}
+                                for m in Measurement.objects.filter(location=nn.filter(activity=a))
+                            ]} for a in acts],
             'requests': [{'id': cr.id,
                           'req_type': Request.TYPES[cr.request_type],
                           'motivation': cr.motivation,
+                          'activity': Activity.objects.get(id=cr.activity_id).name,
                           'url': '/us/projects/{0}/{1}/changerequests/detail/{2}/'
-                          .format(proj.slug, str(nn.activity_id), str(cr.id)),
+                          .format(proj.slug, str(cr.activity_id), str(cr.id)),
                           'status': Request.STATUSES[cr.request_status]}
-                         for cr in Request.objects.filter(location_code=nn.location_code).distinct()]
+                         for cr in Request.objects.filter(location_code=nn[0].location_code).distinct()]
         }
-        if uplog:
-            response['files'] = [{'name': ul.filename, 'when': str(ul.when)} for ul in uplog]
 
     return HttpResponse(json.dumps(response), content_type="application/json")
 

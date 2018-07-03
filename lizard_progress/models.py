@@ -856,7 +856,7 @@ class ReviewProject(models.Model):
         else:
             the_reviews = reviews
 
-        self.set_reviews(the_reviews, from_task=True)  # Saves
+        self.set_reviews(the_reviews, from_task=False)  # Saves
 
     def set_reviews(self, the_reviews, from_task=False):
         logger.debug('Entered  set_reviews')
@@ -1672,8 +1672,8 @@ class Activity(ProjectActivityMixin, models.Model):
     @property
     def percentage_done(self):
         if self.has_locations():
-            return self.percentage(self.num_locations(),
-                                   self.num_complete_locations())
+            return self.percentage(self.num_locations,
+                                   self.num_complete_locations)
         else:
             return 'N/A'
 

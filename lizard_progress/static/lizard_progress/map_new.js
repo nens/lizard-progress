@@ -137,7 +137,7 @@ function build_map(gj, extent) {
 	var popupHTML = '<h3><b>' + ltypes[loc_info.loc_type] + ' '
 	    + loc_info.code + '</b></h3> '
 	    + 'Opdrachtnemer: ' + loc_info.activities[0].contractor /* TODO: probably a tab per activity */
-	    + '<br>Werkzaamheid: ' + loc_info.activities[0].name;
+	    + '<br>Werkzaamheid: ' + loc_info.activities.map(function(a){return a['name'];}).join(',<br>');
 	if ('files' in loc_info) {
 	    popupHTML += '<br><br>Bestanden:<br>';
 	    popupHTML += '<table><tr><th><b>Bestand</b></th><th><b>Upload</b></th></tr>';
@@ -181,6 +181,7 @@ function build_map(gj, extent) {
 	    .openOn(mymap);
     }
     function onMapClick(e) {
+	console.log(getActiveOverlayNames());
 	var popup = L.popup().setLatLng(e.latlng);
 	if (!window.currLocationId) {
 	    popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
@@ -192,7 +193,10 @@ function build_map(gj, extent) {
 	$.ajax({
 	    type: 'get',
 	    url: 'get_closest_to',
-	    data: {'lat': e.latlng.lat, 'lng': e.latlng.lng, 'locId': window.currLocationId},
+	    data: {'lat': e.latlng.lat,
+		   'lng': e.latlng.lng,
+		   'locId': window.currLocationId,
+		   'overlays[]': getActiveOverlayNames()},
 	    datatype: 'json',
 	    success: function(resp){show_dialog(e.latlng, resp);},
 	    error: function(jqXHR, textStatus, err){

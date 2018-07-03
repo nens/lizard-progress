@@ -613,22 +613,41 @@ class InlineMapViewNew(View):
 @login_required
 @ajax_request
 def get_closest_to(request, *args, **kwargs):
+
+    nn = None
+    response = {}
+
     lat = request.GET.get('lat', None)
     lng = request.GET.get('lng', None)
     loc_id = request.GET.get('locId', None)
     radius = request.GET.get('radius', 500)
+    overlays = request.GET.getlist('overlays[]', [])
 
+    logger.debug(overlays)
     proj = Project.objects.get(slug=kwargs['project_slug'])
+
+    # Consider activities in active overlays only
+    in_activities = []
+    if overlays:
+        in_activities = Activity.objects.filter(name__in=overlays)
+
     if not loc_id:
+        # Prepare location ids
+        # for the nearest neighbour search within active overlays
         proj = Project.objects.get(slug=kwargs['project_slug'])
         loc_ids = Location.objects.filter(activity__project=proj)\
-                                  .distinct()\
-                                  .values_list('id', flat=True)
-        cr_ids = Request.objects.filter(activity__project=proj)
+                                  .filter(activity__in=in_activities)
+
+        loc_ids = loc_ids.values_list('id', flat=True)
     else:
+        # Clicked on a location => select location by id
         loc_ids = [loc_id]
 
-    # TODO: ORM-ize
+    # If nothing found, return empty response
+    if not loc_ids:
+        return HttpResponse(json.dumps(response), content_type="application/json")
+
+    # NN search is more efficiently carried out by postgis
     q = """SELECT loc.id FROM lizard_progress_location loc
     WHERE loc.id IN ({0})
     AND (ST_Expand(loc.the_geom, {3}) &&
@@ -642,17 +661,12 @@ def get_closest_to(request, *args, **kwargs):
         locs = [l[0] for l in cursor.fetchall()]
         cursor.close()
 
-    nn = None
-    response = {}
-
     if locs:
-        # We take the closest; in the next step we will select all locations with the same code
-        nn = Location.objects.get(id=locs[0])
-        nn = Location.objects.filter(location_code=nn.location_code)
-
-        # In general, there could be more than one activity booked for a location.
-        # The pairs (location, activity) appear as multiple instances of the Location class.
-        acts = Activity.objects.filter(id__in=nn.values_list('activity_id'))
+        # Take the first from the query result and select all locations with the same location code
+        # (i.e. select the location with all its activities).
+        nn = Location.objects.filter(location_code=Location.objects.get(id=locs[0]).location_code)\
+                             .filter(activity__project=proj)
+        all_loc_activities = Activity.objects.filter(id__in=nn.values_list('activity_id'))
 
         response = {
             'type': 'location',
@@ -665,7 +679,7 @@ def get_closest_to(request, *args, **kwargs):
                                 {'name': m.rel_file_path,
                                  'when': str(m.date)}
                                 for m in Measurement.objects.filter(location=nn.filter(activity=a))
-                            ]} for a in acts],
+                            ]} for a in all_loc_activities],
             'requests': [{'id': cr.id,
                           'req_type': Request.TYPES[cr.request_type],
                           'motivation': cr.motivation,

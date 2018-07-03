@@ -620,7 +620,7 @@ def get_closest_to(request, *args, **kwargs):
     lat = request.GET.get('lat', None)
     lng = request.GET.get('lng', None)
     loc_id = request.GET.get('locId', None)
-    radius = request.GET.get('radius', 500)
+    radius = request.GET.get('radius', 200)
     overlays = request.GET.getlist('overlays[]', [])
 
     proj = Project.objects.get(slug=kwargs['project_slug'])
@@ -665,12 +665,24 @@ def get_closest_to(request, *args, **kwargs):
         # (i.e. select the location with all its activities).
         nn = Location.objects.filter(location_code=Location.objects.get(id=locs[0]).location_code)\
                              .filter(activity__project=proj)
+
+        g = nn[0].the_geom
+        g.transform(4326)
+        if isinstance(g.coords[0], tuple):
+            lng = (g.coords[0][0] + g.coords[1][0]) / 2
+            lat = (g.coords[0][1] + g.coords[1][1]) / 2
+        else:
+            lng, lat = g.coords[0], g.coords[1]
+
         all_loc_activities = Activity.objects.filter(id__in=nn.values_list('activity_id'))
 
+        # Probably no need to GeoJSON-ize it
         response = {
             'type': 'location',
             'loc_type': nn[0].location_type,
             'code': nn[0].location_code,
+            'lat': lat,
+            'lng': lng,
             'activities': [{'name': a.name,
                             'contractor': a.contractor.name,
                             # 'uploads': UploadLog.objects.filter(activity=a),

@@ -174,9 +174,10 @@ function build_map(gj, extent) {
 		    + '<br><span style="color: red" id="submit-errors"></span>';
 	    }
 	}
-	
+
+	latlng = L.latLng(loc_info.lat, loc_info.lng);
 	var popup = L.popup({'maxWidth': 500, 'autoClose': true})
-	    .setLatLng(latlng) //TODO has to be loc coordinates
+	    .setLatLng(latlng)
 	    .setContent(popupHTML)
 	    .openOn(mymap);
     }

@@ -623,7 +623,6 @@ def get_closest_to(request, *args, **kwargs):
     radius = request.GET.get('radius', 500)
     overlays = request.GET.getlist('overlays[]', [])
 
-    logger.debug(overlays)
     proj = Project.objects.get(slug=kwargs['project_slug'])
 
     # Consider activities in active overlays only

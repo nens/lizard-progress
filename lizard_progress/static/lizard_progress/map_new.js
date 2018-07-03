@@ -181,7 +181,6 @@ function build_map(gj, extent) {
 	    .openOn(mymap);
     }
     function onMapClick(e) {
-	console.log(getActiveOverlayNames());
 	var popup = L.popup().setLatLng(e.latlng);
 	if (!window.currLocationId) {
 	    popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')

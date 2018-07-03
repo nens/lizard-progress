@@ -1,3 +1,12 @@
+function getActiveOverlayNames()
+{
+    var arr = [];
+    $('.leaflet-control-layers-selector:checkbox:checked').each(function(){
+	arr.push($(this).parent('div').children('span').text().trim());
+    });
+    return arr;
+}
+
 function build_map(gj, extent) {
     function setCurrLocId(id){window.currLocationId = id;}
     setCurrLocId('');
@@ -26,7 +35,8 @@ function build_map(gj, extent) {
     };
     baseLayer.addTo(mymap);
     
-    var scale = L.control.scale().addTo(mymap);
+    var scale = L.control.scale({imperial: false}).addTo(mymap);
+
     const geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
@@ -95,10 +105,34 @@ function build_map(gj, extent) {
 	}
     }
 
-    L.control.layers([], overlayMaps).addTo(mymap);
+    L.Control.Layers.include({
+	getActiveOverlays: function () {
+	    // Create array for holding active layers
+            var active = [];
+	    // Iterate all layers in control
+            this._layers.forEach(function (obj) {
+		// Check if it's an overlay and added to the map
+		if (obj.overlay && mymap.hasLayer(obj.layer)) {
+		    // Push layer to active array
+                    active.push(obj.layer);
+		}
+            });
+	    // Return array
+            return active;
+	}
+    });
 
+    control = new L.control.layers([], overlayMaps).addTo(mymap);
+    
     function show_dialog(latlng, loc_info){
 	//setup_movable_dialog();
+	if (!('type' in loc_info)) {
+	    var popup = L.popup({'maxWidth': 500, 'autoClose': true})
+		.setLatLng(latlng) //TODO has to be loc coordinates
+		.setContent('Niets gevonden rond deze locatie.')
+		.openOn(mymap);
+	    return;
+	}
 	
 	var popupHTML = '<h3><b>' + ltypes[loc_info.loc_type] + ' '
 	    + loc_info.code + '</b></h3> '
@@ -152,8 +186,8 @@ function build_map(gj, extent) {
 	    popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
 		.openOn(mymap);
 	} else {
-	    //popup.setContent('Ophalen Locatiegegevens...')
-		//.openOn(mymap);
+	    popup.setContent('Ophalen Locatiegegevens...')
+		.openOn(mymap);
 	}	    
 	$.ajax({
 	    type: 'get',

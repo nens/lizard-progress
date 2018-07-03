@@ -588,6 +588,7 @@ class InlineMapViewNew(View):
                 'properties', json_build_object(
                 'type', 'request',
                 'req_id', cr.id,
+                'req_type', cr.request_type,
                 'loc_type', l.location_type,
                 'loc_id', l.id,
                 'code', cr.location_code,

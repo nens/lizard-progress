@@ -11,6 +11,14 @@ function build_map(gj, extent) {
     function setCurrLocId(id){window.currLocationId = id;}
     setCurrLocId('');
     const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk'};
+    const reqtypes = {'1': 'Locatiecode verwijderen',
+		      '2': 'Locatie verplaatsen',
+		      '3': 'Niewe locatiecode'};
+    const reqstatuses = {'1': 'Open',
+			 '2': 'Geaccepteerd',
+			 '3': 'Geweigerd',
+			 '4': 'Ingetrokken',
+			 '5': 'Ongeldig'};
     const reqStatusColors = ["#000099", "#1b9387", "#da70d6"];
     const mymap = L.map('map_new', {
 	fullscreenControl: {
@@ -41,14 +49,14 @@ function build_map(gj, extent) {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
 	    return L.circleMarker(latlng, {
-		radius: 5,
+		radius: 6,
 		weight: 1,
 		opacity: .4,
 		fillOpacity: .4});
 	    } else {
 		var fillOpacity = feature.properties.status; 
 		return L.circleMarker(latlng, {
-		    radius: 5+2,
+		    radius: 5+3,
 		    weight: 3,
 		    opacity: .4,
 		    fillOpacity: .4});
@@ -74,6 +82,10 @@ function build_map(gj, extent) {
 	     More about a location is available onclick. */
 	    var popupHTML = ltypes[feature.properties.loc_type] + ' '
 		+ feature.properties.code;
+	    if (feature.properties.type == 'request') {
+		popupHTML += '<br>Aanvraag: ' + reqtypes[feature.properties.req_type]
+		    + '<br>' + feature.properties.motivation;
+	    }
 	    layer.bindTooltip(popupHTML);
 	    layer.on('mouseover', function(e){setCurrLocId(feature.properties.loc_id);});
 	    layer.on('mouseout', function(e){setCurrLocId('');});
@@ -96,14 +108,16 @@ function build_map(gj, extent) {
 	    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
 	    layer.addTo(mymap); /* show everything by default */
 	    overlayMaps[activityName] = layer;
-	} else {
-	    var activityName = 'Aanvragen';
-	    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
-	    layer.addTo(mymap); /* show everything by default */
-	    overlayMaps[activityName] = layer;
-	    layer.bringToFront();
 	}
     }
+
+    /* get the changerequests ang add a overlay to the back */
+    var geoJsonDocument = gj['Aanvragen'];
+    var activityName = 'Aanvragen';
+    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
+    layer.addTo(mymap); /* show everything by default */
+    overlayMaps[activityName] = layer;
+    layer.bringToBack();
 
     L.Control.Layers.include({
 	getActiveOverlays: function () {

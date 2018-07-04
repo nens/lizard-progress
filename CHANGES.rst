@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.1.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Catch and pass missing coordinates error when creating location from measurement.
 
 
 4.1.10 (2018-06-20)

@@ -109,7 +109,7 @@ class TestReviewProjectViews(FixturesTestCase):
             )
             reviewProject = models.ReviewProject.objects.get(
                             name='new reviewproject')
-            self.assertEquals(reviewProject.calc_progress(), 0)
+            self.assertEquals(reviewProject.calc_progress(), 40)
 
     def test_post_new_reviewproject_with_filler_applicable(self):
         # Create a valid reviewproject with a filler which should auto-fill

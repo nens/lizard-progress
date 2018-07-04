@@ -2183,8 +2183,12 @@ class UploadedFile(models.Model):
         # connection.on_commit is provided by our custom database
         # engine (lizard_progress.db_engine). It takes a callable
         # without arguments, so we use lambda here.
-        connection.on_commit(
-            lambda: tasks.process_uploaded_file_task.delay(self.id))
+        if not settings.DEBUG:
+            connection.on_commit(
+                lambda: tasks.process_uploaded_file_task.delay(self.id))
+        else:
+            from lizard_progress.process_uploaded_file import process_uploaded_file
+            process_uploaded_file(self.id)
 
     @property
     def filename(self):

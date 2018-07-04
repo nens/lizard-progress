@@ -485,10 +485,11 @@ class RibxReinigingInspectieRioolParser(RibxParser):
             if item.work_impossible:
                 return None
             elif not item.new:
-                self.record_error(
-                    item.sourceline, 'LOCATION_NOT_FOUND',
-                    self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
-                return None
+                #self.record_error(
+                #    item.sourceline, 'LOCATION_NOT_FOUND',
+                #    self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
+                location = self.create_new(item)
+                return location
             else:
                 location = self.create_new(item)
 

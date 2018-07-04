@@ -484,21 +484,15 @@ class RibxReinigingInspectieRioolParser(RibxParser):
             # though.
             if item.work_impossible:
                 return None
-            elif not item.new:
-                #self.record_error(
-                #    item.sourceline, 'LOCATION_NOT_FOUND',
-                #    self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
-                location = self.create_new(item)
-                return location
             else:
                 location = self.create_new(item)
-
-                # CHANGE 2018-07-04 for PROJ-312
                 if location in self.ERRORS:
                     self.record_error(item.sourceline,
                                       location,
                                       self.ERRORS[location].format(item.ref))
-                return None
+                    return None
+                else:
+                    return location
 
         manhole_start = None
         if isinstance(item, ribxmodels.InspectionPipe):

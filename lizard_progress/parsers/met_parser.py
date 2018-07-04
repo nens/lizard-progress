@@ -460,6 +460,13 @@ class MetParser(specifics.ProgressParser):
                     distance, max_allowed_distance)
 
     def get_location(self, profile):
+        if profile.midpoint:
+            profile_mid_or_start_point = profile.midpoint
+        else:
+            # This can sometimes happen e.g. if there is no water in a ditch.
+            # We have to use the start_point instead.
+            profile_mid_or_start_point = profile.start_point
+
         try:
             point = Point(profile.start_x, profile.start_y)
             location = self.activity.get_or_create_location(
@@ -468,12 +475,7 @@ class MetParser(specifics.ProgressParser):
             # metfilelib points
             location_point = linear_algebra.Point(
                 x=location.the_geom.x, y=location.the_geom.y)
-            if profile.midpoint:
-                distance = location_point.distance(profile.midpoint)
-            else:
-                # This can sometimes happen e.g. if there is no water in a ditch.
-                # Then we just use the start_point instead.
-                distance = location_point.distance(profile.start_point)
+            distance = location_point.distance(profile_mid_or_start_point)
             maxdistance = self.config_value('maximum_location_distance')
             if distance > maxdistance:
                 self.record_error_code(
@@ -484,8 +486,8 @@ class MetParser(specifics.ProgressParser):
                     m=distance, maxm=maxdistance, recovery={
                         'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
                         'location_code': profile.id,
-                        'x': profile.start_x,
-                        'y': profile.start_y
+                        'x': profile_mid_or_start_point.x,
+                        'y': profile_mid_or_start_point.y,
                         })
             return location
         except models.Activity.NoLocationException:

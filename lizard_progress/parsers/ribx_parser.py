@@ -138,7 +138,7 @@ def check_gwsw(file_obj):
 class RibxParser(ProgressParser):
     ERRORS = {
         'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
-        'LOCATION_COORD_ERROR': "Incorrect or missing position",
+        'LOCATION_COORD_ERROR': "Onbekende locatie met ongespecificeerde coördinaten.",
         'X_NOT_IN_EXTENT': "Buiten gebied: X coördinaat niet tussen {} en {}.",
         'Y_NOT_IN_EXTENT': "Buiten gebied: Y coördinaat niet tussen {} en {}.",
         'ATTACHMENT_ALREADY_EXISTS':

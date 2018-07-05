@@ -831,9 +831,21 @@ class TestActivity(FixturesTestCase):
         location = LocationF.create(
             activity=activity, location_code='testcode')
 
-        location2 = activity.get_or_create_location('testcode', None)
+        location2, method = activity.get_or_create_location('testcode', None)
 
         self.assertEquals(location.id, location2.id)
+        self.assertEquals(method, 'get')
+
+    def test_get_or_create_location_returns_new_location(self):
+        mtype = AvailableMeasurementTypeF.create(
+            needs_predefined_locations=False)
+        activity = ActivityF.create(measurement_type=mtype)
+
+        point = Point(3, 4)
+        location, method = activity.get_or_create_location('testcode', point)
+
+        self.assertEquals(method, 'new')
+        self.assertEquals(location.the_geom, point)
 
     def test_get_or_create_location_returns_from_source_activity(self):
         project = ProjectF.create()
@@ -851,7 +863,8 @@ class TestActivity(FixturesTestCase):
             activity=activity1, location_code='testcode', complete=True)
         MeasurementF.create(location=location)
 
-        location2 = activity2.get_or_create_location('testcode', None)
+        location2, method = activity2.get_or_create_location('testcode', None)
+        self.assertEquals(method, 'copied')
 
         self.assertTrue(location2)
         self.assertNotEquals(location.id, location2.id)

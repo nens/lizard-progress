@@ -4,8 +4,10 @@ Changelog of lizard-progress
 4.1.12 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Avoid running calc_progress in projectreview view, show reviewproject.progress instead.
 
+- Disable Download reviews button if there are no reviews.
+  
 
 4.1.11 (2018-07-05)
 -------------------

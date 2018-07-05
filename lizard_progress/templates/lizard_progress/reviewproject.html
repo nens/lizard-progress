@@ -8,8 +8,8 @@
 
 
     <h1> {{ view.reviewproject.name }} </h1>
-    <h3> Voortgang: {{ view.reviewproject.calc_progress }}% </h3>
-    <progress value={{ view.reviewproject.calc_progress }}  max="100"></progress>
+    <h3> Voortgang: {{ view.reviewproject.progress }}% </h3>
+    <progress value={{ view.reviewproject.progress }}  max="100"></progress>
 
     <a href="download_shapefile">
       <button type="button" class="btn btn-primary btn-md pull-right"
@@ -22,7 +22,11 @@
     </a>
 
     <a href="download">
-      <button type="button" class="btn btn-primary btn-md pull-right" style="padding:9px;margin-right:15px">
+      <button type="button" class="btn btn-primary btn-md pull-right"
+          {% if not view.reviewproject.reviews %}
+          disabled title="No reviews available"
+              {% endif %}
+	      style="padding:9px;margin-right:15px">
         Download reviews
       </button>
     </a>

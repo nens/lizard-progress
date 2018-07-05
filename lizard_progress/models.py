@@ -508,13 +508,13 @@ class Project(ProjectActivityMixin, models.Model):
     def number_of_locations(self):
         return self.counted_number_of_locations
 
-    @cached_property
+    @property
     def number_of_complete_locations(self):
         return Location.objects.filter(
             activity__project=self, complete=True,
             not_part_of_project=False).count()
 
-    @cached_property
+    @property
     def percentage_done(self):
         return self.percentage(self.number_of_locations,
                                self.number_of_complete_locations)
@@ -1683,8 +1683,8 @@ class Activity(ProjectActivityMixin, models.Model):
     @property
     def percentage_done(self):
         if self.has_locations():
-            return self.percentage(self.num_locations(),
-                                   self.num_complete_locations())
+            return self.percentage(self.num_locations,
+                                   self.num_complete_locations)
         else:
             return 'N/A'
 

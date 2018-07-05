@@ -4,6 +4,8 @@ Changelog of lizard-progress
 4.1.11 (unreleased)
 -------------------
 
+- Hotfix progresspar project dahboard.
+
 - Only perform a max distance check when the Location is not newly created.
 
 - Use midpoint for creating metparser Locations.

@@ -777,7 +777,7 @@ class TestActivity(FixturesTestCase):
         activity = ActivityF.create()
         LocationF.create(activity=activity, location_code='a')
         LocationF.create(activity=activity, location_code='b')
-        self.assertEquals(activity.num_locations(), 2)
+        self.assertEquals(activity.num_locations, 2)
 
     def test_num_complete_locations(self):
         activity = ActivityF.create()
@@ -787,7 +787,7 @@ class TestActivity(FixturesTestCase):
             activity=activity, complete=True, location_code='b')
         LocationF.create(
             activity=activity, complete=True, location_code='c')
-        self.assertEquals(activity.num_complete_locations(), 2)
+        self.assertEquals(activity.num_complete_locations, 2)
 
     def test_get_unique_activity_name_combines_contractor_mtype(self):
         project = ProjectF.create()

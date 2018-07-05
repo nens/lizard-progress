@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.1.11 (unreleased)
+4.1.11 (2018-07-05)
 -------------------
 
 - Hotfix progresspar project dahboard.

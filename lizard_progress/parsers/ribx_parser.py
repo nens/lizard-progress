@@ -390,7 +390,7 @@ class RibxParser(ProgressParser):
 
             # CHANGE 2018-07-04 for PROJ-312
             # Specify failure reason if location cannot be created because of
-            # wrong or missing coordinates
+            # unrecognizable or missing coordinates
             try:
                 point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
             except AttributeError:

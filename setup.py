@@ -32,8 +32,9 @@ install_requires = [
     # This is for the export to Lizard functionality
     'sqlalchemy >= 0.8',
     'geoalchemy2',
-    'pyshp'
-    ],
+    'pyshp',
+    'requests',
+    ]
 
 tests_require = [
     'coverage',

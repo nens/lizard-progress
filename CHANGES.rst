@@ -4,6 +4,10 @@ Changelog of lizard-progress
 4.1.11 (unreleased)
 -------------------
 
+- Only perform a max distance check when the Location is not newly created.
+
+- Use midpoint for creating metparser Locations.
+
 - Use midpoint for TOO_FAR_FROM_LOCATION change request.
 
 

@@ -459,36 +459,58 @@ class MetParser(specifics.ProgressParser):
                     'MET_DISTANCE_TO_MIDLINE',
                     distance, max_allowed_distance)
 
-    def get_location(self, profile):
+    @staticmethod
+    def _needs_max_distance_check(location_get_method):
+        """There are three possibilities: locations are (1) created
+        newly, (2) copied from another activity or (3) retrieved by PK.
+
+        (1) doesn't need to be checked, since the location is created from
+        the profile that is currently being parsed (NB: each profile has
+        it's own location)
+
+        (2) and (3) need to be checked, because they're locations that came
+        from a source that was previously uploaded, and we need to verify
+        if our profiles match those locations.
+        """
+        return location_get_method != models.Activity.METHOD_NEW
+
+    def _check_max_distance(self, location, profile):
+        mid_or_start_point = self.get_profile_mid_or_start_point(profile)
+        # metfilelib points
+        location_point = linear_algebra.Point(
+            x=location.the_geom.x, y=location.the_geom.y)
+        distance = location_point.distance(mid_or_start_point)
+        maxdistance = self.config_value('maximum_location_distance')
+        if distance > maxdistance:
+            self.record_error_code(
+                line_number=profile.line_number,
+                error_code="TOO_FAR_FROM_LOCATION",
+                location_id=profile.id,
+                x=location.the_geom.x, y=location.the_geom.y,
+                m=distance, maxm=maxdistance, recovery={
+                    'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
+                    'location_code': profile.id,
+                    'x': mid_or_start_point.x,
+                    'y': mid_or_start_point.y,
+                    })
+
+    @staticmethod
+    def get_profile_mid_or_start_point(profile):
         if profile.midpoint:
-            profile_mid_or_start_point = profile.midpoint
+            return profile.midpoint
         else:
             # This can sometimes happen e.g. if there is no water in a ditch.
             # We have to use the start_point instead.
-            profile_mid_or_start_point = profile.start_point
+            return profile.start_point
 
+    def get_location(self, profile):
+        mid_or_start_point = self.get_profile_mid_or_start_point(profile)
         try:
-            point = Point(profile.start_x, profile.start_y)
-            location = self.activity.get_or_create_location(
+            point = Point(mid_or_start_point.x, mid_or_start_point.y)
+            location, method = self.activity.get_or_create_location(
                 location_code=profile.id, point=point)
-
-            # metfilelib points
-            location_point = linear_algebra.Point(
-                x=location.the_geom.x, y=location.the_geom.y)
-            distance = location_point.distance(profile_mid_or_start_point)
-            maxdistance = self.config_value('maximum_location_distance')
-            if distance > maxdistance:
-                self.record_error_code(
-                    line_number=profile.line_number,
-                    error_code="TOO_FAR_FROM_LOCATION",
-                    location_id=profile.id,
-                    x=location.the_geom.x, y=location.the_geom.y,
-                    m=distance, maxm=maxdistance, recovery={
-                        'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
-                        'location_code': profile.id,
-                        'x': profile_mid_or_start_point.x,
-                        'y': profile_mid_or_start_point.y,
-                        })
+            if self._needs_max_distance_check(method):
+                self._check_max_distance(location, profile)
             return location
         except models.Activity.NoLocationException:
             self.record_error_code(
@@ -498,8 +520,8 @@ class MetParser(specifics.ProgressParser):
                 recovery={
                     'request_type': Request.REQUEST_TYPE_NEW_LOCATION,
                     'location_code': profile.id,
-                    'x': profile.start_x,
-                    'y': profile.start_y
+                    'x': mid_or_start_point.x,
+                    'y': mid_or_start_point.y,
                 })
             return None
 

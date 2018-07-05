@@ -1433,6 +1433,11 @@ class Activity(ProjectActivityMixin, models.Model):
     same set of locations and the same configuration, and have a
     single measurement type and contractor."""
 
+    # constants for get_or_create_location
+    METHOD_GET = 'get'
+    METHOD_COPIED = 'copied'
+    METHOD_NEW = 'new'
+
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100, default="Activity name")
 
@@ -1557,8 +1562,10 @@ class Activity(ProjectActivityMixin, models.Model):
     def get_or_create_location(self, location_code, point):
         try:
             # If it exists, return it
-            return Location.objects.get(
+            location = Location.objects.get(
                 activity=self, location_code=location_code)
+            method = self.METHOD_GET
+            return location, method
         except Location.DoesNotExist:
             # Does it exist in a source activity?
             if self.source_activity is not None:
@@ -1568,7 +1575,9 @@ class Activity(ProjectActivityMixin, models.Model):
                         location_code=location_code)
                     copied = self.copy_location(other_location)
                     if copied:
-                        return copied
+                        location = copied
+                        method = self.METHOD_COPIED
+                        return location, method
                 except Location.DoesNotExist:
                     # Pity
                     pass
@@ -1579,9 +1588,11 @@ class Activity(ProjectActivityMixin, models.Model):
             raise Activity.NoLocationException()
 
         # Let's just make one.
-        return Location.objects.create(
+        location = Location.objects.create(
             activity=self, location_code=location_code,
             the_geom=point, complete=False)
+        method = self.METHOD_NEW
+        return location, method
 
     @classmethod
     def get_unique_activity_name(cls, project, contractor, mtype, activity):

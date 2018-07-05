@@ -76,7 +76,7 @@ DATABASES = {
     # Switched to postgis instead of spatialite because we test a function that
     # uses .extent() and that isn't supported by spatialite.
     'default': {
-        'NAME': 'lizard_progress',
+        'NAME': 'uploadserver_site',
         # For some reason using lizard_progress.db_backend here fails, probably
         # because of the order in which things are loaded. Using it in the site
         # works.

@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = '4.1.11.dev0'
+version = '4.1.12.dev0'
 
 long_description = '\n\n'.join([
     open('README.rst').read(),
@@ -32,8 +32,9 @@ install_requires = [
     # This is for the export to Lizard functionality
     'sqlalchemy >= 0.8',
     'geoalchemy2',
-    'pyshp'
-    ],
+    'pyshp',
+    'requests',
+    ]
 
 tests_require = [
     'coverage',

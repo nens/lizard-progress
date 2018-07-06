@@ -33,21 +33,17 @@ or if the observation contains the element
 Otherwise no action will be taken.
 
 An action consists in putting an extra element into the observation
-with the tag <Herstelregel> and the action code ('Waarschuwing' or 'Ingrijp')
+with the tag <Trigger> and the action code ('Waarschuwing' or 'Ingrijp')
 as content.
 
 """
 
-ACTION_CODES = {'WARN': 'Waarschuwing',
-                'INTERVENE': 'Ingrijp',
-                'NOACTION': ''}
-
-MESSAGE_CODES = {'MASKINVALID': 'Invalid mask.',
-                 'NORULE': 'No applicable rules.'}
-
 import re
 import pandas as pd
 import operator
+
+import logging
+logger = logging.getLogger(__file__)
 
 
 def _eval(val, op, thr):
@@ -283,6 +279,15 @@ class ObservationMask(Observation):
 class Rule(object):
     """Implements a single filter rule."""
 
+    ACTION_CODES = {'WARN': 'Waarschuwing',
+                    'INTERVENE': 'Ingrijp',
+                    'NOACTION': ''}
+    TRIGGER_CODES = {'WARN': 'Waarschuwing',
+                     'INTERVENE': 'Ingrijp'}
+
+    MESSAGE_CODES = {'MASKINVALID': 'Invalid mask.',
+                     'NORULE': 'No applicable rules.'}
+
     def __init__(self, mask, warn=None, intervene=None):
 
         self.mask = mask
@@ -303,7 +308,7 @@ class Rule(object):
         return (self.warnThreshold is not None or self.interveneThreshold is not None) and \
             self.mask.is_valid()
 
-    def apply_to(self, observation):
+    def test_observation(self, observation):
         if not self.mask.is_valid():
             return 'MASKINVALID'
 
@@ -325,8 +330,9 @@ class Rule(object):
 
     def __str__(self):
         return(' '.join((str(self.mask),
-                         ACTION_CODES.keys()[0], self.warnOperator or '', str(self.warnThreshold) or '-',
-                         ACTION_CODES.keys()[1], self.interveneOperator or '', str(self.interveneThreshold) or '-')))
+                         Rule.TRIGGER_CODES.keys()[0], self.warnOperator or '', str(self.warnThreshold) or '-',
+                         Rule.TRIGGER_CODES.keys()[1], self.interveneOperator or '',
+                         str(self.interveneThreshold) or '-')))
 
 
 class FilterTable(object):
@@ -342,39 +348,48 @@ class FilterTable(object):
     def test_observation(self, observation):
         res = 'NORULE'
         for r in self.rules:
-            curr = r.apply_to(observation)
-            if curr in ACTION_CODES.keys():
+            curr = r.test_observation(observation)
+            if curr in Rule.ACTION_CODES.keys():
                 res = curr
                 if curr in ['WARN', 'INTERVENE']:
                     return curr
         return res
 
-    def apply_to_reviews(self, dic):
+    def apply_to_reviews(self, idic):
         """ Applies rules to a dictionary with reviews (uploadservice reviews json)."""
 
-        pipe_idx = 0
-        for pipe in dic['pipes']:
+        dic = idic.copy()
+        # loop through subdictionaries of different location types
+        for locType in ['pipes', 'manholes']:
 
-            if 'ZC' in pipe:
+            loc_idx = 0
 
-                zc_idx = 0
+            for loc in dic[locType]:
 
-                for zc in pipe['ZC']:
+                if 'ZC' in loc:
 
-                    if 'Herstelmaatregel' in zc and zc['Herstelmaatregel'] != '':
-                        continue
+                    zc_idx = 0
 
-                    obs = Observation()
-                    for k in zc.keys():
-                        obs.add_field(Field(k, zc.get(k)))
+                    for zc in loc['ZC']:
 
-                    res = self.test_observation(obs)
-                    if bool(res) and res in ACTION_CODES.keys():
-                        dic['pipes'][pipe_idx]['ZC'][zc_idx]['Herstelmaatregel'] = ACTION_CODES[res]
+                        obs = Observation()
+                        for k in zc.keys():
+                            obs.add_field(Field(k, zc.get(k)))
 
-                    zc_idx += 1
+                        res = self.test_observation(obs)
+                        logger.debug(dic[locType][loc_idx]['ZC'][zc_idx])
+                        logger.debug(res)
+                        if bool(res) and res in Rule.TRIGGER_CODES.keys():
+                            dic[locType][loc_idx]['ZC'][zc_idx]['Trigger'] = Rule.TRIGGER_CODES[res]
+                        else:
+                            del dic[locType][loc_idx]['ZC'][zc_idx]
 
-            pipe_idx += 1
+                        zc_idx += 1
+                else:
+                    # skip locations with no observations
+                    del dic[locType][loc_idx]
+
+                loc_idx += 1
 
         return dic
 
@@ -419,6 +434,8 @@ class FilterTable(object):
 
 class AutoReviewer(object):
 
+    TRIGGER_CODES = Rule.TRIGGER_CODES
+
     def __init__(self, filterfile_in=None):
         self.filterFile = filterfile_in
         self.filterTable = FilterTable()
@@ -457,6 +474,9 @@ class AutoReviewer(object):
 
     def count_rules(self):
         return len([r for r in self.filterTable.rules if r.is_valid()])
+
+    def test_observation(self, obs):
+        return self.filterTable.test_observation(obs)
 
 
 if __name__ == '__main__':

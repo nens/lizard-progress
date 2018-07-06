@@ -35,6 +35,8 @@ from lizard_progress.util import directories
 from lizard_progress.util import geo
 # from lizard_progress.util import filler
 from lizard_progress.util.autoreviewer import AutoReviewer
+from lizard_progress.util.autoreviewer import Field
+from lizard_progress.util.autoreviewer import Observation
 
 from lizard_map import coordinates
 
@@ -737,9 +739,9 @@ class ReviewProject(models.Model):
 
     def _calc_progress_pipe(self, pipe):
         """Return a float indicating how % much the pipe has been reviewed"""
-        if not bool(pipe[self.HERSTELMAATREGEL]):
+        if self.HERSTELMAATREGEL in pipe and bool(pipe[self.HERSTELMAATREGEL]):
             return 100
-        completed = sum(100 for zc in pipe['ZC'] if zc[self.HERSTELMAATREGEL])
+        completed = sum(100 for zc in pipe['ZC'] if self.HERSTELMAATREGEL in zc and bool(zc[self.HERSTELMAATREGEL]))
         return completed / len(pipe['ZC'])
 
     def _calc_progress_inspection(self, inspection):
@@ -747,7 +749,10 @@ class ReviewProject(models.Model):
 
         Because there is only 1 thing to review for an inspection, it either
         returns 0 or 100"""
-        return float(bool(inspection[self.HERSTELMAATREGEL])) * 100
+        if self.HERSTELMAATREGEL in inspection:
+            return float(bool(inspection[self.HERSTELMAATREGEL])) * 100
+        else:
+            return 0
 
     def set_slug_and_save(self):
         """Call on an unsaved project.
@@ -829,6 +834,9 @@ class ReviewProject(models.Model):
         return project_review
 
     def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path):
+
+        from itertools import compress
+
         parser = etree.XMLParser()
         tree = etree.parse(abs_ribx_path)
         root = tree.getroot()
@@ -843,15 +851,6 @@ class ReviewProject(models.Model):
             'manholes': []
         }
 
-        for elem in root.iter('ZB_A'):
-            # pipes
-            pipe = self._parse_zb_a(elem)
-            reviews['pipes'].append(pipe)
-        for elem in root.iter('ZB_C'):
-            # manholes
-            manhole = self._parse_zb_c(elem)
-            reviews['manholes'].append(manhole)
-
         # apply inspection_filler if we specify one
         if abs_filler_path:
             self.inspection_filler = abs_filler_path
@@ -859,9 +858,68 @@ class ReviewProject(models.Model):
         else:
             ar = AutoReviewer()
 
-        the_reviews = ar.run(reviews)
+        for elem in root.iter('ZB_A'):
+            # pipes
+            pipe = self._parse_zb_a(elem)
 
-        self.set_reviews(the_reviews, from_task=True)  # Saves
+            if 'ZC' in pipe:
+
+                keep = [False] * len(pipe['ZC'])
+                zc_idx = 0
+
+                for zc in pipe['ZC']:
+
+                    obs = Observation()
+                    for k in zc.keys():
+                        obs.add_field(Field(k, zc.get(k)))
+
+                    res = ar.test_observation(obs)
+
+                    if bool(res) and res in ar.TRIGGER_CODES.keys():
+                        pipe['ZC'][zc_idx]['Trigger'] = ar.TRIGGER_CODES[res]
+                        pipe['ZC'][zc_idx]['Herstelmaatregel'] = ''
+                        pipe['ZC'][zc_idx]['Opmerking'] = ''
+                        keep[zc_idx] = True
+
+                    zc_idx += 1
+
+                if any(keep):
+                    pipe['Herstelmaatregel'] = ''
+                    pipe['Opmerking'] = ''
+                    pipe['ZC'] = list(compress(pipe['ZC'], keep))
+                    logger.debug(pipe['Beginpunt x'])
+                    reviews['pipes'].append(pipe)
+
+        for elem in root.iter('ZB_C'):
+            # manholes
+            manhole = self._parse_zb_c(elem)
+
+            if 'ZC' in manhole:
+
+                keep = [False] * len(manhole['ZC'])
+                zc_idx = 0
+
+                for zc in manhole['ZC']:
+                    obs = Observation()
+                    for k in zc.keys():
+                        obs.add_field(Field(k, zc.get(k)))
+
+                    res = ar.test_observation(obs)
+                    if bool(res) and res in ar.TRIGGER_CODES.keys():
+                        manhole['ZC'][zc_idx]['Trigger'] = ar.TRIGGER_CODES[res]
+                        manhole['ZC'][zc_idx]['Herstelmaatregel'] = ''
+                        manhole['ZC'][zc_idx]['Opmerking'] = ''
+                        keep[zc_idx] = True
+
+                    zc_idx += 1
+
+                if any(keep):
+                    manhole['Herstelmaatregel'] = ''
+                    manhole['Opmerking'] = ''
+                    manhole['ZC'] = list(compress(manhole['ZC'], keep))
+                    reviews['manholes'].append(manhole)
+
+        self.set_reviews(reviews, from_task=True)  # Saves
 
     def set_reviews(self, the_reviews, from_task=False):
         self.reviews = the_reviews
@@ -897,8 +955,9 @@ class ReviewProject(models.Model):
                     result['Beginpunt CRS'] = elem.getchildren()[0].attrib[
                         'srsName']
                 elif elem.tag in ['AAG']:
-                    x, y = result[elem.tag] = \
-                    elem.getchildren()[0].getchildren()[0].text.split()
+                    x, y = result[elem.tag] = elem\
+                        .getchildren()[0].getchildren()[0]\
+                                         .text.split()
                     result['Eindpunt x'] = x
                     result['Eindpunt y'] = y
                     result['Eindpunt CRS'] = elem.getchildren()[0].attrib[
@@ -909,8 +968,6 @@ class ReviewProject(models.Model):
                         result['ZC'].append(zc_measurement)
                 else:
                     result[elem.tag] = elem.text
-        result[self.HERSTELMAATREGEL] = ''
-        result[self.OPMERKING] = ''
         return result
 
     def is_relevant_measurement(self, zc_measurement):

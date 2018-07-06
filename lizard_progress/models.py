@@ -834,7 +834,7 @@ class ReviewProject(models.Model):
         root = tree.getroot()
 
         reviews = {
-            'project' : {
+            'project': {
                 'name': self.name,
                 'slug': self.slug,
                 'url': project_url
@@ -852,14 +852,8 @@ class ReviewProject(models.Model):
             manhole = self._parse_zb_c(elem)
             reviews['manholes'].append(manhole)
 
-        the_reviews = reviews
-
         # apply inspection_filler if we specify one
         if abs_filler_path:
-            # rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
-            # rule_tree = filler.build_rule_tree(rules)
-            # the_reviews = filler.apply_rules(rule_tree, reviews)
-
             self.inspection_filler = abs_filler_path
             ar = AutoReviewer(abs_filler_path)
         else:

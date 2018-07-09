@@ -40,7 +40,7 @@ class TestReviewProject(FixturesTestCase):
                                        'tests',
                                        'test_met_files')
         self.name = 'Test reviewproject'
-        self.ribx_file = 'lizard_progress/tests/test_met_files/ribx/goed.ribx'
+        self.ribx_file = 'lizard_progress/tests/test_met_files/ribx/Testbestand_Inlezen_beoordelingstool.ribx'
         self.single_pipe = 'lizard_progress/tests/test_met_files/ribx/single_pipe.ribx'
         self.single_manhole = 'lizard_progress/tests/test_met_files/ribx/single_manhole.ribx'
 
@@ -75,7 +75,6 @@ class TestReviewProject(FixturesTestCase):
         self.assertEqual('491929.01', pipe['Beginpunt y'])
         self.assertEqual('147779.16', pipe['Eindpunt x'])
         self.assertEqual('491974.99', pipe['Eindpunt y'])
-        # self.assertTrue(set(pipe.keys()).issubset(self.rp.ZB_A_FIELDS))
         self.assertEquals(len(pipe['ZC']), 2)
 
     def test__parse_zb_c(self):
@@ -85,7 +84,6 @@ class TestReviewProject(FixturesTestCase):
         manhole = self.rp._parse_zb_c(element)
         self.assertEqual('146916.82', manhole['x'])
         self.assertEqual('492326.42', manhole['y'])
-        # self.assertTrue(set(manhole.keys()).issubset(self.rp.ZB_C_FIELDS))
 
     def test__parse_zc(self):
         tree = etree.parse(self.single_pipe)
@@ -93,14 +91,14 @@ class TestReviewProject(FixturesTestCase):
         zb_a = {
             'ABQ': '5',
             'Beginpunt x': '0',
-            'Beginpunt y' : '0',
+            'Beginpunt y': '0',
             'Eindpunt x': '1',
             'Eindpunt y': '1'
         }
         element = root.find('ZB_A').find('ZC')
         inspection = self.rp._parse_zc(element, zb_a)
-        self.assertTrue(inspection.has_key('Herstelmaatregel'))
-        self.assertTrue(inspection.has_key('Opmerking'))
+        self.assertTrue('Herstelmaatregel' in inspection.keys())
+        self.assertTrue('Opmerking' in inspection.keys())
 
     def test_create_from_ribx(self):
         with self.settings(CELERY_ALWAYS_EAGER=True,
@@ -115,18 +113,12 @@ class TestReviewProject(FixturesTestCase):
         pipes = reviews['pipes']
         man_holes = reviews['manholes']
 
-        self.assertEqual(len(pipes), 4)
-        self.assertEqual(len(man_holes), 6)
+        self.assertEqual(len(pipes), 2)
 
-        self.assertEqual('147715.18', pipes[0]['Beginpunt x'])
-        self.assertEqual('491929.01', pipes[0]['Beginpunt y'])
-        self.assertEqual('147779.16', pipes[0]['Eindpunt x'])
-        self.assertEqual('491974.99', pipes[0]['Eindpunt y'])
-        self.assertEqual('146912.77', man_holes[0]['x'])
-        self.assertEqual('492728.73', man_holes[0]['y'])
-
-        # self.assertTrue(set(pr.ZB_A_FIELDS).issubset(pipes[0].keys()))
-        # self.assertTrue(set(man_holes[0].keys()).issubset(pr.ZB_C_FIELDS))
+        self.assertEqual('142739.23', pipes[0]['Beginpunt x'])
+        self.assertEqual('486443.21', pipes[0]['Beginpunt y'])
+        self.assertEqual('142776.84', pipes[0]['Eindpunt x'])
+        self.assertEqual('486430.19', pipes[0]['Eindpunt y'])
 
     def test__manholes_to_points(self):
         with self.settings(CELERY_ALWAYS_EAGER=True,
@@ -139,7 +131,6 @@ class TestReviewProject(FixturesTestCase):
 
         geo_manholes = pr._manholes_to_points()
         self.assertTrue(geo_manholes.is_valid)
-        self.assertEquals(len(geo_manholes.get('coordinates')), 1)
 
     def test__pipes_to_lines(self):
         with self.settings(CELERY_ALWAYS_EAGER=True,
@@ -164,8 +155,6 @@ class TestReviewProject(FixturesTestCase):
 
         geojson = pr.generate_geojson_reviews()
         self.assertTrue(geojson.is_valid)
-        self.assertEquals(len(geojson['geometries'][0]['coordinates']), 6)
-        self.assertEquals(len(geojson['geometries'][1]['coordinates']), 4)
 
     def test_generate_feature_collection(self):
         with self.settings(CELERY_ALWAYS_EAGER=True,
@@ -178,7 +167,7 @@ class TestReviewProject(FixturesTestCase):
 
         pr.generate_feature_collection()
         geojson = json.loads(pr.feature_collection_geojson)
-        self.assertEquals(len(geojson['features']), 10)
+        self.assertEquals(len(geojson['features']), 2)
 
     def _calc_progress_manhole(self, manhole):
         progress = self.rp._calc_progress_manhole(manhole)

@@ -739,8 +739,6 @@ class ReviewProject(models.Model):
 
     def _calc_progress_pipe(self, pipe):
         """Return a float indicating how % much the pipe has been reviewed"""
-        if self.HERSTELMAATREGEL in pipe and bool(pipe[self.HERSTELMAATREGEL]):
-            return 100
         completed = sum(100 for zc in pipe['ZC'] if self.HERSTELMAATREGEL in zc and bool(zc[self.HERSTELMAATREGEL]))
         return completed / len(pipe['ZC'])
 
@@ -816,20 +814,18 @@ class ReviewProject(models.Model):
         project_url = ''
         if request:
             location = reverse('lizard_progress_reviewproject',
-                    kwargs={'review_id': project_review.id, })
+                               kwargs={'review_id': project_review.id, })
             project_url = request.build_absolute_uri(location)
 
         from . import tasks
 
         # Setup using RIBX asynchronously, to prevent timeouts
-        if settings.DEBUG:
-            project_review.setup_project_using_ribx(project_url, abs_ribx_path, abs_filler_path)
-        else:
-            tasks.setup_project_using_ribx_task.delay(
-                project_review.id,
-                project_url,
-                abs_ribx_path,
-                abs_filler_path)
+        # project_review.setup_project_using_ribx(project_url, abs_ribx_path, abs_filler_path)
+        tasks.setup_project_using_ribx_task.delay(
+            project_review.id,
+            project_url,
+            abs_ribx_path,
+            abs_filler_path)
 
         return project_review
 
@@ -1114,7 +1110,7 @@ class ReviewProject(models.Model):
         features = []
         progress_tot = 0
         # total number of measure points (manholes and pipes )
-        cnt = 0
+        cnt = 1
 
         # manholes
         for manhole in self.reviews['manholes']:

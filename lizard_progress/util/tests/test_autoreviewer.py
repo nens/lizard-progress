@@ -136,83 +136,82 @@ class TestAutoReviewerRIBX(FixturesTestCase):
 
                 if zc['A'] == 'BAA':
                     if int(zc['D']) >= 10:
-                        self.assertEquals(zc['Herstelmaatregel'], 'Ingrijp')
+                        self.assertEquals(zc['Trigger'], 'Ingrijp')
                     elif int(zc['D']) >= 5:
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BAB':
                     if zc['B'] in ['B', 'C']:
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BAC':
                     if zc['B'] in ['B', 'C']:
-                        self.assertEquals(zc['Herstelmaatregel'], 'Ingrijp')
+                        self.assertEquals(zc['Trigger'], 'Ingrijp')
                     elif zc['B'] == 'A':
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] in ['BAD', 'BAE']:
-                    self.assertEquals(zc['Herstelmaatregel'], '')
+                    self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BAF':
                     if zc['B'] in 'EFGI' and zc['C'] == 'A':
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     elif zc['B'] in 'CDEFGHI' and zc['C'] == 'B':
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     elif zc['B'] in 'CDEFGHI' and zc['C'] in 'CD':
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     elif bool(zc.get('B')) and zc['C'] in 'EZ':
-                        logger.debug(zc.get('B') + zc['C'])
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BAG':
                     if float(zc['D']) > 25:
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BAH':
                     if zc['B'] in 'EZ':
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BAI':
                     if zc['B'] == 'A' and zc['C'] in 'BCD':
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BAJ':
                     if zc['B'] == 'B' and int(zc['D']) == 10:
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BAK':
                     if zc['B'] in 'ABCEFGHIJK':
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] in ['BAL', 'BAM', 'BAN']:
-                    self.assertEquals(zc['Herstelmaatregel'], '')
+                    self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] in ['BAO', 'BAP']:
                     if int(zc['G']) == 0:
-                        self.assertEquals(zc['Herstelmaatregel'], 'Ingrijp')
+                        self.assertEquals(zc['Trigger'], 'Ingrijp')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')
 
                 elif zc['A'] == 'BBA':
                     if zc['B'] in 'ABC':
-                        self.assertEquals(zc['Herstelmaatregel'], 'Waarschuwing')
+                        self.assertEquals(zc['Trigger'], 'Waarschuwing')
                     else:
-                        self.assertEquals(zc['Herstelmaatregel'], '')
+                        self.assertEquals(zc['Trigger'], '')

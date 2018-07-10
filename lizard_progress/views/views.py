@@ -17,7 +17,6 @@ import json
 
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-
 from django import http
 from django.conf import settings
 from django.contrib import auth
@@ -31,6 +30,9 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.shortcuts import render
+from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
@@ -679,29 +681,12 @@ def get_closest_to(request, *args, **kwargs):
 
         # Probably no need to GeoJSON-ize it
         response = {
-            'type': 'location',
-            'loc_type': nn[0].location_type,
-            'code': nn[0].location_code,
             'lat': lat,
             'lng': lng,
-            'activities': [{'name': a.name,
-                            'contractor': a.contractor.name,
-                            # 'uploads': UploadLog.objects.filter(activity=a),
-                            'files': [
-                                {'name': m.rel_file_path,
-                                 'when': str(m.date)}
-                                for m in Measurement.objects.filter(location=nn.filter(activity=a))
-                            ]} for a in all_loc_activities],
-            'requests': [{'id': cr.id,
-                          'req_type': Request.TYPES[cr.request_type],
-                          'motivation': cr.motivation,
-                          'activity': Activity.objects.get(id=cr.activity_id).name,
-                          'url': '/us/projects/{0}/{1}/changerequests/detail/{2}/'
-                          .format(proj.slug, str(cr.activity_id), str(cr.id)),
-                          'status': Request.STATUSES[cr.request_status]}
-                         for cr in Request.objects.filter(location_code=nn[0].location_code).distinct()]
+            'html': render_to_string('lizard_progress/measurement_types/ribx.html',
+                                     {'locations': nn})
         }
-
+    # return HttpResponse(json.dumps(response), content_type="application/json")
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 

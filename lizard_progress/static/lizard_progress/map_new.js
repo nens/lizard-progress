@@ -140,7 +140,7 @@ function build_map(gj, extent) {
     
     function show_dialog(latlng, loc_info){
 	//setup_movable_dialog();
-	if (!('type' in loc_info)) {
+	if (!('html' in loc_info)) {
 	    var popup = L.popup({'maxWidth': 500, 'autoClose': true})
 		.setLatLng(latlng) //TODO has to be loc coordinates
 		.setContent('Niets gevonden rond deze locatie.')
@@ -148,46 +148,7 @@ function build_map(gj, extent) {
 	    return;
 	}
 	
-	var popupHTML = '<h3><b>' + ltypes[loc_info.loc_type] + ' '
-	    + loc_info.code + '</b></h3> '
-	    + 'Opdrachtnemer: ' + loc_info.activities[0].contractor /* TODO: probably a tab per activity */
-	    + '<br>Werkzaamheid: ' + loc_info.activities.map(function(a){return a['name'];}).join(',<br>');
-	if ('files' in loc_info) {
-	    popupHTML += '<br><br>Bestanden:<br>';
-	    popupHTML += '<table><tr><th><b>Bestand</b></th><th><b>Upload</b></th></tr>';
-	    loc_info['files'].forEach(function(el){
-		var d = new Date(el.when);
-		popupHTML += '<tr><td>' + el.name + '</td><td>'
-		    + d.getDate() + '-' + d.getMonth()+1 + '-' + d.getFullYear() + '</td></tr>';
-	    });
-	    popupHTML += '</table>';
-	} else {
-	    popupHTML += '<br><br>Er is voor deze locatie nog geen data aanwezig in het systeem.';
-	}
-	
-	if (loc_info.requests.length > 0) {
-	    for (var cr in loc_info.requests) {
-		var req = loc_info.requests[cr];
-		popupHTML += '<h3>Aanvraag (' + req['status'] + ')</h3><br>';
-		popupHTML += '<a href=' + req['url']
-		    + '>Klik hier voor meer details (aanvraagpagina)</a><br>'
-		    + '<dl class="dl-horizontal">'
-		    + '<dt>Type<dt><dd>' + req['req_type'] + '</dd>'
-		    + '<dt>Locatie<dt><dd>' + loc_info['code'] + '</dd>'
-		    + '<dt>Werkzaamheid<dt><dd>' + req['activity'] + '</dd>'
-		    + '<dt>Motivatie</dt><dd>' + req['motivation'] + '</dd></dl>'
-		    + '<dt>Goedkeuring</dt><dd>'
-		    + '<dd><form action="' + req['url'] + '/acceptance" method="post">'
-		    + '<input name="csrfmiddlewaretoken" value="QXoOefkj5e25nCahMiTWp4l05HnXrfOe" type="hidden">' 
-		    + '<input name="wantoutputas" value="json" type="hidden">'
-		    + '<input name="accept" id="hidden-accept" value="" type="hidden">'
-		    + '<input name="refuse" id="hidden-refuse" value="" type="hidden">'
-		    + '<button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-accept" class="btn btn-success ajaxsubmit">Goedkeuren</button>'
-		    + '<br><button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-refuse" class="btn btn-danger ajaxsubmit">Afkeuren</button>'
-		    + 'Reden: <input name="reason" value="" type="text">'
-		    + '<br><span style="color: red" id="submit-errors"></span>';
-	    }
-	}
+	var popupHTML = loc_info.html;
 
 	latlng = L.latLng(loc_info.lat, loc_info.lng);
 	var popup = L.popup({'maxWidth': 500, 'autoClose': true})

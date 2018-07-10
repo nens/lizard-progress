@@ -317,7 +317,14 @@ class RibxParser(ProgressParser):
                     self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
                 return None
             else:
-                location = self.create_new(item)
+                try:
+                    location = self.create_new(item)
+                except ValueError:
+                    self.record_error(
+                        item.sourceline,
+                        'CANT_CREATE_LOCATION',
+                        "Can't create location {}".format(item.ref))
+                    return None
 
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement
@@ -378,24 +385,16 @@ class RibxParser(ProgressParser):
             # Huh?
             location_type = models.Location.LOCATION_TYPE_POINT
 
-        if is_point:
-            # Biggest BS ever: The item.geom is a Point which contains x, y,
-            # and z values. However, the GeometryField in the Location model
-            # doesn't accept z-values (maybe only for points?). So we need to
-            # do this elaborate conversion just to get a Point with ONLY x and
-            # y values! Perhaps a better way to do this is is to correctly
-            # parse the Points as 2D in the ribxlib...
-            point_2d = ogr.Geometry(ogr.wkbPoint)
-            point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
-            geom = point_2d
-        else:
-            geom = item.geom
+        if not item.geom:
+            raise ValueError("Item has no geometry.")
+
+        item.geom.FlattenTo2D()
 
         location = models.Location.objects.create(
             activity=self.activity,
             location_code=item.ref,
             location_type=location_type,
-            the_geom=geom.ExportToWkt(),
+            the_geom=item.geom.ExportToWkt(),
             is_point=is_point,
             information=json.dumps({
                 "remark": "Added automatically by {}".format(
@@ -481,7 +480,14 @@ class RibxReinigingInspectieRioolParser(RibxParser):
                     self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
                 return None
             else:
-                location = self.create_new(item)
+                try:
+                    location = self.create_new(item)
+                except ValueError:
+                    self.record_error(
+                        item.sourceline,
+                        'CANT_CREATE_LOCATION',
+                        "Can't create location {}".format(item.ref))
+                    return None
 
         manhole_start = None
         if isinstance(item, ribxmodels.InspectionPipe):

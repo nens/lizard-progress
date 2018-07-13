@@ -8,8 +8,8 @@ function getActiveOverlayNames()
 }
 
 function build_map(gj, extent) {
-    function setCurrLocId(id){window.currLocationId = id;}
-    setCurrLocId('');
+    function setCurrObjId(type, id){window.currType=type;window.currObjId=id;}
+    setCurrObjId('', '');
     const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk'};
     const reqtypes = {'1': 'Locatiecode verwijderen',
 		      '2': 'Locatie verplaatsen',
@@ -87,8 +87,8 @@ function build_map(gj, extent) {
 		    + '<br>' + feature.properties.motivation;
 	    }
 	    layer.bindTooltip(popupHTML);
-	    layer.on('mouseover', function(e){setCurrLocId(feature.properties.loc_id);});
-	    layer.on('mouseout', function(e){setCurrLocId('');});
+	    layer.on('mouseover', function(e){setCurrObjId(feature.properties.type, feature.properties.id);});
+	    layer.on('mouseout', function(e){setCurrObjId('', '');});
 	    layer.on('click', layer.closeTooltip);
 	}
     };
@@ -139,7 +139,10 @@ function build_map(gj, extent) {
     control = new L.control.layers([], overlayMaps).addTo(mymap);
     
     function show_dialog(latlng, loc_info){
-	$('body').append('<div id="movable-dialog"><div id="movable-dialog-content"></div></div>');
+	var html, i;
+
+	html = ''; // '<div id="movable-dialog"><div id="movable-dialog-content">';
+
 	var options = {
             autoOpen: false,
             title: '',
@@ -152,13 +155,12 @@ function build_map(gj, extent) {
             }
 	};
 
-	$('#movable-dialog').dialog(options);
+	// $('#movable-dialog').dialog(options);
 
 
-	var html, i;
 	//setup_movable_dialog();
 	if (!('html' in loc_info)) {
-	    var popup = L.popup({'maxWidth': 650, 'autoClose': true})
+	    var popup = L.popup({'autoClose': true})
 		.setLatLng(latlng) //TODO has to be loc coordinates
 		.setContent('Niets gevonden rond deze locatie.')
 		.openOn(mymap);
@@ -174,11 +176,12 @@ function build_map(gj, extent) {
             if (data.html.length === 1) {
                 // Just copy the contents directly into the target div.
                 $("#movable-dialog-content").html(data.html[0]);
-                // Have the graphs fetch their data.
+		html += data.html[0];
+		// Have the graphs fetch their data.
                 reloadGraphs();
             } else {
                 // Build up html with tabs.
-                html = '<div id="popup-tabs"><ul>';
+                html += '<div id="popup-tabs"><ul>';
                 for (i = 0; i < data.html.length; i += 1) {
                     html += '<li><a href="#popup-tab-' + (i + 1) + '">';
                     html += data.tab_titles[i].replace('manhole', 'Put').replace('pipe', 'Streng').replace('drain', 'Kolk');
@@ -228,9 +231,9 @@ function build_map(gj, extent) {
         }
 	/* END Copypaste */
 
-	var popup = L.popup({'maxWidth': 650, 'height': 380, 'autoClose': true, 'autoPan': false})
+	var popup = L.popup({'minWidth': 650, 'maxHeight': 480, 'autoClose': true, 'autoPan': true})
 	    .setLatLng(latlng)
-	    .setContent(html)
+	    .setContent(html /*+ '</div></div>'*/)
 	    .openOn(mymap); 
 	//mymap.setView(latlng);
 	$('#movable-dialog').dialog();
@@ -250,7 +253,7 @@ function build_map(gj, extent) {
     
     function onMapClick(e) {
 	var popup = L.popup().setLatLng(e.latlng);
-	if (!window.currLocationId) {
+	if (!window.currObjId) {
 	    popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
 		.openOn(mymap);
 	} else {
@@ -262,7 +265,8 @@ function build_map(gj, extent) {
 	    url: 'get_closest_to',
 	    data: {'lat': e.latlng.lat,
 		   'lng': e.latlng.lng,
-		   'locId': window.currLocationId,
+		   'objType': window.currType,
+		   'objId': window.currObjId,
 		   'overlays[]': getActiveOverlayNames()},
 	    datatype: 'json',
 	    success: function(resp){show_dialog(e.latlng, resp);},

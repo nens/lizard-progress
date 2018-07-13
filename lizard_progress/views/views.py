@@ -566,6 +566,7 @@ class InlineMapViewNew(View):
                 'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
                 'properties', json_build_object(
                 'type', 'location',
+                'id', l.id,
                 'loc_id', l.id,
                 'code', l.location_code,
                 'activity', a.name,
@@ -590,6 +591,7 @@ class InlineMapViewNew(View):
                 'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
                 'properties', json_build_object(
                 'type', 'request',
+                'id', cr.id,
                 'req_id', cr.id,
                 'req_type', cr.request_type,
                 'loc_type', l.location_type,
@@ -622,56 +624,61 @@ def get_closest_to(request, *args, **kwargs):
     response = {}
     html = []
     tab_titles = []
-
+    locationIds, changeRequests = [], []
+    
     lat = request.GET.get('lat', None)
     lng = request.GET.get('lng', None)
-    loc_id = request.GET.get('locId', None)
-    radius = request.GET.get('radius', 200)
+    objType = request.GET.get('objType', 'location')
+    objId = request.GET.get('objId', None)
+    radius = request.GET.get('radius', 50)
     overlays = request.GET.getlist('overlays[]', [])
 
     proj = Project.objects.get(slug=kwargs['project_slug'])
 
     # Consider activities in active overlays only
-    in_activities = []
+    selectedActivities = []
     if overlays:
-        in_activities = Activity.objects.filter(name__in=overlays)
-
+        selectedActivities = Activity.objects.filter(name__in=overlays)
+    
     # If location hasn't been specified by clicking,
     # search in all locations within active overlays
-    if not loc_id:
-        proj = Project.objects.get(slug=kwargs['project_slug'])
-        loc_ids = Location.objects.filter(activity__project=proj)\
-                                  .filter(activity__in=in_activities)
-
-        loc_ids = loc_ids.values_list('id', flat=True)
+    if not objId:
+        locationIds = Location.objects.filter(activity__project=proj)\
+                                  .filter(activity__in=selectedActivities)\
+                                  .values_list('id', flat=True)
+        # NN search is more efficiently carried out by postgis
+        q = """SELECT DISTINCT ON (loc.location_type) loc.id FROM lizard_progress_location loc
+        WHERE loc.id IN ({0})
+        AND (ST_Expand(loc.the_geom, {3}) &&
+        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry)
+        ORDER BY loc.location_type, ST_Distance(loc.the_geom,
+        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry) ASC;"""\
+            .format(', '.join(map(str, locationIds)), lng, lat, radius)
+        with connection.cursor() as cursor:
+            cursor.execute(q)
+            locationIds = [l[0] for l in cursor.fetchall()]
+            cursor.close()
     else:
-        # Clicked on a location => select location by id
-        loc_ids = [loc_id]
-
+        if objType == 'location':
+            locationIds = [objId]
+        else:
+            changeRequests = [Request.objects.get(id=objId)]
+            locationIds = Location.objects.filter(activity=changeRequests[0].activity)\
+                                   .filter(location_code=changeRequests[0].location_code)\
+                                   .values_list('id', flat=True)
     # If nothing found, return empty response
-    if not loc_ids:
+    if not (locationIds or changeRequests):
         return HttpResponse(json.dumps(response), content_type="application/json")
 
-    # NN search is more efficiently carried out by postgis
-    q = """SELECT DISTINCT ON (loc.location_type) loc.id FROM lizard_progress_location loc
-    WHERE loc.id IN ({0})
-    AND (ST_Expand(loc.the_geom, {3}) &&
-    ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry)
-    ORDER BY loc.location_type, ST_Distance(loc.the_geom,
-    ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry) ASC;"""\
-        .format(', '.join(map(str, loc_ids)), lng, lat, radius)
-
-    with connection.cursor() as cursor:
-        cursor.execute(q)
-        locs = [l[0] for l in cursor.fetchall()]
-        cursor.close()
-
-    if locs:
+    if locationIds:
         # Take the first from the query result and select all locations with the same location code
         # (i.e. select the location with all its activities).
         nn = Location.objects.filter(location_code__in=Location.objects.
-                                     filter(id__in=locs).values_list('location_code'))\
+                                     filter(id__in=locationIds).values_list('location_code'))\
                              .filter(activity__project=proj)
+
+        if selectedActivities:
+            nn = nn.filter(activity__in=selectedActivities)
 
         g = nn[0].the_geom
         g.transform(4326)
@@ -691,28 +698,6 @@ def get_closest_to(request, *args, **kwargs):
                                          {'locations': [loc]}, context_instance=RequestContext(request)))
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)
 
-        # ###################################
-        # Create html for each Change Request
-        # ###################################
-        change_reqs = Request.objects.\
-                      filter(location_code__in=nn.values_list('location_code'))\
-                      .filter(activity__in=all_loc_activities)
-        for cr in change_reqs:
-            html.append(
-                render_to_string(
-                    'changerequests/detail_popup.html',
-                    {'cr': cr},
-                    context_instance=RequestContext(
-                        request,
-                        {'user_is_manager': UserProfile.get_by_user(
-                            request.user).is_manager_in(cr.project),
-                        'user_is_contractor': UserProfile.get_by_user(
-                            request.user).organization == cr.activity.contractor}
-                    )
-                )
-            )
-            tab_titles.append('Aanvraag ' + cr.type_description + ' ' + cr.location_code)
-
         # ########################################
         # Create html for crossection measurements 
         # ########################################
@@ -720,13 +705,37 @@ def get_closest_to(request, *args, **kwargs):
             html.append(render_to_string('lizard_progress/measurement_types/metfile.html',
                                          {}))
 
+    # ###################################
+    # Create html for each Change Request
+    # ###################################
+    if not changeRequests:
+        changeRequests = Request.objects.\
+                      filter(location_code__in=nn.values_list('location_code'))\
+                      .filter(activity__in=all_loc_activities)
+
+    for cr in changeRequests:
+        html.append(
+            render_to_string(
+                'changerequests/detail_popup.html',
+                {'cr': cr},
+                context_instance=RequestContext(
+                    request,
+                    {'user_is_manager': UserProfile.get_by_user(
+                        request.user).is_manager_in(cr.project),
+                     'user_is_contractor': UserProfile.get_by_user(
+                         request.user).organization == cr.activity.contractor}
+                )
+            )
+        )
+        tab_titles.append('Aanvraag ' + cr.type_description + ' ' + cr.location_code)
+
         
-        response = {
-            'lat': lat,
-            'lng': lng,
-            'html': html,
-            'tab_titles': tab_titles
-        }
+    response = {
+        'lat': lat,
+        'lng': lng,
+        'html': html,
+        'tab_titles': tab_titles
+    }
     # return HttpResponse(json.dumps(response), content_type="application/json")
     return HttpResponse(json.dumps(response), content_type="application/json")
 

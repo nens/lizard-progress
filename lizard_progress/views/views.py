@@ -665,6 +665,7 @@ def get_closest_to(request, *args, **kwargs):
             changeRequests = [Request.objects.get(id=objId)]
             locationIds = Location.objects.filter(activity=changeRequests[0].activity)\
                                    .filter(location_code=changeRequests[0].location_code)\
+                                   .filter(activity__in=selectedActivities)\
                                    .values_list('id', flat=True)
     # If nothing found, return empty response
     if not (locationIds or changeRequests):
@@ -705,9 +706,9 @@ def get_closest_to(request, *args, **kwargs):
             html.append(render_to_string('lizard_progress/measurement_types/metfile.html',
                                          {}))
 
-    # ###################################
-    # Create html for each Change Request
-    # ###################################
+    # ###############################
+    # Create html for Change Requests
+    # ###############################
     if not changeRequests:
         changeRequests = Request.objects.\
                       filter(location_code__in=nn.values_list('location_code'))\

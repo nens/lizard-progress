@@ -61,6 +61,7 @@ from lizard_progress.models import has_access
 from lizard_progress.models import has_access_reviewproject
 from lizard_progress.models import Activity
 from lizard_progress.models import UploadLog
+from lizard_progress.models import UserProfile
 from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
@@ -577,7 +578,7 @@ class InlineMapViewNew(View):
                 from public.lizard_progress_location l
                 inner join lizard_progress_activity a on a.id = l.activity_id
                 inner join lizard_progress_organization o on o.id = a.contractor_id
-                where l.activity_id = {}""".format(str(a.id))
+                where l.the_geom is not null and l.activity_id = {}""".format(str(a.id))
 
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
@@ -697,8 +698,19 @@ def get_closest_to(request, *args, **kwargs):
                       filter(location_code__in=nn.values_list('location_code'))\
                       .filter(activity__in=all_loc_activities)
         for cr in change_reqs:
-            html.append(render_to_string('changerequests/detail_popup.html',
-                                         {'cr': cr}, context_instance=RequestContext(request)))
+            html.append(
+                render_to_string(
+                    'changerequests/detail_popup.html',
+                    {'cr': cr},
+                    context_instance=RequestContext(
+                        request,
+                        {'user_is_manager': UserProfile.get_by_user(
+                            request.user).is_manager_in(cr.project),
+                        'user_is_contractor': UserProfile.get_by_user(
+                            request.user).organization == cr.activity.contractor}
+                    )
+                )
+            )
             tab_titles.append('Aanvraag ' + cr.type_description + ' ' + cr.location_code)
 
         # ########################################

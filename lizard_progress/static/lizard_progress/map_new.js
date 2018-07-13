@@ -48,11 +48,11 @@ function build_map(gj, extent) {
     const geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
-	    return L.circleMarker(latlng, {
-		radius: 6,
-		weight: 1,
-		opacity: .4,
-		fillOpacity: .4});
+		return L.circleMarker(latlng, {
+		    radius: 6,
+		    weight: 1,
+		    opacity: .4,
+		    fillOpacity: .4});
 	    } else {
 		var fillOpacity = feature.properties.status; 
 		return L.circleMarker(latlng, {
@@ -79,7 +79,7 @@ function build_map(gj, extent) {
 	},
 	onEachFeature: function(feature, layer){
 	    /* Feature contain essential information only (location code, location type).
-	     More about a location is available onclick. */
+	       More about a location is available onclick. */
 	    var popupHTML = ltypes[feature.properties.loc_type] + ' '
 		+ feature.properties.code;
 	    if (feature.properties.type == 'request') {
@@ -139,9 +139,10 @@ function build_map(gj, extent) {
     control = new L.control.layers([], overlayMaps).addTo(mymap);
     
     function show_dialog(latlng, loc_info){
+	var html, i;
 	//setup_movable_dialog();
 	if (!('html' in loc_info)) {
-	    var popup = L.popup({'maxWidth': 500, 'autoClose': true})
+	    var popup = L.popup({'maxWidth': 650, 'autoClose': true})
 		.setLatLng(latlng) //TODO has to be loc coordinates
 		.setContent('Niets gevonden rond deze locatie.')
 		.openOn(mymap);
@@ -151,11 +152,88 @@ function build_map(gj, extent) {
 	var popupHTML = loc_info.html;
 
 	latlng = L.latLng(loc_info.lat, loc_info.lng);
-	var popup = L.popup({'maxWidth': 500, 'autoClose': true})
+
+	/* Copypaste from lizard_map/lizard_map.js */
+	var data = loc_info;
+	if (data.html && data.html.length !== 0) {
+            // We got at least 1 result back.
+            if (data.html.length === 1) {
+                // Just copy the contents directly into the target div.
+                $("#movable-dialog-content").html(data.html[0]);
+                // Have the graphs fetch their data.
+                reloadGraphs();
+            } else {
+                // Build up html with tabs.
+                html = '<div id="popup-tabs"><ul>';
+                for (i = 0; i < data.html.length; i += 1) {
+                    html += '<li><a href="#popup-tab-' + (i + 1) + '">';
+                    html += data.tab_titles[i].replace('manhole', 'Put').replace('pipe', 'Streng').replace('drain', 'Kolk');
+                    html += '</a></li>';
+                }
+                html += '</ul>';
+                for (i = 0; i < data.html.length; i += 1) {
+                    html += '<div id="popup-tab-' + (i + 1) + '">';
+                    html += data.html[i];
+                    html += '</div>';
+                }
+                html += '</div>';
+
+                // Copy the prepared HTML to the target div.
+                $("#movable-dialog-content").html(html);
+
+                // Call jQuery UI Tabs to actually instantiate some tabs.
+                $("#popup-tabs").tabs({
+                    idPrefix: 'popup-tab',
+                    selected: 0,
+                    show: function (event, ui) {
+                        // Have the graphs fetch their data.
+                        reloadGraphs();
+                    },
+                    create: function (event, ui) {
+                        // Have the graphs fetch their data.
+                        reloadGraphs();
+                    }
+                });
+            }
+            $("#popup-subtabs").tabs({
+                idPrefix: 'popup-subtab',
+                selected: 0
+            });
+            //$(".add-snippet").snippetInteraction();
+        }
+        else {
+            var nothingFoundMessage = '';
+            if (lizard_map && lizard_map.nothingFoundMessage) {
+                nothingFoundMessage = lizard_map.nothingFoundMessage;
+            }
+            else {
+                // Backwards compatibility
+                nothingFoundMessage = "Er is niets rond deze locatie gevonden.";
+            }
+            $("#movable-dialog-content").html(nothingFoundMessage);
+        }
+	/* END Copypaste */
+
+	//mymap.setView(latlng);
+	var popup = L.popup({'maxWidth': 650, 'height': 380, 'autoClose': true, 'autoPan': false})
 	    .setLatLng(latlng)
-	    .setContent(popupHTML)
+	    .setContent(html)
 	    .openOn(mymap);
+	$('#movable-dialog').dialog();
+	$("#popup-tabs").tabs({
+                    idPrefix: 'popup-tab',
+                    selected: 0,
+                    show: function (event, ui) {
+                        // Have the graphs fetch their data.
+                        reloadGraphs();
+                    },
+                    create: function (event, ui) {
+                        // Have the graphs fetch their data.
+                        reloadGraphs();
+                    }
+                });
     }
+    
     function onMapClick(e) {
 	var popup = L.popup().setLatLng(e.latlng);
 	if (!window.currLocationId) {
@@ -180,4 +258,151 @@ function build_map(gj, extent) {
     }
 
     mymap.on('click', onMapClick);  
+}
+function reloadGraphs(max_image_width, callback, force) {
+    // New Flot graphs
+    $('.dynamic-graph').each(function () {
+        reloadDynamicGraph($(this), callback, force);
+    });
+}
+
+function reloadDynamicGraph($graph, callback, force) {
+    // check if graph is already loaded
+    if (force !== true && $graph.attr('data-graph-loaded')) return;
+
+    // the wonders of asynchronous programming
+    if ($graph.attr('data-graph-loading')) return;
+
+    // check if element is visible (again):
+    // flot can't draw on an invisible surface
+    if ($graph.is(':hidden')) return;
+
+    // determine whether to use flot or the image graph
+    var flot_graph_data_url = $graph.attr('data-flot-graph-data-url');
+    var image_graph_url = $graph.attr('data-image-graph-url');
+    var graph_type;
+    if (isIE && ieVersion < 9) {
+        graph_type = 'image';
+    }
+    else {
+        graph_type = (flot_graph_data_url) ? 'flot' : 'image';
+    }
+    var url = (graph_type == 'flot') ? flot_graph_data_url : image_graph_url;
+
+    // add currently selected date range to url
+    // HACK: viewstate is currently only in lizard_map,
+    // but graphs are here, in lizard_ui, for some reason
+    var view_state = get_view_state();
+    view_state = to_date_strings(view_state);
+    if (view_state !== undefined) {
+        if (view_state.dt_start && view_state.dt_end) {
+            url += '&' + $.param({
+                dt_start: view_state.dt_start,
+                dt_end: view_state.dt_end
+            });
+        }
+    }
+
+    if (url) {
+        // add a spinner
+        var $loading = $('<img src="/static_media/lizard_ui/ajax-loader.gif" class="graph-loading-animation" />');
+        $graph.empty().append($loading);
+        $graph.attr('data-graph-loading', 'true');
+
+        // remove spinner when loading has finished (either with or without an error)
+        var on_loaded = function () {
+            $graph.removeAttr('data-graph-loading');
+            $loading.remove();
+        };
+
+        // set attribute and call callback when drawing has finished
+        var on_drawn = function () {
+            $graph.attr('data-graph-loaded', 'true');
+            if (callback !== undefined) {
+                callback();
+            }
+        };
+
+        // show a message when loading has failed
+        var on_error = function () {
+            on_loaded();
+            $graph.html('Fout bij het laden van de gegevens. Te veel data. Pas uw tijdsperiode aan of exporteer de tijdreeks.');
+        };
+
+        // for flot graphs, grab the JSON data and call Flot
+        if (graph_type == 'flot') {
+            $.ajax({
+                url: url,
+                method: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    on_loaded();
+
+                    // tab might have been hidden in the meantime
+                    // so check if element is visible again:
+                    // we can't draw on an invisible surface
+                    if ($graph.is(':hidden')) return;
+
+                    var plot = flotGraphLoadData($graph, response);
+                    on_drawn();
+                    //bindPanZoomEvents($graph);
+                },
+                timeout: 20000,
+                error: on_error
+            });
+        }
+        // for static image graphs, just load the image as <img> element
+        else if (graph_type == 'image') {
+            var get_url_with_size = function () {
+                // compensate width slightly to prevent a race condition
+                // with the parent element
+                var width = Math.round($graph.width() * 0.95);
+                // add available width and height to url
+                var url_with_size = url + '&' + $.param({
+                    width: width,
+                    height: $graph.height()
+                });
+                return url_with_size;
+            };
+
+            var update_size = function () {
+                var $img = $(this);
+                $img.data('current-loaded-width', $img.width());
+                $img.data('current-loaded-height', $img.height());
+            };
+
+            var on_load_once = function () {
+                on_loaded();
+
+                // tab might have been hidden in the meantime
+                // so check if element is visible again:
+                // we can't draw on an invisible surface
+                if ($graph.is(':hidden')) return;
+
+                $graph.append($(this));
+                on_drawn();
+            };
+
+            var $img = $('<img/>')
+                .one('load', on_load_once) // ensure this is only called once
+                .load(update_size)
+                .error(on_error)
+                .attr('src', get_url_with_size());
+
+            var update_src = function () {
+                $img.attr('src', get_url_with_size());
+            };
+
+            // list to parent div resizes, but dont trigger updating the image
+            // until some time (> 1 sec) has passed.
+            var timeout = null;
+            $graph.resize(function () {
+                if (timeout) {
+                    // clear old timeout first
+                    clearTimeout(timeout);
+                }
+                timeout = setTimeout(update_src, 1500);
+            });
+        }
+    }
 }

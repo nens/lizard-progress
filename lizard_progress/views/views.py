@@ -619,6 +619,8 @@ def get_closest_to(request, *args, **kwargs):
 
     nn = None
     response = {}
+    html = []
+    tab_titles = []
 
     lat = request.GET.get('lat', None)
     lng = request.GET.get('lng', None)
@@ -633,9 +635,9 @@ def get_closest_to(request, *args, **kwargs):
     if overlays:
         in_activities = Activity.objects.filter(name__in=overlays)
 
+    # If location hasn't been specified by clicking,
+    # search in all locations within active overlays
     if not loc_id:
-        # Prepare location ids
-        # for the nearest neighbour search within active overlays
         proj = Project.objects.get(slug=kwargs['project_slug'])
         loc_ids = Location.objects.filter(activity__project=proj)\
                                   .filter(activity__in=in_activities)
@@ -650,11 +652,11 @@ def get_closest_to(request, *args, **kwargs):
         return HttpResponse(json.dumps(response), content_type="application/json")
 
     # NN search is more efficiently carried out by postgis
-    q = """SELECT loc.id FROM lizard_progress_location loc
+    q = """SELECT DISTINCT ON (loc.location_type) loc.id FROM lizard_progress_location loc
     WHERE loc.id IN ({0})
     AND (ST_Expand(loc.the_geom, {3}) &&
     ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry)
-    ORDER BY ST_Distance(loc.the_geom,
+    ORDER BY loc.location_type, ST_Distance(loc.the_geom,
     ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry) ASC;"""\
         .format(', '.join(map(str, loc_ids)), lng, lat, radius)
 
@@ -666,7 +668,8 @@ def get_closest_to(request, *args, **kwargs):
     if locs:
         # Take the first from the query result and select all locations with the same location code
         # (i.e. select the location with all its activities).
-        nn = Location.objects.filter(location_code=Location.objects.get(id=locs[0]).location_code)\
+        nn = Location.objects.filter(location_code__in=Location.objects.
+                                     filter(id__in=locs).values_list('location_code'))\
                              .filter(activity__project=proj)
 
         g = nn[0].the_geom
@@ -679,12 +682,16 @@ def get_closest_to(request, *args, **kwargs):
 
         all_loc_activities = Activity.objects.filter(id__in=nn.values_list('activity_id'))
 
+        for loc in nn:
+            html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
+                                         {'locations': [loc]}))
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)
         # Probably no need to GeoJSON-ize it
         response = {
             'lat': lat,
             'lng': lng,
-            'html': render_to_string('lizard_progress/measurement_types/ribx.html',
-                                     {'locations': nn})
+            'html': html,
+            'tab_titles': tab_titles
         }
     # return HttpResponse(json.dumps(response), content_type="application/json")
     return HttpResponse(json.dumps(response), content_type="application/json")

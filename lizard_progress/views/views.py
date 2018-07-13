@@ -682,15 +682,16 @@ def get_closest_to(request, *args, **kwargs):
 
         all_loc_activities = Activity.objects.filter(id__in=nn.values_list('activity_id'))
 
-        # Create html for each RIBX object
-        for loc in nn:
+        # Create html for sewer objects
+        for loc in [l for l in nn if l.location_type in ['pipe', 'manhole', 'drain']]:
             html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
                                          {'locations': [loc]}))
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)
-            
+
         # Create html for each Change Request
-        change_reqs = Request.objects.filter(location_code__in=nn.values_list('location_code'))\
-                                                                .filter(activity__in=all_loc_activities)
+        change_reqs = Request.objects.\
+                      filter(location_code__in=nn.values_list('location_code'))\
+                      .filter(activity__in=all_loc_activities)
         for cr in change_reqs:
             html.append(render_to_string('changerequests/detail_popup.html',
                                          {'cr': cr}))

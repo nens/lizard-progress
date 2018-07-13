@@ -619,7 +619,13 @@ class InlineMapViewNew(View):
 @login_required
 @ajax_request
 def get_closest_to(request, *args, **kwargs):
+    """ When clicked on the map, searches for nearest neighbours (one of every type) within 
+    active overlays (=activities).
 
+    When clicked on a location or a request, selects it and its relations within active overlays.
+
+    Returns array of html for found objects + some service info for the leaflet popup.
+    """
     nn = None
     response = {}
     html = []
@@ -635,29 +641,27 @@ def get_closest_to(request, *args, **kwargs):
 
     proj = Project.objects.get(slug=kwargs['project_slug'])
 
-    # Consider activities in active overlays only
-    selectedActivities = []
-    if overlays:
-        selectedActivities = Activity.objects.filter(name__in=overlays)
-    
-    # If location hasn't been specified by clicking,
-    # search in all locations within active overlays
     if not objId:
-        locationIds = Location.objects.filter(activity__project=proj)\
-                                  .filter(activity__in=selectedActivities)\
-                                  .values_list('id', flat=True)
+        # Clicked on the basemap, search objects in the vicinity of the clicked point
+        # considering active overlays
         # NN search is more efficiently carried out by postgis
         q = """SELECT DISTINCT ON (loc.location_type) loc.id FROM lizard_progress_location loc
-        WHERE loc.id IN ({0})
-        AND (ST_Expand(loc.the_geom, {3}) &&
-        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry)
+        INNER JOIN lizard_progress_activity a ON a.id = loc.activity_id
+        AND a.name IN ({3})
+        AND (ST_Expand(loc.the_geom, {2}) &&
+        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({0} {1})'), 28992)::geometry)
         ORDER BY loc.location_type, ST_Distance(loc.the_geom,
-        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({1} {2})'), 28992)::geometry) ASC;"""\
-            .format(', '.join(map(str, locationIds)), lng, lat, radius)
+        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({0} {1})'), 28992)::geometry) ASC;"""\
+            .format(lng,
+                    lat,
+                    radius,
+                    ', '.join(map(lambda _: '\'' + str(_) + '\'', overlays)))
+
         with connection.cursor() as cursor:
             cursor.execute(q)
             locationIds = [l[0] for l in cursor.fetchall()]
             cursor.close()
+
     else:
         if objType == 'location':
             locationIds = [objId]
@@ -665,7 +669,7 @@ def get_closest_to(request, *args, **kwargs):
             changeRequests = [Request.objects.get(id=objId)]
             locationIds = Location.objects.filter(activity=changeRequests[0].activity)\
                                    .filter(location_code=changeRequests[0].location_code)\
-                                   .filter(activity__in=selectedActivities)\
+                                   .filter(activity_name__in=overlays)\
                                    .values_list('id', flat=True)
     # If nothing found, return empty response
     if not (locationIds or changeRequests):
@@ -676,10 +680,8 @@ def get_closest_to(request, *args, **kwargs):
         # (i.e. select the location with all its activities).
         nn = Location.objects.filter(location_code__in=Location.objects.
                                      filter(id__in=locationIds).values_list('location_code'))\
-                             .filter(activity__project=proj)
-
-        if selectedActivities:
-            nn = nn.filter(activity__in=selectedActivities)
+                             .filter(activity__project=proj)\
+                             .filter(activity__name__in=overlays)
 
         g = nn[0].the_geom
         g.transform(4326)

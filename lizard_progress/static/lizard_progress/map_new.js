@@ -139,6 +139,22 @@ function build_map(gj, extent) {
     control = new L.control.layers([], overlayMaps).addTo(mymap);
     
     function show_dialog(latlng, loc_info){
+	$('body').append('<div id="movable-dialog"><div id="movable-dialog-content"></div></div>');
+	var options = {
+            autoOpen: false,
+            title: '',
+            width: 650,
+            height: 480,
+            zIndex: 10000,
+            close: function (event, ui) {
+		// clear contents on close
+		$('#movable-dialog-content').empty();
+            }
+	};
+
+	$('#movable-dialog').dialog(options);
+
+
 	var html, i;
 	//setup_movable_dialog();
 	if (!('html' in loc_info)) {
@@ -149,12 +165,10 @@ function build_map(gj, extent) {
 	    return;
 	}
 	
-	var popupHTML = loc_info.html;
-
 	latlng = L.latLng(loc_info.lat, loc_info.lng);
 
-	/* Copypaste from lizard_map/lizard_map.js */
 	var data = loc_info;
+	/* Copypaste from lizard_map/lizard_map.js */
 	if (data.html && data.html.length !== 0) {
             // We got at least 1 result back.
             if (data.html.length === 1) {
@@ -214,24 +228,24 @@ function build_map(gj, extent) {
         }
 	/* END Copypaste */
 
-	//mymap.setView(latlng);
 	var popup = L.popup({'maxWidth': 650, 'height': 380, 'autoClose': true, 'autoPan': false})
 	    .setLatLng(latlng)
 	    .setContent(html)
-	    .openOn(mymap);
+	    .openOn(mymap); 
+	//mymap.setView(latlng);
 	$('#movable-dialog').dialog();
 	$("#popup-tabs").tabs({
-                    idPrefix: 'popup-tab',
-                    selected: 0,
-                    show: function (event, ui) {
-                        // Have the graphs fetch their data.
-                        reloadGraphs();
-                    },
-                    create: function (event, ui) {
-                        // Have the graphs fetch their data.
-                        reloadGraphs();
-                    }
-                });
+            idPrefix: 'popup-tab',
+            selected: 0,
+            show: function (event, ui) {
+                // Have the graphs fetch their data.
+                reloadGraphs();
+            },
+            create: function (event, ui) {
+                // Have the graphs fetch their data.
+                reloadGraphs();
+            }
+        });
     }
     
     function onMapClick(e) {

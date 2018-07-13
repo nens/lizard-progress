@@ -626,7 +626,7 @@ def get_closest_to(request, *args, **kwargs):
 
     Returns array of html for found objects + some service info for the leaflet popup.
     """
-    nn = None
+    locations = None
     response = {}
     html = []
     tab_titles = []
@@ -678,12 +678,9 @@ def get_closest_to(request, *args, **kwargs):
     if locationIds:
         # Take the first from the query result and select all locations with the same location code
         # (i.e. select the location with all its activities).
-        nn = Location.objects.filter(location_code__in=Location.objects.
-                                     filter(id__in=locationIds).values_list('location_code'))\
-                             .filter(activity__project=proj)\
-                             .filter(activity__name__in=overlays)
+        locations = Location.objects.filter(id__in=locationIds)
 
-        g = nn[0].the_geom
+        g = locations[0].the_geom
         g.transform(4326)
         if isinstance(g.coords[0], tuple):
             lng = (g.coords[0][0] + g.coords[1][0]) / 2
@@ -691,12 +688,12 @@ def get_closest_to(request, *args, **kwargs):
         else:
             lng, lat = g.coords[0], g.coords[1]
 
-        all_loc_activities = Activity.objects.filter(id__in=nn.values_list('activity_id'))
+        all_loc_activities = Activity.objects.filter(id__in=locations.values_list('activity_id'))
 
         # #############################
         # Create html for sewer objects
         # #############################
-        for loc in [l for l in nn if l.location_type in ['pipe', 'manhole', 'drain']]:
+        for loc in [l for l in locations if l.location_type in ['pipe', 'manhole', 'drain']]:
             html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
                                          {'locations': [loc]}, context_instance=RequestContext(request)))
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)
@@ -704,7 +701,7 @@ def get_closest_to(request, *args, **kwargs):
         # ########################################
         # Create html for crossection measurements 
         # ########################################
-        for loc in [l for l in nn if l.location_type in ['point']]:
+        for loc in [l for l in locations if l.location_type in ['point']]:
             html.append(render_to_string('lizard_progress/measurement_types/metfile.html',
                                          {}))
 
@@ -713,7 +710,7 @@ def get_closest_to(request, *args, **kwargs):
     # ###############################
     if not changeRequests:
         changeRequests = Request.objects.\
-                      filter(location_code__in=nn.values_list('location_code'))\
+                      filter(location_code__in=locations.values_list('location_code'))\
                       .filter(activity__in=all_loc_activities)
 
     for cr in changeRequests:

@@ -687,7 +687,7 @@ def get_closest_to(request, *args, **kwargs):
         # #############################
         for loc in [l for l in nn if l.location_type in ['pipe', 'manhole', 'drain']]:
             html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
-                                         {'locations': [loc]}))
+                                         {'locations': [loc]}, context_instance=RequestContext(request)))
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)
 
         # ###################################
@@ -698,7 +698,7 @@ def get_closest_to(request, *args, **kwargs):
                       .filter(activity__in=all_loc_activities)
         for cr in change_reqs:
             html.append(render_to_string('changerequests/detail_popup.html',
-                                         {'cr': cr}))
+                                         {'cr': cr}, context_instance=RequestContext(request)))
             tab_titles.append('Aanvraag ' + cr.type_description + ' ' + cr.location_code)
 
         # ########################################

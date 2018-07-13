@@ -19,7 +19,7 @@ function build_map(gj, extent) {
 			 '3': 'Geweigerd',
 			 '4': 'Ingetrokken',
 			 '5': 'Ongeldig'};
-    const reqStatusColors = ["#000099", "#1b9387", "#da70d6"];
+    const reqStatusColors = ["#000099", "#1b9387", "#da70d6", "#da70d6", "gray"];
     const mymap = L.map('map_new', {
 	fullscreenControl: {
             pseudoFullscreen: true

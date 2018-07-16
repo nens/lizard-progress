@@ -669,7 +669,7 @@ def get_closest_to(request, *args, **kwargs):
             changeRequests = [Request.objects.get(id=objId)]
             locationIds = Location.objects.filter(activity=changeRequests[0].activity)\
                                    .filter(location_code=changeRequests[0].location_code)\
-                                   .filter(activity_name__in=overlays)\
+                                   .filter(activity__name__in=overlays)\
                                    .values_list('id', flat=True)
     # If nothing found, return empty response
     if not (locationIds or changeRequests):

@@ -17,12 +17,7 @@ function reloadDynamicGraph($graph, callback, force) {
     if ($graph.is(':hidden')) return;
 
     // determine whether to use flot or the image graph
-    var flot_graph_data_url = $graph.attr('data-flot-graph-data-url');
-    var image_graph_url = $graph.attr('data-image-graph-url');
-    var graph_type;
-    graph_type = (flot_graph_data_url) ? 'flot' : 'image';
-    var url = (graph_type == 'flot') ? flot_graph_data_url : image_graph_url;
-
+    var url = $graph.attr('data-image-graph-url');
     if (url) {
         // add a spinner
         var $loading = $('<img src="/static_media/lizard_ui/ajax-loader.gif" class="graph-loading-animation" />');
@@ -43,87 +38,68 @@ function reloadDynamicGraph($graph, callback, force) {
             }
         };
 
+	var on_empty = function() {
+            on_loaded();
+            $graph.html('Voor deze locatie is er geen data anwezig in het systeem.');
+	}
+	
         // show a message when loading has failed
         var on_error = function () {
             on_loaded();
-            $graph.html('Fout bij het laden van de gegevens. Te veel data. Pas uw tijdsperiode aan of exporteer de tijdreeks.');
+	    // Assuming the image is empty because there is no data
+	    on_empty();
         };
 
-        // for flot graphs, grab the JSON data and call Flot
-        if (graph_type == 'flot') {
-            $.ajax({
-                url: url,
-                method: 'GET',
-                dataType: 'json',
-                success: function (response) {
-                    on_loaded();
-
-                    // tab might have been hidden in the meantime
-                    // so check if element is visible again:
-                    // we can't draw on an invisible surface
-                    if ($graph.is(':hidden')) return;
-
-                    var plot = flotGraphLoadData($graph, response);
-                    on_drawn();
-                    //bindPanZoomEvents($graph);
-                },
-                timeout: 20000,
-                error: on_error
+        var get_url_with_size = function () {
+            // compensate width slightly to prevent a race condition
+            // with the parent element
+            var width = Math.round($graph.width() * 0.95);
+            // add available width and height to url
+            var url_with_size = url + '&' + $.param({
+                width: width,
+                height: $graph.height()
             });
-        }
-        // for static image graphs, just load the image as <img> element
-        else if (graph_type == 'image') {
-            var get_url_with_size = function () {
-                // compensate width slightly to prevent a race condition
-                // with the parent element
-                var width = Math.round($graph.width() * 0.95);
-                // add available width and height to url
-                var url_with_size = url + '&' + $.param({
-                    width: width,
-                    height: $graph.height()
-                });
-                return url_with_size;
-            };
+            return url_with_size;
+        };
 
-            var update_size = function () {
-                var $img = $(this);
-                $img.data('current-loaded-width', $img.width());
-                $img.data('current-loaded-height', $img.height());
-            };
+        var update_size = function () {
+            var $img = $(this);
+            $img.data('current-loaded-width', $img.width());
+            $img.data('current-loaded-height', $img.height());
+        };
 
-            var on_load_once = function () {
-                on_loaded();
+        var on_load_once = function () {
+            on_loaded();
 
-                // tab might have been hidden in the meantime
-                // so check if element is visible again:
-                // we can't draw on an invisible surface
-                if ($graph.is(':hidden')) return;
+            // tab might have been hidden in the meantime
+            // so check if element is visible again:
+            // we can't draw on an invisible surface
+            if ($graph.is(':hidden')) return;
 
-                $graph.append($(this));
-                on_drawn();
-            };
+            $graph.append($(this));
+            on_drawn();
+        };
 
-            var $img = $('<img/>')
-                .one('load', on_load_once) // ensure this is only called once
-                .load(update_size)
-                .error(on_error)
-                .attr('src', get_url_with_size());
+        var $img = $('<img/>')
+            .one('load', on_load_once) // ensure this is only called once
+            .load(update_size)
+            .error(on_error)
+            .attr('src', get_url_with_size());
 
-            var update_src = function () {
-                $img.attr('src', get_url_with_size());
-            };
+        var update_src = function () {
+            $img.attr('src', get_url_with_size());
+        };
 
-            // list to parent div resizes, but dont trigger updating the image
-            // until some time (> 1 sec) has passed.
-            var timeout = null;
-            $graph.resize(function () {
-                if (timeout) {
-                    // clear old timeout first
-                    clearTimeout(timeout);
-                }
-                timeout = setTimeout(update_src, 1500);
-            });
-        }
+        // list to parent div resizes, but dont trigger updating the image
+        // until some time (> 1 sec) has passed.
+        var timeout = null;
+        $graph.resize(function () {
+            if (timeout) {
+                // clear old timeout first
+                clearTimeout(timeout);
+            }
+            timeout = setTimeout(update_src, 1500);
+        });
     }
 }
 function getActiveOverlayNames()
@@ -229,7 +205,6 @@ function build_map(gj, extent) {
     for (var activity in gj) {
 	var geoJsonDocument = gj[activity];
 	if ('Aanvragen' != activity) {
-	    console.log(activity);
 	    // If we render using the Canvas, Points need to be rendered after LineStrings, or
 	    // else they become very difficult to click.
 	    geoJsonDocument.features.sort(renderingOrderComparator);

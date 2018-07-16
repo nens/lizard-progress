@@ -762,11 +762,17 @@ def get_closest_to(request, *args, **kwargs):
 
 
 def xsecimage(request, *args, **kwargs):
+
     from . import crosssection_graph as xsgr
-    loc = Location.objects.get(id=request.GET.get('loc_id'))
-    canvas = xsgr.graph(loc, Measurement.objects.filter(location=loc))
-    response = HttpResponse(content_type='image/png')
-    canvas.print_png(response)
+
+    if Measurement.objects.filter(location=loc):
+        loc = Location.objects.get(id=request.GET.get('loc_id'))
+        canvas = xsgr.graph(loc, Measurement.objects.filter(location=loc))
+        response = HttpResponse(content_type='image/png')
+        canvas.print_png(response)
+    else:
+        response = HttpResponse()
+
     return response
 
 

@@ -706,9 +706,18 @@ def get_closest_to(request, *args, **kwargs):
         xsects = [l for l in locations if l.location_type in ['point']]
 
         for loc in xsects:
+            multiple_projects_graph_url = None
+            if loc.close_by_locations_of_same_organisation().count() > 1:
+                organization = loc.activity.project.organization
+                multiple_projects_graph_url = reverse(
+                    'crosssection_graph', kwargs=dict(
+                        organization_id=organization.id,
+                        location_id=loc.id))
             lhtml = render_to_string('lizard_progress/measurement_types/metfile.html',
                                      {'image_graph_url': 'xsecimage?loc_id={}'.format(loc.id),
-                                      'title': loc.location_code + ' ' + loc.activity.name})
+                                      'title': loc.location_code + ' ' + loc.activity.name,
+                                      'multiple_projects_graph_url': multiple_projects_graph_url})
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)
             html.append(lhtml)
         # END crossection graph
 

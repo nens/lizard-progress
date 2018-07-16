@@ -138,7 +138,7 @@ function getActiveOverlayNames()
 function build_map(gj, extent) {
     function setCurrObjId(type, id){window.currType=type;window.currObjId=id;}
     setCurrObjId('', '');
-    const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk'};
+    const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
     const reqtypes = {'1': 'Locatiecode verwijderen',
 		      '2': 'Locatie verplaatsen',
 		      '3': 'Niewe locatiecode'};

@@ -40,7 +40,7 @@ class PlottingData:
         self.date = date
 
         self.title = (
-            'Dwarsprofiel {code}, werkzaamheid {activity}, {date}'
+            '\nDwarsprofiel {code},\nwerkzaamheid {activity}, {date}'
             .format(code=location.location_code,
                     activity=location.activity,
                     date=date.strftime("%d/%m/%y")))
@@ -135,7 +135,7 @@ def graph(location, measurements):
         colors = get_colors(len(data))
         ax.set_title(
             'Dwarsprofielen binnen {distance}m van locatie {code} '
-            'in {activity}'
+            '\nin {activity}'
             .format(
                 distance=models.Location.CLOSE_BY_DISTANCE,
                 code=location.location_code,

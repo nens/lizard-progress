@@ -229,13 +229,14 @@ function build_map(gj, extent) {
     for (var activity in gj) {
 	var geoJsonDocument = gj[activity];
 	if ('Aanvragen' != activity) {
+	    console.log(activity);
 	    // If we render using the Canvas, Points need to be rendered after LineStrings, or
 	    // else they become very difficult to click.
 	    geoJsonDocument.features.sort(renderingOrderComparator);
-	    var activityName = geoJsonDocument.features[0].properties.activity;
+	    //var activityName = geoJsonDocument.features[0].properties.activity;
 	    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
 	    layer.addTo(mymap); /* show everything by default */
-	    overlayMaps[activityName] = layer;
+	    overlayMaps[activity] = layer;
 	}
     }
 

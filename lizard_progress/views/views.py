@@ -554,7 +554,12 @@ class InlineMapViewNew(View):
         """A FeatureCollection of locations."""
         import geojson
 
-        activities = Activity.objects.filter(project=self.project).distinct()
+        activities = Activity.objects.filter(project=self.project)\
+            .filter(measurement_type__slug__in=['dwarsprofiel',
+                                                'ribx_reiniging_riool',
+                                                'ribx_reiniging_kolken',
+                                                'ribx_reiniging_inspectie_riool'])
+                                     
         chreqs = Request.objects.filter(activity__in=activities).distinct()
         layers = {}
 

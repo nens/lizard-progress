@@ -720,6 +720,7 @@ def get_closest_to(request, *args, **kwargs):
                         location_id=loc.id))
             lhtml = render_to_string('lizard_progress/measurement_types/metfile.html',
                                      {'image_graph_url': 'xsecimage?loc_id={}'.format(loc.id),
+                                      'location': loc,
                                       'title': loc.location_code + ' ' + loc.activity.name,
                                       'multiple_projects_graph_url': multiple_projects_graph_url})
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)

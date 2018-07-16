@@ -5,8 +5,9 @@
 {# header #}
 {% block popup_title %}
 <div>
-  <img src="{{ symbol_url }}" />&nbsp;
-  <strong>{{ title|truncatewords:8 }}</strong>
+    <img src="{{ symbol_url }}" />&nbsp;
+    <h3>{{location.location_code}}</h3> 
+    <h4>{{location.activity|truncatewords:8 }}</h4>
 </div>
 {% endblock %}
 

@@ -1,3 +1,131 @@
+function reloadGraphs(max_image_width, callback, force=true) {
+    // New Flot graphs
+    $('.dynamic-graph').each(function () {
+        reloadDynamicGraph($(this), callback, force);
+    });
+}
+
+function reloadDynamicGraph($graph, callback, force) {
+    // check if graph is already loaded
+    if (force !== true && $graph.attr('data-graph-loaded')) return;
+
+    // the wonders of asynchronous programming
+    if ($graph.attr('data-graph-loading')) return;
+
+    // check if element is visible (again):
+    // flot can't draw on an invisible surface
+    if ($graph.is(':hidden')) return;
+
+    // determine whether to use flot or the image graph
+    var flot_graph_data_url = $graph.attr('data-flot-graph-data-url');
+    var image_graph_url = $graph.attr('data-image-graph-url');
+    var graph_type;
+    graph_type = (flot_graph_data_url) ? 'flot' : 'image';
+    var url = (graph_type == 'flot') ? flot_graph_data_url : image_graph_url;
+
+    if (url) {
+        // add a spinner
+        var $loading = $('<img src="/static_media/lizard_ui/ajax-loader.gif" class="graph-loading-animation" />');
+        $graph.empty().append($loading);
+        $graph.attr('data-graph-loading', 'true');
+
+        // remove spinner when loading has finished (either with or without an error)
+        var on_loaded = function () {
+            $graph.removeAttr('data-graph-loading');
+            $loading.remove();
+        };
+
+        // set attribute and call callback when drawing has finished
+        var on_drawn = function () {
+            $graph.attr('data-graph-loaded', 'true');
+            if (callback !== undefined) {
+                callback();
+            }
+        };
+
+        // show a message when loading has failed
+        var on_error = function () {
+            on_loaded();
+            $graph.html('Fout bij het laden van de gegevens. Te veel data. Pas uw tijdsperiode aan of exporteer de tijdreeks.');
+        };
+
+        // for flot graphs, grab the JSON data and call Flot
+        if (graph_type == 'flot') {
+            $.ajax({
+                url: url,
+                method: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    on_loaded();
+
+                    // tab might have been hidden in the meantime
+                    // so check if element is visible again:
+                    // we can't draw on an invisible surface
+                    if ($graph.is(':hidden')) return;
+
+                    var plot = flotGraphLoadData($graph, response);
+                    on_drawn();
+                    //bindPanZoomEvents($graph);
+                },
+                timeout: 20000,
+                error: on_error
+            });
+        }
+        // for static image graphs, just load the image as <img> element
+        else if (graph_type == 'image') {
+            var get_url_with_size = function () {
+                // compensate width slightly to prevent a race condition
+                // with the parent element
+                var width = Math.round($graph.width() * 0.95);
+                // add available width and height to url
+                var url_with_size = url + '&' + $.param({
+                    width: width,
+                    height: $graph.height()
+                });
+                return url_with_size;
+            };
+
+            var update_size = function () {
+                var $img = $(this);
+                $img.data('current-loaded-width', $img.width());
+                $img.data('current-loaded-height', $img.height());
+            };
+
+            var on_load_once = function () {
+                on_loaded();
+
+                // tab might have been hidden in the meantime
+                // so check if element is visible again:
+                // we can't draw on an invisible surface
+                if ($graph.is(':hidden')) return;
+
+                $graph.append($(this));
+                on_drawn();
+            };
+
+            var $img = $('<img/>')
+                .one('load', on_load_once) // ensure this is only called once
+                .load(update_size)
+                .error(on_error)
+                .attr('src', get_url_with_size());
+
+            var update_src = function () {
+                $img.attr('src', get_url_with_size());
+            };
+
+            // list to parent div resizes, but dont trigger updating the image
+            // until some time (> 1 sec) has passed.
+            var timeout = null;
+            $graph.resize(function () {
+                if (timeout) {
+                    // clear old timeout first
+                    clearTimeout(timeout);
+                }
+                timeout = setTimeout(update_src, 1500);
+            });
+        }
+    }
+}
 function getActiveOverlayNames()
 {
     var arr = [];
@@ -269,158 +397,11 @@ function build_map(gj, extent) {
 		   'objId': window.currObjId,
 		   'overlays[]': getActiveOverlayNames()},
 	    datatype: 'json',
-	    success: function(resp){show_dialog(e.latlng, resp);},
+	    success: function(resp){show_dialog(e.latlng, resp);reloadGraphs();},
 	    error: function(jqXHR, textStatus, err){
 		console.log("ERR: " + jqXHR + ' ' + err + ', ' + textStatus);}
 	});
     }
 
-    mymap.on('click', onMapClick);  
-}
-function reloadGraphs(max_image_width, callback, force) {
-    // New Flot graphs
-    $('.dynamic-graph').each(function () {
-        reloadDynamicGraph($(this), callback, force);
-    });
-}
-
-function reloadDynamicGraph($graph, callback, force) {
-    // check if graph is already loaded
-    if (force !== true && $graph.attr('data-graph-loaded')) return;
-
-    // the wonders of asynchronous programming
-    if ($graph.attr('data-graph-loading')) return;
-
-    // check if element is visible (again):
-    // flot can't draw on an invisible surface
-    if ($graph.is(':hidden')) return;
-
-    // determine whether to use flot or the image graph
-    var flot_graph_data_url = $graph.attr('data-flot-graph-data-url');
-    var image_graph_url = $graph.attr('data-image-graph-url');
-    var graph_type;
-    if (isIE && ieVersion < 9) {
-        graph_type = 'image';
-    }
-    else {
-        graph_type = (flot_graph_data_url) ? 'flot' : 'image';
-    }
-    var url = (graph_type == 'flot') ? flot_graph_data_url : image_graph_url;
-
-    // add currently selected date range to url
-    // HACK: viewstate is currently only in lizard_map,
-    // but graphs are here, in lizard_ui, for some reason
-    var view_state = get_view_state();
-    view_state = to_date_strings(view_state);
-    if (view_state !== undefined) {
-        if (view_state.dt_start && view_state.dt_end) {
-            url += '&' + $.param({
-                dt_start: view_state.dt_start,
-                dt_end: view_state.dt_end
-            });
-        }
-    }
-
-    if (url) {
-        // add a spinner
-        var $loading = $('<img src="/static_media/lizard_ui/ajax-loader.gif" class="graph-loading-animation" />');
-        $graph.empty().append($loading);
-        $graph.attr('data-graph-loading', 'true');
-
-        // remove spinner when loading has finished (either with or without an error)
-        var on_loaded = function () {
-            $graph.removeAttr('data-graph-loading');
-            $loading.remove();
-        };
-
-        // set attribute and call callback when drawing has finished
-        var on_drawn = function () {
-            $graph.attr('data-graph-loaded', 'true');
-            if (callback !== undefined) {
-                callback();
-            }
-        };
-
-        // show a message when loading has failed
-        var on_error = function () {
-            on_loaded();
-            $graph.html('Fout bij het laden van de gegevens. Te veel data. Pas uw tijdsperiode aan of exporteer de tijdreeks.');
-        };
-
-        // for flot graphs, grab the JSON data and call Flot
-        if (graph_type == 'flot') {
-            $.ajax({
-                url: url,
-                method: 'GET',
-                dataType: 'json',
-                success: function (response) {
-                    on_loaded();
-
-                    // tab might have been hidden in the meantime
-                    // so check if element is visible again:
-                    // we can't draw on an invisible surface
-                    if ($graph.is(':hidden')) return;
-
-                    var plot = flotGraphLoadData($graph, response);
-                    on_drawn();
-                    //bindPanZoomEvents($graph);
-                },
-                timeout: 20000,
-                error: on_error
-            });
-        }
-        // for static image graphs, just load the image as <img> element
-        else if (graph_type == 'image') {
-            var get_url_with_size = function () {
-                // compensate width slightly to prevent a race condition
-                // with the parent element
-                var width = Math.round($graph.width() * 0.95);
-                // add available width and height to url
-                var url_with_size = url + '&' + $.param({
-                    width: width,
-                    height: $graph.height()
-                });
-                return url_with_size;
-            };
-
-            var update_size = function () {
-                var $img = $(this);
-                $img.data('current-loaded-width', $img.width());
-                $img.data('current-loaded-height', $img.height());
-            };
-
-            var on_load_once = function () {
-                on_loaded();
-
-                // tab might have been hidden in the meantime
-                // so check if element is visible again:
-                // we can't draw on an invisible surface
-                if ($graph.is(':hidden')) return;
-
-                $graph.append($(this));
-                on_drawn();
-            };
-
-            var $img = $('<img/>')
-                .one('load', on_load_once) // ensure this is only called once
-                .load(update_size)
-                .error(on_error)
-                .attr('src', get_url_with_size());
-
-            var update_src = function () {
-                $img.attr('src', get_url_with_size());
-            };
-
-            // list to parent div resizes, but dont trigger updating the image
-            // until some time (> 1 sec) has passed.
-            var timeout = null;
-            $graph.resize(function () {
-                if (timeout) {
-                    // clear old timeout first
-                    clearTimeout(timeout);
-                }
-                timeout = setTimeout(update_src, 1500);
-            });
-        }
-    }
+    mymap.on('click', onMapClick);
 }

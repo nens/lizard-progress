@@ -682,6 +682,8 @@ def get_closest_to(request, *args, **kwargs):
 
         g = locations[0].the_geom
         g.transform(4326)
+
+        # If object is a pipe, point the popup to its middlepoint.
         if isinstance(g.coords[0], tuple):
             lng = (g.coords[0][0] + g.coords[1][0]) / 2
             lat = (g.coords[0][1] + g.coords[1][1]) / 2
@@ -701,9 +703,14 @@ def get_closest_to(request, *args, **kwargs):
         # ########################################
         # Create html for crossection measurements 
         # ########################################
-        for loc in [l for l in locations if l.location_type in ['point']]:
-            html.append(render_to_string('lizard_progress/measurement_types/metfile.html',
-                                         {}))
+        xsects = [l for l in locations if l.location_type in ['point']]
+
+        for loc in xsects:
+            lhtml = render_to_string('lizard_progress/measurement_types/metfile.html',
+                                     {'image_graph_url': 'xsecimage?loc_id={}'.format(loc.id),
+                                      'title': loc.location_code + ' ' + loc.activity.name})
+            html.append(lhtml)
+        # END crossection graph
 
     # ###############################
     # Create html for Change Requests
@@ -738,6 +745,15 @@ def get_closest_to(request, *args, **kwargs):
     }
     # return HttpResponse(json.dumps(response), content_type="application/json")
     return HttpResponse(json.dumps(response), content_type="application/json")
+
+
+def xsecimage(request, *args, **kwargs):
+    from . import crosssection_graph as xsgr
+    loc = Location.objects.get(id=request.GET.get('loc_id'))
+    canvas = xsgr.graph(loc, Measurement.objects.filter(location=loc))
+    response = HttpResponse(content_type='image/png')
+    canvas.print_png(response)
+    return response
 
 
 class MapView(View, AppView):

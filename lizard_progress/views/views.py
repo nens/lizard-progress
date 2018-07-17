@@ -646,7 +646,10 @@ def get_closest_to(request, *args, **kwargs):
 
     proj = Project.objects.get(slug=kwargs['project_slug'])
 
-    if not objId:
+    # Unclickable items work-around
+    ALWAYS_VICINITY = len(overlays) > 2
+
+    if not objId or ALWAYS_VICINITY:
         # Clicked on the basemap, search objects in the vicinity of the clicked point
         # considering active overlays
         # NN search is more efficiently carried out by postgis

@@ -114,16 +114,21 @@ function getActiveOverlayNames()
 function build_map(gj, extent) {
     function setCurrObjId(type, id){window.currType=type;window.currObjId=id;}
     setCurrObjId('', '');
+    
     const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
+
     const reqtypes = {'1': 'Locatiecode verwijderen',
 		      '2': 'Locatie verplaatsen',
 		      '3': 'Niewe locatiecode'};
+
     const reqstatuses = {'1': 'Open',
 			 '2': 'Geaccepteerd',
 			 '3': 'Geweigerd',
 			 '4': 'Ingetrokken',
 			 '5': 'Ongeldig'};
-    const reqStatusColors = ["#000099", "#1b9387", "#da70d6", "#da70d6", "gray"];
+
+    const reqStatusColors = ["#33aaff", "#119cca", "#c301fe", "#c301fe", "#c301fe"];
+
     const mymap = L.map('map_new', {
 	fullscreenControl: {
             pseudoFullscreen: true
@@ -153,17 +158,17 @@ function build_map(gj, extent) {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
 		return L.circleMarker(latlng, {
-		    radius: 6,
+		    radius: 5,
 		    weight: 1,
-		    opacity: .4,
-		    fillOpacity: .4});
+		    opacity: .8,
+		    fillOpacity: .8});
 	    } else {
 		var fillOpacity = feature.properties.status; 
 		return L.circleMarker(latlng, {
-		    radius: 5+3,
+		    radius: 4+3,
 		    weight: 3,
-		    opacity: .4,
-		    fillOpacity: .4});
+		    opacity: .8,
+		    fillOpacity: .8});
 	    }		
 	},
 	style: function(feature) {
@@ -171,10 +176,16 @@ function build_map(gj, extent) {
 	    if (feature.properties.type == 'location') {
 		if (feature.properties.complete) {
 		    color = "green";
-		} else if(feature.properties.complete === false) {
-		    color = "red";
 		} else {
-		    color = "orange";
+		    if(feature.properties.complete === false) {
+			color = "red";
+		    } else if(feature.properties.not_part_of_project == true) {
+			color = "gray";
+		    } else if(feature.properties.new == true) {
+			color = "#ababf8";
+		    } else {
+			color = "orange";
+		    }
 		}
 	    } else if (feature.properties.type == 'request') {
 		color = reqStatusColors[feature.properties.status - 1];
@@ -240,7 +251,7 @@ function build_map(gj, extent) {
 	}
     });
 
-    control = new L.control.layers([], overlayMaps).addTo(mymap);
+    control = new L.control.layers([], overlayMaps, {position: 'topleft'}).addTo(mymap);
     
     function show_dialog(latlng, loc_info){
 	var html, i;

@@ -568,7 +568,7 @@ class InlineMapViewNew(View):
             for a in activities:
                 q = """select json_build_object(
                 'type', 'Feature',
-                'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
+                'geometry', ST_AsGeoJSON(ST_Transform(ST_Translate(l.the_geom, random()*(0.0001-0.00005)+0.00005, random()*(0.0001-0.00005)+0.00005), 4326))::json,
                 'properties', json_build_object(
                 'type', 'location',
                 'id', l.id,
@@ -579,7 +579,10 @@ class InlineMapViewNew(View):
                 'loc_type', l.location_type,
                 'planned_date', l.planned_date,
                 'complete', l.complete,
-                'measured_date', l.measured_date
+                'measured_date', l.measured_date,
+                'work_impossible', l.work_impossible,
+                'not_part_of_project', l.not_part_of_project,
+                'new', l.new
                 )) as features
                 from public.lizard_progress_location l
                 inner join lizard_progress_activity a on a.id = l.activity_id

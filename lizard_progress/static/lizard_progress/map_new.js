@@ -1,3 +1,17 @@
+const locStatusColors = {'green': 'Compleet',
+		       'red': 'Niet (geheel) aanwezig en niet gepland',
+		       'black': 'Gepland, nog niet compleet',
+		       'gray': 'Geen onderdeel van werkzaamheden',
+		       '#ababf8': 'Nieuw object (automatisch toegevoegd)',
+		      }
+const reqstatuses = {'1': 'Open',
+		     '2': 'Geaccepteerd',
+		     '3': 'Geweigerd',
+		     '4': 'Ingetrokken',
+		     '5': 'Ongeldig'};
+
+const reqStatusColors = ["#33aaff", "#119cca", "#c301fe", "#c301fe", "#c301fe"];
+
 function reloadGraphs(max_image_width, callback, force=true) {
     // New Flot graphs
     $('.dynamic-graph').each(function () {
@@ -111,6 +125,31 @@ function getActiveOverlayNames()
     return arr;
 }
 
+function featureColor(feat){
+
+    var color = 'black';
+    
+    if (feat.properties.type == 'location') {
+	if (feat.properties.complete) {
+	    color = "green";
+	} else {
+	    if(feat.properties.complete === false) {
+		color = "red";
+	    } else if(feat.properties.not_part_of_project == true) {
+		color = "gray";
+	    } else if(feat.properties.new == true) {
+		color = "#ababf8";
+	    } else {
+		color = "orange";
+	    }
+	}
+    }
+    if (feat.properties.type == 'request') {
+	color = reqStatusColors[feat.properties.status - 1];
+    }
+    return color;
+}
+
 function build_map(gj, extent) {
     function setCurrObjId(type, id){window.currType=type;window.currObjId=id;}
     setCurrObjId('', '');
@@ -120,14 +159,6 @@ function build_map(gj, extent) {
     const reqtypes = {'1': 'Locatiecode verwijderen',
 		      '2': 'Locatie verplaatsen',
 		      '3': 'Niewe locatiecode'};
-
-    const reqstatuses = {'1': 'Open',
-			 '2': 'Geaccepteerd',
-			 '3': 'Geweigerd',
-			 '4': 'Ingetrokken',
-			 '5': 'Ongeldig'};
-
-    const reqStatusColors = ["#33aaff", "#119cca", "#c301fe", "#c301fe", "#c301fe"];
 
     const mymap = L.map('map_new', {
 	fullscreenControl: {
@@ -172,24 +203,7 @@ function build_map(gj, extent) {
 	    }		
 	},
 	style: function(feature) {
-	    var color = "black";
-	    if (feature.properties.type == 'location') {
-		if (feature.properties.complete) {
-		    color = "green";
-		} else {
-		    if(feature.properties.complete === false) {
-			color = "red";
-		    } else if(feature.properties.not_part_of_project == true) {
-			color = "gray";
-		    } else if(feature.properties.new == true) {
-			color = "#ababf8";
-		    } else {
-			color = "orange";
-		    }
-		}
-	    } else if (feature.properties.type == 'request') {
-		color = reqStatusColors[feature.properties.status - 1];
-	    }
+	    var color = featureColor(feature);
 	    return {color: color, fillColor: color};
 	},
 	onEachFeature: function(feature, layer){
@@ -252,6 +266,29 @@ function build_map(gj, extent) {
     });
 
     control = new L.control.layers([], overlayMaps, {position: 'topleft'}).addTo(mymap);
+
+    var ribx = true;
+    if (ribx) {
+	var legend = L.control({position: 'bottomright'});
+
+	legend.onAdd = function (mymap) {
+	    var div = L.DomUtil.create('div', 'info legend');
+	    div.style.background = 'rgba(255,255,255, .6)';
+	    
+	    div.innerHTML += '<strong><u>Objecten/Locaties</u></strong><br>';
+	    for (k in locStatusColors) {
+		div.innerHTML +=
+		    '<font color="' + k + '">&#11044;</font><strong> ' + locStatusColors[k] + '</strong><br>';
+	    }
+	    div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
+	    div.innerHTML += '<font color="#33aaff">&#11044;</font><strong>Open</strong><br>';
+	    div.innerHTML += '<font color="#119cca">&#11044;</font><strong>Geaccepteerd</strong><br>';
+	    div.innerHTML += '<font color="#c301fe">&#11044;</font><strong>Geweigerd / ingetrokken / ongeldig</strong><br>';
+	    
+	    return div;
+	};
+	legend.addTo(mymap);
+    }
     
     function show_dialog(latlng, loc_info){
 	var html, i;

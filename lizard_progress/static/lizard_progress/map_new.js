@@ -189,14 +189,17 @@ function build_map(gj, extent) {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
 		return L.circleMarker(latlng, {
-		    radius: 5,
+		    radius: 4,
 		    weight: 1,
 		    opacity: .8,
 		    fillOpacity: .8});
 	    } else {
-		var fillOpacity = feature.properties.status; 
-		return L.circleMarker(latlng, {
-		    radius: 4+3,
+		var fillOpacity = feature.properties.status;
+		/* Displace change requests slightly to make them always visible.
+		   It's ok as long as the displacement is << object size.
+		   5e-7 lat/lng deg is approx 5.6 cm. */ 
+		return L.circleMarker([latlng['lat']+.0000005, latlng.lng+.0000005], {
+		    radius: 4,
 		    weight: 3,
 		    opacity: .8,
 		    fillOpacity: .8});
@@ -281,9 +284,9 @@ function build_map(gj, extent) {
 		    '<font color="' + k + '">&#11044;</font><strong> ' + locStatusColors[k] + '</strong><br>';
 	    }
 	    div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
-	    div.innerHTML += '<font color="#33aaff">&#11044;</font><strong>Open</strong><br>';
-	    div.innerHTML += '<font color="#119cca">&#11044;</font><strong>Geaccepteerd</strong><br>';
-	    div.innerHTML += '<font color="#c301fe">&#11044;</font><strong>Geweigerd / ingetrokken / ongeldig</strong><br>';
+	    div.innerHTML += '<font color="#33aaff">&#11044;</font><strong> Open</strong><br>';
+	    div.innerHTML += '<font color="#119cca">&#11044;</font><strong> Geaccepteerd</strong><br>';
+	    div.innerHTML += '<font color="#c301fe">&#11044;</font><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
 	    
 	    return div;
 	};

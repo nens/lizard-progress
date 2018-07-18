@@ -138,6 +138,7 @@ def check_gwsw(file_obj):
 class RibxParser(ProgressParser):
     ERRORS = {
         'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
+        'LOCATION_COORD_ERROR': "Onbekende locatie met ongespecificeerde coördinaten.",
         'X_NOT_IN_EXTENT': "Buiten gebied: X coördinaat niet tussen {} en {}.",
         'Y_NOT_IN_EXTENT': "Buiten gebied: Y coördinaat niet tussen {} en {}.",
         'ATTACHMENT_ALREADY_EXISTS':
@@ -401,7 +402,15 @@ class RibxParser(ProgressParser):
             # y values! Perhaps a better way to do this is is to correctly
             # parse the Points as 2D in the ribxlib...
             point_2d = ogr.Geometry(ogr.wkbPoint)
-            point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
+
+            # CHANGE 2018-07-04 for PROJ-312
+            # Specify failure reason if location cannot be created because of
+            # unrecognizable or missing coordinates
+            try:
+                point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
+            except AttributeError:
+                return 'LOCATION_COORD_ERROR'
+
             geom = point_2d
         else:
             geom = item.geom
@@ -490,13 +499,15 @@ class RibxReinigingInspectieRioolParser(RibxParser):
             # though.
             if item.work_impossible:
                 return None
-            elif not item.new:
-                self.record_error(
-                    item.sourceline, 'LOCATION_NOT_FOUND',
-                    self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
-                return None
             else:
                 location = self.create_new(item)
+                if location in self.ERRORS:
+                    self.record_error(item.sourceline,
+                                      location,
+                                      self.ERRORS[location].format(item.ref))
+                    return None
+                else:
+                    return location
 
         manhole_start = None
         if isinstance(item, ribxmodels.InspectionPipe):

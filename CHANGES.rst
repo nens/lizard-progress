@@ -2,9 +2,10 @@ Changelog of lizard-progress
 ===================================================
 
 4.1.12 (unreleased)
--------------------
 
 - Added work_impossible test before reporting error on missing start point
+
+- Catch and pass missing coordinates error when creating location from measurement.
 
 - Avoid running calc_progress in projectreview view, show reviewproject.progress instead.
 

@@ -7,6 +7,8 @@ Changelog of lizard-progress
 
 - Catch and pass missing coordinates error when creating location from measurement.
 
+- Autoreview.
+
 - Avoid running calc_progress in projectreview view, show reviewproject.progress instead.
 
 - Disable Download reviews button if there are no reviews.
@@ -22,7 +24,6 @@ Changelog of lizard-progress
 - Use midpoint for creating metparser Locations.
 
 - Use midpoint for TOO_FAR_FROM_LOCATION change request.
-
 
 4.1.10 (2018-06-20)
 -------------------

@@ -33,7 +33,10 @@ from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
-from lizard_progress.util import filler
+# from lizard_progress.util import filler
+from lizard_progress.util.autoreviewer import AutoReviewer
+from lizard_progress.util.autoreviewer import Field
+from lizard_progress.util.autoreviewer import Observation
 
 from lizard_map import coordinates
 
@@ -504,7 +507,7 @@ class Project(ProjectActivityMixin, models.Model):
     def specifics(self, activity=None):
         return lizard_progress.specifics.Specifics(self, activity)
 
-    @cached_property
+    @property
     def number_of_locations(self):
         return self.counted_number_of_locations
 
@@ -736,9 +739,7 @@ class ReviewProject(models.Model):
 
     def _calc_progress_pipe(self, pipe):
         """Return a float indicating how % much the pipe has been reviewed"""
-        if not bool(pipe[self.HERSTELMAATREGEL]):
-            return 100
-        completed = sum(100 for zc in pipe['ZC'] if zc[self.HERSTELMAATREGEL])
+        completed = sum(100 for zc in pipe['ZC'] if self.HERSTELMAATREGEL in zc and bool(zc[self.HERSTELMAATREGEL]))
         return completed / len(pipe['ZC'])
 
     def _calc_progress_inspection(self, inspection):
@@ -746,7 +747,10 @@ class ReviewProject(models.Model):
 
         Because there is only 1 thing to review for an inspection, it either
         returns 0 or 100"""
-        return float(bool(inspection[self.HERSTELMAATREGEL])) * 100
+        if self.HERSTELMAATREGEL in inspection:
+            return float(bool(inspection[self.HERSTELMAATREGEL])) * 100
+        else:
+            return 0
 
     def set_slug_and_save(self):
         """Call on an unsaved project.
@@ -810,12 +814,13 @@ class ReviewProject(models.Model):
         project_url = ''
         if request:
             location = reverse('lizard_progress_reviewproject',
-                    kwargs={'review_id': project_review.id, })
+                               kwargs={'review_id': project_review.id, })
             project_url = request.build_absolute_uri(location)
 
         from . import tasks
 
         # Setup using RIBX asynchronously, to prevent timeouts
+        # project_review.setup_project_using_ribx(project_url, abs_ribx_path, abs_filler_path)
         tasks.setup_project_using_ribx_task.delay(
             project_review.id,
             project_url,
@@ -825,12 +830,15 @@ class ReviewProject(models.Model):
         return project_review
 
     def setup_project_using_ribx(self, project_url, abs_ribx_path, abs_filler_path):
+
+        from itertools import compress
+
         parser = etree.XMLParser()
         tree = etree.parse(abs_ribx_path)
         root = tree.getroot()
 
         reviews = {
-            'project' : {
+            'project': {
                 'name': self.name,
                 'slug': self.slug,
                 'url': project_url
@@ -839,27 +847,77 @@ class ReviewProject(models.Model):
             'manholes': []
         }
 
+        # apply inspection_filler if we specify one
+        if abs_filler_path:
+            self.inspection_filler = abs_filler_path
+            ar = AutoReviewer(abs_filler_path)
+        else:
+            ar = AutoReviewer()
+
         for elem in root.iter('ZB_A'):
             # pipes
             pipe = self._parse_zb_a(elem)
-            reviews['pipes'].append(pipe)
+
+            if 'ZC' in pipe:
+
+                keep = [False] * len(pipe['ZC'])
+                zc_idx = 0
+
+                for zc in pipe['ZC']:
+
+                    obs = Observation()
+                    for k in zc.keys():
+                        obs.add_field(Field(k, zc.get(k)))
+
+                    res = ar.test_observation(obs)
+
+                    if bool(res) and res in ar.TRIGGER_CODES.keys():
+                        pipe['ZC'][zc_idx]['Trigger'] = ar.TRIGGER_CODES[res]
+                        pipe['ZC'][zc_idx]['Herstelmaatregel'] = ''
+                        pipe['ZC'][zc_idx]['Opmerking'] = ''
+                        keep[zc_idx] = True
+
+                    zc_idx += 1
+
+                if any(keep):
+                    pipe['Herstelmaatregel'] = ''
+                    pipe['Opmerking'] = ''
+                    pipe['ZC'] = list(compress(pipe['ZC'], keep))
+                    logger.debug(pipe['Beginpunt x'])
+                    reviews['pipes'].append(pipe)
+
         for elem in root.iter('ZB_C'):
             # manholes
             manhole = self._parse_zb_c(elem)
-            reviews['manholes'].append(manhole)
 
-        # apply inspection_filler if we specify one
-        if abs_filler_path:
-            rules = filler.parse_insp_filler(open(abs_filler_path, 'r'))
-            rule_tree = filler.build_rule_tree(rules)
-            the_reviews = filler.apply_rules(rule_tree, reviews)
-        else:
-            the_reviews = reviews
+            if 'ZC' in manhole:
 
-        self.set_reviews(the_reviews, from_task=True)  # Saves
+                keep = [False] * len(manhole['ZC'])
+                zc_idx = 0
+
+                for zc in manhole['ZC']:
+                    obs = Observation()
+                    for k in zc.keys():
+                        obs.add_field(Field(k, zc.get(k)))
+
+                    res = ar.test_observation(obs)
+                    if bool(res) and res in ar.TRIGGER_CODES.keys():
+                        manhole['ZC'][zc_idx]['Trigger'] = ar.TRIGGER_CODES[res]
+                        manhole['ZC'][zc_idx]['Herstelmaatregel'] = ''
+                        manhole['ZC'][zc_idx]['Opmerking'] = ''
+                        keep[zc_idx] = True
+
+                    zc_idx += 1
+
+                if any(keep):
+                    manhole['Herstelmaatregel'] = ''
+                    manhole['Opmerking'] = ''
+                    manhole['ZC'] = list(compress(manhole['ZC'], keep))
+                    reviews['manholes'].append(manhole)
+
+        self.set_reviews(reviews, from_task=True)  # Saves
 
     def set_reviews(self, the_reviews, from_task=False):
-        logger.debug('Entered  set_reviews')
         self.reviews = the_reviews
         self.save()
 
@@ -893,8 +951,9 @@ class ReviewProject(models.Model):
                     result['Beginpunt CRS'] = elem.getchildren()[0].attrib[
                         'srsName']
                 elif elem.tag in ['AAG']:
-                    x, y = result[elem.tag] = \
-                    elem.getchildren()[0].getchildren()[0].text.split()
+                    x, y = result[elem.tag] = elem\
+                        .getchildren()[0].getchildren()[0]\
+                                         .text.split()
                     result['Eindpunt x'] = x
                     result['Eindpunt y'] = y
                     result['Eindpunt CRS'] = elem.getchildren()[0].attrib[
@@ -905,8 +964,6 @@ class ReviewProject(models.Model):
                         result['ZC'].append(zc_measurement)
                 else:
                     result[elem.tag] = elem.text
-        result[self.HERSTELMAATREGEL] = ''
-        result[self.OPMERKING] = ''
         return result
 
     def is_relevant_measurement(self, zc_measurement):
@@ -967,28 +1024,6 @@ class ReviewProject(models.Model):
         result[self.HERSTELMAATREGEL] = ''
         result[self.OPMERKING] = ''
         return result
-
-    # TODO: NOT USED ANYWHERE, nor tested, should probably remove this
-    def apply_inspection_filler(self,
-                                inspection_filler=None,
-                                delimiter=str(',')):
-        """Apply the inspection filler to the inspections of this reviewproject
-
-        :arg
-            inspection_filler (string): the path location of the inspection
-                filler
-            delimiter (str): one-character string used to separate fields.
-        :return
-            Reviews updated according to the rules defined in the inspection_filler.
-        """
-        if inspection_filler is None:
-            inspection_filler = self.inspection_filler
-
-        flat_rules = filler.parse_insp_filter(inspection_filler)
-        rule_tree = filler.build_rule_tree(flat_rules)
-        new_reviews = filler.apply_rules(rule_tree, reviews)
-
-        return new_reviews
 
     def get_coord_reviewproject(self):
         """Return a set of coordinates of this reviewproject.
@@ -1075,7 +1110,7 @@ class ReviewProject(models.Model):
         features = []
         progress_tot = 0
         # total number of measure points (manholes and pipes )
-        cnt = 0
+        cnt = 1
 
         # manholes
         for manhole in self.reviews['manholes']:
@@ -1526,7 +1561,7 @@ class Activity(ProjectActivityMixin, models.Model):
     def has_locations(self):
         return self.location_set.filter(not_part_of_project=False).exists()
 
-    @cached_property
+    @property
     def num_complete_locations(self):
         return self.location_set.filter(
             complete=True, not_part_of_project=False).count()

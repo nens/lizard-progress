@@ -2,7 +2,8 @@ Changelog of lizard-progress
 ===================================================
 
 4.1.12 (unreleased)
--------------------
+
+- Added work_impossible test before reporting error on missing start point
 
 - Catch and pass missing coordinates error when creating location from measurement.
 

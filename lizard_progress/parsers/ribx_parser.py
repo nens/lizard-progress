@@ -241,6 +241,21 @@ class RibxParser(ProgressParser):
             # the start of a measurement run, BDC the end. BCE is probably the
             # end of a measurement run if there's a problem (like an
             # obstruction). BXA is an angle measurement.
+
+            # CHANGE 2018-07-04, ticket 'RIBX parser geeft foutmelding als er geen…'
+            # Handle inspections with correct work_impossible the same way
+            # as in get_coordinates(), i.e. create a deletion request rather than an error
+            try:
+                if inspection_pipe.work_impossible:
+                    logger.debug("Inspection has been reported as impossible, skipping it completely")
+                    self.create_deletion_request(inspection_pipe)
+                    continue
+            except TypeError:
+                # for test cases only: since inspection mocks are not iterable, they
+                # will land here.
+                pass
+            # END CHANGE
+
             starts = [obs for obs in inspection_pipe.observations
                       if obs.observation_type == 'BCD']
             ends = [obs for obs in inspection_pipe.observations

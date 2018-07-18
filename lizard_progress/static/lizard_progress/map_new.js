@@ -11,6 +11,11 @@ const reqstatuses = {'1': 'Open',
 		     '5': 'Ongeldig'};
 
 const reqStatusColors = ["#33aaff", "#119cca", "#c301fe", "#c301fe", "#c301fe"];
+const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
+
+const reqtypes = {'1': 'Locatiecode verwijderen',
+		  '2': 'Locatie verplaatsen',
+		  '3': 'Niewe locatiecode'};
 
 function reloadGraphs(max_image_width, callback, force=true) {
     // New Flot graphs
@@ -151,15 +156,21 @@ function featureColor(feat){
 }
 
 function build_map(gj, extent) {
+    var empty = false;
+    if (!gj.features || !extent) {
+	empty = true;
+	extent = {'top': 53, 'bottom': 51.5, 'left':4.5, 'right':4.9};
+    }
+
+    function renderingOrderComparator(featA, featB){
+	return _orderingTable[featA.geometry.loc_type] - _orderingTable[featB.geometry.loc_type];
+    }
+
+    var overlayMaps = {};
+
     function setCurrObjId(type, id){window.currType=type;window.currObjId=id;}
     setCurrObjId('', '');
     
-    const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
-
-    const reqtypes = {'1': 'Locatiecode verwijderen',
-		      '2': 'Locatie verplaatsen',
-		      '3': 'Niewe locatiecode'};
-
     const mymap = L.map('map_new', {
 	fullscreenControl: {
             pseudoFullscreen: true
@@ -182,8 +193,24 @@ function build_map(gj, extent) {
 	"Street map": baseLayer
     };
     baseLayer.addTo(mymap);
-    
     var scale = L.control.scale({imperial: false}).addTo(mymap);
+
+    if (empty) {
+	var msg = L.control({position: 'bottomright'});
+	msg.onAdd = function (mymap) {
+	    var div = L.DomUtil.create('div', 'msg');
+	    div.setAttribute("style", "background: rgba(255,255,255, .6);"
+			     + "width: " + mymap.getSize().x + "px;"
+			     + "margin: 0;"
+			     + "font-size: 20pt;"
+			     + "text-align: center;");
+	    div.innerHTML += 'Geen gegevens beschikbaar';
+	    return div;
+	};
+	msg.addTo(mymap);
+	console.log(mymap.getSize());
+	return;
+    }
 
     const geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
@@ -194,8 +221,7 @@ function build_map(gj, extent) {
 		    opacity: .8,
 		    fillOpacity: .8});
 	    } else {
-		var fillOpacity = feature.properties.status;
-		/* Displace change requests slightly to make them always visible.
+		/* Displace change requests slightly since they might be covered by other markers.
 		   It's ok as long as the displacement is << object size.
 		   5e-7 lat/lng deg is approx 5.6 cm. */ 
 		return L.circleMarker([latlng['lat']+.0000005, latlng.lng+.0000005], {
@@ -225,11 +251,6 @@ function build_map(gj, extent) {
 	}
     };
 
-    function renderingOrderComparator(featA, featB){
-	return _orderingTable[featA.geometry.loc_type] - _orderingTable[featB.geometry.loc_type];
-    }
-
-    var overlayMaps = {};
     for (var activity in gj) {
 	var geoJsonDocument = gj[activity];
 	if ('Aanvragen' != activity) {

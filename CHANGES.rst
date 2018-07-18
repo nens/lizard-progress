@@ -1,6 +1,12 @@
 Changelog of lizard-progress
 ===================================================
 
+4.2.1 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
 4.2.0 (2018-07-18)
 
 - Added work_impossible test before reporting error on missing start point

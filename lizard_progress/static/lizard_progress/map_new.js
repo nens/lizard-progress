@@ -292,7 +292,8 @@ function build_map(gj, extent) {
     });
 
     control = new L.control.layers([], overlayMaps, {position: 'topleft'}).addTo(mymap);
-
+    $(".leaflet-control-layers-overlays").prepend("<label><u>Kaartlagen</u></label>");
+    
     var ribx = true;
     if (ribx) {
 	var legend = L.control({position: 'bottomright'});
@@ -304,12 +305,12 @@ function build_map(gj, extent) {
 	    div.innerHTML += '<strong><u>Objecten/Locaties</u></strong><br>';
 	    for (k in locStatusColors) {
 		div.innerHTML +=
-		    '<font color="' + k + '">&#11044;</font><strong> ' + locStatusColors[k] + '</strong><br>';
+		    '<span style="color:' + k + ';">&#9679;</span><strong> ' + locStatusColors[k] + '</strong><br>';
 	    }
 	    div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
-	    div.innerHTML += '<font color="#33aaff">&#11044;</font><strong> Open</strong><br>';
-	    div.innerHTML += '<font color="#119cca">&#11044;</font><strong> Geaccepteerd</strong><br>';
-	    div.innerHTML += '<font color="#c301fe">&#11044;</font><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
+	    div.innerHTML += '<span style="color:#33aaff;">&#9679;</span><strong> Open</strong><br>';
+	    div.innerHTML += '<span style="color:#119cca;">&#9679;</span><strong> Geaccepteerd</strong><br>';
+	    div.innerHTML += '<span style="color:#c301fe;">&#9679;</span><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
 	    
 	    return div;
 	};

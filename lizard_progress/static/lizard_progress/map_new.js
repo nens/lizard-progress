@@ -1,23 +1,4 @@
-const locStatusColors = {'green': 'Compleet',
-		       'red': 'Niet (geheel) aanwezig en niet gepland',
-		       'black': 'Gepland, nog niet compleet',
-		       'gray': 'Geen onderdeel van werkzaamheden',
-		       '#ababf8': 'Nieuw object (automatisch toegevoegd)',
-		      }
-const reqstatuses = {'1': 'Open',
-		     '2': 'Geaccepteerd',
-		     '3': 'Geweigerd',
-		     '4': 'Ingetrokken',
-		     '5': 'Ongeldig'};
-
-const reqStatusColors = ["#33aaff", "#119cca", "#c301fe", "#c301fe", "#c301fe"];
-const ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
-
-const reqtypes = {'1': 'Locatiecode verwijderen',
-		  '2': 'Locatie verplaatsen',
-		  '3': 'Niewe locatiecode'};
-
-function reloadGraphs(max_image_width, callback, force=true) {
+function reloadGraphs(max_image_width, callback, force) {
     // New Flot graphs
     $('.dynamic-graph').each(function () {
         reloadDynamicGraph($(this), callback, force);
@@ -160,6 +141,24 @@ function isEmpty(ob){
 }
 
 function build_map(gj, extent) {
+    var locStatusColors = {'green': 'Compleet',
+		       'red': 'Niet (geheel) aanwezig en niet gepland',
+		       'black': 'Gepland, nog niet compleet',
+		       'gray': 'Geen onderdeel van werkzaamheden',
+		       '#ababf8': 'Nieuw object (automatisch toegevoegd)',
+		      }
+var reqstatuses = {'1': 'Open',
+		     '2': 'Geaccepteerd',
+		     '3': 'Geweigerd',
+		     '4': 'Ingetrokken',
+		     '5': 'Ongeldig'};
+
+var reqStatusColors = ["#33aaff", "#119cca", "#c301fe", "#c301fe", "#c301fe"];
+var ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
+
+var reqtypes = {'1': 'Locatiecode verwijderen',
+		  '2': 'Locatie verplaatsen',
+		  '3': 'Niewe locatiecode'};
     var empty = false;
     if (isEmpty(gj) || isEmpty(extent)) {
 	empty = true;
@@ -175,25 +174,25 @@ function build_map(gj, extent) {
     function setCurrObjId(type, id){window.currType=type;window.currObjId=id;}
     setCurrObjId('', '');
     
-    const mymap = L.map('map_new', {
+    var mymap = L.map('map_new', {
 	fullscreenControl: {
             pseudoFullscreen: true
 	},
 	preferCanvas: true
     });
-    const bounds = [
+    var bounds = [
 	[extent.top, extent.left],
 	[extent.bottom, extent.right]
     ];
-    const _orderingTable = {LineString: 0, Point: 10};
+    var _orderingTable = {LineString: 0, Point: 10};
 
     mymap.fitBounds(bounds);
 
-    const baseLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+    var baseLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 	attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
 	maxZoom: 22
     });
-    const baseMaps = {
+    var baseMaps = {
 	"Street map": baseLayer
     };
     baseLayer.addTo(mymap);
@@ -215,7 +214,7 @@ function build_map(gj, extent) {
 	return;
     }
 
-    const geojsonLayerOptions = {
+    var geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
 		return L.circleMarker(latlng, {

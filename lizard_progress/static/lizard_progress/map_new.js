@@ -154,10 +154,14 @@ function featureColor(feat){
     }
     return color;
 }
+function isEmpty(ob){
+   for(var i in ob){ return false;}
+  return true;
+}
 
 function build_map(gj, extent) {
     var empty = false;
-    if (!gj.features || !extent) {
+    if (isEmpty(gj) || isEmpty(extent)) {
 	empty = true;
 	extent = {'top': 53, 'bottom': 51.5, 'left':4.5, 'right':4.9};
     }
@@ -208,7 +212,6 @@ function build_map(gj, extent) {
 	    return div;
 	};
 	msg.addTo(mymap);
-	console.log(mymap.getSize());
 	return;
     }
 

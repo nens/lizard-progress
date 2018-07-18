@@ -36,7 +36,7 @@
                 <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
 		<script src="{% static 'lizard_progress/map_new.js' %}"></script>
                 <script> $(function(){ var gj = {{ view.locations_geojson|safe }};
-		     var extent = {% if view.extent|safe %} view.extent|safe {%else%} {} {%endif%}; 
+		     var extent = {% if view.extent|safe %} {{view.extent|safe}} {%else%} {} {%endif%}; 
 		     build_map(gj, extent);});
 		 </script>
             </div>

@@ -236,7 +236,7 @@ function build_map(gj, extent) {
 
     mymap.fitBounds(bounds);
 
-    var base = providers['nlmapsstandaard'];
+    var base = providers['osm'];
     var baseLayer = L.tileLayer(base.tile, {
 	attribution: base.attr,
 	maxZoom: 19
@@ -266,21 +266,18 @@ function build_map(gj, extent) {
     var geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
-		return L.circleMarker(latlng, {
-		    radius: 4,
-		    weight: 1,
-		    opacity: .8,
-		    fillOpacity: .8});
+		var c = L.circle([latlng['lat'], latlng['lng']], 3);
+		return c;
 	    } else {
 		/* Displace change requests slightly since they might be covered by other markers.
 		   It's ok as long as the displacement is << object size.
 		   5e-7 lat/lng deg is approx 5.6 cm. */ 
 		var c = L.circleMarker([latlng['lat']+.0000005, latlng.lng+.0000005], {
-		    radius: 4,
+		    radius: 2.5,
 		    weight: 3,
 		    opacity: .8,
 		    fillOpacity: .8});
-		var c = L.circle([latlng['lat'], latlng['lng']], 2).addTo(mymap);
+		var c = L.circle([latlng['lat'], latlng['lng']], 3).addTo(mymap);
 		var r = L.rectangle(c.getBounds());
 		mymap.removeLayer(c);
 		return r;
@@ -347,28 +344,25 @@ function build_map(gj, extent) {
     control = new L.control.layers([], overlayMaps, {position: 'topleft'}).addTo(mymap);
     $(".leaflet-control-layers-overlays").prepend("<label><u>Kaartlagen</u></label>");
     
-    var ribx = true;
-    if (ribx) {
-	var legend = L.control({position: 'bottomright'});
+    var legend = L.control({position: 'bottomright'});
 
-	legend.onAdd = function (mymap) {
-	    var div = L.DomUtil.create('div', 'info legend');
-	    div.style.background = 'rgba(255,255,255, .6)';
-	    
-	    div.innerHTML += '<strong><u>Objecten/Locaties</u></strong><br>';
-	    for (k in locStatusColors) {
-		div.innerHTML +=
+    legend.onAdd = function (mymap) {
+	var div = L.DomUtil.create('div', 'info legend');
+	div.style.background = 'rgba(255,255,255, .6)';
+	
+	div.innerHTML += '<strong><u>Objecten/Locaties</u></strong><br>';
+	for (k in locStatusColors) {
+	    div.innerHTML +=
 		    '<span style="color:' + k + ';">&#9679;</span><strong> ' + locStatusColors[k] + '</strong><br>';
-	    }
-	    div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
-	    div.innerHTML += '<span style="color:' + reqStatusColors[0] +';">&#9632;</span><strong> Open</strong><br>';
-	    div.innerHTML += '<span style="color:' + reqStatusColors[1] +';">&#9632;</span><strong> Geaccepteerd</strong><br>';
-	    div.innerHTML += '<span style="color:' + reqStatusColors[2] +';">&#9632;</span><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
-	    
-	    return div;
-	};
-	legend.addTo(mymap);
-    }
+	}
+	div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatusColors[0] +';">&#9632;</span><strong> Open</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatusColors[1] +';">&#9632;</span><strong> Geaccepteerd</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatusColors[2] +';">&#9632;</span><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
+	
+	return div;
+    };
+    legend.addTo(mymap);
     
     function show_dialog(latlng, loc_info){
 	var html, i;
@@ -463,7 +457,7 @@ height:100%;
             html = nothingFoundMessage;
         }
 
-	var popup = L.popup({'minWidth': 650, 'maxHeight': 480, 'autoClose': true, 'autoPan': true})
+	var popup = L.popup({'minWidth': 650, 'maxHeight': 500, 'autoClose': true, 'autoPan': true})
 	    .setLatLng(latlng)
 	    .setContent(html)
 	    .openOn(mymap); 

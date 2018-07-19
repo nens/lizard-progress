@@ -40,10 +40,10 @@ class PlottingData:
         self.date = date
 
         self.title = (
-            '\nDwarsprofiel {code},\nwerkzaamheid {activity}, {date}'
+            '\nDwarsprofiel {code},\nWerkzaamheid: {activity}, {date}'
             .format(code=location.location_code,
                     activity=location.activity,
-                    date=date.strftime("%d/%m/%y")))
+                    date=date.strftime("%Y-%m-%d")))
 
         (self.baseline, self.left,
          self.right, self.waterlevel) = self.find_base_line(data)
@@ -114,7 +114,7 @@ def graph(location, measurements):
     data = [PlottingData(m.data, m.location, m.date) for m in measurements]
     from lizard_progress.views import ScreenFigure
     if len(data) == 1:
-        fig = ScreenFigure(525, 300)
+        fig = ScreenFigure(600, 300)
         ax = fig.add_subplot(111)
         d = data[0]
         ax.set_title(d.title)

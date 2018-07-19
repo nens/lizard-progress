@@ -2,7 +2,7 @@ var locStatusColors = {'green': 'Compleet',
 		       'red': 'Niet (geheel) aanwezig en niet gepland',
 		       'black': 'Gepland, nog niet compleet',
 		       'gray': 'Geen onderdeel van werkzaamheden',
-		       '#ababf8': 'Nieuw object (automatisch toegevoegd)'
+		       'brown': 'Nieuw object (automatisch toegevoegd)'
 		      };
 var reqstatuses = {'1': 'Open',
 		     '2': 'Geaccepteerd',
@@ -10,12 +10,40 @@ var reqstatuses = {'1': 'Open',
 		     '4': 'Ingetrokken',
 		     '5': 'Ongeldig'};
 
-var reqStatusColors = ["#33aaff", "#119cca", "#c301fe", "#c301fe", "#c301fe"];
+var reqStatusColors = ["#blue", "green", "magenta", "magenta", "magenta"];
 var ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
 
 var reqtypes = {'1': 'Locatiecode verwijderen',
-		  '2': 'Locatie verplaatsen',
-		  '3': 'Niewe locatiecode'};
+		'2': 'Locatie verplaatsen',
+		'3': 'Niewe locatiecode'};
+
+var providers = {
+    'osm': {
+	tile: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+	attr: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    },
+    'osmnolabels': {
+	tile: 'https://tiles.wmflabs.org/osm-no-labels/{z}/{x}/{y}.png',
+	attr: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    },
+    'cartolight': {
+	tile: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+	attr: 'Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.'
+    },
+    'nlmapspastel': {
+	tile: 'https://geodata.nationaalgeoregister.nl/tiles/service/wmts/brtachtergrondkaartpastel/EPSG:3857/{z}/{x}/{y}.png',
+	attr: 'Kaartgegevens &copy; <a href="kadaster.nl">Kadaster</a>'
+    },
+    'nlmapsstandaard': {
+	tile: 'https://geodata.nationaalgeoregister.nl/tiles/service/wmts/brtachtergrondkaart/EPSG:3857/{z}/{x}/{y}.png',
+	attr: 'Kaartgegevens &copy; <a href="kadaster.nl">Kadaster</a>'
+    },
+    'openinfrawater': {
+	tile: 'https://geodata.nationaalgeoregister.nl/tiles/service/wmts/brtachtergrondkaart/EPSG:3857/{z}/{x}/{y}.png',
+	attr: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://www.openinframap.org/about.html">About OpenInfraMap</a>'
+    }
+};
+
 function reloadGraphs(max_image_width, callback, force) {
     // New Flot graphs
     $('.dynamic-graph').each(function () {
@@ -196,8 +224,10 @@ function build_map(gj, extent) {
 	fullscreenControl: {
             pseudoFullscreen: true
 	},
-	preferCanvas: true
+	preferCanvas: true,
+	zoomControl: false
     });
+  
     var bounds = [
 	[extent.top, extent.left],
 	[extent.bottom, extent.right]
@@ -206,9 +236,10 @@ function build_map(gj, extent) {
 
     mymap.fitBounds(bounds);
 
-    var baseLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-	attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-	maxZoom: 22
+    var base = providers['nlmapsstandaard'];
+    var baseLayer = L.tileLayer(base.tile, {
+	attribution: base.attr,
+	maxZoom: 19
     });
     var baseMaps = {
 	"Street map": baseLayer
@@ -244,16 +275,20 @@ function build_map(gj, extent) {
 		/* Displace change requests slightly since they might be covered by other markers.
 		   It's ok as long as the displacement is << object size.
 		   5e-7 lat/lng deg is approx 5.6 cm. */ 
-		return L.circleMarker([latlng['lat']+.0000005, latlng.lng+.0000005], {
+		var c = L.circleMarker([latlng['lat']+.0000005, latlng.lng+.0000005], {
 		    radius: 4,
 		    weight: 3,
 		    opacity: .8,
 		    fillOpacity: .8});
+		var c = L.circle([latlng['lat'], latlng['lng']], 2).addTo(mymap);
+		var r = L.rectangle(c.getBounds());
+		mymap.removeLayer(c);
+		return r;
 	    }		
 	},
 	style: function(feature) {
 	    var color = featureColor(feature);
-	    return {color: color, fillColor: color};
+	    return {color: color, fillColor: color, fillOpacity: feature.properties.type == 'location' ? 0.8 : 0.05};
 	},
 	onEachFeature: function(feature, layer){
 	    /* Feature contain essential information only (location code, location type).
@@ -290,7 +325,7 @@ function build_map(gj, extent) {
     var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
     layer.addTo(mymap); /* show everything by default */
     overlayMaps[activityName] = layer;
-    layer.bringToBack();
+    layer.bringToFront();
 
     L.Control.Layers.include({
 	getActiveOverlays: function () {
@@ -326,9 +361,9 @@ function build_map(gj, extent) {
 		    '<span style="color:' + k + ';">&#9679;</span><strong> ' + locStatusColors[k] + '</strong><br>';
 	    }
 	    div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
-	    div.innerHTML += '<span style="color:#33aaff;">&#9679;</span><strong> Open</strong><br>';
-	    div.innerHTML += '<span style="color:#119cca;">&#9679;</span><strong> Geaccepteerd</strong><br>';
-	    div.innerHTML += '<span style="color:#c301fe;">&#9679;</span><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
+	    div.innerHTML += '<span style="color:' + reqStatusColors[0] +';">&#9632;</span><strong> Open</strong><br>';
+	    div.innerHTML += '<span style="color:' + reqStatusColors[1] +';">&#9632;</span><strong> Geaccepteerd</strong><br>';
+	    div.innerHTML += '<span style="color:' + reqStatusColors[2] +';">&#9632;</span><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
 	    
 	    return div;
 	};

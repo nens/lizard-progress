@@ -639,6 +639,7 @@ def get_closest_to(request, *args, **kwargs):
     response = {}
     html = []
     tab_titles = []
+    obj_ids = []
     locationIds, changeRequests = [], []
     
     lat = request.GET.get('lat', None)
@@ -651,7 +652,7 @@ def get_closest_to(request, *args, **kwargs):
     proj = Project.objects.get(slug=kwargs['project_slug'])
 
     # Unclickable items work-around
-    ALWAYS_VICINITY = len(overlays) > 2
+    ALWAYS_VICINITY = len(overlays) > 2 and False
 
     if not objId or ALWAYS_VICINITY:
         # Clicked on the basemap, search objects in the vicinity of the clicked point
@@ -712,6 +713,7 @@ def get_closest_to(request, *args, **kwargs):
                                          {'locations': [loc]}, context_instance=RequestContext(request)))
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' '
                               + Truncator(loc.activity.name).chars(10))
+            obj_ids.append(loc.id)
 
         # ########################################
         # Create html for crossection measurements 
@@ -732,6 +734,7 @@ def get_closest_to(request, *args, **kwargs):
                                       'title': loc.location_code + ' ' + loc.activity.name,
                                       'multiple_projects_graph_url': multiple_projects_graph_url})
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + Truncator(loc.activity.name).chars(10))
+            obj_ids.append(loc.id)
             html.append(lhtml)
         # END crossection graph
 
@@ -758,13 +761,14 @@ def get_closest_to(request, *args, **kwargs):
             )
         )
         tab_titles.append('Aanvraag ' + cr.type_description + ' ' + cr.location_code)
+        obj_ids.append(cr.id)
 
-        
     response = {
         'lat': lat,
         'lng': lng,
         'html': html,
-        'tab_titles': tab_titles
+        'tab_titles': tab_titles,
+        'objIds': obj_ids
     }
     # return HttpResponse(json.dumps(response), content_type="application/json")
     return HttpResponse(json.dumps(response), content_type="application/json")

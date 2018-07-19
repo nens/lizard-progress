@@ -24,7 +24,6 @@ function reloadGraphs(max_image_width, callback, force) {
 }
 function openTab(evt, tab) {
     var i, tabcontent, tablinks;
-    console.log(evt);
     // Get all elements with class="tabcontent" and hide them
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i=0; i<tabcontent.length; i++) {
@@ -38,11 +37,9 @@ function openTab(evt, tab) {
     }
 
     // Show the current tab, and add an "active" class to the link that opened the tab
-    console.log('popup-tab-' + tab.toString());
     document.getElementById('popup-tab-' + tab.toString()).style.display = "block";
     evt.currentTarget.className += " active";
 } 
-
 
 function reloadDynamicGraph($graph, callback, force) {
     // check if graph is already loaded
@@ -354,7 +351,7 @@ function build_map(gj, extent) {
 	latlng = L.latLng(loc_info.lat, loc_info.lng);
 
 	var data = loc_info;
-	/* Copypaste from lizard_map/lizard_map.js */
+
 	if (data.html && data.html.length !== 0) {
             if (data.html.length === 1) {
 		html += data.html[0];
@@ -397,10 +394,13 @@ function build_map(gj, extent) {
     border-top: none;
 height:100%;
 } 
- </style>`; 
+ </style>`;
 		html += '<div><div class="tab" id="popup-tabs">';
+		/* indexOf() returns -1 if not found, in this case activate the first tab */
+		var selectedIdx = Math.max(0, data.objIds.indexOf(window.currObjId));
+		var active = '';
                 for (var i=0; i<data.html.length; i+=1) {
-		    var active = (i === 0) ? ' active' : '';
+		    active = (i == selectedIdx) ? ' active' : '';
                     html += '<button class="tablinks' + active + '" onclick="openTab(event, ' + i.toString() + ')">';
                     html += data.tab_titles[i]
 			.replace('manhole', 'Put')
@@ -410,24 +410,12 @@ height:100%;
                 }
 		html += '</div>';
 
-		for (var i= 0; i<data.html.length; i+=1) {
-		    var display = (i === 0) ? 'block' : 'none';
-                    html += '<div class="tabcontent" id="popup-tab-' + i.toString() + '" style="display:' + display +';">';
+		for (var i=0; i<data.html.length; i+=1) {
+		    active = (i == selectedIdx) ? 'block' : 'none';
+                    html += '<div class="tabcontent" id="popup-tab-' + i.toString() + '" style="display:' + active +';">';
                     html += data.html[i];
 		    html += '</div></div>';
                 }
-
-		//console.log(html);
-                // $("popup-tabs").tabs({
-                //     idPrefix: 'popup-tab',
-                //     selected: 0,
-                //     show: function (event, ui) {
-                //         reloadGraphs();
-                //     },
-                //     create: function (event, ui) {
-                //         reloadGraphs();
-                //     }
-                // });
             }
         } else {
             var nothingFoundMessage = '';
@@ -439,7 +427,6 @@ height:100%;
             }
             html = nothingFoundMessage;
         }
-	/* END Copypaste */
 
 	var popup = L.popup({'minWidth': 650, 'maxHeight': 480, 'autoClose': true, 'autoPan': true})
 	    .setLatLng(latlng)

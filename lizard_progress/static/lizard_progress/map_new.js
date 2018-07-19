@@ -1,9 +1,9 @@
-    var locStatusColors = {'green': 'Compleet',
+var locStatusColors = {'green': 'Compleet',
 		       'red': 'Niet (geheel) aanwezig en niet gepland',
 		       'black': 'Gepland, nog niet compleet',
 		       'gray': 'Geen onderdeel van werkzaamheden',
-		       '#ababf8': 'Nieuw object (automatisch toegevoegd)',
-		      }
+		       '#ababf8': 'Nieuw object (automatisch toegevoegd)'
+		      };
 var reqstatuses = {'1': 'Open',
 		     '2': 'Geaccepteerd',
 		     '3': 'Geweigerd',
@@ -22,6 +22,27 @@ function reloadGraphs(max_image_width, callback, force) {
         reloadDynamicGraph($(this), callback, force);
     });
 }
+function openTab(evt, tab) {
+    var i, tabcontent, tablinks;
+    console.log(evt);
+    // Get all elements with class="tabcontent" and hide them
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i=0; i<tabcontent.length; i++) {
+	tabcontent[i].style.display = "none";
+    }
+
+    // Get all elements with class="tablinks" and remove the class "active"
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+	tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab, and add an "active" class to the link that opened the tab
+    console.log('popup-tab-' + tab.toString());
+    document.getElementById('popup-tab-' + tab.toString()).style.display = "block";
+    evt.currentTarget.className += " active";
+} 
+
 
 function reloadDynamicGraph($graph, callback, force) {
     // check if graph is already loaded
@@ -320,24 +341,8 @@ function build_map(gj, extent) {
     function show_dialog(latlng, loc_info){
 	var html, i;
 
-	html = ''; // '<div id="movable-dialog"><div id="movable-dialog-content">';
+	html = '';
 
-	var options = {
-            autoOpen: false,
-            title: '',
-            width: 650,
-            height: 480,
-            zIndex: 10000,
-            close: function (event, ui) {
-		// clear contents on close
-		$('#movable-dialog-content').empty();
-            }
-	};
-
-	// $('#movable-dialog').dialog(options);
-
-
-	//setup_movable_dialog();
 	if (!('html' in loc_info)) {
 	    var popup = L.popup({'autoClose': true})
 		.setLatLng(latlng) //TODO has to be loc coordinates
@@ -351,85 +356,96 @@ function build_map(gj, extent) {
 	var data = loc_info;
 	/* Copypaste from lizard_map/lizard_map.js */
 	if (data.html && data.html.length !== 0) {
-            // We got at least 1 result back.
             if (data.html.length === 1) {
-                // Just copy the contents directly into the target div.
-                $("#movable-dialog-content").html(data.html[0]);
 		html += data.html[0];
-		// Have the graphs fetch their data.
                 reloadGraphs();
             } else {
-                // Build up html with tabs.
-                html += '<div id="popup-tabs"><ul>';
-                for (i = 0; i < data.html.length; i += 1) {
-                    html += '<li><a href="#popup-tab-' + (i + 1) + '">';
-                    html += data.tab_titles[i].replace('manhole', 'Put').replace('pipe', 'Streng').replace('drain', 'Kolk');
-                    html += '</a></li>';
+		html = `<style>
+ /* Style the tab */
+.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: 'white';//#f1f1f1;
+}
+
+/* Style the buttons that are used to open the tab content */
+.tab button {
+    background-color: #f1f1f1;
+    float: left;
+    border: 1px solid #ccc;
+    outline: none;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: 0.3s;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+    background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+    background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+//    display: none;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-top: none;
+height:100%;
+} 
+ </style>`; 
+		html += '<div><div class="tab" id="popup-tabs">';
+                for (var i=0; i<data.html.length; i+=1) {
+		    var active = (i === 0) ? ' active' : '';
+                    html += '<button class="tablinks' + active + '" onclick="openTab(event, ' + i.toString() + ')">';
+                    html += data.tab_titles[i]
+			.replace('manhole', 'Put')
+			.replace('pipe', 'Streng')
+			.replace('drain', 'Kolk');
+                    html += '</button>';
                 }
-                html += '</ul>';
-                for (i = 0; i < data.html.length; i += 1) {
-                    html += '<div id="popup-tab-' + (i + 1) + '">';
+		html += '</div>';
+
+		for (var i= 0; i<data.html.length; i+=1) {
+		    var display = (i === 0) ? 'block' : 'none';
+                    html += '<div class="tabcontent" id="popup-tab-' + i.toString() + '" style="display:' + display +';">';
                     html += data.html[i];
-                    html += '</div>';
+		    html += '</div></div>';
                 }
-                html += '</div>';
 
-                // Copy the prepared HTML to the target div.
-                $("#movable-dialog-content").html(html);
-
-                // Call jQuery UI Tabs to actually instantiate some tabs.
-                $("#popup-tabs").tabs({
-                    idPrefix: 'popup-tab',
-                    selected: 0,
-                    show: function (event, ui) {
-                        // Have the graphs fetch their data.
-                        reloadGraphs();
-                    },
-                    create: function (event, ui) {
-                        // Have the graphs fetch their data.
-                        reloadGraphs();
-                    }
-                });
+		//console.log(html);
+                // $("popup-tabs").tabs({
+                //     idPrefix: 'popup-tab',
+                //     selected: 0,
+                //     show: function (event, ui) {
+                //         reloadGraphs();
+                //     },
+                //     create: function (event, ui) {
+                //         reloadGraphs();
+                //     }
+                // });
             }
-            $("#popup-subtabs").tabs({
-                idPrefix: 'popup-subtab',
-                selected: 0
-            });
-            //$(".add-snippet").snippetInteraction();
-        }
-        else {
+        } else {
             var nothingFoundMessage = '';
             if (lizard_map && lizard_map.nothingFoundMessage) {
                 nothingFoundMessage = lizard_map.nothingFoundMessage;
-            }
-            else {
+            } else {
                 // Backwards compatibility
                 nothingFoundMessage = "Er is niets rond deze locatie gevonden.";
             }
-            $("#movable-dialog-content").html(nothingFoundMessage);
+            html = nothingFoundMessage;
         }
 	/* END Copypaste */
 
 	var popup = L.popup({'minWidth': 650, 'maxHeight': 480, 'autoClose': true, 'autoPan': true})
 	    .setLatLng(latlng)
-	    .setContent(html /*+ '</div></div>'*/)
+	    .setContent(html)
 	    .openOn(mymap); 
-	//mymap.setView(latlng);
-	$('#movable-dialog').dialog();
-	$("#popup-tabs").tabs({
-            idPrefix: 'popup-tab',
-            selected: 0,
-            show: function (event, ui) {
-                // Have the graphs fetch their data.
-                reloadGraphs();
-            },
-            create: function (event, ui) {
-                // Have the graphs fetch their data.
-                reloadGraphs();
-            }
-        });
-    }
-    
+    }    
     function onMapClick(e) {
 	var popup = L.popup().setLatLng(e.latlng);
 	if (!window.currObjId) {

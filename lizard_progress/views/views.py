@@ -34,6 +34,7 @@ from django.shortcuts import render
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
+from django.utils.text import Truncator
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
 from django.views.decorators.csrf import csrf_exempt
@@ -709,7 +710,8 @@ def get_closest_to(request, *args, **kwargs):
         for loc in [l for l in locations if l.location_type in ['pipe', 'manhole', 'drain']]:
             html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
                                          {'locations': [loc]}, context_instance=RequestContext(request)))
-            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' '
+                              + Truncator(loc.activity.name).chars(10))
 
         # ########################################
         # Create html for crossection measurements 
@@ -729,7 +731,7 @@ def get_closest_to(request, *args, **kwargs):
                                       'location': loc,
                                       'title': loc.location_code + ' ' + loc.activity.name,
                                       'multiple_projects_graph_url': multiple_projects_graph_url})
-            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + loc.activity.name)
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + Truncator(loc.activity.name).chars(10))
             html.append(lhtml)
         # END crossection graph
 

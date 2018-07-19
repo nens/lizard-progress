@@ -306,6 +306,7 @@ function build_map(gj, extent) {
     for (var activity in gj) {
 	var geoJsonDocument = gj[activity];
 	if ('Aanvragen' != activity) {
+	    console.log(activity, gj[activity] == []);
 	    // If we render using the Canvas, Points need to be rendered after LineStrings, or
 	    // else they become very difficult to click.
 	    geoJsonDocument.features.sort(renderingOrderComparator);
@@ -317,13 +318,15 @@ function build_map(gj, extent) {
     }
 
     /* get the changerequests ang add a overlay to the back */
-    var geoJsonDocument = gj['Aanvragen'];
-    var activityName = 'Aanvragen';
-    var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
-    layer.addTo(mymap); /* show everything by default */
-    overlayMaps[activityName] = layer;
-    layer.bringToFront();
-
+    if ('Aanvragen' in gj) {
+	var geoJsonDocument = gj['Aanvragen'];
+	var activityName = 'Aanvragen';
+	var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
+	layer.addTo(mymap); /* show everything by default */
+	overlayMaps[activityName] = layer;
+	layer.bringToFront();
+    }
+    
     L.Control.Layers.include({
 	getActiveOverlays: function () {
 	    // Create array for holding active layers

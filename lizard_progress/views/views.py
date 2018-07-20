@@ -612,14 +612,39 @@ class InlineMapViewNew(View):
                 from changerequests_request cr
                 inner join lizard_progress_activity a on cr.activity_id = a.id
                 inner join lizard_progress_location l on cr.location_code = l.location_code
-                where cr.activity_id in ({})""".format(', '.join(
-                    map(str, activities.values_list('id', flat=True))))
+                where cr.activity_id in ({0})"""\
+                    .format(
+                        ', '.join(map(str, activities.values_list('id', flat=True))))
 
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
                 layers['Aanvragen'] = geojson.FeatureCollection(features)
 
-            cursor.close()
+            if 'change_request' in self.kwargs:
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'properties', json_build_object(
+                'type', 'request',
+                'id', cr.id,
+                'req_id', cr.id,
+                'req_type', cr.request_type,
+                'loc_type', l.location_type,
+                'loc_id', l.id,
+                'code', cr.location_code,
+                'motivation', cr.motivation,
+                'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                inner join lizard_progress_activity a on cr.activity_id = a.id
+                inner join lizard_progress_location l on cr.location_code = l.location_code
+                where cr.id = {}"""\
+                    .format(self.kwargs.get('change_request', -1))
+
+                cursor.execute(q)
+                features = [json.loads(r[0]) for r in cursor.fetchall()]
+                layers['OoI'] = geojson.FeatureCollection(features)
+            
 
         res = json.dumps(layers)
         return (res)

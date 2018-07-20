@@ -210,7 +210,7 @@ function isEmpty(ob){
   return true;
 }
 
-function build_map(gj, extent) {
+function build_map(gj, extent, OoI) {
     var empty = false;
     if (isEmpty(gj) || isEmpty(extent)) {
 	empty = true;
@@ -311,7 +311,11 @@ function build_map(gj, extent) {
 
     for (var activity in gj) {
 	var geoJsonDocument = gj[activity];
-	if ('Aanvragen' != activity) {
+	if (activity == 'Aanvragen') {
+	    continue;
+	} else if (activity == 'OoI') {
+	    continue;
+	} else {
 	    // If we render using the Canvas, Points need to be rendered after LineStrings, or
 	    // else they become very difficult to click.
 	    geoJsonDocument.features.sort(renderingOrderComparator);
@@ -461,7 +465,7 @@ height:100%;
             }
             html = nothingFoundMessage;
         }
-
+	console.log(data.latlng[0]);
 	window.popup = L.popup({'minWidth': 650, 'maxHeight': 500, 'autoClose': true, 'autoPan': true})
 	    .setLatLng(data.latlng[0])
 	    .setContent(html)
@@ -492,4 +496,28 @@ height:100%;
     }
 
     mymap.on('click', onMapClick);
+
+    if (OoI !== undefined) {
+	$.ajax({
+	    type: 'get',
+	    url: 'get_closest_to',
+	    data: {'lat': OoI.features[0].geometry.coordinates[1],
+		   'lng': OoI.features[0].geometry.coordinates[0],
+		   'objType': OoI.features[0].properties.type,
+		   'objId': OoI.features[0].properties.id,
+		   'overlays[]': getActiveOverlayNames()},
+	    datatype: 'json',
+	    success: function(resp){
+		setCurrObjId(OoI.features[0].properties.type, OoI.features[0].properties.id);
+		ll = new L.LatLng(OoI.features[0].geometry.coordinates[1],
+				  OoI.features[0].geometry.coordinates[0])
+		mymap.panTo(ll);
+		console.log(ll)
+		//mymap.setZoom(18);
+		//show_dialog(ll, resp);
+		reloadGraphs();},
+	    error: function(jqXHR, textStatus, err){
+		console.log("ERR: " + jqXHR + ' ' + err + ', ' + textStatus);}
+	});
+    }
 }

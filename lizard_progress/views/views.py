@@ -569,7 +569,7 @@ class InlineMapViewNew(View):
             for a in activities:
                 q = """select json_build_object(
                 'type', 'Feature',
-                'geometry', ST_AsGeoJSON(ST_Transform(ST_Translate(l.the_geom, random()*(0.0001-0.00005)+0.00005, random()*(0.0001-0.00005)+0.00005), 4326))::json,
+                'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
                 'properties', json_build_object(
                 'type', 'location',
                 'id', l.id,
@@ -640,6 +640,7 @@ def get_closest_to(request, *args, **kwargs):
     html = []
     tab_titles = []
     obj_ids = []
+    latlng = []
     locationIds, changeRequests = [], []
     
     lat = request.GET.get('lat', None)
@@ -709,6 +710,17 @@ def get_closest_to(request, *args, **kwargs):
         # Create html for sewer objects
         # #############################
         for loc in [l for l in locations if l.location_type in ['pipe', 'manhole', 'drain']]:
+            g = loc.the_geom
+            g.transform(4326)
+
+            # If object is a pipe, point the popup to its middlepoint.
+            if isinstance(g.coords[0], tuple):
+                lng = (g.coords[0][0] + g.coords[1][0]) / 2
+                lat = (g.coords[0][1] + g.coords[1][1]) / 2
+            else:
+                lng, lat = g.coords[0], g.coords[1]
+
+            latlng.append([lat, lng])
             html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
                                          {'locations': [loc]}, context_instance=RequestContext(request)))
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' '
@@ -721,6 +733,10 @@ def get_closest_to(request, *args, **kwargs):
         xsects = [l for l in locations if l.location_type in ['point']]
 
         for loc in xsects:
+            g = loc.the_geom
+            g.transform(4326)
+            latlng.append([g.coords[1], g.coords[0]])
+
             multiple_projects_graph_url = None
             if loc.close_by_locations_of_same_organisation().count() > 1:
                 organization = loc.activity.project.organization
@@ -747,6 +763,9 @@ def get_closest_to(request, *args, **kwargs):
                       .filter(activity__in=all_loc_activities)
 
     for cr in changeRequests:
+        g = cr.the_geom
+        g.transform(4326)
+        latlng.append([g.coords[1], g.coords[0]])
         html.append(
             render_to_string(
                 'changerequests/detail_popup.html',
@@ -764,11 +783,10 @@ def get_closest_to(request, *args, **kwargs):
         obj_ids.append(cr.id)
 
     response = {
-        'lat': lat,
-        'lng': lng,
         'html': html,
         'tab_titles': tab_titles,
-        'objIds': obj_ids
+        'objIds': obj_ids,
+        'latlng': latlng
     }
     # return HttpResponse(json.dumps(response), content_type="application/json")
     return HttpResponse(json.dumps(response), content_type="application/json")

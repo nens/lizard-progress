@@ -44,14 +44,19 @@ var providers = {
     }
 };
 
+/* we want to access the popup from several scopes, 
+   temporary ;-) solution is to make it global */
+var popup;
+
 function reloadGraphs(max_image_width, callback, force) {
     // New Flot graphs
     $('.dynamic-graph').each(function () {
         reloadDynamicGraph($(this), callback, force);
     });
 }
-function openTab(evt, tab) {
+function openTab(evt, tab, lat, lng) {
     var i, tabcontent, tablinks;
+
     // Get all elements with class="tabcontent" and hide them
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i=0; i<tabcontent.length; i++) {
@@ -67,6 +72,7 @@ function openTab(evt, tab) {
     // Show the current tab, and add an "active" class to the link that opened the tab
     document.getElementById('popup-tab-' + tab.toString()).style.display = "block";
     evt.currentTarget.className += " active";
+    window.popup.setLatLng([lat, lng]);
 } 
 
 function reloadDynamicGraph($graph, callback, force) {
@@ -306,7 +312,6 @@ function build_map(gj, extent) {
     for (var activity in gj) {
 	var geoJsonDocument = gj[activity];
 	if ('Aanvragen' != activity) {
-	    console.log(activity, gj[activity] == []);
 	    // If we render using the Canvas, Points need to be rendered after LineStrings, or
 	    // else they become very difficult to click.
 	    geoJsonDocument.features.sort(renderingOrderComparator);
@@ -367,23 +372,19 @@ function build_map(gj, extent) {
     };
     legend.addTo(mymap);
     
-    function show_dialog(latlng, loc_info){
+    function show_dialog(latlng, data){
 	var html, i;
 
 	html = '';
 
-	if (!('html' in loc_info)) {
-	    var popup = L.popup({'autoClose': true})
+	if (!('html' in data)) {
+	    window.popup = L.popup({'autoClose': true})
 		.setLatLng(latlng) //TODO has to be loc coordinates
 		.setContent('Niets gevonden rond deze locatie.')
 		.openOn(mymap);
 	    return;
 	}
 	
-	latlng = L.latLng(loc_info.lat, loc_info.lng);
-
-	var data = loc_info;
-
 	if (data.html && data.html.length !== 0) {
             if (data.html.length === 1) {
 		html += data.html[0];
@@ -433,7 +434,8 @@ height:100%;
 		var active = '';
                 for (var i=0; i<data.html.length; i+=1) {
 		    active = (i == selectedIdx) ? ' active' : '';
-                    html += '<button class="tablinks' + active + '" onclick="openTab(event, ' + i.toString() + ')">';
+                    html += '<button class="tablinks' + active + '" onclick="openTab(event, ' + i.toString()
+			+ ',' + data.latlng[i] + ')">';
                     html += data.tab_titles[i]
 			.replace('manhole', 'Put')
 			.replace('pipe', 'Streng')
@@ -460,18 +462,18 @@ height:100%;
             html = nothingFoundMessage;
         }
 
-	var popup = L.popup({'minWidth': 650, 'maxHeight': 500, 'autoClose': true, 'autoPan': true})
-	    .setLatLng(latlng)
+	window.popup = L.popup({'minWidth': 650, 'maxHeight': 500, 'autoClose': true, 'autoPan': true})
+	    .setLatLng(data.latlng[0])
 	    .setContent(html)
 	    .openOn(mymap); 
     }    
     function onMapClick(e) {
-	var popup = L.popup().setLatLng(e.latlng);
+	window.popup = L.popup().setLatLng(e.latlng);
 	if (!window.currObjId) {
-	    popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
+	    window.popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
 		.openOn(mymap);
 	} else {
-	    popup.setContent('Ophalen Locatiegegevens...')
+	    window.popup.setContent('Ophalen Locatiegegevens...')
 		.openOn(mymap);
 	}	    
 	$.ajax({

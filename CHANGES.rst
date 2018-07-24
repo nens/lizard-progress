@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.2.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Hotfix handling missing unknown pipe node with no coordinates specified.
 
 
 4.2.0 (2018-07-18)

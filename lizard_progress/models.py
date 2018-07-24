@@ -2229,7 +2229,7 @@ class UploadedFile(models.Model):
         # connection.on_commit is provided by our custom database
         # engine (lizard_progress.db_engine). It takes a callable
         # without arguments, so we use lambda here.
-        if True:
+        if False:
             from . import process_uploaded_file as puf
             puf.process_uploaded_file(self.id)
         else:

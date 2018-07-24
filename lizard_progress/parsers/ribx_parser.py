@@ -207,8 +207,7 @@ class RibxParser(ProgressParser):
                     self.create_deletion_request(item)
                 else:
                     measurement = self.save_measurement(item)
-                    if measurement is not None:
-                        measurements.append(measurement)
+                    measurements.append(measurement)
         return measurements
 
     def check_coordinates(self, item):
@@ -421,7 +420,6 @@ class RibxParser(ProgressParser):
             geom = item.geom
             if geom is None:
                 return 'LOCATION_COORD_ERROR'
-            
 
         location = models.Location.objects.create(
             activity=self.activity,
@@ -514,8 +512,6 @@ class RibxReinigingInspectieRioolParser(RibxParser):
                                       location,
                                       self.ERRORS[location].format(item.ref))
                     return None
-                else:
-                    return location
 
         manhole_start = None
         if isinstance(item, ribxmodels.InspectionPipe):
@@ -523,7 +519,7 @@ class RibxReinigingInspectieRioolParser(RibxParser):
 
         measurement = self.find_or_create_ribx_measurement(
             location, item.inspection_date, manhole_start)
-
+      
         # Record the location regardless of whether it was uploaded before --
         # maybe someone corrected the previous upload.
         measurement.record_location(item.geom)  # Saves

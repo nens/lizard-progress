@@ -158,24 +158,17 @@ def try_parser(uploaded_file, parser):
                     m.rel_file_path = target_path
                     m.save()
 
-                    # For some reason (probably a bug in the ribx parser),
-                    # m is sometimes of type 'Location'
-                    # Until the ribxparser is fixed, we catch this error here
-                    try:
-                        location = m.location
-                    except AttributeError:
-                        errors += [specifics.Error(line=0, error_code='NONE',
-                                                  error_message='Fout Inspectieparser')]
-                        continue
-
+                    location = m.location
+                    
                     location.one_measurement_uploaded = True
                     location.measured_date = location.latest_measurement_date()
                     location.save()
 
                 # Log success
-                uploaded_file.log_success(parseresult.measurements)
+                if len(errors) == 0:
+                    uploaded_file.log_success(parseresult.measurements)
 
-                return True, [], []
+                return len(errors) == 0, errors, []
 
             elif parseresult.success:
                 # Success, but no results.  Don't count this as

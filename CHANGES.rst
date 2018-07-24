@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.2.1 (unreleased)
+4.2.1 (2018-07-24)
 ------------------
 
 - LOCATION_COORD_ERROR for pipes with at least one unknown node.

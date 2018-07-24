@@ -157,18 +157,15 @@ def try_parser(uploaded_file, parser):
                 for m in parseresult.measurements:
                     m.rel_file_path = target_path
                     m.save()
-
                     location = m.location
-                    
                     location.one_measurement_uploaded = True
                     location.measured_date = location.latest_measurement_date()
                     location.save()
 
                 # Log success
-                if len(errors) == 0:
-                    uploaded_file.log_success(parseresult.measurements)
+                uploaded_file.log_success(parseresult.measurements)
 
-                return len(errors) == 0, errors, []
+                return True, [], []
 
             elif parseresult.success:
                 # Success, but no results.  Don't count this as
@@ -182,11 +179,11 @@ def try_parser(uploaded_file, parser):
 
                 # New style errors (possibly more than one)
                 if parseresult.errors:
-                    errors += parseresult.errors
+                    errors = parseresult.errors
                     possible_requests = parseresult.possible_requests
                 # Old style (only one)
                 elif parseresult.error:
-                    errors += [
+                    errors = [
                         specifics.Error(
                             line=0,
                             error_code='NONE',

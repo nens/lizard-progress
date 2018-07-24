@@ -158,6 +158,7 @@ def try_parser(uploaded_file, parser):
                     m.rel_file_path = target_path
                     m.save()
                     location = m.location
+
                     location.one_measurement_uploaded = True
                     location.measured_date = location.latest_measurement_date()
                     location.save()

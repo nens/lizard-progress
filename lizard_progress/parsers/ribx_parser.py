@@ -138,7 +138,7 @@ def check_gwsw(file_obj):
 class RibxParser(ProgressParser):
     ERRORS = {
         'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
-        'LOCATION_COORD_ERROR': "Onbekende locatie met ongespecificeerde coördinaten.",
+        'LOCATION_COORD_ERROR': "Onbekende locatie of knooppunt met ongespecificeerde coördinaten.",
         'X_NOT_IN_EXTENT': "Buiten gebied: X coördinaat niet tussen {} en {}.",
         'Y_NOT_IN_EXTENT': "Buiten gebied: Y coördinaat niet tussen {} en {}.",
         'ATTACHMENT_ALREADY_EXISTS':
@@ -334,6 +334,11 @@ class RibxParser(ProgressParser):
                 return None
             else:
                 location = self.create_new(item)
+                if location in self.ERRORS:
+                    self.record_error(item.sourceline,
+                                      location,
+                                      self.ERRORS[location].format(item.ref))
+                    return None
 
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement
@@ -414,6 +419,9 @@ class RibxParser(ProgressParser):
             geom = point_2d
         else:
             geom = item.geom
+            if geom is None:
+                return 'LOCATION_COORD_ERROR'
+            
 
         location = models.Location.objects.create(
             activity=self.activity,

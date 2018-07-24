@@ -164,8 +164,8 @@ def try_parser(uploaded_file, parser):
                     try:
                         location = m.location
                     except AttributeError:
-                        errors += specifics.Error(line=0, error_code='NONE',
-                                                  error_message='Fout Inspectieparser')
+                        errors += [specifics.Error(line=0, error_code='NONE',
+                                                  error_message='Fout Inspectieparser')]
                         continue
 
                     location.one_measurement_uploaded = True

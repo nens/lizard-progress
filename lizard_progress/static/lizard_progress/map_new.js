@@ -10,7 +10,7 @@ var reqstatuses = {'1': 'Open',
 		     '4': 'Ingetrokken',
 		     '5': 'Ongeldig'};
 
-var reqStatusColors = ["#blue", "green", "magenta", "magenta", "magenta"];
+var reqStatusColors = ["blue", "green", "magenta", "magenta", "magenta"];
 var ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
 
 var reqtypes = {'1': 'Locatiecode verwijderen',
@@ -183,7 +183,7 @@ function getActiveOverlayNames()
 
 function featureColor(feat){
 
-    var color = 'black';
+    var color = 'orange';
     
     if (feat.properties.type == 'location') {
 	if (feat.properties.complete) {
@@ -201,7 +201,7 @@ function featureColor(feat){
 	}
     }
     if (feat.properties.type == 'request') {
-	color = reqStatusColors[feat.properties.status - 1];
+	color = reqStatusColors[feat.properties.status-1];
     }
     return color;
 }
@@ -465,7 +465,6 @@ height:100%;
             }
             html = nothingFoundMessage;
         }
-	console.log(data.latlng[0]);
 	window.popup = L.popup({'minWidth': 650, 'maxHeight': 500, 'autoClose': true, 'autoPan': true})
 	    .setLatLng(data.latlng[0])
 	    .setContent(html)
@@ -512,7 +511,6 @@ height:100%;
 		ll = new L.LatLng(OoI.features[0].geometry.coordinates[1],
 				  OoI.features[0].geometry.coordinates[0])
 		mymap.panTo(ll);
-		console.log(ll)
 		//mymap.setZoom(18);
 		//show_dialog(ll, resp);
 		reloadGraphs();},

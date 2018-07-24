@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.2.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Updated dependency (metfilelib).
 
 
 4.2.1 (2018-07-24)

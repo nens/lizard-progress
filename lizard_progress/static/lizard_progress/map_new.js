@@ -449,17 +449,21 @@ function build_map(gj, extent, OoI) {
         }
 
 	/* find max tab height and use it as fixed popup height */
-	function maxh() {
+	var maxHeight = 500;
+	function seth() {
 	    var arr = [];
 	    $('.tabcontent').each(function(){arr.push($(this).height());});
-	    return Math.max.apply(null, arr);
+	    console.log(arr, Math.max.apply(null, arr));
+	    return Math.min(Math.max.apply(null, arr), maxHeight);
 	}
-	window.popup = L.popup({'minWidth': 650, 'height': maxh(),
-				'maxHeight': 500, 'autoClose': true,
+	window.popup = L.popup({'minWidth': 650,
+				'maxHeight': maxHeight,
+				'autoClose': true,
 				'autoPan': true})
 	    .setLatLng(data.latlng[0])
 	    .setContent(html)
 	    .openOn(mymap);
+	$('.leaflet-popup-content').each(function(){$(this).height(seth());});
     }    
     function onMapClick(e) {
 	window.popup = L.popup().setLatLng(e.latlng);

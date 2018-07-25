@@ -20,7 +20,7 @@
         <div class="col-md-11">
             <div class="panel panel-default">
 		<div class="panel-heading clearfix">
-		    <h3 class="panel-title pull-left" style="padding-top: 7.5px;"><i class="fa fa-globe"></i>&nbsp;Kaart {{ view.project.name }}</h3>
+		    <h3 class="panel-title pull-left" style="padding-top: 7.5px;"><i class="fa fa-globe"></i>&nbsp;Project <span><strong>{{ view.project.name }}</strong></span></h3>
 		</div>
                 <div id="map_new" style="height: 800px"></div>
                 <!-- TODO: vendorize -->
@@ -39,12 +39,7 @@
 		<div>
 		    <button onclick="var up='<i class=\'fa fa-arrow-up\'></i>';var dn='<i class=\'fa fa-arrow-down\'></i>';
  var se='leaflet-control-layers-expanded';var cl=$('.leaflet-control-layers');cl.each(function(){$(this).toggleClass(se);});if(cl.hasClass(se)){$(this).html(dn + ' Kaartlagen');}else{$(this).html(up + ' Kaartlagen');}"><i class='fa fa-arrow-up'></i> Kaartlagen</button>
-		    <button style="position:absolute; right:25px;"
-onclick="$('.legend').slideToggle();
-                                 if ($('.legend').height()>1){
-                                 $(this).html('<i class=\'fa fa-arrow-up\'></i> Legenda')
-                                 }else{
-                                 $(this).html('<i class=\'fa fa-arrow-down\'></i> Legenda');}">
+		    <button style="position:absolute; right:25px;" onclick="$('.legend').slideToggle();if ($('.legend').height()>1){$(this).html('<i class=\'fa fa-arrow-up\'></i> Legenda');}else{$(this).html('<i class=\'fa fa-arrow-down\'></i> Legenda');}">
 			<i class="fa fa-arrow-down"></i> Legenda</button>
 		</div>
             </div>

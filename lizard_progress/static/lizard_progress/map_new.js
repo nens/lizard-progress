@@ -447,10 +447,19 @@ function build_map(gj, extent, OoI) {
             }
             html = nothingFoundMessage;
         }
-	window.popup = L.popup({'minWidth': 650, 'maxHeight': 500, 'autoClose': true, 'autoPan': true})
+
+	/* find max tab height and use it as fixed popup height */
+	function maxh() {
+	    var arr = [];
+	    $('.tabcontent').each(function(){arr.push($(this).height());});
+	    return Math.max.apply(null, arr);
+	}
+	window.popup = L.popup({'minWidth': 650, 'height': maxh(),
+				'maxHeight': 500, 'autoClose': true,
+				'autoPan': true})
 	    .setLatLng(data.latlng[0])
 	    .setContent(html)
-	    .openOn(mymap); 
+	    .openOn(mymap);
     }    
     function onMapClick(e) {
 	window.popup = L.popup().setLatLng(e.latlng);

@@ -1,9 +1,12 @@
 var locStatusColors = {'green': 'Compleet',
 		       'red': 'Niet (geheel) aanwezig en niet gepland',
 		       'black': 'Gepland, nog niet compleet',
+		       'yellow': 'Gepland, niet compleet en\n planningsdatum verstreken',
 		       'gray': 'Geen onderdeel van werkzaamheden',
-		       'brown': 'Nieuw object (automatisch toegevoegd)'
+		       'purple': 'Nieuw object (automatisch toegevoegd)',
+		       'brown': 'Niet behandeld (automatisch toegevoegd)'
 		      };
+
 var reqstatuses = {'1': 'Open',
 		     '2': 'Geaccepteerd',
 		     '3': 'Geweigerd',
@@ -184,19 +187,33 @@ function getActiveOverlayNames()
 function featureColor(feat){
 
     var color = 'orange';
-    
+    var now = Date.now();    
     if (feat.properties.type == 'location') {
 	if (feat.properties.complete) {
+	    /* Complete */
 	    color = "green";
 	} else {
-	    if(feat.properties.complete === false) {
-		color = "red";
-	    } else if(feat.properties.not_part_of_project == true) {
-		color = "gray";
-	    } else if(feat.properties.new == true) {
-		color = "#ababf8";
+	    /* Scheduled, incomplete */
+	    if (feat.properties.planned_date !== null) {
+		var duedate = new Date(feat.properties.planned_date);
+		var overdue = duedate < now;
+		/* Scheduled, incomplete, overdue */
+		if (overdue) {
+		    color = 'yellow';
+		} else {
+		    /* Scheduled, incomplete, not overdue*/
+		    color = 'black';
+		}
 	    } else {
-		color = "orange";
+		if(feat.properties.complete === false) {
+		    color = "red";
+		}
+		if(feat.properties.not_part_of_project == true) {
+		    color = "gray";
+		}
+		if(feat.properties.new == true) {
+		    color = "#ababf8";
+		}
 	    }
 	}
     }

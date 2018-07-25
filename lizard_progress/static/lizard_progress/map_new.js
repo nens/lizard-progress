@@ -1,4 +1,4 @@
-var locStatusColors = {'green': 'Compleet',
+window.locStatusColors = {'green': 'Compleet',
 		       'red': 'Niet (geheel) aanwezig en niet gepland',
 		       'black': 'Gepland, nog niet compleet',
 		       'yellow': 'Gepland, niet compleet en\n planningsdatum verstreken',
@@ -47,9 +47,8 @@ var providers = {
     }
 };
 
-/* we want to access the popup from several scopes, 
-   temporary ;-) solution is to make it global */
-var popup;
+window.popup;
+window.legendColors = {'locations': [], 'requests': []};
 
 function reloadGraphs(max_image_width, callback, force) {
     // New Flot graphs
@@ -191,7 +190,7 @@ function featureColor(feat){
     if (feat.properties.type == 'location') {
 	if (feat.properties.complete === true) {
 	    /* Complete */
-	    color = "green";
+	    color = 'green';
 	} else {
 	    /* Scheduled, incomplete */
 	    if (feat.properties.planned_date !== null) {
@@ -219,9 +218,11 @@ function featureColor(feat){
 	if(feat.properties.not_part_of_project == true) {
 	    color = "gray";
 	}
+	if (window.legendColors['locations'].indexOf(color) < 0) {window.legendColors['locations'].push(color); }
     }
     if (feat.properties.type == 'request') {
 	color = reqStatusColors[feat.properties.status-1];
+	if (window.legendColors['requests'].indexOf(color) < 0) {window.legendColors['requests'].push(color); }
     }
     return color;
 }
@@ -382,10 +383,13 @@ function build_map(gj, extent, OoI) {
 	div.style.background = 'rgba(255,255,255, .7)';
 	
 	div.innerHTML += '<span><strong><u>Objecten/Locaties</u></strong></span><br>';
-	for (k in locStatusColors) {
+	console.log(window.legendColors['locations']);
+	for (k in window.legendColors['locations']) {
+	    var c = window.legendColors['locations'][k];
 	    div.innerHTML +=
-		    '<span style="color:' + k + ';">&#9679;</span><strong> ' + locStatusColors[k] + '</strong><br>';
+		'<span style="color:' + c + ';">&#9679;</span><strong> ' + window.locStatusColors[c] + '</strong><br>';
 	}
+	
 	div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
 	div.innerHTML += '<span style="color:' + reqStatusColors[0] +';">&#9632;</span><strong> Open</strong><br>';
 	div.innerHTML += '<span style="color:' + reqStatusColors[1] +';">&#9632;</span><strong> Geaccepteerd</strong><br>';

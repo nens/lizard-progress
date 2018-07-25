@@ -452,9 +452,10 @@ function build_map(gj, extent, OoI) {
 	var maxHeight = 500;
 	function seth() {
 	    var arr = [];
-	    $('.tabcontent').each(function(){arr.push($(this).height());});
+	    $('.tabcontent').each(function(){arr.push($(this).height() + $('#popup-tabs').height());});
 	    console.log(arr, Math.max.apply(null, arr));
-	    return Math.min(Math.max.apply(null, arr), maxHeight);
+	    return Math.min(Math.max.apply(null, arr),
+			    maxHeight - $('.leaflet-popup-tim-container').height());
 	}
 	window.popup = L.popup({'minWidth': 650,
 				'maxHeight': maxHeight,

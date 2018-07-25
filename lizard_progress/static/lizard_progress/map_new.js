@@ -413,45 +413,8 @@ function build_map(gj, extent, OoI) {
 		html += data.html[0];
                 reloadGraphs();
             } else {
-		html = `<style>
- /* Style the tab */
-.tab {
-    overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: 'white';//#f1f1f1;
-}
-
-/* Style the buttons that are used to open the tab content */
-.tab button {
-    background-color: #f1f1f1;
-    float: left;
-    border: 1px solid #ccc;
-    outline: none;
-    cursor: pointer;
-    padding: 5px 10px;
-    transition: 0.3s;
-}
-
-/* Change background color of buttons on hover */
-.tab button:hover {
-    background-color: #ddd;
-}
-
-/* Create an active/current tablink class */
-.tab button.active {
-    background-color: #ccc;
-}
-
-/* Style the tab content */
-.tabcontent {
-//    display: none;
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-top: none;
-height:100%;
-} 
- </style>`;
-		html += '<div><div class="tab" id="popup-tabs">';
+		/* style is defined in leaflet-popup.css */
+		html = '<div><div class="tab" id="popup-tabs">';
 		/* indexOf() returns -1 if not found, in this case activate the first tab */
 		var selectedIdx = Math.max(0, data.objIds.indexOf(window.currObjId));
 		var active = '';

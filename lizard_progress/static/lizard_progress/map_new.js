@@ -3,7 +3,7 @@ var locStatusColors = {'green': 'Compleet',
 		       'black': 'Gepland, nog niet compleet',
 		       'yellow': 'Gepland, niet compleet en\n planningsdatum verstreken',
 		       'gray': 'Geen onderdeel van werkzaamheden',
-		       'purple': 'Nieuw object (automatisch toegevoegd)',
+		       'MediumPurple': 'Nieuw object (automatisch toegevoegd)',
 		       'brown': 'Niet behandeld (automatisch toegevoegd)'
 		      };
 
@@ -211,7 +211,7 @@ function featureColor(feat){
 		    color = "red";
 		}
 		if(feat.properties.new == true) {
-		    color = "purple";
+		    color = "MediumPurple";
 		}
 	    }
 	}
@@ -380,7 +380,7 @@ function build_map(gj, extent, OoI) {
 
     legend.onAdd = function (mymap) {
 	var div = L.DomUtil.create('div', 'info legend');
-	div.style.background = 'rgba(255,255,255, .6)';
+	div.style.background = 'rgba(255,255,255, .7)';
 	
 	div.innerHTML += '<strong><u>Objecten/Locaties</u></strong><br>';
 	for (k in locStatusColors) {

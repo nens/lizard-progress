@@ -30,6 +30,14 @@
 		     build_map(gj, extent, gj.OoI);
 		 });
 		</script>
+		<div style="background=grey;">
+		    <button style="position:absolute; right:25px;"
+			    onclick="$('.legend').slideToggle();
+                                     if ($('.legend').height()>1){
+                                       $(this).text('&#8679; Legenda')
+                                     }else{
+                                       $(this).text('&#8681; Legenda');}">
+			&#8681; Legenda</button></div>
             </div>
         </div>
         {% include "lizard_progress/sidebar_include.html" with active="map_new" %}

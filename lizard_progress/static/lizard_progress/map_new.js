@@ -373,11 +373,12 @@ function build_map(gj, extent, OoI) {
 	}
     });
 
+    /* Overlay Control */
     control = new L.control.layers([], overlayMaps, {position: 'topleft'}).addTo(mymap);
     $(".leaflet-control-layers-overlays").prepend("<label><u>Kaartlagen</u></label>");
     
+    /* Legend */
     var legend = L.control({position: 'bottomright'});
-
     legend.onAdd = function (mymap) {
 	var div = L.DomUtil.create('div', 'info legend');
 	div.style.background = 'rgba(255,255,255, .7)';

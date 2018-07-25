@@ -856,7 +856,7 @@ class ReviewProject(models.Model):
         else:
             the_reviews = reviews
 
-        self.set_reviews(the_reviews, from_task=False)  # Saves
+        self.set_reviews(the_reviews, from_task=True)  # Saves
 
     def set_reviews(self, the_reviews, from_task=False):
         logger.debug('Entered  set_reviews')

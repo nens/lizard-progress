@@ -13,7 +13,7 @@ var reqstatuses = {'1': 'Open',
 		     '4': 'Ingetrokken',
 		     '5': 'Ongeldig'};
 
-var reqStatusColors = ["blue", "green", "magenta", "magenta", "magenta"];
+var reqStatusColors = ["blue", "green", "DarkOrchid", "DarkOrchid", "DarkOrchid"];
 var ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
 
 var reqtypes = {'1': 'Locatiecode verwijderen',
@@ -191,9 +191,7 @@ function featureColor(feat){
     if (feat.properties.type == 'location') {
 	if (feat.properties.complete === true) {
 	    /* Complete */
-	    if (feat.properties.planned_date !== null) {
-		color = "green";
-	    }
+	    color = "green";
 	} else {
 	    /* Scheduled, incomplete */
 	    if (feat.properties.planned_date !== null) {
@@ -300,7 +298,7 @@ function build_map(gj, extent, OoI) {
 		/* Displace change requests slightly since they might be covered by other markers.
 		   It's ok as long as the displacement is << object size.
 		   5e-7 lat/lng deg is approx 5.6 cm. */ 
-		var c = L.circle([latlng['lat'], latlng['lng']], 3).addTo(mymap);
+		var c = L.circle([latlng['lat'], latlng['lng']], {radius:3}).addTo(mymap);
 		var r = L.rectangle(c.getBounds());
 		mymap.removeLayer(c);
 		return r;
@@ -383,7 +381,7 @@ function build_map(gj, extent, OoI) {
 	var div = L.DomUtil.create('div', 'info legend');
 	div.style.background = 'rgba(255,255,255, .7)';
 	
-	div.innerHTML += '<strong><u>Objecten/Locaties</u></strong><br>';
+	div.innerHTML += '<span><strong><u>Objecten/Locaties</u></strong></span><br>';
 	for (k in locStatusColors) {
 	    div.innerHTML +=
 		    '<span style="color:' + k + ';">&#9679;</span><strong> ' + locStatusColors[k] + '</strong><br>';

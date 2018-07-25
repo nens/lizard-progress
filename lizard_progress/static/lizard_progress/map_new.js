@@ -189,9 +189,11 @@ function featureColor(feat){
     var color = 'orange';
     var now = Date.now();    
     if (feat.properties.type == 'location') {
-	if (feat.properties.complete) {
+	if (feat.properties.complete === true) {
 	    /* Complete */
-	    color = "green";
+	    if (feat.properties.planned_date !== null) {
+		color = "green";
+	    }
 	} else {
 	    /* Scheduled, incomplete */
 	    if (feat.properties.planned_date !== null) {
@@ -208,13 +210,16 @@ function featureColor(feat){
 		if(feat.properties.complete === false) {
 		    color = "red";
 		}
-		if(feat.properties.not_part_of_project == true) {
-		    color = "gray";
-		}
 		if(feat.properties.new == true) {
-		    color = "#ababf8";
+		    color = "purple";
 		}
 	    }
+	}
+	if (feat.properties.work_impossible) {
+	    color = 'brown';
+	}
+	if(feat.properties.not_part_of_project == true) {
+	    color = "gray";
 	}
     }
     if (feat.properties.type == 'request') {
@@ -289,17 +294,12 @@ function build_map(gj, extent, OoI) {
     var geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
-		var c = L.circle([latlng['lat'], latlng['lng']], 3);
+		var c = L.circle([latlng['lat'], latlng['lng']], {radius:2, opacity: 0.8, fillOpacity:0.8});
 		return c;
 	    } else {
 		/* Displace change requests slightly since they might be covered by other markers.
 		   It's ok as long as the displacement is << object size.
 		   5e-7 lat/lng deg is approx 5.6 cm. */ 
-		var c = L.circleMarker([latlng['lat']+.0000005, latlng.lng+.0000005], {
-		    radius: 2.5,
-		    weight: 3,
-		    opacity: .8,
-		    fillOpacity: .8});
 		var c = L.circle([latlng['lat'], latlng['lng']], 3).addTo(mymap);
 		var r = L.rectangle(c.getBounds());
 		mymap.removeLayer(c);
@@ -308,7 +308,10 @@ function build_map(gj, extent, OoI) {
 	},
 	style: function(feature) {
 	    var color = featureColor(feature);
-	    return {color: color, fillColor: color, fillOpacity: feature.properties.type == 'location' ? 0.8 : 0.05};
+	    return {color: color,
+		    fillColor: color,
+		    opacity: 0.8,
+		    fillOpacity: feature.properties.type == 'location' ? 0.8 : 0.05};
 	},
 	onEachFeature: function(feature, layer){
 	    /* Feature contain essential information only (location code, location type).

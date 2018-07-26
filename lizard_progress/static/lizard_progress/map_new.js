@@ -1,26 +1,47 @@
-window.locStatusColors = {'green': 'Compleet',
-		       'red': 'Niet (geheel) aanwezig en niet gepland',
-		       'black': 'Gepland, nog niet compleet',
-		       'yellow': 'Gepland, niet compleet en\n planningsdatum verstreken',
-		       'gray': 'Geen onderdeel van werkzaamheden',
-		       'MediumPurple': 'Nieuw object (automatisch toegevoegd)',
-		       'brown': 'Niet behandeld (automatisch toegevoegd)'
-		      };
+var locStatusColors = {
+    'green': 'Compleet',
+    'red': 'Niet (geheel) aanwezig en niet gepland',
+    'black': 'Gepland, nog niet compleet',
+    'gold': 'Gepland, niet compleet en\n planningsdatum verstreken',
+    'gray': 'Geen onderdeel van werkzaamheden',
+    'MediumPurple': 'Nieuw object (automatisch toegevoegd)',
+    'brown': 'Niet behandeld (automatisch toegevoegd)'
+};
 
-var reqstatuses = {'1': 'Open',
-		     '2': 'Geaccepteerd',
-		     '3': 'Geweigerd',
-		     '4': 'Ingetrokken',
-		     '5': 'Ongeldig'};
+var locStatuses = {
+    'complete': {status: 'Compleet', color: 'green', opacity: 0.3},
+    'incomplete': {status: 'Niet (geheel) aanwezig en niet gepland', color: 'red', opacity: 1},
+    'sched_incomplete': {status: 'Gepland, nog niet compleet', color: 'black', opacity: 0.02},
+    'overdue': {status: 'Gepland, niet compleet en\n planningsdatum verstreken', color: 'gold', opacity: 1},
+    'notproject': {status: 'Geen onderdeel van werkzaamheden', color: 'gray', opacity: 0.02},
+    'auto_new': {status: 'Nieuw object (automatisch toegevoegd)', color: 'MediumPurple', opacity: 0.02},
+    'auto_skipped': {status: 'Niet behandeld (automatisch toegevoegd)', color: 'brown', opacity: 0.02},
+    'unknown': {status: 'Onbekend', color: 'fuchsia', opacity: 0.6}
+};
 
-var reqStatusColors = ["blue", "green", "DarkOrchid", "DarkOrchid", "DarkOrchid"];
-var ltypes = {'manhole':'Put','pipe':'Streng','drain':'Kolk', 'point': ''};
+var reqStatuses = {
+    1: {status: 'Open', color: 'blue', opacity: 0.6},
+    2: {status: 'Geaccepteerd', color: 'green', opacity: 0.6},
+    3: {status: 'Geweigerd', color: 'DarkOrchid', opacity: 0.6},
+    4: {status: 'Ingetrokken', color: 'DarkOrchid', opacity: 0.6},
+    5: {status: 'Ongeldig', color: 'DarkOrchid', opacity: 0.6}
+};
 
-var reqtypes = {'1': 'Locatiecode verwijderen',
-		'2': 'Locatie verplaatsen',
-		'3': 'Niewe locatiecode'};
+var locationDictionary = {
+    'manhole':'Put',
+    'pipe':'Streng',
+    'drain':'Kolk',
+    'point': ''
+};
 
-var providers = {
+var reqTypes = {
+    1: 'Locatiecode verwijderen',
+    2: 'Locatie verplaatsen',
+    3: 'Niewe locatiecode'
+};
+
+var providers = ['cartolight', 'osm', 'osmnolabels', 'nlmapspastel', 'nlmapsstandaard', 'openinfrawater'];
+var providerData = {
     'osm': {
 	tile: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
 	attr: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -47,8 +68,38 @@ var providers = {
     }
 };
 
-window.popup;
-window.legendColors = {'locations': [], 'requests': []};
+var mymap, popup;
+var currBounds = [[],[]];
+var dynamicLegendColors = {'locations': [], 'requests': []};
+var dynamicLegend = {'locations': [], 'requests': []};
+
+function currBase() {
+    if (window._currBase === undefined) {
+	window._currBase = 0;
+    }
+    return window._currBase;
+}
+	
+function nextBase() {
+    mymap.attributionControl._attributions = {};
+    var base = providerData[providers[window._currBase]];
+    var baseLayer = L.tileLayer(base.tile, {
+	attribution: base.attr,
+	maxZoom: 19
+    });
+
+    window._currBase = (currBase() + 1 ) % (providers.length);
+    base = providerData[providers[window._currBase]];
+    var newbaseLayer = L.tileLayer(base.tile, {
+	attribution: base.attr,
+	maxZoom: 19
+    });
+    var baseMaps = {
+	"Street map": newbaseLayer
+    };
+    mymap.removeLayer(baseLayer);
+    newbaseLayer.addTo(mymap);
+}
 
 function reloadGraphs(max_image_width, callback, force) {
     // New Flot graphs
@@ -74,7 +125,7 @@ function openTab(evt, tab, lat, lng) {
     // Show the current tab, and add an "active" class to the link that opened the tab
     document.getElementById('popup-tab-' + tab.toString()).style.display = "block";
     evt.currentTarget.className += " active";
-    window.popup.setLatLng([lat, lng]);
+    popup.setLatLng([lat, lng]);
 } 
 
 function reloadDynamicGraph($graph, callback, force) {
@@ -183,48 +234,59 @@ function getActiveOverlayNames()
     return arr;
 }
 
+function calcLocationStatus(feat) {
+    var status = 'unknown';
+    if (feat.properties.complete === true) {
+	status = 'complete';
+    } else {
+	if (feat.properties.planned_date !== null) {
+	    var now = Date.now();    
+	    var duedate = new Date(feat.properties.planned_date);
+	    var overdue = duedate < now;
+	    /* Scheduled, incomplete, overdue */
+	    if (overdue) {
+		/* Overdue */
+		status = 'overdue';
+	    } else {
+		/* Scheduled, incomplete, not overdue*/
+		status = 'sched_incomplete';
+	    }
+	} else {
+	    if(feat.properties.complete === false) {
+		status = 'incomplete';
+	    }
+	    if(feat.properties.new == true) {
+		status = 'auto_new';
+	    }
+	}
+    }
+    if (feat.properties.work_impossible) {
+	status = 'auto_skipped';
+    }
+    if(feat.properties.not_part_of_project == true) {
+	status = 'notproject';
+    }
+    return status;
+}
+
 function featureColor(feat){
 
     var color = 'orange';
+    var opacity = 0.2;
     var now = Date.now();    
+    
     if (feat.properties.type == 'location') {
-	if (feat.properties.complete === true) {
-	    /* Complete */
-	    color = 'green';
-	} else {
-	    /* Scheduled, incomplete */
-	    if (feat.properties.planned_date !== null) {
-		var duedate = new Date(feat.properties.planned_date);
-		var overdue = duedate < now;
-		/* Scheduled, incomplete, overdue */
-		if (overdue) {
-		    color = 'yellow';
-		} else {
-		    /* Scheduled, incomplete, not overdue*/
-		    color = 'black';
-		}
-	    } else {
-		if(feat.properties.complete === false) {
-		    color = "red";
-		}
-		if(feat.properties.new == true) {
-		    color = "MediumPurple";
-		}
-	    }
-	}
-	if (feat.properties.work_impossible) {
-	    color = 'brown';
-	}
-	if(feat.properties.not_part_of_project == true) {
-	    color = "gray";
-	}
-	if (window.legendColors['locations'].indexOf(color) < 0) {window.legendColors['locations'].push(color); }
+	var status = calcLocationStatus(feat);
+	color = locStatuses[status].color;
+	opacity = locStatuses[status].opacity;
+	if (dynamicLegend['locations'].indexOf(status) < 0) {dynamicLegend['locations'].push(status); }
     }
     if (feat.properties.type == 'request') {
-	color = reqStatusColors[feat.properties.status-1];
-	if (window.legendColors['requests'].indexOf(color) < 0) {window.legendColors['requests'].push(color); }
+	color = reqStatuses[feat.properties.status].color;
+	opacity = reqStatuses[feat.properties.status].opacity;
+	if (dynamicLegendColors['requests'].indexOf(color) < 0) {dynamicLegendColors['requests'].push(color); }
     }
-    return color;
+    return [color, opacity];
 }
 function isEmpty(ob){
    for(var i in ob){ return false;}
@@ -244,10 +306,10 @@ function build_map(gj, extent, OoI) {
 
     var overlayMaps = {};
 
-    function setCurrObjId(type, id){window.currType=type;window.currObjId=id;}
+    function setCurrObjId(type, id){currType=type;currObjId=id;}
     setCurrObjId('', '');
     
-    var mymap = L.map('map_new', {
+    mymap = L.map('map_new', {
 	fullscreenControl: {
             pseudoFullscreen: true
 	},
@@ -255,15 +317,18 @@ function build_map(gj, extent, OoI) {
 	zoomControl: false
     });
   
-    var bounds = [
+    currBounds = [
 	[extent.top, extent.left],
 	[extent.bottom, extent.right]
     ];
     var _orderingTable = {LineString: 0, Point: 10};
 
-    mymap.fitBounds(bounds);
+    mymap.fitBounds(currBounds);
+    mymap.on('moveend', function() { 
+	currBounds = mymap.getBounds();
+    });
 
-    var base = providers['osm'];
+    var base = providerData[providers[currBase()]];
     var baseLayer = L.tileLayer(base.tile, {
 	attribution: base.attr,
 	maxZoom: 19
@@ -293,7 +358,7 @@ function build_map(gj, extent, OoI) {
     var geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
-		var c = L.circle([latlng['lat'], latlng['lng']], {radius:2, opacity: 0.8, fillOpacity:0.8});
+		var c = L.circle([latlng['lat'], latlng['lng']], {radius:2});
 		return c;
 	    } else {
 		/* Displace change requests slightly since they might be covered by other markers.
@@ -306,19 +371,21 @@ function build_map(gj, extent, OoI) {
 	    }		
 	},
 	style: function(feature) {
-	    var color = featureColor(feature);
+	    var dummy = featureColor(feature);
+	    var color = dummy[0];
+	    var opacity = dummy[1];
 	    return {color: color,
 		    fillColor: color,
-		    opacity: 0.8,
-		    fillOpacity: feature.properties.type == 'location' ? 0.8 : 0.05};
+		    opacity: opacity,
+		    fillOpacity: opacity};
 	},
 	onEachFeature: function(feature, layer){
 	    /* Feature contain essential information only (location code, location type).
 	       More about a location is available onclick. */
-	    var popupHTML = ltypes[feature.properties.loc_type] + ' '
+	    var popupHTML = locationDictionary[feature.properties.loc_type] + ' '
 		+ feature.properties.code;
 	    if (feature.properties.type == 'request') {
-		popupHTML += '<br>Aanvraag: ' + reqtypes[feature.properties.req_type]
+		popupHTML += '<br>Aanvraag: ' + reqTypes[feature.properties.req_type]
 		    + '<br>' + feature.properties.motivation;
 	    }
 	    layer.bindTooltip(popupHTML);
@@ -383,17 +450,17 @@ function build_map(gj, extent, OoI) {
 	div.style.background = 'rgba(255,255,255, .7)';
 	
 	div.innerHTML += '<span><strong><u>Objecten/Locaties</u></strong></span><br>';
-	console.log(window.legendColors['locations']);
-	for (k in window.legendColors['locations']) {
-	    var c = window.legendColors['locations'][k];
+	for (idx in dynamicLegend['locations']) {
+	    var s = dynamicLegend['locations'][idx];
 	    div.innerHTML +=
-		'<span style="color:' + c + ';">&#9679;</span><strong> ' + window.locStatusColors[c] + '</strong><br>';
+		'<span style="color:' + locStatuses[s].color
+		+ ';">&#9679;</span><strong> ' + locStatuses[s].status + '</strong><br>';
 	}
 	
 	div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatusColors[0] +';">&#9632;</span><strong> Open</strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatusColors[1] +';">&#9632;</span><strong> Geaccepteerd</strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatusColors[2] +';">&#9632;</span><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatuses[1].color +';">&#9632;</span><strong> Open</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatuses[2].color +';">&#9632;</span><strong> Geaccepteerd</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatuses[3].color +';">&#9632;</span><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
 	
 	return div;
     };
@@ -405,7 +472,7 @@ function build_map(gj, extent, OoI) {
 	html = '';
 
 	if (!('html' in data)) {
-	    window.popup = L.popup({'autoClose': true})
+	    popup = L.popup({'autoClose': true})
 		.setLatLng(latlng) //TODO has to be loc coordinates
 		.setContent('Niets gevonden rond deze locatie.')
 		.openOn(mymap);
@@ -420,7 +487,7 @@ function build_map(gj, extent, OoI) {
 		/* style is defined in leaflet-popup.css */
 		html = '<div><div class="tab" id="popup-tabs">';
 		/* indexOf() returns -1 if not found, in this case activate the first tab */
-		var selectedIdx = Math.max(0, data.objIds.indexOf(window.currObjId));
+		var selectedIdx = Math.max(0, data.objIds.indexOf(currObjId));
 		var active = '';
                 for (var i=0; i<data.html.length; i+=1) {
 		    active = (i == selectedIdx) ? ' active' : '';
@@ -453,7 +520,7 @@ function build_map(gj, extent, OoI) {
         }
 
 	/* find max tab height and use it as fixed popup height */
-	window.popup = L.popup({'minWidth': 650,
+	popup = L.popup({'minWidth': 650,
 				'maxHeight': 500,
 				'autoClose': true,
 				'autoPan': true})
@@ -462,12 +529,12 @@ function build_map(gj, extent, OoI) {
 	    .openOn(mymap);
     }    
     function onMapClick(e) {
-	window.popup = L.popup().setLatLng(e.latlng);
-	if (!window.currObjId) {
-	    window.popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
+	popup = L.popup().setLatLng(e.latlng);
+	if (!currObjId) {
+	    popup.setContent('Zoeken naar de dichtsbijzijnde locatie...')
 		.openOn(mymap);
 	} else {
-	    window.popup.setContent('Ophalen Locatiegegevens...')
+	    popup.setContent('Ophalen Locatiegegevens...')
 		.openOn(mymap);
 	}	    
 	$.ajax({
@@ -475,8 +542,8 @@ function build_map(gj, extent, OoI) {
 	    url: 'get_closest_to',
 	    data: {'lat': e.latlng.lat,
 		   'lng': e.latlng.lng,
-		   'objType': window.currType,
-		   'objId': window.currObjId,
+		   'objType': currType,
+		   'objId': currObjId,
 		   'overlays[]': getActiveOverlayNames()},
 	    datatype: 'json',
 	    success: function(resp){show_dialog(e.latlng, resp);reloadGraphs();},

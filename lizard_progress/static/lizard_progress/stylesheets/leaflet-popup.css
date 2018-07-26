@@ -35,6 +35,6 @@
     font-size:small;
 } 
 .leaflet-tooltip{
-    max-width: 300px;
+    max-width: 400px;
     word-wrap: normal;
 }

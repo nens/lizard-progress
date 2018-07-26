@@ -386,14 +386,13 @@ function build_map(gj, extent, OoI) {
 	onEachFeature: function(feature, layer){
 	    /* Feature contain essential information only (location code, location type).
 	       More about a location is available onclick. */
-	    var popupHTML = '<p>' + locTypes[feature.properties.loc_type] + ' '
-		+ feature.properties.code + '</p>';
+	    var popupHTML = locTypes[feature.properties.loc_type] + ' '
+		+ feature.properties.code;
 	    if (feature.properties.type == 'request') {
-		popupHTML += '<p><b>Aanvraag: </b>' + reqTypes[feature.properties.req_type]
-		    +' (' + reqStatuses[feature.properties.status].status + ')</p>'
-		    + 'Reden: ' + feature.properties.motivation
+		popupHTML += '<br><b>Aanvraag: </b>' + reqTypes[feature.properties.req_type]
+		    +' (' + reqStatuses[feature.properties.status].status + ')'
+		    + '<br>Reden: ' + feature.properties.motivation
 		    .replace(/[^A-Za-z0-9 _.,!"'/()$]/g, '<br>')
-		    .replace('(Z)', '')
 		    .replace('None', '');
 	    }
 	    layer.bindTooltip(popupHTML);

@@ -1,15 +1,5 @@
-var locStatusColors = {
-    'green': 'Compleet',
-    'red': 'Niet (geheel) aanwezig en niet gepland',
-    'black': 'Gepland, nog niet compleet',
-    'gold': 'Gepland, niet compleet en\n planningsdatum verstreken',
-    'gray': 'Geen onderdeel van werkzaamheden',
-    'MediumPurple': 'Nieuw object (automatisch toegevoegd)',
-    'brown': 'Niet behandeld (automatisch toegevoegd)'
-};
-
 var locStatuses = {
-    'complete': {status: 'Compleet', color: 'green', opacity: 0.3},
+    'complete': {status: 'Compleet', color: 'limegreen', opacity: 0.3},
     'incomplete': {status: 'Niet (geheel) aanwezig en niet gepland', color: 'red', opacity: 1},
     'sched_incomplete': {status: 'Gepland, nog niet compleet', color: 'black', opacity: 0.02},
     'overdue': {status: 'Gepland, niet compleet en\n planningsdatum verstreken', color: 'gold', opacity: 1},
@@ -27,7 +17,7 @@ var reqStatuses = {
     5: {status: 'Ongeldig', color: 'DarkOrchid', opacity: 0.6}
 };
 
-var locationDictionary = {
+var locTypes = {
     'manhole':'Put',
     'pipe':'Streng',
     'drain':'Kolk',
@@ -40,7 +30,7 @@ var reqTypes = {
     3: 'Niewe locatiecode'
 };
 
-var providers = ['cartolight', 'osm', 'osmnolabels', 'nlmapspastel', 'nlmapsstandaard', 'openinfrawater'];
+var providers = ['cartolight', 'osm', 'osmnolabels', 'nlmapspastel', 'nlmapsstandaard'];
 var providerData = {
     'osm': {
 	tile: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
@@ -382,7 +372,7 @@ function build_map(gj, extent, OoI) {
 	onEachFeature: function(feature, layer){
 	    /* Feature contain essential information only (location code, location type).
 	       More about a location is available onclick. */
-	    var popupHTML = locationDictionary[feature.properties.loc_type] + ' '
+	    var popupHTML = locTypes[feature.properties.loc_type] + ' '
 		+ feature.properties.code;
 	    if (feature.properties.type == 'request') {
 		popupHTML += '<br>Aanvraag: ' + reqTypes[feature.properties.req_type]

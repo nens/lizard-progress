@@ -749,7 +749,7 @@ def get_closest_to(request, *args, **kwargs):
             html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
                                          {'locations': [loc]}, context_instance=RequestContext(request)))
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' '
-                              + Truncator(loc.activity.name).chars(10))
+                              + Truncator(loc.activity.name).chars(14))
             obj_ids.append(loc.id)
 
         # ########################################
@@ -774,7 +774,7 @@ def get_closest_to(request, *args, **kwargs):
                                       'location': loc,
                                       'title': loc.location_code + ' ' + loc.activity.name,
                                       'multiple_projects_graph_url': multiple_projects_graph_url})
-            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + Truncator(loc.activity.name).chars(10))
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + Truncator(loc.activity.name).chars(14))
             obj_ids.append(loc.id)
             html.append(lhtml)
         # END crossection graph

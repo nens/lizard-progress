@@ -10,11 +10,11 @@ var locStatuses = {
 };
 
 var reqStatuses = {
-    1: {status: 'Open', color: 'blue', opacity: 0.6},
-    2: {status: 'Geaccepteerd', color: 'green', opacity: 0.6},
-    3: {status: 'Geweigerd', color: 'DarkOrchid', opacity: 0.6},
-    4: {status: 'Ingetrokken', color: 'DarkOrchid', opacity: 0.6},
-    5: {status: 'Ongeldig', color: 'DarkOrchid', opacity: 0.6}
+    1: {status: 'Open', color: 'blue', opacity: 0.1},
+    2: {status: 'Geaccepteerd', color: 'green', opacity: 0.1},
+    3: {status: 'Geweigerd', color: 'DarkOrchid', opacity: 0.1},
+    4: {status: 'Ingetrokken', color: 'DarkOrchid', opacity: 0.1},
+    5: {status: 'Ongeldig', color: 'DarkOrchid', opacity: 0.1}
 };
 
 var locTypes = {
@@ -386,11 +386,15 @@ function build_map(gj, extent, OoI) {
 	onEachFeature: function(feature, layer){
 	    /* Feature contain essential information only (location code, location type).
 	       More about a location is available onclick. */
-	    var popupHTML = locTypes[feature.properties.loc_type] + ' '
-		+ feature.properties.code;
+	    var popupHTML = '<p>' + locTypes[feature.properties.loc_type] + ' '
+		+ feature.properties.code + '</p>';
 	    if (feature.properties.type == 'request') {
-		popupHTML += '<br>Aanvraag: ' + reqTypes[feature.properties.req_type]
-		    + '<br>' + feature.properties.motivation;
+		popupHTML += '<p><b>Aanvraag: </b>' + reqTypes[feature.properties.req_type]
+		    +' (' + reqStatuses[feature.properties.status].status + ')</p>'
+		    + 'Reden: ' + feature.properties.motivation
+		    .replace(/[^A-Za-z0-9 _.,!"'/()$]/g, '<br>')
+		    .replace('(Z)', '')
+		    .replace('None', '');
 	    }
 	    layer.bindTooltip(popupHTML);
 	    layer.on('mouseover', function(e){setCurrObjId(feature.properties.type, feature.properties.id);});

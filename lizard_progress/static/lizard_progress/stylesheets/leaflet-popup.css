@@ -34,3 +34,7 @@
     height:100%;
     font-size:small;
 } 
+.leaflet-tooltip{
+    max-width: 300px;
+    word-wrap: normal;
+}

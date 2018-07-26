@@ -674,7 +674,7 @@ def get_closest_to(request, *args, **kwargs):
     objId = request.GET.get('objId', None)
     radius = request.GET.get('radius', 50)
     overlays = request.GET.getlist('overlays[]', [])
-
+    
     proj = Project.objects.get(slug=kwargs['project_slug'])
 
     # Unclickable items work-around
@@ -704,8 +704,8 @@ def get_closest_to(request, *args, **kwargs):
     else:
         if objType == 'location':
             rootLocation = Location.objects.get(id=objId)
-            locAllActivities = Location.objects.filter(location_code=rootLocation.location_code)\
-                                               .filter(activity__name__in=overlays)
+            locations = Location.objects.filter(location_code=rootLocation.location_code)\
+                                        .filter(activity__name__in=overlays)
             locationIds = Location.objects.filter(location_code=rootLocation.location_code)\
                                           .filter(activity__name__in=overlays).values_list('id', flat=True)
         else:

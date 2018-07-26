@@ -703,7 +703,11 @@ def get_closest_to(request, *args, **kwargs):
 
     else:
         if objType == 'location':
-            locationIds = [objId]
+            rootLocation = Location.objects.get(id=objId)
+            locAllActivities = Location.objects.filter(location_code=rootLocation.location_code)\
+                                               .filter(activity__name__in=overlays)
+            locationIds = Location.objects.filter(location_code=rootLocation.location_code)\
+                                          .filter(activity__name__in=overlays).values_list('id', flat=True)
         else:
             changeRequests = [Request.objects.get(id=objId)]
             locationIds = Location.objects.filter(activity=changeRequests[0].activity)\

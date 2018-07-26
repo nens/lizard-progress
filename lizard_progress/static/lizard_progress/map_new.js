@@ -30,7 +30,9 @@ var reqTypes = {
     3: 'Niewe locatiecode'
 };
 
-var providers = ['cartolight', 'osm', 'osmnolabels', 'nlmapspastel', 'nlmapsstandaard'];
+var providers = ['osm', 'cartolight', 'stamen.tonerlite',
+		 'osmnolabels', 'nlmapspastel', 'nlmapsstandaard',
+		 'openmapserfer.grayscale'];
 var providerData = {
     'osm': {
 	tile: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
@@ -51,6 +53,18 @@ var providerData = {
     'nlmapsstandaard': {
 	tile: 'https://geodata.nationaalgeoregister.nl/tiles/service/wmts/brtachtergrondkaart/EPSG:3857/{z}/{x}/{y}.png',
 	attr: 'Kaartgegevens &copy; <a href="kadaster.nl">Kadaster</a>'
+    },
+    'stamen.tonerlite': {
+	tile: 'https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}{r}.png',
+   	attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    },
+    'opentopomap': {
+	tile: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+	attr: 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+    },
+    'openmapserfer.grayscale': {
+	tile: 'https://korona.geog.uni-heidelberg.de/tiles/roadsg/x={x}&y={y}&z={z}',
+	attr: 'Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     },
     'openinfrawater': {
 	tile: 'https://geodata.nationaalgeoregister.nl/tiles/service/wmts/brtachtergrondkaart/EPSG:3857/{z}/{x}/{y}.png',

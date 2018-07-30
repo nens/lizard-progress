@@ -17,6 +17,36 @@ from osgeo import ogr
 from lizard_map import coordinates
 
 
+def rd_to_wgs84_extent(rd_extent, extra_border=0.1):
+    """Translate an extent that is in (minx, miny, maxx, maxy) RD
+    projection format to a dictionary {'top': ... 'left': 'right':
+    'bottom': } in Google projection.
+
+    To make OpenLayers zoom better, the extent can get an
+    extra_border. If this argument is 0.1, 10% of the width and
+    breadth is added on all sides (so it's a 20% total increase per
+    side).
+    """
+    _topleft = rd_extent[0:2]
+    _bottomright = rd_extent[2:4]
+
+    topleft = coordinates.rd_to_wgs84(*_topleft)
+    bottomright = coordinates.rd_to_wgs84(*_bottomright)
+
+    # To make sure we zoom in "correctly", with everything in view,
+    # we now increase this extent some arbitrary percentage...
+    dx = extra_border * abs(topleft[0] - bottomright[0])
+    dy = extra_border * abs(topleft[1] - bottomright[1])
+
+    # Format as a top/left/right/bottom dict with extra border
+    return {
+        'top': topleft[1] - dy,
+        'left': topleft[0] - dx,
+        'right': bottomright[0] + dx,
+        'bottom': bottomright[1] + dy
+    }
+
+
 def rd_to_google_extent(rd_extent, extra_border=0.1):
     """Translate an extent that is in (minx, miny, maxx, maxy) RD
     projection format to a dictionary {'top': ... 'left': 'right':

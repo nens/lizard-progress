@@ -1,0 +1,56 @@
+{% extends "lizard_progress/progressbase2.html" %}
+{% load staticfiles %}
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+      integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+      crossorigin=""/>
+<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/fonts/open-sans/open-sans.css">
+<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/fonts/font-awesome/4.3.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/bower_components/sweetalert/dist/sweetalert.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/sortable-theme-light.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/sortable-theme-dark.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/sortable-theme-bootstrap.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}lizard_progress/stylesheets/screen.css" />
+<link type="text/css" href="{{ STATIC_URL }}jqueryui/smoothness/jquery-ui.css" rel="stylesheet" media="screen, projection" />
+<link rel="stylesheet" href="/static_media/lizard_progress/fonts/font-awesome/4.3.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="/static_media/lizard_progress/stylesheets/screen.css">
+<link rel="stylesheet" href="/static_media/lizard_progress/stylesheets/leaflet-popup.css">
+{% endblock css %}
+
+{% block content %}
+{% include "lizard_progress/projectswitcher.html" %}    
+<div class="container" id="project-details">
+    <div class="row">
+        <div class="col-md-11">
+            <div class="panel panel-default">
+		<div class="panel-heading clearfix">
+		    <h3 class="panel-title pull-left" style="padding-top: 7.5px;"><i class="fa fa-globe"></i>&nbsp;Project <strong>{{ view.project.name }}</strong></h3>
+		</div>
+                <div id="map_new" style="height: 800px;"></div>
+                <!-- TODO: vendorize -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+                <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+			integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+			crossorigin="">
+                </script>
+                <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+		<script src="{% static 'lizard_progress/map_new.js' %}"></script>
+                <script> $(function(){var gj={{view.locations_geojson|safe}};
+		     var extent = {% if view.extent|safe %} {{view.extent|safe}} {%else%} {} {%endif%};
+		     build_map(gj, extent, gj.OoI);
+		 });
+		</script>
+		<div>
+		    <button onclick="var up='<i class=\'fa fa-arrow-up\'></i>';var dn='<i class=\'fa fa-arrow-down\'></i>';
+ var se='leaflet-control-layers-expanded';var cl=$('.leaflet-control-layers');cl.each(function(){$(this).toggleClass(se);});if(cl.hasClass(se)){$(this).html(dn + ' Kaartlagen');}else{$(this).html(up + ' Kaartlagen');}"><i class='fa fa-arrow-up'></i> Kaartlagen</button>
+		    <button onclick="nextBase();">Andere straatkaart</button>
+		    <button style="position:absolute; right:25px;" onclick="$('.legend').slideToggle();if ($('.legend').height()>1){$(this).html('<i class=\'fa fa-arrow-up\'></i> Legenda');}else{$(this).html('<i class=\'fa fa-arrow-down\'></i> Legenda');}">
+			<i class="fa fa-arrow-down"></i> Legenda</button>
+		</div>
+            </div>
+        </div>
+        {% include "lizard_progress/sidebar_include.html" with active="map_new" %}
+    </div>
+</div>
+{% endblock %}

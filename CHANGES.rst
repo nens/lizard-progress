@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.2.4 (unreleased)
+4.2.4 (2018-07-30)
 ------------------
 
 - Hotfix connection.cursor for python 2.7 w/o DebugToolbar.

@@ -1,5 +1,5 @@
 var locStatuses = {
-    'complete': {status: 'Compleet', color: 'limegreen', opacity: 0.3},
+    'complete': {status: 'Compleet', color: 'limegreen', opacity: 0.4},
     'incomplete': {status: 'Niet (geheel) aanwezig en niet gepland', color: 'red', opacity: 1},
     'sched_incomplete': {status: 'Gepland, nog niet compleet', color: 'black', opacity: 0.02},
     'overdue': {status: 'Gepland, niet compleet en\n planningsdatum verstreken', color: 'gold', opacity: 1},

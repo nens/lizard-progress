@@ -564,7 +564,8 @@ class InlineMapViewNew(View):
         chreqs = Request.objects.filter(activity__in=activities).distinct()
         layers = {}
 
-        with connection.cursor() as cursor:
+        cursor = connection.cursor()
+        try:
             # Activities
             for a in activities:
                 q = """select json_build_object(
@@ -644,7 +645,8 @@ class InlineMapViewNew(View):
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
                 layers['OoI'] = geojson.FeatureCollection(features)
-            
+        finally:
+            cursor.close()
 
         res = json.dumps(layers)
         return (res)

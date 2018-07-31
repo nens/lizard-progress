@@ -475,23 +475,65 @@ class MetParser(specifics.ProgressParser):
         return location_get_method != models.Activity.METHOD_NEW
 
     def _check_max_distance(self, location, profile):
+
+        use_2components_dist = self.config_value('maximum_location_distance_use_2components')
+
         mid_or_start_point = self.get_profile_mid_or_start_point(profile)
         # metfilelib points
         location_point = linear_algebra.Point(
             x=location.the_geom.x, y=location.the_geom.y)
-        distance = location_point.distance(mid_or_start_point)
-        maxdistance = self.config_value('maximum_location_distance')
-        if distance > maxdistance:
-            self.record_error_code(
-                line_number=profile.line_number,
-                error_code="TOO_FAR_FROM_LOCATION",
-                location_id=profile.id,
-                x=location.the_geom.x, y=location.the_geom.y,
-                m=distance, maxm=maxdistance, recovery={
-                    'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
-                    'location_code': profile.id,
-                    'x': mid_or_start_point.x,
-                    'y': mid_or_start_point.y,
+
+        if not use_2components_dist or not profile.line:
+            # Old Point-to-Point distance control
+            distance = location_point.distance(mid_or_start_point)
+            maxdistance = self.config_value('maximum_location_distance')
+            if distance > maxdistance:
+                self.record_error_code(
+                    line_number=profile.line_number,
+                    error_code="TOO_FAR_FROM_LOCATION",
+                    location_id=profile.id,
+                    x=location.the_geom.x, y=location.the_geom.y,
+                    m=distance, maxm=maxdistance, recovery={
+                        'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
+                        'location_code': profile.id,
+                        'x': mid_or_start_point.x,
+                        'y': mid_or_start_point.y,
+                    })
+        else:
+            # New 2-component distance control
+
+            # Project measured middlepoint onto the target profile
+            projection = profile.line.project(location_point)
+
+            dist_parallel = projection.distance(mid_or_start_point)
+            dist_orthogonal = projection.distance(location_point)
+            max_dist_parallel = self.config_value('maximum_location_distance_parallel')
+            max_dist_orthogonal = self.config_value('maximum_location_distance_orthogonal')
+
+            if dist_parallel > max_dist_parallel:
+                self.record_error_code(
+                    line_number=profile.line_number,
+                    error_code="TOO_FAR_FROM_LOCATION_PARALLEL",
+                    location_id=profile.id,
+                    x=location.the_geom.x, y=location.the_geom.y,
+                    m=dist_parallel, maxm=max_dist_parallel, recovery={
+                        'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
+                        'location_code': profile.id,
+                        'x': mid_or_start_point.x,
+                        'y': mid_or_start_point.y,
+                    })
+
+            if dist_orthogonal > max_dist_orthogonal:
+                self.record_error_code(
+                    line_number=profile.line_number,
+                    error_code="TOO_FAR_FROM_LOCATION_ORTHOGONAL",
+                    location_id=profile.id,
+                    x=location.the_geom.x, y=location.the_geom.y,
+                    m=dist_orthogonal, maxm=max_dist_orthogonal, recovery={
+                        'request_type': Request.REQUEST_TYPE_MOVE_LOCATION,
+                        'location_code': profile.id,
+                        'x': mid_or_start_point.x,
+                        'y': mid_or_start_point.y,
                     })
 
     @staticmethod

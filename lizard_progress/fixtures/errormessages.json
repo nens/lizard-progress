@@ -390,5 +390,22 @@
         },
         "model": "lizard_progress.errormessage",
         "pk": 49
+    },
+    {
+        "fields": {
+            "error_code": "TOO_FAR_FROM_LOCATION_ORTHOGONAL",
+            "error_message": "Locatie bevindt zich te ver van geplande meetprofiel ({m}m, maximum is {maxm}m in loodrechte richting)."
+        },
+        "model": "lizard_progress.errormessage",
+        "pk": 50
+    },
+    {
+        "fields": {
+            "error_code": "TOO_FAR_FROM_LOCATION_PARALLEL",
+            "error_message": "Locatie bevindt zich te ver van geplande meetpunt ({m}m, maximum is {maxm}m in evenwijdige richting)."
+        },
+        "model": "lizard_progress.errormessage",
+        "pk": 50
     }
+
 ]

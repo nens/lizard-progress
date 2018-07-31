@@ -1573,7 +1573,7 @@ class Activity(ProjectActivityMixin, models.Model):
             location__not_part_of_project=False).count()
 
     def has_measurements(self):
-        return self.num_measurements() > 0
+        return self.num_measurements > 0
 
     def open_requests(self):
         return self.request_set.filter(request_status=1)

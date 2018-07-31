@@ -1374,7 +1374,7 @@ class DeleteActivity(ProjectsView):
         if activity.project.slug != project_slug:
             raise PermissionDenied()
 
-        if activity.has_measurements():
+        if activity.has_measurements:
             raise PermissionDenied()
 
         activity.delete()

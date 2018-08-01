@@ -644,7 +644,6 @@ class InlineMapViewNew(View):
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
                 layers['OoI'] = geojson.FeatureCollection(features)
-            
 
         res = json.dumps(layers)
         return (res)
@@ -653,7 +652,7 @@ class InlineMapViewNew(View):
 @login_required
 @ajax_request
 def get_closest_to(request, *args, **kwargs):
-    """ When clicked on the map, searches for nearest neighbours (one of every type) within 
+    """ When clicked on the map, searches for nearest neighbours (one of every type) within
     active overlays (=activities).
 
     When clicked on a location or a request, selects it and its relations within active overlays.
@@ -667,14 +666,14 @@ def get_closest_to(request, *args, **kwargs):
     obj_ids = []
     latlng = []
     locationIds, changeRequests = [], []
-    
+
     lat = request.GET.get('lat', None)
     lng = request.GET.get('lng', None)
     objType = request.GET.get('objType', 'location')
     objId = request.GET.get('objId', None)
     radius = request.GET.get('radius', 50)
     overlays = request.GET.getlist('overlays[]', [])
-    
+
     proj = Project.objects.get(slug=kwargs['project_slug'])
 
     # Unclickable items work-around
@@ -711,9 +710,9 @@ def get_closest_to(request, *args, **kwargs):
         else:
             changeRequests = [Request.objects.get(id=objId)]
             locationIds = Location.objects.filter(activity=changeRequests[0].activity)\
-                                   .filter(location_code=changeRequests[0].location_code)\
-                                   .filter(activity__name__in=overlays)\
-                                   .values_list('id', flat=True)
+                                          .filter(location_code=changeRequests[0].location_code)\
+                                          .filter(activity__name__in=overlays)\
+                                          .values_list('id', flat=True)
     # If nothing found, return empty response
     if not (locationIds or changeRequests):
         return HttpResponse(json.dumps(response), content_type="application/json")
@@ -752,12 +751,12 @@ def get_closest_to(request, *args, **kwargs):
             latlng.append([lat, lng])
             html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
                                          {'locations': [loc]}, context_instance=RequestContext(request)))
-            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' '
-                              + Truncator(loc.activity.name).chars(14))
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' +
+                              Truncator(loc.activity.name).chars(14))
             obj_ids.append(loc.id)
 
         # ########################################
-        # Create html for crossection measurements 
+        # Create html for crossection measurements
         # ########################################
         xsects = [l for l in locations if l.location_type in ['point']]
 

@@ -1,38 +1,43 @@
 {% with location=locations.0 %}
-  {% if location.location_type == "pipe" %}
-     <h3>Streng {{ location.location_code }}</h3>
-  {% elif location.location_type == "manhole" %}
-     <h3>Put {{ location.location_code }}</h3>
-  {% elif location.location_type == "drain" %}
-     <h3>Kolk {{ location.location_code }}</h3>
+{% if location.location_type == "pipe" %}
+<h3>Streng {{ location.location_code }}</h3>
+{% elif location.location_type == "manhole" %}
+<h3>Put {{ location.location_code }}</h3>
+{% elif location.location_type == "drain" %}
+<h3>Kolk {{ location.location_code }}</h3>
+{% else %}
+<h3>Onbekend rioleringselement {{ location.location_code }}</h3>
+{% endif %}
+{% if location.complete %}
+  {% if location.work_impossible %}
+  <h3>Compleet (niet gedaan, maar automatisch goedgekeurd {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
+      {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
+      )</h3>
+  {% elif location.new %}
+  <h3>Compleet (nieuw {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
+      {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
+      )</h3>
   {% else %}
-     <h3>Onbekend rioleringselement {{ location.location_code }}</h3>
+  <h3>Compleet (gedaan {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
+      {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
+      )</h3>
   {% endif %}
-  {% if location.complete %}
-    {% if location.work_impossible %}
-     <h3>Compleet (niet gedaan, maar automatisch goedgekeurd {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
-     {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
-     )</h3>
-    {% elif location.new %}
-     <h3>Compleet (nieuw {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
-     {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
-     )</h3>
-    {% else %}
-     <h3>Compleet (gedaan {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
-     {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
-     )</h3>
-    {% endif %}
-  {% endif %}
-  {% if location.not_part_of_project %}
-    <strong>Dit object is geen eigendom van {{ location.activity.project.organization }} en hoort niet bij de
-    werkzaamheden.</strong>
+{% endif %}
+  
+{% if location.not_part_of_project %}
+  <strong>Dit object is geen eigendom van {{ location.activity.project.organization }} en hoort niet bij de
+      werkzaamheden.</strong>
   {% else %}
-    <p>Opdrachtnemer: {{ location.activity.contractor }}<br />
-    Werkzaamheid: {{ location.activity }}</p>
+  <p>Opdrachtnemer: {{ location.activity.contractor }}<br />
+      Werkzaamheid: {{ location.activity }}</p>
+{% endif %}
+    
+  {% if not location.measurement_set.exists %}
+  <p>Er is voor deze locatie nog geen data aanwezig in het systeem.</p>
   {% endif %}
 
   {% with measurements=location.measurement_set.all %}
-    {% if measurements %}
+  {% if measurements %}
       <p>Bestanden:</p>
       <table class="table">
         <thead>
@@ -95,7 +100,7 @@
   {% endwith %}
   {% if location.planned_date %}
     <p>De geplande datum voor deze locatie is {{ location.planned_date|date:"DATE_FORMAT" }}.</p>
-  {% endif %}
+    {% endif %}
 {% endwith %}
 
 {% if not location.activity.project.is_archived %}

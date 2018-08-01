@@ -38,3 +38,6 @@
     max-width: 400px;
     word-wrap: normal;
 }
+.info {
+    font-size:120%; 
+}

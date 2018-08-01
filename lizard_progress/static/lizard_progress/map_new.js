@@ -500,10 +500,11 @@ function build_map(gj, extent, OoI) {
 		    active = (i == selectedIdx) ? ' active' : '';
                     html += '<button class="tablinks' + active + '" onclick="openTab(event, ' + i.toString()
 			+ ',' + data.latlng[i] + ')">';
-                    html += data.tab_titles[i]
+		    html += data.tab_titles[i]
 			.replace('manhole', 'Put')
 			.replace('pipe', 'Streng')
 			.replace('drain', 'Kolk');
+			.replace('point', '');
                     html += '</button>';
                 }
 		html += '</div>';

@@ -22,7 +22,7 @@
 {% include "lizard_progress/projectswitcher.html" %}    
 <div class="container" id="project-details">
     <div class="row">
-        <div class="col-md-11">
+        <div class="col-md-11" id="anchor">
             <div class="panel panel-default">
 		<div class="panel-heading clearfix">
 		    <h3 class="panel-title pull-left" style="padding-top: 7.5px;"><i class="fa fa-globe"></i>&nbsp;Project <strong>{{ view.project.name }}</strong></h3>
@@ -39,6 +39,7 @@
                 <script> $(function(){var gj={{view.locations_geojson|safe}};
 		     var extent = {% if view.extent|safe %} {{view.extent|safe}} {%else%} {} {%endif%};
 		     build_map(gj, extent, gj.OoI);
+		     $('#anchor')[0].scrollIntoView();
 		 });
 		</script>
 		<div>

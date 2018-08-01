@@ -557,6 +557,8 @@ class InlineMapViewNew(View):
 
         activities = Activity.objects.filter(project=self.project)\
             .filter(measurement_type__slug__in=['dwarsprofiel',
+                                                'dwarsprofielen_inpeiling',
+                                                'dwarsprofielen_uitpeiling',
                                                 'ribx_reiniging_riool',
                                                 'ribx_reiniging_kolken',
                                                 'ribx_reiniging_inspectie_riool'])

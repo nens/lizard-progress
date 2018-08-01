@@ -76,7 +76,7 @@ var mymap, popup;
 var currBounds = [[],[]];
 var dynamicLegendColors = {'locations': [], 'requests': []};
 var dynamicLegend = {'locations': [], 'requests': []};
-var MAXZOOM = 17;
+var MAXZOOM = 19;
 
 function currBase() {
     if (window._currBase === undefined) {
@@ -131,6 +131,7 @@ function openTab(evt, tab, lat, lng) {
     document.getElementById('popup-tab-' + tab.toString()).style.display = "block";
     evt.currentTarget.className += " active";
     popup.setLatLng([lat, lng]);
+    reloadGraphs();
 } 
 
 function reloadDynamicGraph($graph, callback, force) {
@@ -506,7 +507,7 @@ function build_map(gj, extent, OoI) {
 			.replace('manhole', 'Put')
 			.replace('pipe', 'Streng')
 			.replace('drain', 'Kolk')
-			.replace('point', '');
+			.replace('point', 'Point');
                     html += '</button>';
                 }
 		html += '</div>';
@@ -537,6 +538,7 @@ function build_map(gj, extent, OoI) {
 	    .setLatLng(data.latlng[0])
 	    .setContent(html)
 	    .openOn(mymap);
+	reloadGraphs();
     }    
     function onMapClick(e) {
 	popup = L.popup().setLatLng(e.latlng);

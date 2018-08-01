@@ -34,6 +34,11 @@
     height:100%;
     font-size:small;
 } 
+.tabcontent > h2,
+.tabcontent > h3,
+.table th { 
+    font-weight: bold;
+}
 .leaflet-tooltip{
     max-width: 400px;
     word-wrap: normal;

@@ -755,7 +755,7 @@ def get_closest_to(request, *args, **kwargs):
                 lng, lat = g.coords[0], g.coords[1]
 
             latlng.append([lat, lng])
-            html.append(render_to_string('lizard_progress/measurement_types/ribx.html',
+            html.append(render_to_string('lizard_progress/measurement_types/ribx_newmap.html',
                                          {'locations': [loc]}, context_instance=RequestContext(request)))
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' +
                               Truncator(loc.activity.name).chars(14))

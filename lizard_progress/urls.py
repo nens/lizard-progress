@@ -104,7 +104,6 @@ activity_urls = [
         name='lizard_progress_activity_dashboard'),
 ]
 
-
 project_urls = [
     # Kaartlagen view
     url('^map/$', login_required(InlineMapView.as_view()),
@@ -127,7 +126,7 @@ project_urls = [
         login_required(InlineMapViewNew.as_view()),
         name='lizard_progress_newmap_change_request'),
     # END NEW MAP
-    
+
     url('^mapinline/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
     url('^map/change_request/(?P<change_request>[^/]+)/$',

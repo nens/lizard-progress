@@ -393,7 +393,8 @@ function build_map(gj, extent, OoI) {
 		    +' (' + reqStatuses[feature.properties.status].status + ')'
 		    + '<br>Reden: ' + feature.properties.motivation
 		    .replace(/[^A-Za-z0-9 _.,!"'/()$]/g, '<br>')
-		    .replace('None', '');
+		    .replace('None', '')
+		    .replace('<br><br>', '<br>');
 	    }
 	    layer.bindTooltip(popupHTML);
 	    layer.on('mouseover', function(e){setCurrObjId(feature.properties.type, feature.properties.id);});

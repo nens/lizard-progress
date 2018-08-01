@@ -503,7 +503,7 @@ function build_map(gj, extent, OoI) {
 		    html += data.tab_titles[i]
 			.replace('manhole', 'Put')
 			.replace('pipe', 'Streng')
-			.replace('drain', 'Kolk');
+			.replace('drain', 'Kolk')
 			.replace('point', '');
                     html += '</button>';
                 }

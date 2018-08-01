@@ -605,6 +605,7 @@ class InlineMapViewNew(View):
                 'req_type', cr.request_type,
                 'loc_type', l.location_type,
                 'loc_id', l.id,
+                'loc_geom', l.the_geom,
                 'code', cr.location_code,
                 'motivation', cr.motivation,
                 'status', cr.request_status
@@ -612,7 +613,8 @@ class InlineMapViewNew(View):
                 from changerequests_request cr
                 inner join lizard_progress_activity a on cr.activity_id = a.id
                 inner join lizard_progress_location l on cr.location_code = l.location_code
-                where cr.activity_id in ({0})"""\
+                where cr.activity_id in ({0})
+                and l.activity_id in ({0})"""\
                     .format(
                     ', '.join(map(str, activities.values_list('id', flat=True))))
 

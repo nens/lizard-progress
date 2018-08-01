@@ -109,7 +109,7 @@ project_urls = [
     url('^map/$', login_required(InlineMapView.as_view()),
         name='lizard_progress_inlinemapview'),
 
-    # NEW MAP
+    # NEW MAP ###################################
     url('^map_new/$', login_required(InlineMapViewNew.as_view()),
         name='lizard_progress_inlinemapview_new'),
 
@@ -122,10 +122,11 @@ project_urls = [
     url('^map_new/location_code/(?P<location_code>[^/]+)/$',
         login_required(InlineMapViewNew.as_view()),
         name='lizard_progress_mapview_location_code'),
+
     url('^map_new/change_request/(?P<change_request>[^/]+)/$',
         login_required(InlineMapViewNew.as_view()),
         name='lizard_progress_newmap_change_request'),
-    # END NEW MAP
+    # END NEW MAP ###############################
 
     url('^mapinline/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),

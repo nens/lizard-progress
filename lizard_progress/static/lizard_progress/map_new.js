@@ -577,9 +577,8 @@ function build_map(gj, extent, OoI) {
 		setCurrObjId(OoI.features[0].properties.type, OoI.features[0].properties.id);
 		ll = new L.LatLng(OoI.features[0].geometry.coordinates[1],
 				  OoI.features[0].geometry.coordinates[0])
-		mymap.panTo(ll);
-		//mymap.setZoom(18);
-		//show_dialog(ll, resp);
+		mymap.fitBounds(L.latLngBounds([ll]));
+		show_dialog(ll, resp);
 		reloadGraphs();},
 	    error: function(jqXHR, textStatus, err){
 		console.log("ERR: " + jqXHR + ' ' + err + ', ' + textStatus);}

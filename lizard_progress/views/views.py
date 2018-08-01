@@ -560,7 +560,7 @@ class InlineMapViewNew(View):
                                                 'ribx_reiniging_riool',
                                                 'ribx_reiniging_kolken',
                                                 'ribx_reiniging_inspectie_riool'])
-                                     
+
         chreqs = Request.objects.filter(activity__in=activities).distinct()
         layers = {}
 
@@ -614,12 +614,14 @@ class InlineMapViewNew(View):
                 inner join lizard_progress_location l on cr.location_code = l.location_code
                 where cr.activity_id in ({0})"""\
                     .format(
-                        ', '.join(map(str, activities.values_list('id', flat=True))))
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
 
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
                 layers['Aanvragen'] = geojson.FeatureCollection(features)
 
+            # If called from a ChangeReq page (Toon op kaart - link),
+            # then pass the change request info
             if 'change_request' in self.kwargs:
                 q = """select json_build_object(
                 'type', 'Feature',
@@ -777,7 +779,8 @@ def get_closest_to(request, *args, **kwargs):
                                       'location': loc,
                                       'title': loc.location_code + ' ' + loc.activity.name,
                                       'multiple_projects_graph_url': multiple_projects_graph_url})
-            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' + Truncator(loc.activity.name).chars(14))
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' +
+                              Truncator(loc.activity.name).chars(14))
             obj_ids.append(loc.id)
             html.append(lhtml)
         # END crossection graph
@@ -787,8 +790,8 @@ def get_closest_to(request, *args, **kwargs):
     # ###############################
     if not changeRequests:
         changeRequests = Request.objects.\
-                      filter(location_code__in=locations.values_list('location_code'))\
-                      .filter(activity__in=all_loc_activities)
+            filter(location_code__in=locations.values_list('location_code'))\
+            .filter(activity__in=all_loc_activities)
 
     for cr in changeRequests:
         g = cr.the_geom

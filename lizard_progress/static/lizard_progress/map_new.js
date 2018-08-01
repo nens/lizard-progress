@@ -10,11 +10,11 @@ var locStatuses = {
 };
 
 var reqStatuses = {
-    1: {status: 'Open', color: 'blue', opacity: 0.1},
-    2: {status: 'Geaccepteerd', color: 'green', opacity: 0.1},
-    3: {status: 'Geweigerd', color: 'DarkOrchid', opacity: 0.1},
-    4: {status: 'Ingetrokken', color: 'DarkOrchid', opacity: 0.1},
-    5: {status: 'Ongeldig', color: 'DarkOrchid', opacity: 0.1}
+    1: {status: 'Open', color: 'blue', opacity: 0.4},
+    2: {status: 'Geaccepteerd', color: 'green', opacity: 0.4},
+    3: {status: 'Geweigerd', color: 'DarkOrchid', opacity: 0.4},
+    4: {status: 'Ingetrokken', color: 'DarkOrchid', opacity: 0.4},
+    5: {status: 'Ongeldig', color: 'DarkOrchid', opacity: 0.4}
 };
 
 var locTypes = {

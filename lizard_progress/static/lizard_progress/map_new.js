@@ -76,6 +76,7 @@ var mymap, popup;
 var currBounds = [[],[]];
 var dynamicLegendColors = {'locations': [], 'requests': []};
 var dynamicLegend = {'locations': [], 'requests': []};
+var MAXZOOM = 17;
 
 function currBase() {
     if (window._currBase === undefined) {
@@ -89,14 +90,14 @@ function nextBase() {
     var base = providerData[providers[window._currBase]];
     var baseLayer = L.tileLayer(base.tile, {
 	attribution: base.attr,
-	maxZoom: 19
+	maxZoom: MAXZOOM
     });
 
     window._currBase = (currBase() + 1 ) % (providers.length);
     base = providerData[providers[window._currBase]];
     var newbaseLayer = L.tileLayer(base.tile, {
 	attribution: base.attr,
-	maxZoom: 19
+	maxZoom: MAXZOOM
     });
     var baseMaps = {
 	"Street map": newbaseLayer
@@ -335,7 +336,7 @@ function build_map(gj, extent, OoI) {
     var base = providerData[providers[currBase()]];
     var baseLayer = L.tileLayer(base.tile, {
 	attribution: base.attr,
-	maxZoom: 19
+	maxZoom: MAXZOOM
     });
     var baseMaps = {
 	"Street map": baseLayer

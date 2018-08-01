@@ -778,9 +778,10 @@ def get_closest_to(request, *args, **kwargs):
                     'crosssection_graph', kwargs=dict(
                         organization_id=organization.id,
                         location_id=loc.id))
-            lhtml = render_to_string('lizard_progress/measurement_types/metfile.html',
+            lhtml = render_to_string('lizard_progress/measurement_types/metfile_newmap.html',
                                      {'image_graph_url': 'xsecimage?loc_id={}'.format(loc.id),
                                       'location': loc,
+                                      'measurements': loc.measurement_set.all().count(),
                                       'title': loc.location_code + ' ' + loc.activity.name,
                                       'multiple_projects_graph_url': multiple_projects_graph_url})
             tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' +

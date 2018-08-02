@@ -293,7 +293,7 @@ CONFIG_OPTIONS = {
             'Als deze optie aan staat, worden kolken die niet in eigendom '
             'zijn niet meegeteld in statistieken en anders getoond op '
             'de kaart.'
-            ),
+        ),
         type='boolean',
         default=False,
         only_for_error=None,

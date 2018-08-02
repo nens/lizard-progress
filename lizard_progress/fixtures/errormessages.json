@@ -405,7 +405,6 @@
             "error_message": "Locatie bevindt zich te ver van geplande meetpunt ({m}m, maximum is {maxm}m in evenwijdige richting)."
         },
         "model": "lizard_progress.errormessage",
-        "pk": 50
+        "pk": 51
     }
-
 ]

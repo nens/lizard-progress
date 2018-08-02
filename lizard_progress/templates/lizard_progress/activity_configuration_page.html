@@ -29,13 +29,6 @@
                                 <th>Waarde</th>
                             </thead>
                             {% for option, current_value in view.config_options %}
-			    {# A dirty hack to make the new distance control available to HDSR members only #}
-			    {% if view.organization.name != "HDSR" and 'evenwijdig' in option.long_description or view.organization.name != "HDSR" and 'loodrecht' in option.long_description %}
-
-			    {# continue #}
-
-			    {% else %}
-
 			    <tr>
                                     <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
                                     <td>
@@ -57,7 +50,6 @@
                                         {% endif %}
                                     </td>
                             </tr>
-			    {% endif %}
                             {% endfor %}
                         </table>
                         <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">

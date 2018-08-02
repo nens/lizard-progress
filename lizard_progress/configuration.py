@@ -175,7 +175,7 @@ CONFIG_OPTIONS = {
     ),
     'maximum_location_distance_use_2components': Option(
         option='maximum_location_distance_use_2components',
-        short_description='Gebruik nieuwe afstandscontrole',
+        short_description='Gebruik afstandscontrole opgesplitst in twee componenten',
         long_description='''Controle voor afstand tussen geplande en gemeten middelpunt opsplitsen in twee componenten
         (loodrecht en langsrichting)''',
         type='boolean',

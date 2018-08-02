@@ -394,7 +394,7 @@
     {
         "fields": {
             "error_code": "TOO_FAR_FROM_LOCATION_ORTHOGONAL",
-            "error_message": "Locatie bevindt zich te ver van geplande meetprofiel (loodrecht op het profiel)."
+            "error_message": "Locatie bevindt zich te ver van geplande meetprofiel (loodrecht)."
         },
         "model": "lizard_progress.errormessage",
         "pk": 50

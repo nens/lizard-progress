@@ -630,20 +630,23 @@ class InlineMapViewNew(View):
                 q = """select json_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'old_geometry', ST_AsGeoJSON(ST_Transform(lold.the_geom, 4326))::json,
                 'properties', json_build_object(
                 'type', 'request',
                 'id', cr.id,
                 'req_id', cr.id,
                 'req_type', cr.request_type,
-                'loc_type', l.location_type,
-                'loc_id', l.id,
+                'loc_type', lnew.location_type,
+                'loc_id', lnew.id,
                 'code', cr.location_code,
+                'old_code', cr.old_location_code,
                 'motivation', cr.motivation,
                 'status', cr.request_status
                 )) as features
                 from changerequests_request cr
                 inner join lizard_progress_activity a on cr.activity_id = a.id
-                inner join lizard_progress_location l on cr.location_code = l.location_code
+                inner join lizard_progress_location lnew on cr.location_code = lnew.location_code
+                left join lizard_progress_location lold on cr.old_location_code = lold.location_code
                 where cr.id = {}"""\
                     .format(self.kwargs.get('change_request', -1))
 

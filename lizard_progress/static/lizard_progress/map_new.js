@@ -77,6 +77,7 @@ var currBounds = [[],[]];
 var dynamicLegendColors = {'locations': [], 'requests': []};
 var dynamicLegend = {'locations': [], 'requests': []};
 var MAXZOOM = 19;
+var globalDummyArr = [];
 
 function currBase() {
     if (window._currBase === undefined) {
@@ -364,14 +365,22 @@ function build_map(gj, extent, OoI) {
     var geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
-		var c = L.circle([latlng['lat'], latlng['lng']], {radius:2});
-		return c;
-	    } else {
-		/* Displace change requests slightly since they might be covered by other markers.
+		/* Displace locations slightly depending on their activity.
 		   It's ok as long as the displacement is << object size.
 		   5e-7 lat/lng deg is approx 5.6 cm. */ 
-		var c = L.circle([latlng['lat'], latlng['lng']], {radius:3}).addTo(mymap);
-		var r = L.rectangle(c.getBounds());
+		if (globalDummyArr.indexOf(feature.properties.activity) < 0) {
+		    globalDummyArr.push(feature.properties.activity);
+		}
+		idx = globalDummyArr.indexOf(feature.properties.activity);
+		var c = L.circle([latlng['lat'] + idx*2e-6,
+				  latlng['lng'] + idx*2e-6],
+				 {radius: 2});
+		return c;
+	    } else {
+		var c = L.circle([latlng['lat'], latlng['lng']],
+				 {radius:3}).addTo(mymap);
+		var r = L.rectangle(c.getBounds(),
+				    {stroke:true, opacity: 0.4, fillOpacity: 0.4, weight: 2, lineJoin: 'round'});
 		mymap.removeLayer(c);
 		return r;
 	    }		
@@ -380,7 +389,10 @@ function build_map(gj, extent, OoI) {
 	    var dummy = featureColor(feature);
 	    var color = dummy[0];
 	    var opacity = dummy[1];
-	    return {color: color,
+	    return {stroke:true,
+		    weight:2,
+		    lineJoin: 'round',
+		    color: color,
 		    fillColor: color,
 		    opacity: opacity,
 		    fillOpacity: opacity};

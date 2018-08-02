@@ -166,7 +166,7 @@ CONFIG_OPTIONS = {
     'maximum_location_distance': Option(
         option='maximum_location_distance',
         short_description='Maximum afstand tot geplande meetlocatie, middelpunten (m)',
-        long_description='Maximale afstand tussen het middelpung geplande profiel en middelpunt gemeten profiel',
+        long_description='Maximale afstand tussen het middelpunt geplande profiel en middelpunt gemeten profiel',
         type='float',
         default='10',
         only_for_error='TOO_FAR_FROM_LOCATION',
@@ -175,8 +175,9 @@ CONFIG_OPTIONS = {
     ),
     'maximum_location_distance_use_2components': Option(
         option='maximum_location_distance_use_2components',
-        short_description='Gebruik 2-componenten-afstandscontrole',
-        long_description='Afstand tussen gepland en gemeten opsplitsen in twee componenten (loodrecht/evenwijdig)',
+        short_description='Gebruik nieuwe afstandscontrole',
+        long_description='''Controle voor afstand tussen geplande en gemeten middelpunt opsplitsen in twee componenten
+        (loodrecht en langsrichting)''',
         type='boolean',
         default='',
         only_for_error=None,
@@ -185,8 +186,9 @@ CONFIG_OPTIONS = {
     ),
     'maximum_location_distance_parallel': Option(
         option='maximum_location_distance_parallel',
-        short_description='Maximum afstand tot geplande meetlocatie, evenwijdig (m)',
-        long_description='Maximale afstand evenwijdig tot het geplande profiel',
+        short_description='Maximum afstand tot geplande meetlocatie, langsrichting (m)',
+        long_description='''Maximale afstand van middelpunt gemeten profiel tot het geplande middelpunt,
+        gemeten in de langsrichting''',
         type='float',
         default='5',
         only_for_error='TOO_FAR_FROM_LOCATION_PARALLEL',
@@ -196,7 +198,8 @@ CONFIG_OPTIONS = {
     'maximum_location_distance_orthogonal': Option(
         option='maximum_location_distance_orthogonal',
         short_description='Maximum afstand tot geplande meetlocatie, loodrecht (m)',
-        long_description='Maximale  afstand loodrecht tot het geplande profiel',
+        long_description='''Maximale afstand van middelpunt gemeten profiel tot het geplande profiel,
+        gemeten loodrecht op het profiel''',
         type='float',
         default='5',
         only_for_error='TOO_FAR_FROM_LOCATION_ORTHOGONAL',

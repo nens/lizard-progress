@@ -513,7 +513,7 @@ class MetParser(specifics.ProgressParser):
             if dist_parallel > max_dist_parallel:
                 self.record_error_code(
                     line_number=profile.line_number,
-                    error_code="TOO_FAR_FROM_LOCATION_PARALLEL",
+                    error_code="TOO_FAR_FROM_LOCATION_PARA",
                     location_id=profile.id,
                     x=location.the_geom.x, y=location.the_geom.y,
                     m=dist_parallel, maxm=max_dist_parallel, recovery={
@@ -526,7 +526,7 @@ class MetParser(specifics.ProgressParser):
             if dist_orthogonal > max_dist_orthogonal:
                 self.record_error_code(
                     line_number=profile.line_number,
-                    error_code="TOO_FAR_FROM_LOCATION_ORTHOGONAL",
+                    error_code="TOO_FAR_FROM_LOCATION_ORTHO",
                     location_id=profile.id,
                     x=location.the_geom.x, y=location.the_geom.y,
                     m=dist_orthogonal, maxm=max_dist_orthogonal, recovery={

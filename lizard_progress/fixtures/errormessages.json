@@ -393,7 +393,7 @@
     },
     {
         "fields": {
-            "error_code": "TOO_FAR_FROM_LOCATION_ORTHOGONAL",
+            "error_code": "TOO_FAR_FROM_LOCATION_ORTHO",
             "error_message": "Locatie bevindt zich te ver van geplande meetprofiel (loodrecht)."
         },
         "model": "lizard_progress.errormessage",
@@ -401,7 +401,7 @@
     },
     {
         "fields": {
-            "error_code": "TOO_FAR_FROM_LOCATION_PARALLEL",
+            "error_code": "TOO_FAR_FROM_LOCATION_PARA",
             "error_message": "Locatie bevindt zich te ver van geplande meetpunt (langs het profiel)."
         },
         "model": "lizard_progress.errormessage",

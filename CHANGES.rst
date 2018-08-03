@@ -1,22 +1,10 @@
 Changelog of lizard-progress
 ===================================================
 
-4.2.5 (unreleased)
+4.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
-
-4.2.4 (2018-07-30)
-------------------
-
-- Hotfix connection.cursor for python 2.7 w/o DebugToolbar.
-
-
-4.2.3 (2018-07-30)
-------------------
-
-- Leaflet map.
+- 2-comp. distance control voor Dwarsprofiel.
 
 
 4.2.2 (2018-07-24)

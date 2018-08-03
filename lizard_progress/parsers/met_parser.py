@@ -501,7 +501,6 @@ class MetParser(specifics.ProgressParser):
                     })
         else:
             # New 2-component distance control
-
             # Project measured middlepoint onto the target profile
             projection = profile.line.project(location_point)
 
@@ -510,7 +509,15 @@ class MetParser(specifics.ProgressParser):
             max_dist_parallel = self.config_value('maximum_location_distance_parallel')
             max_dist_orthogonal = self.config_value('maximum_location_distance_orthogonal')
 
+            logger.debug('line: {} prof: {}'.format(profile.line_number, profile.id))
+            logger.debug('max para:  {}, max_ortho:  {}'.format(max_dist_parallel, max_dist_orthogonal))
+            logger.debug('meas para: {}, meas ortho: {}, meas dist: {}'
+                         .format(dist_parallel,
+                                 dist_orthogonal,
+                                 location_point.distance(mid_or_start_point)))
+
             if dist_parallel > max_dist_parallel:
+                logger.debug('PARALLEL EXCEEDED')
                 self.record_error_code(
                     line_number=profile.line_number,
                     error_code="TOO_FAR_FROM_LOCATION_PARA",
@@ -524,6 +531,7 @@ class MetParser(specifics.ProgressParser):
                     })
 
             if dist_orthogonal > max_dist_orthogonal:
+                logger.debug('ORTHO EXCEEDED')
                 self.record_error_code(
                     line_number=profile.line_number,
                     error_code="TOO_FAR_FROM_LOCATION_ORTHO",

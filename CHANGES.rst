@@ -33,8 +33,6 @@ Changelog of lizard-progress
 
 - Autoreview.
 
-- Leaflet map.
-
 - Avoid running calc_progress in projectreview view, show reviewproject.progress instead.
 
 - Disable Download reviews button if there are no reviews.

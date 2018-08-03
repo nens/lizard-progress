@@ -21,7 +21,6 @@ from lizard_progress.views import DownloadView
 from lizard_progress.views import DownloadDocumentsView
 from lizard_progress.views import DownloadOrganizationDocumentView
 from lizard_progress.views import InlineMapView
-from lizard_progress.views import InlineMapViewNew
 from lizard_progress.views import MapView
 from lizard_progress.views import ProjectsView
 from lizard_progress.views import UploadDialogView
@@ -108,31 +107,15 @@ activity_urls = [
 project_urls = [
     # Kaartlagen view
     url('^map/$', login_required(InlineMapView.as_view()),
-        name='lizard_progress_inlinemapview'),
-
-    # NEW MAP
-    url('^map_new/$', login_required(InlineMapViewNew.as_view()),
-        name='lizard_progress_inlinemapview_new'),
-
-    url('^map_new/.*get_closest_to.*$', login_required(views.get_closest_to),
-        name='lizard_progress_get_closest_to'),
-
-    url('^map_new/xsecimage.*$', login_required(views.xsecimage),
-        name='lizard_progress_xsecimage'),
-
-    url('^map_new/location_code/(?P<location_code>[^/]+)/$',
-        login_required(InlineMapViewNew.as_view()),
-        name='lizard_progress_mapview_location_code'),
-    url('^map_new/change_request/(?P<change_request>[^/]+)/$',
-        login_required(InlineMapViewNew.as_view()),
-        name='lizard_progress_newmap_change_request'),
-    # END NEW MAP
-    
+        name='lizard_progress_inlinemapview'),    
     url('^mapinline/$', login_required(MapView.as_view()),
         name='lizard_progress_mapview'),
     url('^map/change_request/(?P<change_request>[^/]+)/$',
         login_required(InlineMapView.as_view()),
         name='lizard_progress_mapview_change_request'),
+    url('^map/location_code/(?P<location_code>[^/]+)/$',
+        login_required(InlineMapView.as_view()),
+        name='lizard_progress_mapview_location_code'),
     # Dashboard page
     url('^dashboard/$', login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),

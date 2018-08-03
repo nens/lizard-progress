@@ -37,9 +37,6 @@ Dashboard will show in 3 columns width, while the others will have a 1 column wi
 	      <li>
 	        <a href="{% url "lizard_progress_inlinemapview" view.project.slug %}"><i class="fa fa-lg fa-globe"></i> &nbsp; kaart</a>
 	      </li>
-	      <li>
-	        <a href="{% url "lizard_progress_inlinemapview_new" view.project.slug %}"><i class="fa fa-lg fa-globe"></i> &nbsp; kaart (nieuw)</a>
-	      </li>
 <!-- 	      <li>
 	        <a href="#"><i class="fa fa-lg fa-share"></i> &nbsp; exporteren</a>
 	      </li> -->
@@ -82,27 +79,16 @@ Dashboard will show in 3 columns width, while the others will have a 1 column wi
           </a>
         </li>
         {% endif %}
-
-        <li data-toggle="tooltip" data-placement="left" title="Kaart">
-          <a
-          {% if active == 'map' %}
-          class="active"
-          {% endif %}
-          href="{% url "lizard_progress_inlinemapview" view.project.slug %}">
-            <i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart</span>
-          </a>
-        </li>
-
-        <li data-toggle="tooltip" data-placement="left" title="Kaart (nieuw)">
-          <a
-          {% if active == 'map_new' %}
-          class="active"
-          {% endif %}
-          href="{% url "lizard_progress_inlinemapview_new" view.project.slug %}">
-            <i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart</span>
-          </a>
-        </li>
-
+	      <li data-toggle="tooltip" data-placement="left" title="Kaart">
+	        <a 
+	        {% if active == 'map' %}
+	        	class="active" 
+	        {% endif %}        
+	        	href="{% url "lizard_progress_inlinemapview" view.project.slug %}">
+	        	<i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart</span>
+	        </a>
+	        
+	      </li>
 	    </ul>
 	  </nav>
 	</div>

@@ -607,7 +607,7 @@ class InlineMapViewNew(View):
                 'req_type', cr.request_type,
                 'loc_type', l.location_type,
                 'loc_id', l.id,
-                'loc_geom', l.the_geom,
+                'loc_geom', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
                 'code', cr.location_code,
                 'motivation', cr.motivation,
                 'status', cr.request_status
@@ -622,7 +622,33 @@ class InlineMapViewNew(View):
 
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
-                layers['Aanvragen'] = geojson.FeatureCollection(features)
+
+                # Add source/target location for 'move location' requests:
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
+                'properties', json_build_object(
+                'type', 'request',
+                'id', cr.id,
+                'req_id', cr.id,
+                'req_type', cr.request_type,
+                'loc_type', l.location_type,
+                'loc_id', l.id,
+                'cr_geom', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'code', cr.location_code,
+                'motivation', cr.motivation,
+                'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                inner join lizard_progress_location l on cr.location_code = l.location_code
+                where cr.activity_id in ({0})
+                and l.activity_id in ({0})"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                features2 = [json.loads(r[0]) for r in cursor.fetchall()]
+                layers['Aanvragen'] = geojson.FeatureCollection(features + features2)
 
             # If called from a ChangeReq page (Toon op kaart - link),
             # then pass the change request info

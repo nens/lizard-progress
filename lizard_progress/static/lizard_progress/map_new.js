@@ -10,7 +10,7 @@ var locStatuses = {
 };
 
 var reqStatuses = {
-    1: {status: 'Open', color: 'blue', opacity: 0.4},
+    1: {status: 'Open', color: 'deepskyblue', opacity: 0.4},
     2: {status: 'Geaccepteerd', color: 'green', opacity: 0.4},
     3: {status: 'Geweigerd', color: 'DarkOrchid', opacity: 0.4},
     4: {status: 'Ingetrokken', color: 'DarkOrchid', opacity: 0.4},
@@ -290,8 +290,21 @@ function featureColor(feat){
     }
     if (feat.properties.type == 'request') {
 	color = reqStatuses[feat.properties.status].color;
+	legendColor = color;
 	opacity = reqStatuses[feat.properties.status].opacity;
-	if (dynamicLegendColors['requests'].indexOf(color) < 0) {dynamicLegendColors['requests'].push(color); }
+	/* - if type is 2 (move location) and status is not 2 (accepted),
+	   then color it as new,
+	   - if type is 2 (move location) and status is 2 (accepted),
+	   then color it as old 
+	*/
+	if (feat.properties.req_type == 2) {
+	    if (feat.properties.status == 2) {
+		/* not sure if should implement */;
+	    } else {
+		;
+	    }
+	}
+	if (dynamicLegendColors['requests'].indexOf(legendColor) < 0) {dynamicLegendColors['requests'].push(legendColor); }
     }
     return [color, opacity];
 }

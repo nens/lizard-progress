@@ -40,10 +40,10 @@ class PlottingData:
         self.date = date
 
         self.title = (
-            '\nDwarsprofiel {code},\nWerkzaamheid: {activity}, {date}'
+            'Dwarsprofiel {code}, werkzaamheid {activity}, {date}'
             .format(code=location.location_code,
                     activity=location.activity,
-                    date=date.strftime("%Y-%m-%d")))
+                    date=date.strftime("%d/%m/%y")))
 
         (self.baseline, self.left,
          self.right, self.waterlevel) = self.find_base_line(data)
@@ -114,7 +114,7 @@ def graph(location, measurements):
     data = [PlottingData(m.data, m.location, m.date) for m in measurements]
     from lizard_progress.views import ScreenFigure
     if len(data) == 1:
-        fig = ScreenFigure(600, 300)
+        fig = ScreenFigure(525, 300)
         ax = fig.add_subplot(111)
         d = data[0]
         ax.set_title(d.title)
@@ -135,7 +135,7 @@ def graph(location, measurements):
         colors = get_colors(len(data))
         ax.set_title(
             'Dwarsprofielen binnen {distance}m van locatie {code} '
-            '\nin {activity}'
+            'in {activity}'
             .format(
                 distance=models.Location.CLOSE_BY_DISTANCE,
                 code=location.location_code,

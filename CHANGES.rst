@@ -1,13 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.2.5 (unreleased)
-------------------
-
-- Nothing changed yet.
-
-
-4.2.4 (2018-07-30)
+4.2.4 (unreleased)
 ------------------
 
 - Nothing changed yet.

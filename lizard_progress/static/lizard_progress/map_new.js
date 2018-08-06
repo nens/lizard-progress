@@ -1,20 +1,20 @@
 var locStatuses = {
-    'complete': {status: 'Compleet', color: 'limegreen', opacity: 0.4},
-    'incomplete': {status: 'Niet (geheel) aanwezig en niet gepland', color: 'red', opacity: 1},
-    'sched_incomplete': {status: 'Gepland, nog niet compleet', color: 'black', opacity: 0.02},
-    'overdue': {status: 'Gepland, niet compleet en\n planningsdatum verstreken', color: 'gold', opacity: 1},
-    'notproject': {status: 'Geen onderdeel van werkzaamheden', color: 'gray', opacity: 0.02},
-    'auto_new': {status: 'Nieuw object (automatisch toegevoegd)', color: 'MediumPurple', opacity: 0.02},
-    'auto_skipped': {status: 'Niet behandeld (automatisch toegevoegd)', color: 'brown', opacity: 0.02},
+    'complete': {status: 'Compleet', color: 'limegreen', opacity: 0.75},
+    'incomplete': {status: 'Niet (geheel) aanwezig en niet gepland', color: 'red', opacity: 0.75},
+    'sched_incomplete': {status: 'Gepland, nog niet compleet', color: 'black', opacity: 0.75},
+    'overdue': {status: 'Gepland, niet compleet en\n planningsdatum verstreken', color: 'gold', opacity: 0.75},
+    'notproject': {status: 'Geen onderdeel van werkzaamheden', color: 'gray', opacity: 0.75},
+    'auto_new': {status: 'Nieuw object (automatisch toegevoegd)', color: 'MediumPurple', opacity: 0.75},
+    'auto_skipped': {status: 'Niet behandeld (automatisch toegevoegd)', color: 'brown', opacity: 0.75},
     'unknown': {status: 'Onbekend', color: 'fuchsia', opacity: 0.6}
 };
 
 var reqStatuses = {
-    1: {status: 'Open', color: 'deepskyblue', opacity: 0.4},
-    2: {status: 'Geaccepteerd', color: 'green', opacity: 0.4},
-    3: {status: 'Geweigerd', color: 'DarkOrchid', opacity: 0.4},
-    4: {status: 'Ingetrokken', color: 'DarkOrchid', opacity: 0.4},
-    5: {status: 'Ongeldig', color: 'DarkOrchid', opacity: 0.4}
+    1: {status: 'Open', color: 'blue', altColor: 'darkblue', opacity: 0.75},
+    2: {status: 'Geaccepteerd', color: 'green', altColor: 'darkgreen', opacity: 0.75},
+    3: {status: 'Geweigerd', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
+    4: {status: 'Ingetrokken', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
+    5: {status: 'Ongeldig', color: 'lightpink', altColor: 'deeppink', opacity: 0.75}
 };
 
 var locTypes = {
@@ -27,7 +27,7 @@ var locTypes = {
 var reqTypes = {
     1: 'Locatiecode verwijderen',
     2: 'Locatie verplaatsen',
-    3: 'Niewe locatiecode'
+    3: 'Nieuwe locatiecode'
 };
 
 var providers = ['osm', 'cartolight', 'stamen.tonerlite',
@@ -279,7 +279,8 @@ function calcLocationStatus(feat) {
 function featureColor(feat){
 
     var color = 'orange';
-    var opacity = 0.2;
+    var opacity = 0.75;
+    var fillOpacity = opacity;
     var now = Date.now();    
     
     if (feat.properties.type == 'location') {
@@ -290,23 +291,25 @@ function featureColor(feat){
     }
     if (feat.properties.type == 'request') {
 	color = reqStatuses[feat.properties.status].color;
-	legendColor = color;
 	opacity = reqStatuses[feat.properties.status].opacity;
-	/* - if type is 2 (move location) and status is not 2 (accepted),
-	   then color it as new,
-	   - if type is 2 (move location) and status is 2 (accepted),
-	   then color it as old 
-	*/
+
 	if (feat.properties.req_type == 2) {
+	    console.log(feat.properties.req_type, feat.properties.status);
 	    if (feat.properties.status == 2) {
-		/* not sure if should implement */;
+		/* accepted move req => geometry is 'old' geometry */
+		color = reqStatuses[feat.properties.status].altColor;
+	    } else if (feat.properties.oldnew == 'old'){
+		color = reqStatuses[feat.properties.status].altColor;
+		fillOpacity = 0;
 	    } else {
-		;
+		/* not accepted move req => geometry is 'new' geometry */
+		color = reqStatuses[feat.properties.status].color;
 	    }
 	}
+	legendColor = color;
 	if (dynamicLegendColors['requests'].indexOf(legendColor) < 0) {dynamicLegendColors['requests'].push(legendColor); }
     }
-    return [color, opacity];
+    return [color, opacity, fillOpacity];
 }
 function isEmpty(ob){
    for(var i in ob){ return false;}
@@ -392,8 +395,7 @@ function build_map(gj, extent, OoI) {
 	    } else {
 		var c = L.circle([latlng['lat'], latlng['lng']],
 				 {radius:3}).addTo(mymap);
-		var r = L.rectangle(c.getBounds(),
-				    {stroke:true, opacity: 0.4, fillOpacity: 0.4, weight: 2, lineJoin: 'round'});
+		var r = L.rectangle(c.getBounds(), {stroke:true, weight: 2, lineJoin: 'round'});
 		mymap.removeLayer(c);
 		return r;
 	    }		
@@ -402,13 +404,24 @@ function build_map(gj, extent, OoI) {
 	    var dummy = featureColor(feature);
 	    var color = dummy[0];
 	    var opacity = dummy[1];
-	    return {stroke:true,
-		    weight:2,
-		    lineJoin: 'round',
-		    color: color,
-		    fillColor: color,
-		    opacity: opacity,
-		    fillOpacity: opacity};
+	    var fillOpacity = dummy[2];
+	    if (feature.properties.type == 'location') {
+		return {stroke:true,
+			weight:2,
+			lineJoin: 'round',
+			color: color,
+			fillColor: color,
+			opacity: opacity,
+			fillOpacity: fillOpacity};
+	    } else {
+		return {stroke:true,
+			weight:3,
+			lineJoin: 'round',
+			color: color,
+			fillColor: color,
+			opacity: opacity,
+			fillOpacity: fillOpacity};
+	    }
 	},
 	onEachFeature: function(feature, layer){
 	    /* Feature contain essential information only (location code, location type).
@@ -493,10 +506,10 @@ function build_map(gj, extent, OoI) {
 	}
 	
 	div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[1].color +';">&#9632;</span><strong> Open</strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[2].color +';">&#9632;</span><strong> Geaccepteerd</strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[3].color +';">&#9632;</span><strong> Geweigerd / ingetrokken / ongeldig</strong><br>';
-	
+	div.innerHTML += '<span style="color:' + reqStatuses[1].color +';">&#9632;/&#9633;</span><strong> Open (nieuw / oud)</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatuses[2].color +';">&#9632;/&#9633;</span><strong> Geaccepteerd (nieuw / oud)</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatuses[3].color +';">&#9632;/&#9633;</span><strong> Geweigerd, ingetrokken of ongeldig (nieuw / oud)</strong><br>';
+
 	return div;
     };
     legend.addTo(mymap);
@@ -557,9 +570,10 @@ function build_map(gj, extent, OoI) {
 
 	/* find max tab height and use it as fixed popup height */
 	popup = L.popup({'minWidth': 650,
-				'maxHeight': 500,
-				'autoClose': true,
-				'autoPan': true})
+			 'maxHeight': 500,
+			 'autoClose': true,
+			 'autoPan': true,
+			 'opacity': 0.8})
 	    .setLatLng(data.latlng[0])
 	    .setContent(html)
 	    .openOn(mymap);

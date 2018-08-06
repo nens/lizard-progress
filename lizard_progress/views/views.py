@@ -30,7 +30,6 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
@@ -61,7 +60,6 @@ from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
 from lizard_progress.models import has_access_reviewproject
 from lizard_progress.models import Activity
-from lizard_progress.models import UploadLog
 from lizard_progress.models import UserProfile
 from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.util import directories
@@ -567,56 +565,61 @@ class InlineMapViewNew(View):
         layers = {}
 
         with connection.cursor() as cursor:
-            # Activities
+            # Activities (Locations)
             for a in activities:
                 q = """select json_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
                 'properties', json_build_object(
-                'type', 'location',
-                'id', l.id,
-                'loc_id', l.id,
-                'code', l.location_code,
-                'activity', a.name,
-                'contractor', o.name,
-                'loc_type', l.location_type,
-                'planned_date', l.planned_date,
-                'complete', l.complete,
-                'measured_date', l.measured_date,
-                'work_impossible', l.work_impossible,
-                'not_part_of_project', l.not_part_of_project,
-                'new', l.new
+                  'type', 'location',
+                  'id', l.id,
+                  'loc_id', l.id,
+                  'code', l.location_code,
+                  'activity', a.name,
+                  'contractor', o.name,
+                  'loc_type', l.location_type,
+                  'planned_date', l.planned_date,
+                  'complete', l.complete,
+                  'measured_date', l.measured_date,
+                  'work_impossible', l.work_impossible,
+                  'not_part_of_project', l.not_part_of_project,
+                  'new', l.new,
+                  'cr_type', cr.request_type,
+                  'cr_status', cr.request_status
                 )) as features
                 from public.lizard_progress_location l
                 inner join lizard_progress_activity a on a.id = l.activity_id
                 inner join lizard_progress_organization o on o.id = a.contractor_id
+                left join changerequests_request cr on cr.location_code = l.location_code and cr.activity_id=l.activity_id
                 where l.the_geom is not null and l.activity_id = {}""".format(str(a.id))
 
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
                 layers[a.name] = geojson.FeatureCollection(features)
 
+            # Change Requests
             for cr in chreqs:
                 q = """select json_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
                 'properties', json_build_object(
-                'type', 'request',
-                'id', cr.id,
-                'req_id', cr.id,
-                'req_type', cr.request_type,
-                'loc_type', l.location_type,
-                'loc_id', l.id,
-                'loc_geom', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
-                'code', cr.location_code,
-                'motivation', cr.motivation,
-                'status', cr.request_status
+                  'cr_RDgeom', cr.the_geom,
+                  'type', 'request',
+                  'id', cr.id,
+                  'req_id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', l.location_type,
+                  'loc_id', l.id,
+                  'loc_geom', ST_AsGeoJSON(ST_Transform(l.the_geom, 28992))::json,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
                 )) as features
                 from changerequests_request cr
                 inner join lizard_progress_activity a on cr.activity_id = a.id
-                inner join lizard_progress_location l on cr.location_code = l.location_code
+                left join lizard_progress_location l on cr.location_code = l.location_code and cr.activity_id = l.activity_id
                 where cr.activity_id in ({0})
-                and l.activity_id in ({0})"""\
+                and cr.activity_id in ({0})"""\
                     .format(
                     ', '.join(map(str, activities.values_list('id', flat=True))))
 
@@ -628,26 +631,30 @@ class InlineMapViewNew(View):
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
                 'properties', json_build_object(
-                'type', 'request',
-                'id', cr.id,
-                'req_id', cr.id,
-                'req_type', cr.request_type,
-                'loc_type', l.location_type,
-                'loc_id', l.id,
-                'cr_geom', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
-                'code', cr.location_code,
-                'motivation', cr.motivation,
-                'status', cr.request_status
+                  'type', 'request',
+                  'oldnew', 'old',
+                  'id', cr.id,
+                  'req_id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', l.location_type,
+                  'loc_id', l.id,
+                  'cr_geom', ST_AsGeoJSON(ST_Transform(cr.the_geom, 26910))::json,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
                 )) as features
                 from changerequests_request cr
-                inner join lizard_progress_location l on cr.location_code = l.location_code
+                inner join lizard_progress_location l on cr.location_code = l.location_code and l.activity_id = cr.activity_id
                 where cr.activity_id in ({0})
-                and l.activity_id in ({0})"""\
+                and l.activity_id in ({0})
+                and cr.request_type = 2
+                and not ST_Equals(l.the_geom, cr.the_geom)"""\
                     .format(
                     ', '.join(map(str, activities.values_list('id', flat=True))))
 
                 cursor.execute(q)
                 features2 = [json.loads(r[0]) for r in cursor.fetchall()]
+
                 layers['Aanvragen'] = geojson.FeatureCollection(features + features2)
 
             # If called from a ChangeReq page (Toon op kaart - link),
@@ -656,7 +663,6 @@ class InlineMapViewNew(View):
                 q = """select json_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
-                'old_geometry', ST_AsGeoJSON(ST_Transform(lold.the_geom, 4326))::json,
                 'properties', json_build_object(
                 'type', 'request',
                 'id', cr.id,
@@ -833,7 +839,7 @@ def get_closest_to(request, *args, **kwargs):
         latlng.append([g.coords[1], g.coords[0]])
         html.append(
             render_to_string(
-                'changerequests/detail_popup.html',
+                'changerequests/detail_popup_newmap.html',
                 {'cr': cr},
                 context_instance=RequestContext(
                     request,

@@ -90,6 +90,14 @@ Dashboard will show in 3 columns width, while the others will have a 1 column wi
 	        	href="{% url "lizard_progress_inlinemapview" view.project.slug %}">
 	        	<i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart</span>
 	        </a>
+		<li data-toggle="tooltip" data-placement="left" title="Kaart (nieuw)">
+	        <a 
+	            {% if active == 'new_map' %}
+	            class="active" 
+	            {% endif %}        
+	            href="{% url "lizard_progress_inlinemapview_new" view.project.slug %}">
+	            <i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart (nieuw)</span>
+	        </a>
 	        
 	      </li>
 	    </ul>

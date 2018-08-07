@@ -46,3 +46,8 @@
 .info {
     font-size:120%; 
 }
+span.colored-line {
+    display: inline-block;
+    height: 2px;
+    width: 20px;
+}

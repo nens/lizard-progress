@@ -26,7 +26,7 @@ var reqTypes = {
 var reqStatuses = {
     1: {status: 'Open', color: 'skyblue', altColor: 'darkblue', opacity: 0.75},
     2: {status: 'Geaccepteerd', color: 'green', altColor: 'darkgreen', opacity: 0.75},
-    3: {status: 'Geweigerd', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
+    3: {status: 'Geweigerd, ingetrokken of ongeldig', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
     4: {status: 'Ingetrokken', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
     5: {status: 'Ongeldig', color: 'lightpink', altColor: 'deeppink', opacity: 0.75}
 };
@@ -411,7 +411,10 @@ function build_map(gj, extent, OoI) {
 			    fillOpacity = 0;
 			}
 		    }
-		    legendColor = color;
+		    
+		    legendColor = reqStatuses[feat.properties.status].color;
+		    /* for requests, collect colors rather than statusses, since rejected, cancelled and invalid 
+		       requests share color */
 		    if (dynamicLegendColors['requests'].indexOf(legendColor) < 0) {dynamicLegendColors['requests'].push(legendColor); }
 		}
 		return [color, opacity, fillOpacity];
@@ -499,15 +502,22 @@ function build_map(gj, extent, OoI) {
 	for (idx in dynamicLegend['locations']) {
 	    var s = dynamicLegend['locations'][idx];
 	    div.innerHTML +=
-		'<span style="color:' + locStatuses[s].color
-		+ ';">&#9679;</span><strong> ' + locStatuses[s].status + '</strong><br>';
+		'<span style="color:' + locStatuses[s].color + ';">&#9679;</span><strong>, </strong><span class="colored-line" style="background-color:'
+		+ locStatuses[s].color +'"></span><strong> ' + locStatuses[s].status + '</strong><br>';
 	}
-	
-	div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[1].color +';">&#9632;/&#9633;</span><strong> Open (nieuwe / oude locatie)</strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[2].color +';">&#9632;/&#9633;</span><strong> Geaccepteerd (nieuwe / oude locatie)</strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[3].color +';">&#9632;/&#9633;</span><strong> Geweigerd, ingetrokken of ongeldig (nieuwe / oude locatie)</strong><br>';
 
+	if (!isEmpty(dynamicLegendColors['requests'])) {
+	    div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
+
+	    for (var idx of [1,2,3]) {
+		if (dynamicLegendColors['requests'].indexOf(reqStatuses[idx].color) > -1) {
+		    div.innerHTML += '<strong>'
+			+ '<span style="color:'	+ reqStatuses[idx].color + ';">&#9632;</span>'
+			+ ','
+			+ '<span style="color:'	+ reqStatuses[idx].color + ';">&#9633;</span>'
+			+ ' ' + reqStatuses[idx].status + ' (nieuwe, oude locatie)</strong><br>';}
+	    }
+	}
 	return div;
     };
     legend.addTo(mymap);

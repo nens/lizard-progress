@@ -34,6 +34,7 @@ from django.shortcuts import get_object_or_404
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
+from django.utils.text import Truncator
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
 from django.views.decorators.csrf import csrf_exempt
@@ -944,7 +945,7 @@ def get_closest_to(request, *args, **kwargs):
 def xsecimage(request, *args, **kwargs):
 
     from . import crosssection_graph as xsgr
-
+    from lizard_progress.models import Measurement
     loc = Location.objects.get(id=request.GET.get('loc_id'))
     if Measurement.objects.filter(location=loc):
         canvas = xsgr.graph(loc, Measurement.objects.filter(location=loc))

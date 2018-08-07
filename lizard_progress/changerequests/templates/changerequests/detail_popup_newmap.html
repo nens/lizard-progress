@@ -12,13 +12,13 @@
   {# verplaatsing #}
   {% if cr.request_type == 2 %}
   <dt>Nieuwe co&ouml;rdinaten</dt>
-  <dd>({{ cr.the_geom.x }}, {{ cr.the_geom.y }})</dd>
+  <dd>({{ cr.the_geomRD.x }}, {{ cr.the_geomRD.y }})</dd>
   {% endif %}
 
   {# codewijziging #}
   {% if cr.request_type == 3 %}
   <dt>Co&ouml;rdinaten</dt>
-  <dd>({{ cr.the_geom.x }}, {{ cr.the_geom.y }})</dd>
+  <dd>({{ cr.the_geomRD.x}}, {{ cr.the_geomRD.y }})</dd>
   {% endif %}
 
   <dt>Werkzaamheid</dt>

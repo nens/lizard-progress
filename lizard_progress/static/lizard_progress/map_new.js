@@ -24,7 +24,7 @@ var reqTypes = {
 
 /* altColor will be used to mark moving requests' original locations */
 var reqStatuses = {
-    1: {status: 'Open', color: 'skyblue', altColor: 'darkblue', opacity: 0.75},
+    1: {status: 'Open', color: '#773c08', altColor: '#773c08', opacity: 0.75},
     2: {status: 'Geaccepteerd', color: 'green', altColor: 'darkgreen', opacity: 0.75},
     3: {status: 'Geweigerd, ingetrokken of ongeldig', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
     4: {status: 'Ingetrokken', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
@@ -401,9 +401,11 @@ function build_map(gj, extent, OoI) {
 		    if (dynamicLegend['locations'].indexOf(status) < 0) {dynamicLegend['locations'].push(status); }
 		}
 		if (feat.properties.type == 'request') {
+
 		    color = reqStatuses[feat.properties.status].color;
 		    opacity = reqStatuses[feat.properties.status].opacity;
-
+		    fillOpacity = opacity;
+		   
 		    /* process moving requests separately since they come pairwise (old/new) */
 		    if (feat.properties.req_type == 2) {
 			if (feat.properties.old == 1) {

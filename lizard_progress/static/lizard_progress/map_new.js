@@ -1,3 +1,10 @@
+var locTypes = {
+    'manhole':'Put',
+    'pipe':'Streng',
+    'drain':'Kolk',
+    'point': ''
+};
+
 var locStatuses = {
     'complete': {status: 'Compleet', color: 'limegreen', opacity: 0.75},
     'incomplete': {status: 'Niet (geheel) aanwezig en niet gepland', color: 'red', opacity: 0.75},
@@ -9,27 +16,22 @@ var locStatuses = {
     'unknown': {status: 'Onbekend', color: 'fuchsia', opacity: 0.6}
 };
 
-var reqStatuses = {
-    1: {status: 'Open', color: 'blue', altColor: 'darkblue', opacity: 0.75},
-    2: {status: 'Geaccepteerd', color: 'green', altColor: 'darkgreen', opacity: 0.75},
-    3: {status: 'Geweigerd', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
-    4: {status: 'Ingetrokken', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
-    5: {status: 'Ongeldig', color: 'lightpink', altColor: 'deeppink', opacity: 0.75}
-};
-
-var locTypes = {
-    'manhole':'Put',
-    'pipe':'Streng',
-    'drain':'Kolk',
-    'point': ''
-};
-
 var reqTypes = {
     1: 'Locatiecode verwijderen',
     2: 'Locatie verplaatsen',
     3: 'Nieuwe locatiecode'
 };
 
+/* altColor will be used to mark moving requests' original locations */
+var reqStatuses = {
+    1: {status: 'Open', color: 'skyblue', altColor: 'darkblue', opacity: 0.75},
+    2: {status: 'Geaccepteerd', color: 'green', altColor: 'darkgreen', opacity: 0.75},
+    3: {status: 'Geweigerd', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
+    4: {status: 'Ingetrokken', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
+    5: {status: 'Ongeldig', color: 'lightpink', altColor: 'deeppink', opacity: 0.75}
+};
+
+/* base map variants */
 var providers = ['osm', 'cartolight', 'stamen.tonerlite',
 		 'osmnolabels', 'nlmapspastel', 'nlmapsstandaard',
 		 'openmapserfer.grayscale'];
@@ -76,16 +78,17 @@ var mymap, popup;
 var currBounds = [[],[]];
 var dynamicLegendColors = {'locations': [], 'requests': []};
 var dynamicLegend = {'locations': [], 'requests': []};
-var MAXZOOM = 19;
+var MAXZOOM = 18;
 var globalDummyArr = [];
 
+/***/
+/* base map handlers */
 function currBase() {
     if (window._currBase === undefined) {
 	window._currBase = 0;
     }
     return window._currBase;
 }
-	
 function nextBase() {
     mymap.attributionControl._attributions = {};
     var base = providerData[providers[window._currBase]];
@@ -107,6 +110,8 @@ function nextBase() {
     newbaseLayer.addTo(mymap);
 }
 
+/***/
+/* tabbed popup functions */
 function reloadGraphs(max_image_width, callback, force) {
     // New Flot graphs
     $('.dynamic-graph').each(function () {
@@ -134,7 +139,6 @@ function openTab(evt, tab, lat, lng) {
     popup.setLatLng([lat, lng]);
     reloadGraphs();
 } 
-
 function reloadDynamicGraph($graph, callback, force) {
     // check if graph is already loaded
     if (force !== true && $graph.attr('data-graph-loaded')) return;
@@ -232,6 +236,8 @@ function reloadDynamicGraph($graph, callback, force) {
         });
     }
 }
+
+/* Get activated overlay names (will be used to limit the back-end search to active overlays only */
 function getActiveOverlayNames()
 {
     var arr = [];
@@ -241,6 +247,7 @@ function getActiveOverlayNames()
     return arr;
 }
 
+/* Based on various location properties, derive its status */
 function calcLocationStatus(feat) {
     var status = 'unknown';
     if (feat.properties.complete === true) {
@@ -276,46 +283,15 @@ function calcLocationStatus(feat) {
     return status;
 }
 
-function featureColor(feat){
-
-    var color = 'orange';
-    var opacity = 0.75;
-    var fillOpacity = opacity;
-    var now = Date.now();    
-    
-    if (feat.properties.type == 'location') {
-	var status = calcLocationStatus(feat);
-	color = locStatuses[status].color;
-	opacity = locStatuses[status].opacity;
-	if (dynamicLegend['locations'].indexOf(status) < 0) {dynamicLegend['locations'].push(status); }
-    }
-    if (feat.properties.type == 'request') {
-	color = reqStatuses[feat.properties.status].color;
-	opacity = reqStatuses[feat.properties.status].opacity;
-
-	if (feat.properties.req_type == 2) {
-	    console.log(feat.properties.req_type, feat.properties.status);
-	    if (feat.properties.status == 2) {
-		/* accepted move req => geometry is 'old' geometry */
-		color = reqStatuses[feat.properties.status].altColor;
-	    } else if (feat.properties.oldnew == 'old'){
-		color = reqStatuses[feat.properties.status].altColor;
-		fillOpacity = 0;
-	    } else {
-		/* not accepted move req => geometry is 'new' geometry */
-		color = reqStatuses[feat.properties.status].color;
-	    }
-	}
-	legendColor = color;
-	if (dynamicLegendColors['requests'].indexOf(legendColor) < 0) {dynamicLegendColors['requests'].push(legendColor); }
-    }
-    return [color, opacity, fillOpacity];
-}
+/* auxiliary function, check if array is empty */
 function isEmpty(ob){
-   for(var i in ob){ return false;}
-  return true;
+    for(var i in ob){
+	return false;
+    }
+    return true;
 }
 
+/* main function */
 function build_map(gj, extent, OoI) {
     var empty = false;
     if (isEmpty(gj) || isEmpty(extent)) {
@@ -323,15 +299,7 @@ function build_map(gj, extent, OoI) {
 	extent = {'top': 53, 'bottom': 51.5, 'left':4.5, 'right':4.9};
     }
 
-    function renderingOrderComparator(featA, featB){
-	return _orderingTable[featA.geometry.loc_type] - _orderingTable[featB.geometry.loc_type];
-    }
-
-    var overlayMaps = {};
-
-    function setCurrObjId(type, id){currType=type;currObjId=id;}
-    setCurrObjId('', '');
-    
+    /* create a leaflet map object */
     mymap = L.map('map_new', {
 	fullscreenControl: {
             pseudoFullscreen: true
@@ -351,6 +319,7 @@ function build_map(gj, extent, OoI) {
 	currBounds = mymap.getBounds();
     });
 
+    /* add base map */
     var base = providerData[providers[currBase()]];
     var baseLayer = L.tileLayer(base.tile, {
 	attribution: base.attr,
@@ -360,8 +329,10 @@ function build_map(gj, extent, OoI) {
 	"Street map": baseLayer
     };
     baseLayer.addTo(mymap);
+
     var scale = L.control.scale({imperial: false}).addTo(mymap);
 
+    /* if deojsonDoc is empty, show the 'no data' message */
     if (empty) {
 	var msg = L.control({position: 'bottomright'});
 	msg.onAdd = function (mymap) {
@@ -378,12 +349,26 @@ function build_map(gj, extent, OoI) {
 	return;
     }
 
+    /* keep object type and id of the recently clicked object (both global variables) */
+    function setCurrObjId(type, id){
+	currType = type;
+	currObjId = id;
+    }
+    setCurrObjId('', '');
+
+    function renderingOrderComparator(featA, featB){
+	return _orderingTable[featA.geometry.loc_type] - _orderingTable[featB.geometry.loc_type];
+    }
+
+    var overlayMaps = {};
+
+    /* leaflet overlay maps */
     var geojsonLayerOptions = {
 	pointToLayer: function(feature, latlng){
 	    if (feature.properties.type == 'location') {
 		/* Displace locations slightly depending on their activity.
 		   It's ok as long as the displacement is << object size.
-		   5e-7 lat/lng deg is approx 5.6 cm. */ 
+		   2e-6 lat/lng deg is approx 22 cm. */ 
 		if (globalDummyArr.indexOf(feature.properties.activity) < 0) {
 		    globalDummyArr.push(feature.properties.activity);
 		}
@@ -401,6 +386,36 @@ function build_map(gj, extent, OoI) {
 	    }		
 	},
 	style: function(feature) {
+	    /* Determine color and shape of the feature marker based on its type, status etc. */
+	    function featureColor(feat){
+		var color = 'orange';
+		var opacity = 1;
+		var fillOpacity = opacity;
+		var now = Date.now();    
+
+		if (feat.properties.type == 'location') {
+		    var status = calcLocationStatus(feat);
+		    color = locStatuses[status].color;
+		    opacity = locStatuses[status].opacity;
+		    /* color/status is to be added to the legend */
+		    if (dynamicLegend['locations'].indexOf(status) < 0) {dynamicLegend['locations'].push(status); }
+		}
+		if (feat.properties.type == 'request') {
+		    color = reqStatuses[feat.properties.status].color;
+		    opacity = reqStatuses[feat.properties.status].opacity;
+
+		    /* process moving requests separately since they come pairwise (old/new) */
+		    if (feat.properties.req_type == 2) {
+			if (feat.properties.old == 1) {
+			    color = reqStatuses[feat.properties.status].altColor;
+			    fillOpacity = 0;
+			}
+		    }
+		    legendColor = color;
+		    if (dynamicLegendColors['requests'].indexOf(legendColor) < 0) {dynamicLegendColors['requests'].push(legendColor); }
+		}
+		return [color, opacity, fillOpacity];
+	    }
 	    var dummy = featureColor(feature);
 	    var color = dummy[0];
 	    var opacity = dummy[1];
@@ -467,31 +482,14 @@ function build_map(gj, extent, OoI) {
 	var layer = L.geoJSON(geoJsonDocument, geojsonLayerOptions);
 	layer.addTo(mymap); /* show everything by default */
 	overlayMaps[activityName] = layer;
-	layer.bringToFront();
+	layer.bringToBack();
     }
-    
-    L.Control.Layers.include({
-	getActiveOverlays: function () {
-	    // Create array for holding active layers
-            var active = [];
-	    // Iterate all layers in control
-            this._layers.forEach(function (obj) {
-		// Check if it's an overlay and added to the map
-		if (obj.overlay && mymap.hasLayer(obj.layer)) {
-		    // Push layer to active array
-                    active.push(obj.layer);
-		}
-            });
-	    // Return array
-            return active;
-	}
-    });
 
-    /* Overlay Control */
+    /* Add Overlay Control */
     control = new L.control.layers([], overlayMaps, {position: 'topleft'}).addTo(mymap);
     $(".leaflet-control-layers-overlays").prepend("<label><u>Kaartlagen</u></label>");
     
-    /* Legend */
+    /* Create and add Legend */
     var legend = L.control({position: 'bottomright'});
     legend.onAdd = function (mymap) {
 	var div = L.DomUtil.create('div', 'info legend');
@@ -506,19 +504,21 @@ function build_map(gj, extent, OoI) {
 	}
 	
 	div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[1].color +';">&#9632;/&#9633;</span><strong> Open (nieuw / oud)</strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[2].color +';">&#9632;/&#9633;</span><strong> Geaccepteerd (nieuw / oud)</strong><br>';
-	div.innerHTML += '<span style="color:' + reqStatuses[3].color +';">&#9632;/&#9633;</span><strong> Geweigerd, ingetrokken of ongeldig (nieuw / oud)</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatuses[1].color +';">&#9632;/&#9633;</span><strong> Open (nieuwe / oude locatie)</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatuses[2].color +';">&#9632;/&#9633;</span><strong> Geaccepteerd (nieuwe / oude locatie)</strong><br>';
+	div.innerHTML += '<span style="color:' + reqStatuses[3].color +';">&#9632;/&#9633;</span><strong> Geweigerd, ingetrokken of ongeldig (nieuwe / oude locatie)</strong><br>';
 
 	return div;
     };
     legend.addTo(mymap);
-    
+
+    /* process the response after a click and show the popup with it */
     function show_dialog(latlng, data){
 	var html, i;
 
 	html = '';
 
+	/* Empty response: clicked too far from any location */
 	if (!('html' in data)) {
 	    popup = L.popup({'autoClose': true})
 		.setLatLng(latlng) //TODO has to be loc coordinates
@@ -526,7 +526,8 @@ function build_map(gj, extent, OoI) {
 		.openOn(mymap);
 	    return;
 	}
-	
+
+	/* response with data is an array with tabs (one tab per object)*/
 	if (data.html && data.html.length !== 0) {
             if (data.html.length === 1) {
 		html += data.html[0];
@@ -578,7 +579,10 @@ function build_map(gj, extent, OoI) {
 	    .setContent(html)
 	    .openOn(mymap);
 	reloadGraphs();
-    }    
+    }
+
+    /* click handler: get cursor coordinates and, if applicable, clicked object id and type,
+     send a request to search around the clicked point */
     function onMapClick(e) {
 	popup = L.popup().setLatLng(e.latlng);
 	if (!currObjId) {
@@ -605,6 +609,7 @@ function build_map(gj, extent, OoI) {
 
     mymap.on('click', onMapClick);
 
+    /* when called from a request page ('Bekijk op kaart'-link), show popup */
     if (OoI !== undefined) {
 	$.ajax({
 	    type: 'get',

@@ -583,79 +583,155 @@ class InlineMapViewNew(View):
                   'measured_date', l.measured_date,
                   'work_impossible', l.work_impossible,
                   'not_part_of_project', l.not_part_of_project,
-                  'new', l.new,
-                  'cr_type', cr.request_type,
-                  'cr_status', cr.request_status
+                  'new', l.new
                 )) as features
                 from public.lizard_progress_location l
                 inner join lizard_progress_activity a on a.id = l.activity_id
                 inner join lizard_progress_organization o on o.id = a.contractor_id
-                left join changerequests_request cr on cr.location_code = l.location_code and cr.activity_id=l.activity_id
                 where l.the_geom is not null and l.activity_id = {}""".format(str(a.id))
 
                 cursor.execute(q)
-                features = [json.loads(r[0]) for r in cursor.fetchall()]
-                layers[a.name] = geojson.FeatureCollection(features)
+                locfeatures = [json.loads(r[0]) for r in cursor.fetchall()]
+                layers[a.name] = geojson.FeatureCollection(locfeatures)
 
-            # Change Requests
+            # Change Requests. Moving requests will be collected separated since they
+            # should provide an additional old/new  location status
+            # TODO: dat kan waarschijnlijk eleganter
             for cr in chreqs:
                 q = """select json_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
                 'properties', json_build_object(
-                  'cr_RDgeom', cr.the_geom,
+                  'activity', 'a.name',
                   'type', 'request',
                   'id', cr.id,
-                  'req_id', cr.id,
                   'req_type', cr.request_type,
-                  'loc_type', l.location_type,
-                  'loc_id', l.id,
-                  'loc_geom', ST_AsGeoJSON(ST_Transform(l.the_geom, 28992))::json,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'loc_geom', ST_AsGeoJSON(ST_Transform(loc.the_geom, 28992))::json,
+                  'same_geom', ST_Equals(loc.the_geom, cr.the_geom),
                   'code', cr.location_code,
                   'motivation', cr.motivation,
                   'status', cr.request_status
                 )) as features
                 from changerequests_request cr
                 inner join lizard_progress_activity a on cr.activity_id = a.id
-                left join lizard_progress_location l on cr.location_code = l.location_code and cr.activity_id = l.activity_id
+                left join lizard_progress_location loc on cr.location_code = loc.location_code
+                and cr.activity_id = loc.activity_id
                 where cr.activity_id in ({0})
-                and cr.activity_id in ({0})"""\
+                and cr.request_type != 2"""\
                     .format(
                     ', '.join(map(str, activities.values_list('id', flat=True))))
 
                 cursor.execute(q)
-                features = [json.loads(r[0]) for r in cursor.fetchall()]
+                reqfeatures = [json.loads(r[0]) for r in cursor.fetchall()]
 
-                # Add source/target location for 'move location' requests:
+                # Append accepted moving requests to mark 'old' locations:
+                # geom of an accepted request is original (old) geom of the location
                 q = """select json_build_object(
                 'type', 'Feature',
-                'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
+                'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
                 'properties', json_build_object(
                   'type', 'request',
-                  'oldnew', 'old',
+                  'old', 1,
                   'id', cr.id,
-                  'req_id', cr.id,
                   'req_type', cr.request_type,
-                  'loc_type', l.location_type,
-                  'loc_id', l.id,
-                  'cr_geom', ST_AsGeoJSON(ST_Transform(cr.the_geom, 26910))::json,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
                   'code', cr.location_code,
                   'motivation', cr.motivation,
                   'status', cr.request_status
                 )) as features
                 from changerequests_request cr
-                inner join lizard_progress_location l on cr.location_code = l.location_code and l.activity_id = cr.activity_id
+                join lizard_progress_location loc on cr.location_code = loc.location_code
+                  and cr.activity_id = loc.activity_id
                 where cr.activity_id in ({0})
-                and l.activity_id in ({0})
-                and cr.request_type = 2
-                and not ST_Equals(l.the_geom, cr.the_geom)"""\
+                  and cr.request_type = 2"""\
                     .format(
                     ', '.join(map(str, activities.values_list('id', flat=True))))
 
                 cursor.execute(q)
-                features2 = [json.loads(r[0]) for r in cursor.fetchall()]
+                reqfeatures += [json.loads(r[0]) for r in cursor.fetchall()]
 
-                layers['Aanvragen'] = geojson.FeatureCollection(features + features2)
+                # Append location references of not accepted moving requests to mark 'old' locations
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(loc.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'type', 'request',
+                  'old', 1,
+                  'id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                join lizard_progress_location loc on cr.location_code = loc.location_code
+                  and cr.activity_id = loc.activity_id
+                where cr.activity_id in ({0})
+                  and cr.request_type = 2 and cr.request_status != 2"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                reqfeatures += [json.loads(r[0]) for r in cursor.fetchall()]
+
+                # Append not accepted (both open and rejected) moving requests to mark 'new' locations
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'type', 'request',
+                  'old', 0,
+                  'id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                join lizard_progress_location loc on cr.location_code = loc.location_code
+                  and cr.activity_id = loc.activity_id
+                where cr.activity_id in ({0})
+                  and cr.request_type = 2 and cr.request_status != 2"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                reqfeatures += [json.loads(r[0]) for r in cursor.fetchall()]
+
+                # Append accepted moving requests to mark 'new' locations
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(loc.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'type', 'request',
+                  'old', 0,
+                  'id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                join lizard_progress_location loc on cr.location_code = loc.location_code
+                  and cr.activity_id = loc.activity_id
+                where cr.activity_id in ({0})
+                  and cr.request_type = 2 and cr.request_status = 2"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                reqfeatures += [json.loads(r[0]) for r in cursor.fetchall()]
+
+                layers['Aanvragen'] = geojson.FeatureCollection(reqfeatures)
 
             # If called from a ChangeReq page (Toon op kaart - link),
             # then pass the change request info

@@ -26,15 +26,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db import connection
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-<<<<<<< HEAD
 from django.template import RequestContext
 from django.template.loader import render_to_string
-=======
->>>>>>> master
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
@@ -61,10 +59,7 @@ from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
 from lizard_progress.models import has_access_reviewproject
 from lizard_progress.models import Activity
-<<<<<<< HEAD
 from lizard_progress.models import UserProfile
-=======
->>>>>>> master
 from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
@@ -76,6 +71,16 @@ logger = logging.getLogger(__name__)
 
 
 UiView  # Don't delete, it is imported by ``views/activity.py``
+
+
+# Decorator serving to assure the request is a AJAX request
+def ajax_request(view):
+    def wrapper(request, *args, **kwargs):
+        if request.is_ajax():
+            return view(request, *args, **kwargs)
+        else:
+            raise PermissionDenied
+    return wrapper
 
 
 class ProjectsMixin(object):
@@ -558,7 +563,8 @@ class InlineMapViewNew(View):
         chreqs = Request.objects.filter(activity__in=activities).distinct()
         layers = {}
 
-        with connection.cursor() as cursor:
+        cursor = connection.cursor()
+        try:
             # Activities (Locations)
             for a in activities:
                 q = """select json_build_object(
@@ -755,6 +761,8 @@ class InlineMapViewNew(View):
                 cursor.execute(q)
                 features = [json.loads(r[0]) for r in cursor.fetchall()]
                 layers['OoI'] = geojson.FeatureCollection(features)
+        finally:
+            cursor.close()
 
         res = json.dumps(layers)
         return (res)

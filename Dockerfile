@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     python-mapnik \
     python-matplotlib \
     python-nose \
+    python-pandas \
     python-pip \
     python-psycopg2 \
     python-tornado \

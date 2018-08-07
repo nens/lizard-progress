@@ -1,10 +1,31 @@
 Changelog of lizard-progress
 ===================================================
 
-4.1.12 (unreleased)
--------------------
+4.2.3 (unreleased)
+------------------
 
 - Leaflet map.
+
+
+4.2.2 (2018-07-24)
+------------------
+
+- Updated dependency (metfilelib).
+
+
+4.2.1 (2018-07-24)
+------------------
+
+- LOCATION_COORD_ERROR for pipes with at least one unknown node.
+
+
+4.2.0 (2018-07-18)
+
+- Added work_impossible test before reporting error on missing start point
+
+- Catch and pass missing coordinates error when creating location from measurement.
+
+- Autoreview.
 
 - Avoid running calc_progress in projectreview view, show reviewproject.progress instead.
 
@@ -21,7 +42,6 @@ Changelog of lizard-progress
 - Use midpoint for creating metparser Locations.
 
 - Use midpoint for TOO_FAR_FROM_LOCATION change request.
-
 
 4.1.10 (2018-06-20)
 -------------------

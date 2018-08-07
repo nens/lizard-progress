@@ -138,6 +138,7 @@ def check_gwsw(file_obj):
 class RibxParser(ProgressParser):
     ERRORS = {
         'LOCATION_NOT_FOUND': "Onbekende streng/put/kolk ref '{}'.",
+        'LOCATION_COORD_ERROR': "Onbekende locatie of knooppunt met ongespecificeerde coördinaten.",
         'X_NOT_IN_EXTENT': "Buiten gebied: X coördinaat niet tussen {} en {}.",
         'Y_NOT_IN_EXTENT': "Buiten gebied: Y coördinaat niet tussen {} en {}.",
         'ATTACHMENT_ALREADY_EXISTS':
@@ -240,6 +241,21 @@ class RibxParser(ProgressParser):
             # the start of a measurement run, BDC the end. BCE is probably the
             # end of a measurement run if there's a problem (like an
             # obstruction). BXA is an angle measurement.
+
+            # CHANGE 2018-07-04, ticket 'RIBX parser geeft foutmelding als er geen…'
+            # Handle inspections with correct work_impossible the same way
+            # as in get_coordinates(), i.e. create a deletion request rather than an error
+            try:
+                if inspection_pipe.work_impossible:
+                    logger.debug("Inspection has been reported as impossible, skipping it completely")
+                    self.create_deletion_request(inspection_pipe)
+                    continue
+            except TypeError:
+                # for test cases only: since inspection mocks are not iterable, they
+                # will land here.
+                pass
+            # END CHANGE
+
             starts = [obs for obs in inspection_pipe.observations
                       if obs.observation_type == 'BCD']
             ends = [obs for obs in inspection_pipe.observations
@@ -318,6 +334,11 @@ class RibxParser(ProgressParser):
                 return None
             else:
                 location = self.create_new(item)
+                if location in self.ERRORS:
+                    self.record_error(item.sourceline,
+                                      location,
+                                      self.ERRORS[location].format(item.ref))
+                    return None
 
         # If measurement already exists with the same date, this
         # upload isn't new and we don't have to add a new Measurement
@@ -386,10 +407,20 @@ class RibxParser(ProgressParser):
             # y values! Perhaps a better way to do this is is to correctly
             # parse the Points as 2D in the ribxlib...
             point_2d = ogr.Geometry(ogr.wkbPoint)
-            point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
+
+            # CHANGE 2018-07-04 for PROJ-312
+            # Specify failure reason if location cannot be created because of
+            # unrecognizable or missing coordinates
+            try:
+                point_2d.AddPoint_2D(item.geom.GetX(), item.geom.GetY())
+            except AttributeError:
+                return 'LOCATION_COORD_ERROR'
+
             geom = point_2d
         else:
             geom = item.geom
+            if geom is None:
+                return 'LOCATION_COORD_ERROR'
 
         location = models.Location.objects.create(
             activity=self.activity,
@@ -475,13 +506,13 @@ class RibxReinigingInspectieRioolParser(RibxParser):
             # though.
             if item.work_impossible:
                 return None
-            elif not item.new:
-                self.record_error(
-                    item.sourceline, 'LOCATION_NOT_FOUND',
-                    self.ERRORS['LOCATION_NOT_FOUND'].format(item.ref))
-                return None
             else:
                 location = self.create_new(item)
+                if location in self.ERRORS:
+                    self.record_error(item.sourceline,
+                                      location,
+                                      self.ERRORS[location].format(item.ref))
+                    return None
 
         manhole_start = None
         if isinstance(item, ribxmodels.InspectionPipe):

@@ -1,4 +1,9 @@
 /* Style the tab */
+.tabcontent::-webkit-scrollbar-corner {
+    background: rgba(0,0,0,0);
+    display: none;
+}
+
 .tab {
     overflow: hidden;
     border: 1px solid #ccc;
@@ -29,15 +34,17 @@
 /* Style the tab content */
 .tabcontent {
     padding: 6px 10px;
-    border: 1px solid #ccc;
+    border: 0;
     border-top: none;
     height:100%;
     font-size:small;
+    overflow:auto;
 } 
 .tabcontent > h2,
 .tabcontent > h3,
 .table th { 
     font-weight: bold;
+    border: 0;
 }
 .leaflet-tooltip{
     max-width: 400px;

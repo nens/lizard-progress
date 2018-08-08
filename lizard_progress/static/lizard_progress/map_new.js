@@ -24,7 +24,7 @@ var reqTypes = {
 
 /* altColor will be used to mark moving requests' original locations */
 var reqStatuses = {
-    1: {status: 'Open', color: 'blueviolet', altColor: 'blueviolet', opacity: 0.75},
+    1: {status: 'Open', color: 'orange', altColor: 'orange', opacity: 0.75},
     2: {status: 'Geaccepteerd', color: 'green', altColor: 'darkgreen', opacity: 0.75},
     3: {status: 'Geweigerd, ingetrokken of ongeldig', color: 'mediumvioletred', altColor: 'mediumvioletred', opacity: 0.75},
     4: {status: 'Ingetrokken', color: 'mediumvioletred', altColor: 'mediumvioletred', opacity: 0.75},
@@ -379,7 +379,7 @@ function build_map(gj, extent, OoI) {
 		return c;
 	    } else {
 		var c = L.circle([latlng['lat'], latlng['lng']],
-				 {radius:3}).addTo(mymap);
+				 {radius:4}).addTo(mymap);
 		var r = L.rectangle(c.getBounds(), {stroke:true, weight: 2, lineJoin: 'round'});
 		mymap.removeLayer(c);
 		return r;

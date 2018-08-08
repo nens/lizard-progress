@@ -24,11 +24,11 @@ var reqTypes = {
 
 /* altColor will be used to mark moving requests' original locations */
 var reqStatuses = {
-    1: {status: 'Open', color: '#773c08', altColor: '#773c08', opacity: 0.75},
+    1: {status: 'Open', color: 'blueviolet', altColor: 'blueviolet', opacity: 0.75},
     2: {status: 'Geaccepteerd', color: 'green', altColor: 'darkgreen', opacity: 0.75},
-    3: {status: 'Geweigerd, ingetrokken of ongeldig', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
-    4: {status: 'Ingetrokken', color: 'lightpink', altColor: 'deeppink', opacity: 0.75},
-    5: {status: 'Ongeldig', color: 'lightpink', altColor: 'deeppink', opacity: 0.75}
+    3: {status: 'Geweigerd, ingetrokken of ongeldig', color: 'mediumvioletred', altColor: 'mediumvioletred', opacity: 0.75},
+    4: {status: 'Ingetrokken', color: 'mediumvioletred', altColor: 'mediumvioletred', opacity: 0.75},
+    5: {status: 'Ongeldig', color: 'mediumvioletred', altColor: 'mediumvioletred', opacity: 0.75}
 };
 
 /* base map variants */

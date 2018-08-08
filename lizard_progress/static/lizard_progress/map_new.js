@@ -373,8 +373,8 @@ function build_map(gj, extent, OoI) {
 		    globalDummyArr.push(feature.properties.activity);
 		}
 		idx = globalDummyArr.indexOf(feature.properties.activity);
-		var c = L.circle([latlng['lat'] + idx*2e-6,
-				  latlng['lng'] + idx*2e-6],
+		var c = L.circle([latlng['lat'] + idx*4e-6,
+				  latlng['lng'] + idx*4e-6],
 				 {radius: 2});
 		return c;
 	    } else {

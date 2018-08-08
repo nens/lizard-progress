@@ -329,11 +329,16 @@ var ajax_submit = function (button) {
     var url = $form.attr("action");
 
     $.post(url, formdata,function (data) {
+	console.log(data);
         if (data.success) {
             // Reload page? Easiest way to close the dialog, delete the
             // request from the sidebar, and stop showing the request on
             // the map.
-            location.reload();
+	    if (data.redirurl) {
+		window.open(data.redirurl, '_self');
+	    } else {
+		location.reload();
+	    }
         } else {
             var error_span_id = data.error_span_id || "#submit-errors";
             var $errors = $(error_span_id);

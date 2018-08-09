@@ -31,15 +31,6 @@ Dashboard will show in 3 columns width, while the others will have a 1 column wi
           <a href="{% url "lizard_progress_project_configuration_view" view.project.slug %}"><i class="fa fa-lg fa-cogs"></i> &nbsp; configuratie</a>
         </li>
         {% endif %}
-<!-- 	      <li>
-	        <a href="#"><i class="fa fa-lg fa-question-circle"></i> &nbsp; aanvragen <span class="badge">4x</span></a>
-	      </li> -->
-	      <li>
-	        <a href="{% url "lizard_progress_inlinemapview" view.project.slug %}"><i class="fa fa-lg fa-globe"></i> &nbsp; kaart</a>
-	      </li>
-<!-- 	      <li>
-	        <a href="#"><i class="fa fa-lg fa-share"></i> &nbsp; exporteren</a>
-	      </li> -->
 	    </ul>
 	  </nav>
 	</div>  
@@ -79,16 +70,6 @@ Dashboard will show in 3 columns width, while the others will have a 1 column wi
           </a>
         </li>
         {% endif %}
-	      <li data-toggle="tooltip" data-placement="left" title="Kaart">
-	        <a 
-	        {% if active == 'map' %}
-	        	class="active" 
-	        {% endif %}        
-	        	href="{% url "lizard_progress_inlinemapview" view.project.slug %}">
-	        	<i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart</span>
-	        </a>
-	        
-	      </li>
 	    </ul>
 	  </nav>
 	</div>

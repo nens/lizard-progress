@@ -14,7 +14,7 @@ from django.contrib.gis.geos import Point
 
 from osgeo import ogr
 
-from lizard_map import coordinates
+from . import coordinates
 
 
 def rd_to_google_extent(rd_extent, extra_border=0.1):

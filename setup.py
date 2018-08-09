@@ -6,7 +6,7 @@ long_description = '\n\n'.join([
     open('README.rst').read(),
     open('CREDITS.rst').read(),
     open('CHANGES.rst').read(),
-    ])
+])
 
 install_requires = [
     'Django >= 1.4, < 1.7',  # Ships with form-wizard
@@ -21,7 +21,6 @@ install_requires = [
     'django-transaction-hooks',
     'geojson',
     'lizard-ui >= 4.40, < 5.0',
-    'lizard-map >= 4.50, < 5.0',
     'metfilelib >= 0.14',
     'ribxlib >= 0.10',
     'pkginfo',
@@ -34,12 +33,14 @@ install_requires = [
     'geoalchemy2',
     'pyshp',
     'requests',
-    ]
+    'pandas',
+    'djangorestframework',
+]
 
 tests_require = [
     'coverage',
     'nose',
-    ]
+]
 
 setup(name='lizard-progress',
       version=version,
@@ -61,10 +62,5 @@ setup(name='lizard-progress',
       tests_require=tests_require,
       extras_require={'test': tests_require},
       entry_points={
-          'console_scripts': [],
-          'lizard_map.adapter_class': [
-              'adapter_progress = lizard_progress.layers:ProgressAdapter',
-              'adapter_hydrovak = lizard_progress.layers:HydrovakAdapter',
-              'adapter_changerequest = '
-              'lizard_progress.changerequests.layers:ChangeRequestAdapter',
-              ]})
+          'console_scripts': []
+      })

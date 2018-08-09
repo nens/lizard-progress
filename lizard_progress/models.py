@@ -38,7 +38,7 @@ from lizard_progress.util.autoreviewer import AutoReviewer
 from lizard_progress.util.autoreviewer import Field
 from lizard_progress.util.autoreviewer import Observation
 
-from lizard_map import coordinates
+from lizard_progress.util import coordinates
 
 import geojson
 import datetime

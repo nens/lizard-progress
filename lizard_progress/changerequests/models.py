@@ -18,7 +18,6 @@ from django.core.urlresolvers import reverse
 from django.contrib.gis.db import models
 from django.contrib.sites.models import Site
 from django.dispatch import receiver
-from lizard_map.models import WorkspaceEditItem
 
 from lizard_progress.util import geo
 from lizard_progress import models as pmodels
@@ -244,12 +243,6 @@ class Request(models.Model):
 
         self.request_status = status
         self.save()
-
-        if open_before and not self.is_open:
-            # We got closed, remove us from workspaces
-            WorkspaceEditItem.objects.filter(
-                adapter_class=self.adapter_class,
-                adapter_layer_json=self.adapter_layer_json()).delete()
 
     def accept(self):
         # Sanity check

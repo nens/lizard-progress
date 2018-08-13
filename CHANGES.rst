@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet
+- 2-comp. distance control voor Dwarsprofiel.
 
 
 4.2.2 (2018-07-24)

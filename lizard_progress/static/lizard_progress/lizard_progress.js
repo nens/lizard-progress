@@ -329,7 +329,6 @@ var ajax_submit = function (button) {
     var url = $form.attr("action");
 
     $.post(url, formdata,function (data) {
-	console.log(data);
         if (data.success) {
             // Reload page? Easiest way to close the dialog, delete the
             // request from the sidebar, and stop showing the request on

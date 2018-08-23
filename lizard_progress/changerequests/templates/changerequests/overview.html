@@ -76,6 +76,7 @@
                                         <a href="{{ request.get_absolute_url }}">bekijk details</a>
                                         |
                                         <a href="{% url "lizard_progress_mapview_change_request" project_slug=view.project_slug change_request=request.id %}">bekijk op kaart</a>
+                                        | <a href="{% url "lizard_progress_newmap_change_request" project_slug=view.project_slug change_request=request.id %}">bekijk op nieuwe kaart</a>
                                     </td>
                                 </tr>
                                 {% endfor %}

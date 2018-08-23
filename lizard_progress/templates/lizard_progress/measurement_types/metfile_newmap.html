@@ -1,0 +1,16 @@
+{% if image_graph_url and measurements %}
+<div style="width: 100%; height: 300px;"
+     class="dynamic-graph"
+     data-image-graph-url="{{ image_graph_url }}">
+</div>
+{% else %}
+<h2>{{location.activity.name}}</h2>
+<h3>Code: {{location.location_code}}</h3>
+<br>Opdrachtnemer: {{location.activity.contractor.name}}
+<br>Werkzaamheid: {{location.activity.name}}
+<p>Er is voor deze locatie nog geen data aanwezig in het systeem.</p>
+{% endif %}
+
+{% if multiple_projects_graph_url %}
+<p>Deze locatiecode bestaat in meerdere projecten: <a href="{{ multiple_projects_graph_url }}" target="_">bekijk ze allemaal in 1 grafiek.</a></p>
+{% endif %}

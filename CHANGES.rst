@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.3.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Leaflet map.
 
 
 4.3.0 (2018-08-13)

@@ -26,11 +26,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db import connection
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
+from django.utils.text import Truncator
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
 from django.views.decorators.csrf import csrf_exempt
@@ -56,6 +60,7 @@ from lizard_progress.models import ReviewProject
 from lizard_progress.models import has_access
 from lizard_progress.models import has_access_reviewproject
 from lizard_progress.models import Activity
+from lizard_progress.models import UserProfile
 from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
@@ -67,6 +72,16 @@ logger = logging.getLogger(__name__)
 
 
 UiView  # Don't delete, it is imported by ``views/activity.py``
+
+
+# Decorator serving to assure the request is a AJAX request
+def ajax_request(view):
+    def wrapper(request, *args, **kwargs):
+        if request.is_ajax():
+            return view(request, *args, **kwargs)
+        else:
+            raise PermissionDenied
+    return wrapper
 
 
 class ProjectsMixin(object):
@@ -479,6 +494,467 @@ class View(KickOutMixin, ProjectsMixin, TemplateView):
 
 class InlineMapView(View):
     template_name = 'lizard_progress/map_inline.html'
+
+
+class InlineMapViewNew(View):
+    template_name = 'lizard_progress/map_inline_new.html'
+
+    def get(self, request, *args, **kwargs):
+        # import pdb; pdb.set_trace()
+        return super(InlineMapViewNew, self).get(request, *args, **kwargs)
+
+    def extent(self):
+        rd_extent = self.get_rd_extent()
+        logger.debug("InlineMapViewNew rd extent %s", rd_extent)
+        wgs_extent = geo.rd_to_wgs84_extent(rd_extent)
+        logger.debug("InlineMapViewNew new extent %s", wgs_extent)
+        return json.dumps(wgs_extent)
+
+    # TODO: remove
+    available_layers = []
+
+    def get_rd_extent(self, change_request=None, location_code=None):
+        """Compute the extent we want to zoom to, in RD."""
+
+        locations = Location.objects.filter(activity__project=self.project)
+        if location_code:
+            locations = locations.filter(location_code=location_code)
+
+        # Layers MAY define their own extent (used for the extents of
+        # change requests). Otherwise layer.extent will be None.
+        extra_extents = [layer.extent for layer in self.available_layers
+                         if layer.extent is not None]
+
+        if change_request:
+            extent = Request.objects.get(id=change_request).map_layer().extent
+        elif locations.exists():
+            # Start with this extent, add the extras to this
+            extent = locations.extent()
+        elif extra_extents:
+            # No locations, but extra extents: use the first as start extent
+            extent = extra_extents.pop()
+        else:
+            # There is nothing to zoom to...
+            return None
+
+        minx, miny, maxx, maxy = extent
+
+        # Combine extra extents
+        for extra_extent in extra_extents:
+            e_minx, e_miny, e_maxx, e_maxy = extra_extent
+            minx = min(minx, e_minx)
+            miny = min(miny, e_miny)
+            maxx = max(maxx, e_maxx)
+            maxy = max(maxy, e_maxy)
+
+        return (minx, miny, maxx, maxy)
+
+    def locations_geojson(self):
+        """A FeatureCollection of locations."""
+        import geojson
+
+        activities = Activity.objects.filter(project=self.project)\
+            .filter(measurement_type__slug__in=['dwarsprofiel',
+                                                'dwarsprofielen_inpeiling',
+                                                'dwarsprofielen_uitpeiling',
+                                                'ribx_reiniging_riool',
+                                                'ribx_reiniging_kolken',
+                                                'ribx_reiniging_inspectie_riool'])
+
+        chreqs = Request.objects.filter(activity__in=activities).distinct()
+        layers = {}
+
+        cursor = connection.cursor()
+        try:
+            # Activities (Locations)
+            for a in activities:
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(l.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'type', 'location',
+                  'id', l.id,
+                  'loc_id', l.id,
+                  'code', l.location_code,
+                  'activity', a.name,
+                  'contractor', o.name,
+                  'loc_type', l.location_type,
+                  'planned_date', l.planned_date,
+                  'complete', l.complete,
+                  'measured_date', l.measured_date,
+                  'work_impossible', l.work_impossible,
+                  'not_part_of_project', l.not_part_of_project,
+                  'new', l.new
+                )) as features
+                from public.lizard_progress_location l
+                inner join lizard_progress_activity a on a.id = l.activity_id
+                inner join lizard_progress_organization o on o.id = a.contractor_id
+                where l.the_geom is not null and l.activity_id = {}""".format(str(a.id))
+
+                cursor.execute(q)
+                locfeatures = [json.loads(r[0]) for r in cursor.fetchall()]
+                layers[a.name] = geojson.FeatureCollection(locfeatures)
+
+            # Change Requests. Moving requests will be collected separated since they
+            # should provide an additional old/new  location status
+            # TODO: dat kan waarschijnlijk eleganter
+            for cr in chreqs:
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'activity', 'a.name',
+                  'type', 'request',
+                  'id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'loc_geom', ST_AsGeoJSON(ST_Transform(loc.the_geom, 28992))::json,
+                  'same_geom', ST_Equals(loc.the_geom, cr.the_geom),
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                inner join lizard_progress_activity a on cr.activity_id = a.id
+                left join lizard_progress_location loc on cr.location_code = loc.location_code
+                and cr.activity_id = loc.activity_id
+                where cr.activity_id in ({0})
+                and cr.request_type != 2"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                reqfeatures = [json.loads(r[0]) for r in cursor.fetchall()]
+
+                # Append accepted moving requests to mark 'old' locations:
+                # geom of an accepted request is original (old) geom of the location
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'type', 'request',
+                  'old', 1,
+                  'id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                join lizard_progress_location loc on cr.location_code = loc.location_code
+                  and cr.activity_id = loc.activity_id
+                where cr.activity_id in ({0})
+                  and cr.request_type = 2"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                reqfeatures += [json.loads(r[0]) for r in cursor.fetchall()]
+
+                # Append location references of not accepted moving requests to mark 'old' locations
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(loc.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'type', 'request',
+                  'old', 1,
+                  'id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                join lizard_progress_location loc on cr.location_code = loc.location_code
+                  and cr.activity_id = loc.activity_id
+                where cr.activity_id in ({0})
+                  and cr.request_type = 2 and cr.request_status != 2"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                reqfeatures += [json.loads(r[0]) for r in cursor.fetchall()]
+
+                # Append not accepted (both open and rejected) moving requests to mark 'new' locations
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'type', 'request',
+                  'old', 0,
+                  'id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                join lizard_progress_location loc on cr.location_code = loc.location_code
+                  and cr.activity_id = loc.activity_id
+                where cr.activity_id in ({0})
+                  and cr.request_type = 2 and cr.request_status != 2"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                reqfeatures += [json.loads(r[0]) for r in cursor.fetchall()]
+
+                # Append accepted moving requests to mark 'new' locations
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(loc.the_geom, 4326))::json,
+                'properties', json_build_object(
+                  'type', 'request',
+                  'old', 0,
+                  'id', cr.id,
+                  'req_type', cr.request_type,
+                  'loc_type', loc.location_type,
+                  'loc_id', loc.id,
+                  'code', cr.location_code,
+                  'motivation', cr.motivation,
+                  'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                join lizard_progress_location loc on cr.location_code = loc.location_code
+                  and cr.activity_id = loc.activity_id
+                where cr.activity_id in ({0})
+                  and cr.request_type = 2 and cr.request_status = 2"""\
+                    .format(
+                    ', '.join(map(str, activities.values_list('id', flat=True))))
+
+                cursor.execute(q)
+                reqfeatures += [json.loads(r[0]) for r in cursor.fetchall()]
+
+                layers['Aanvragen'] = geojson.FeatureCollection(reqfeatures)
+
+            # If called from a ChangeReq page (Toon op kaart - link),
+            # then pass the change request info
+            if 'change_request' in self.kwargs:
+                q = """select json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(cr.the_geom, 4326))::json,
+                'properties', json_build_object(
+                'type', 'request',
+                'id', cr.id,
+                'req_id', cr.id,
+                'req_type', cr.request_type,
+                'loc_type', lnew.location_type,
+                'loc_id', lnew.id,
+                'code', cr.location_code,
+                'old_code', cr.old_location_code,
+                'motivation', cr.motivation,
+                'status', cr.request_status
+                )) as features
+                from changerequests_request cr
+                inner join lizard_progress_activity a on cr.activity_id = a.id
+                inner join lizard_progress_location lnew on cr.location_code = lnew.location_code
+                left join lizard_progress_location lold on cr.old_location_code = lold.location_code
+                where cr.id = {}"""\
+                    .format(self.kwargs.get('change_request', -1))
+
+                cursor.execute(q)
+                features = [json.loads(r[0]) for r in cursor.fetchall()]
+                layers['OoI'] = geojson.FeatureCollection(features)
+        finally:
+            cursor.close()
+
+        res = json.dumps(layers)
+        return (res)
+
+
+@login_required
+@ajax_request
+def get_closest_to(request, *args, **kwargs):
+    """ When clicked on the map, searches for nearest neighbours (one of every type) within
+    active overlays (=activities).
+
+    When clicked on a location or a request, selects it and its relations within active overlays.
+
+    Returns array of html for found objects + some service info for the leaflet popup.
+    """
+    locations = None
+    response = {}
+    html = []
+    tab_titles = []
+    obj_ids = []
+    latlng = []
+    locationIds, changeRequests = [], []
+
+    lat = request.GET.get('lat', None)
+    lng = request.GET.get('lng', None)
+    objType = request.GET.get('objType', 'location')
+    objId = request.GET.get('objId', None)
+    radius = request.GET.get('radius', 50)
+    overlays = request.GET.getlist('overlays[]', [])
+
+    proj = Project.objects.get(slug=kwargs['project_slug'])
+
+    # Unclickable items work-around
+    ALWAYS_VICINITY = len(overlays) > 2 and False
+
+    if not objId or ALWAYS_VICINITY:
+        # Clicked on the basemap, search objects in the vicinity of the clicked point
+        # considering active overlays
+        # NN search is more efficiently carried out by postgis
+        q = """SELECT DISTINCT ON (loc.location_type) loc.id FROM lizard_progress_location loc
+        INNER JOIN lizard_progress_activity a ON a.id = loc.activity_id
+        AND a.name IN ({3})
+        AND (ST_Expand(loc.the_geom, {2}) &&
+        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({0} {1})'), 28992)::geometry)
+        ORDER BY loc.location_type, ST_Distance(loc.the_geom,
+        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({0} {1})'), 28992)::geometry) ASC;"""\
+            .format(lng,
+                    lat,
+                    radius,
+                    ', '.join(map(lambda _: '\'' + str(_) + '\'', overlays)))
+
+        with connection.cursor() as cursor:
+            cursor.execute(q)
+            locationIds = [l[0] for l in cursor.fetchall()]
+            cursor.close()
+
+    else:
+        if objType == 'location':
+            rootLocation = Location.objects.get(id=objId)
+            locations = Location.objects.filter(location_code=rootLocation.location_code)\
+                                        .filter(activity__name__in=overlays)
+            locationIds = Location.objects.filter(location_code=rootLocation.location_code)\
+                                          .filter(activity__name__in=overlays).values_list('id', flat=True)
+        else:
+            changeRequests = [Request.objects.get(id=objId)]
+            locationIds = Location.objects.filter(activity=changeRequests[0].activity)\
+                                          .filter(location_code=changeRequests[0].location_code)\
+                                          .filter(activity__name__in=overlays)\
+                                          .values_list('id', flat=True)
+    # If nothing found, return empty response
+    if not (locationIds or changeRequests):
+        return HttpResponse(json.dumps(response), content_type="application/json")
+
+    if locationIds:
+        # Take the first from the query result and select all locations with the same location code
+        # (i.e. select the location with all its activities).
+        locations = Location.objects.filter(id__in=locationIds)
+
+        g = locations[0].the_geom
+        g.transform(4326)
+
+        # If object is a pipe, point the popup to its middlepoint.
+        if isinstance(g.coords[0], tuple):
+            lng = (g.coords[0][0] + g.coords[1][0]) / 2
+            lat = (g.coords[0][1] + g.coords[1][1]) / 2
+        else:
+            lng, lat = g.coords[0], g.coords[1]
+
+        all_loc_activities = Activity.objects.filter(id__in=locations.values_list('activity_id'))
+
+        # #############################
+        # Create html for sewer objects
+        # #############################
+        for loc in [l for l in locations if l.location_type in ['pipe', 'manhole', 'drain']]:
+            g = loc.the_geom
+            g.transform(4326)
+
+            # If object is a pipe, point the popup to its middlepoint.
+            if isinstance(g.coords[0], tuple):
+                lng = (g.coords[0][0] + g.coords[1][0]) / 2
+                lat = (g.coords[0][1] + g.coords[1][1]) / 2
+            else:
+                lng, lat = g.coords[0], g.coords[1]
+
+            latlng.append([lat, lng])
+            html.append(render_to_string('lizard_progress/measurement_types/ribx_newmap.html',
+                                         {'locations': [loc]}, context_instance=RequestContext(request)))
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' +
+                              Truncator(loc.activity.name).chars(14))
+            obj_ids.append(loc.id)
+
+        # ########################################
+        # Create html for crossection measurements
+        # ########################################
+        xsects = [l for l in locations if l.location_type in ['point']]
+
+        for loc in xsects:
+            g = loc.the_geom
+            g.transform(4326)
+            latlng.append([g.coords[1], g.coords[0]])
+
+            multiple_projects_graph_url = None
+            if loc.close_by_locations_of_same_organisation().count() > 1:
+                organization = loc.activity.project.organization
+                multiple_projects_graph_url = reverse(
+                    'crosssection_graph', kwargs=dict(
+                        organization_id=organization.id,
+                        location_id=loc.id))
+            lhtml = render_to_string('lizard_progress/measurement_types/metfile_newmap.html',
+                                     {'image_graph_url': 'xsecimage?loc_id={}'.format(loc.id),
+                                      'location': loc,
+                                      'measurements': loc.measurement_set.all().count(),
+                                      'title': loc.location_code + ' ' + loc.activity.name,
+                                      'multiple_projects_graph_url': multiple_projects_graph_url})
+            tab_titles.append(loc.location_type + ' ' + loc.location_code + ' ' +
+                              Truncator(loc.activity.name).chars(14))
+            obj_ids.append(loc.id)
+            html.append(lhtml)
+        # END crossection graph
+
+    # ###############################
+    # Create html for Change Requests
+    # ###############################
+    if not changeRequests:
+        changeRequests = Request.objects.\
+            filter(location_code__in=locations.values_list('location_code'))\
+            .filter(activity__in=all_loc_activities)
+
+    for cr in changeRequests:
+        g = cr.the_geom
+        g.transform(4326)
+        latlng.append([g.coords[1], g.coords[0]])
+        html.append(
+            render_to_string(
+                'changerequests/detail_popup_newmap.html',
+                {'cr': cr},
+                context_instance=RequestContext(
+                    request,
+                    {'user_is_manager': UserProfile.get_by_user(
+                        request.user).is_manager_in(cr.project),
+                     'user_is_contractor': UserProfile.get_by_user(
+                         request.user).organization == cr.activity.contractor}
+                )
+            )
+        )
+        tab_titles.append('Aanvraag ' + cr.type_description + ' ' + cr.location_code)
+        obj_ids.append(cr.id)
+
+    response = {
+        'html': html,
+        'tab_titles': tab_titles,
+        'objIds': obj_ids,
+        'latlng': latlng
+    }
+    # return HttpResponse(json.dumps(response), content_type="application/json")
+    return HttpResponse(json.dumps(response), content_type="application/json")
+
+
+def xsecimage(request, *args, **kwargs):
+
+    from . import crosssection_graph as xsgr
+    from lizard_progress.models import Measurement
+    loc = Location.objects.get(id=request.GET.get('loc_id'))
+    if Measurement.objects.filter(location=loc):
+        canvas = xsgr.graph(loc, Measurement.objects.filter(location=loc))
+        response = HttpResponse(content_type='image/png')
+        canvas.print_png(response)
+    else:
+        response = HttpResponse()
+
+    return response
 
 
 class MapView(View, AppView):

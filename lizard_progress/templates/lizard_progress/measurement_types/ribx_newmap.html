@@ -1,0 +1,123 @@
+{% with location=locations.0 %}
+<h2>{{location.activity.name}}</h2>
+{% if location.location_type == "pipe" %}
+<h3>Streng {{ location.location_code }}</h3>
+{% elif location.location_type == "manhole" %}
+<h3>Put {{ location.location_code }}</h3>
+{% elif location.location_type == "drain" %}
+<h3>Kolk {{ location.location_code }}</h3>
+{% else %}
+<h3>Onbekend rioleringselement {{ location.location_code }}</h3>
+{% endif %}
+{% if location.complete %}
+  {% if location.work_impossible %}
+  <h3>Compleet (niet gedaan, maar automatisch goedgekeurd {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
+      {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
+      )</h3>
+  {% elif location.new %}
+  <h3>Compleet (nieuw {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
+      {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
+      )</h3>
+  {% else %}
+  <h3>Compleet (gedaan {{ location.latest_measurement_date|date:"DATE_FORMAT" }}
+      {% if location.planned_date %}, gepland {{ location.planned_date|date:"DATE_FORMAT" }}{% endif %}
+      )</h3>
+  {% endif %}
+{% endif %}
+  
+{% if location.not_part_of_project %}
+  <strong>Dit object is geen eigendom van {{ location.activity.project.organization }} en hoort niet bij de
+      werkzaamheden.</strong>
+  {% else %}
+  <p>Opdrachtnemer: {{ location.activity.contractor }}<br />
+      Werkzaamheid: {{ location.activity }}</p>
+{% endif %}
+    
+  {% if not location.measurement_set.exists %}
+  <p>Er is voor deze locatie nog geen data aanwezig in het systeem.</p>
+  {% endif %}
+
+  {% with measurements=location.measurement_set.all %}
+  {% if measurements %}
+      <p>Bestanden:</p>
+      <table class="table">
+        <thead>
+          <th>Bestand</th>
+          <th>Type</th>
+          <th>Aanwezig</th>
+          <th>Gedaan</th>
+          <th>Upload</th>
+          <th>Verwijderen</th>
+        </thead>
+        <tbody>
+          {% for measurement in measurements %}
+            {% if measurement.data.filetype == "ribx" %}
+              <tr>
+                <td><a href="{{ measurement.get_absolute_url }}">{{ measurement.base_filename }}</a>
+                </td>
+                <td>RIBX</td>
+                <td>Ja</td>
+                <td>{{ measurement.date|date:"d/m/Y" }}</td>
+                <td>{{ measurement.timestamp|date:"d/m/Y" }}</td>
+                <td>
+                  {% if not location.activity.project.is_archived %}
+                    <a href="{{ measurement.get_absolute_url }}" class="delete_measurement" data-message="Als dit bestand alleen bij deze locatie hoort, wordt het verwijderd van de Uploadservice. Weet u dit zeker?">Annuleren</a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% with attachments=measurement.attached_measurements %}
+                {% for attachment in attachments %}
+                  <tr>
+                    <td><a href="{{ attachment.get_absolute_url }}">{{ attachment.base_filename }}</a></td>
+                    <td>Media</td>
+                    <td>Ja</td>
+                    <td></td>
+                    <td>{{ attachment.timestamp|date:"d/m/Y" }}</td>
+                    <td>
+                      {% if not location.activity.project.is_archived %}
+                        <a href="{{ attachment.get_absolute_url }}" class="delete_measurement" data-message="Als dit bestand alleen bij deze locatie hoort, wordt het verwijderd van de Uploadservice. Weet u dit zeker?">Annuleren</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% endwith %}
+              {% with attachments=measurement.missing_attachments %}
+                {% for a in attachments %}
+                  <tr>
+                     <td>{{ a.filename }}</td>
+                     <td>Media</td>
+                     <td>Nee</td>
+                     <td></td>
+                     <td></td>
+                     <td></td>
+                  </tr>
+                {% endfor %}
+              {% endwith %}
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  {% endwith %}
+  {% if location.planned_date %}
+    <p>De geplande datum voor deze locatie is {{ location.planned_date|date:"DATE_FORMAT" }}.</p>
+    {% endif %}
+{% endwith %}
+
+{% if not location.activity.project.is_archived %}
+<script>
+$("a.delete_measurement").click(function (event) {
+    event.preventDefault();
+    if (confirm($(this).attr("data-message"))) {
+        // Send a DELETE request to the measurement's URL
+        $.ajax({
+            url: $(this).attr("href"),
+            type: 'DELETE',
+            success: function () {
+                location.reload(true);
+            }
+        });
+    }
+});
+</script>
+{% endif %}

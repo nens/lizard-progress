@@ -142,6 +142,7 @@ class ChangeRequestMotivation(RequestDetailPage):
 class AcceptOrRefuseRequest(RequestDetailPage):
     def post(self, request, project_slug):
         wantsjson = request.POST.get('wantoutputas') == 'json'
+        redir = request.POST.get('redirecturl', '')
 
         if request.POST.get('accept'):
             if not self.user_is_manager():
@@ -171,7 +172,12 @@ class AcceptOrRefuseRequest(RequestDetailPage):
             self.changerequest.withdraw()
 
         if wantsjson:
-            return JSONResponse({'success': True})
+            res = {'success': True,
+                   'id': self.changerequest.id}
+            if redir:
+                res['redirurl'] = redir
+
+            return JSONResponse(res)
         else:
             return HttpResponseRedirect(
                 self.changerequest.get_absolute_url())

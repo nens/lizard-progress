@@ -91,7 +91,9 @@
                             {% endif %}
                             <dt></dt>
                             <dd>
+				{# TODO: remove when releasing #}
                                 <a href="{% url "lizard_progress_mapview_change_request" project_slug=view.project_slug change_request=cr.id %}" class="btn btn-default"><i class="fa fa-globe"></i>&nbsp;Toon op kaart</a>
+                                <a href="{% url "lizard_progress_newmap_change_request" project_slug=view.project_slug change_request=cr.id %}" class="btn btn-default"><i class="fa fa-globe"></i>&nbsp;Toon op nieuwe kaart</a>
                             </dd>
                         </dl>
                         

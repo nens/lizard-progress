@@ -9177,7 +9177,6 @@ div.panel-heading > h3 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  width: 50%;
 }
 
 /* line 289, ../sass/modules/_project_manager_home.scss */

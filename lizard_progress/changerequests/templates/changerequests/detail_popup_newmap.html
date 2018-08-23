@@ -1,0 +1,59 @@
+<h3>Aanvraag ({{ cr.status_description }})</h3>
+
+<a href="{{ cr.get_absolute_url }}">Klik hier voor meer details (aanvragenpagina)</a>
+
+<dl class="dl-horizontal">
+  <dt>Type aanvraag</dt>
+  <dd>{{ cr.type_description }}</dd>
+
+  <dt>Locatie</dt>
+  <dd>{{ cr.location_code }}{% if cr.old_location_code %} (vervangt {{cr.old_location_code }}){% endif %}</dd>
+
+  {# verplaatsing #}
+  {% if cr.request_type == 2 %}
+  <dt>Nieuwe co&ouml;rdinaten</dt>
+  <dd>({{ cr.the_geomRD.x }}, {{ cr.the_geomRD.y }})</dd>
+  {% endif %}
+
+  {# codewijziging #}
+  {% if cr.request_type == 3 %}
+  <dt>Co&ouml;rdinaten</dt>
+  <dd>({{ cr.the_geomRD.x}}, {{ cr.the_geomRD.y }})</dd>
+  {% endif %}
+
+  <dt>Werkzaamheid</dt>
+  <dd>{{ cr.activity }}</dd>
+
+  <dt>Motivatie</dt>
+  <dd>{{ cr.motivation }}</dd>
+  {% if cr.refusal_reason %}
+    <dt>Geweigerd vanwege</dt>
+    <dd>{{ cr.refusal_reason }}</dd>
+  {% endif %}
+  {% if cr.invalid_reason %}
+    <dt>Ongeldig vanwege</dt>
+    <dd>{{ cr.invalid_reason }}</dd>
+  {% endif %}
+  {% if cr.is_open %}
+  <dt>Goedkeuring</dt>
+  <dd>
+    <form action="{{ cr.get_absolute_url }}acceptance/" method="post">
+    {% csrf_token %}
+	<input type="hidden" name="redirecturl"
+	       value="{% url "lizard_progress_newmap_change_request" project_slug=cr.activity.project.slug change_request=cr.id %}">	
+    <input type="hidden" name="wantoutputas" value="json">
+    <input type="hidden" name="accept" id="hidden-accept" value="">
+    <input type="hidden" name="refuse" id="hidden-refuse" value="">
+    {% if user_is_manager %}
+    <button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-accept" class="btn btn-success ajaxsubmit">Goedkeuren</button>
+    <br><button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-refuse" class="btn btn-danger ajaxsubmit">Afkeuren</button>
+    Reden: <input name="reason" type="text" value="">
+    <br><span style="color: red" id="submit-errors"></span>
+    {% else %}
+    <input type="hidden" name="withdraw" id="hidden-withdraw" value="">
+    <button onclick="ajax_submit(this);" type="button" data-hidden-id="#hidden-withdraw" class="btn btn-danger ajaxsubmit">Annuleren</button>
+    {% endif %}
+    </form>
+  </dd>
+  {% endif %}
+</dl>

@@ -99,6 +99,12 @@ class Request(models.Model):
     # as well as for showing points on the map.
     the_geom = models.PointField(null=True, srid=pmodels.SRID)
 
+    @property
+    def the_geomRD(self):
+        g = self.the_geom
+        g = g.transform(28992, clone=True)
+        return g
+
     possible_request = models.ForeignKey(
         'PossibleRequest', null=True, blank=True,
         on_delete=models.SET_NULL)

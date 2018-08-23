@@ -102,7 +102,7 @@ class Request(models.Model):
     @property
     def the_geomRD(self):
         g = self.the_geom
-        g.transform(28992)
+        g = g.transform(28992, clone=True)
         return g
 
     possible_request = models.ForeignKey(

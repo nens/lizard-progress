@@ -29,7 +29,7 @@
                                 <th>Waarde</th>
                             </thead>
                             {% for option, current_value in view.config_options %}
-                                <tr>
+			    <tr>
                                     <td>{{ option.short_description }}<br /><span class="small">{{ option.long_description }}</span></td>
                                     <td>
                                         {% if option.type == "float" %}
@@ -49,7 +49,7 @@
                                             <input type="text" name="{{ option.option }}" value="{{ current_value }}">
                                         {% endif %}
                                     </td>
-                                </tr>
+                            </tr>
                             {% endfor %}
                         </table>
                         <input type="submit" value="Opslaan" class="btn btn-medium btn-primary">

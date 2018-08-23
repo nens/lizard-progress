@@ -390,5 +390,21 @@
         },
         "model": "lizard_progress.errormessage",
         "pk": 49
+    },
+    {
+        "fields": {
+            "error_code": "TOO_FAR_FROM_LOCATION_ORTHO",
+            "error_message": "Locatie bevindt zich te ver van geplande meetprofiel (loodrecht)."
+        },
+        "model": "lizard_progress.errormessage",
+        "pk": 50
+    },
+    {
+        "fields": {
+            "error_code": "TOO_FAR_FROM_LOCATION_PARA",
+            "error_message": "Locatie bevindt zich te ver van geplande meetpunt (langs het profiel)."
+        },
+        "model": "lizard_progress.errormessage",
+        "pk": 51
     }
 ]

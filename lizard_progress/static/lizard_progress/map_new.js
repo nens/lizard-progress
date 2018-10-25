@@ -373,10 +373,15 @@ function build_map(gj, extent, OoI) {
 		    globalDummyArr.push(feature.properties.activity);
 		}
 		idx = globalDummyArr.indexOf(feature.properties.activity);
-		/* NB: circle radius in m, circleMarker radius in px */
+		/* NB: circle radius in m, circleMarker radius in px.
+		   Let's draw both - depending on the zoom level, the larger one will be visible.
+		 */
 		var c = L.circle([latlng['lat'] + idx*3e-6,
 				  latlng['lng'] + idx*3e-6],
 				 {radius: 3});
+		var cm = L.circleMarker([latlng['lat'] + idx*3e-6,
+				  latlng['lng'] + idx*3e-6],
+				 {radius: 2});
 		return c;
 	    } else {
 		var c = L.circle([latlng['lat'], latlng['lng']],

@@ -509,7 +509,7 @@ function build_map(gj, extent, OoI) {
 	}
 
 	if (!isEmpty(dynamicLegendColors['requests'])) {
-	    div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
+	    div.innerHTML += '<strong>Aanvragen</strong><br>';
 
 	    for (var idx of [1,2,3]) {
 		if (dynamicLegendColors['requests'].indexOf(reqStatuses[idx].color) > -1) {

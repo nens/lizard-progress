@@ -818,7 +818,6 @@ def get_closest_to(request, *args, **kwargs):
         with connection.cursor() as cursor:
             cursor.execute(q)
             locationIds = [l[0] for l in cursor.fetchall()]
-            cursor.close()
 
     else:
         if objType == 'location':

@@ -373,13 +373,14 @@ function build_map(gj, extent, OoI) {
 		    globalDummyArr.push(feature.properties.activity);
 		}
 		idx = globalDummyArr.indexOf(feature.properties.activity);
+		/* NB: circle radius in m, circleMarker radius in px */
 		var c = L.circle([latlng['lat'] + idx*3e-6,
 				  latlng['lng'] + idx*3e-6],
-				 {radius: 2});
+				 {radius: 3});
 		return c;
 	    } else {
 		var c = L.circle([latlng['lat'], latlng['lng']],
-				 {radius:4}).addTo(mymap);
+				 {radius:5}).addTo(mymap);
 		var r = L.rectangle(c.getBounds(), {stroke:true, weight: 2, lineJoin: 'round'});
 		mymap.removeLayer(c);
 		return r;
@@ -427,7 +428,7 @@ function build_map(gj, extent, OoI) {
 	    var fillOpacity = dummy[2];
 	    if (feature.properties.type == 'location') {
 		return {stroke:true,
-			weight:2,
+			weight:4,
 			lineJoin: 'round',
 			color: color,
 			fillColor: color,
@@ -435,7 +436,7 @@ function build_map(gj, extent, OoI) {
 			fillOpacity: fillOpacity};
 	    } else {
 		return {stroke:true,
-			weight:3,
+			weight:4,
 			lineJoin: 'round',
 			color: color,
 			fillColor: color,

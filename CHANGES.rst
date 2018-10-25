@@ -4,7 +4,11 @@ Changelog of lizard-progress
 4.4.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Upgrade Leaflet to 1.3.4, leaflet-fullscreen to 1.0.2.
+
+- Minor fixes in Legenda.
+
+- Removed basemap toggle button.
 
 
 4.4.0 (2018-08-23)

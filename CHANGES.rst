@@ -10,6 +10,8 @@ Changelog of lizard-progress
 
 - Removed basemap toggle button.
 
+- Drawing both circle and circleMarker, the larger one wins.
+
 
 4.4.0 (2018-08-23)
 ------------------

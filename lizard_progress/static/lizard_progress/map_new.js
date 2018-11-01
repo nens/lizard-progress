@@ -7,7 +7,7 @@ var locTypes = {
 
 var locStatuses = {
     'complete': {status: 'Compleet', color: 'limegreen', opacity: 0.75},
-    'incomplete': {status: 'Niet (geheel) aanwezig en niet gepland', color: 'red', opacity: 0.75},
+    'incomplete': {status: 'Niet (geheel) aanwezig en nog niet gepland', color: 'red', opacity: 0.75},
     'sched_incomplete': {status: 'Gepland, nog niet compleet', color: 'black', opacity: 0.75},
     'overdue': {status: 'Gepland, niet compleet en\n planningsdatum verstreken', color: 'gold', opacity: 0.75},
     'notproject': {status: 'Geen onderdeel van werkzaamheden', color: 'gray', opacity: 0.75},
@@ -373,13 +373,19 @@ function build_map(gj, extent, OoI) {
 		    globalDummyArr.push(feature.properties.activity);
 		}
 		idx = globalDummyArr.indexOf(feature.properties.activity);
+		/* NB: circle radius in m, circleMarker radius in px.
+		   Let's draw both - depending on the zoom level, the larger one will be visible.
+		 */
 		var c = L.circle([latlng['lat'] + idx*3e-6,
+				  latlng['lng'] + idx*3e-6],
+				 {radius: 3});
+		var cm = L.circleMarker([latlng['lat'] + idx*3e-6,
 				  latlng['lng'] + idx*3e-6],
 				 {radius: 2});
 		return c;
 	    } else {
 		var c = L.circle([latlng['lat'], latlng['lng']],
-				 {radius:4}).addTo(mymap);
+				 {radius:5}).addTo(mymap);
 		var r = L.rectangle(c.getBounds(), {stroke:true, weight: 2, lineJoin: 'round'});
 		mymap.removeLayer(c);
 		return r;
@@ -427,7 +433,7 @@ function build_map(gj, extent, OoI) {
 	    var fillOpacity = dummy[2];
 	    if (feature.properties.type == 'location') {
 		return {stroke:true,
-			weight:2,
+			weight:4,
 			lineJoin: 'round',
 			color: color,
 			fillColor: color,
@@ -435,7 +441,7 @@ function build_map(gj, extent, OoI) {
 			fillOpacity: fillOpacity};
 	    } else {
 		return {stroke:true,
-			weight:3,
+			weight:4,
 			lineJoin: 'round',
 			color: color,
 			fillColor: color,
@@ -500,7 +506,7 @@ function build_map(gj, extent, OoI) {
 	var div = L.DomUtil.create('div', 'info legend');
 	div.style.background = 'rgba(255,255,255, .7)';
 	
-	div.innerHTML += '<span><strong><u>Objecten/Locaties</u></strong></span><br>';
+	div.innerHTML += '<span><strong><u>Legenda</u></strong></span><br>';
 	for (idx in dynamicLegend['locations']) {
 	    var s = dynamicLegend['locations'][idx];
 	    div.innerHTML +=
@@ -509,7 +515,7 @@ function build_map(gj, extent, OoI) {
 	}
 
 	if (!isEmpty(dynamicLegendColors['requests'])) {
-	    div.innerHTML += '<strong><u>Aanvragen</u></strong><br>';
+	    div.innerHTML += '<strong>Aanvragen</strong><br>';
 
 	    for (var idx of [1,2,3]) {
 		if (dynamicLegendColors['requests'].indexOf(reqStatuses[idx].color) > -1) {

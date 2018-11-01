@@ -28,6 +28,7 @@ install_requires = [
     'factory_boy',
     'mock',
     'dxfwrite',
+    'pandas',
     'pyproj',
     # This is for the export to Lizard functionality
     'sqlalchemy >= 0.8',

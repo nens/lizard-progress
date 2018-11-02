@@ -765,9 +765,10 @@ class InlineMapViewNew(View):
         finally:
             cursor.close()
 
+        cursor.close()
+        
         res = json.dumps(layers)
         return (res)
-
 
 @login_required
 @ajax_request
@@ -803,19 +804,18 @@ def get_closest_to(request, *args, **kwargs):
         # Clicked on the basemap, search objects in the vicinity of the clicked point
         # considering active overlays
         # NN search is more efficiently carried out by postgis
-        q = """SELECT DISTINCT ON (loc.location_type) loc.id FROM lizard_progress_location loc
-        INNER JOIN lizard_progress_activity a ON a.id = loc.activity_id
-        AND a.name IN ({3})
-        AND (ST_Expand(loc.the_geom, {2}) &&
-        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({0} {1})'), 28992)::geometry)
-        ORDER BY loc.location_type, ST_Distance(loc.the_geom,
-        ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({0} {1})'), 28992)::geometry) ASC;"""\
-            .format(lng,
-                    lat,
-                    radius,
-                    ', '.join(map(lambda _: '\'' + str(_) + '\'', overlays)))
 
         with connection.cursor() as cursor:
+            q = """SELECT DISTINCT ON (loc.location_type) loc.id FROM lizard_progress_location loc
+            INNER JOIN lizard_progress_activity a ON a.id = loc.activity_id
+            AND a.name IN ({3})
+            AND (ST_Expand(loc.the_geom, {2}) &&
+            ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({0} {1})'), 28992)::geometry)
+            ORDER BY loc.location_type, ST_Distance(loc.the_geom,
+            ST_Transform(ST_GeomFromEWKT('SRID=4326;POINT({0} {1})'), 28992)::geometry) ASC;"""\
+                .format(lng, lat, radius,
+                        ', '.join(map(lambda _: '\'' + str(_) + '\'', overlays)))
+
             cursor.execute(q)
             locationIds = [l[0] for l in cursor.fetchall()]
 

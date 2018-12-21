@@ -766,7 +766,7 @@ class InlineMapViewNew(View):
             cursor.close()
 
         cursor.close()
-        
+
         res = json.dumps(layers)
         return (res)
 
@@ -1492,7 +1492,7 @@ class DeleteActivity(ProjectsView):
         if activity.project.slug != project_slug:
             raise PermissionDenied()
 
-        if activity.has_measurements:
+        if activity.has_measurements():
             raise PermissionDenied()
 
         activity.delete()

@@ -1,6 +1,12 @@
 Changelog of lizard-progress
 ===================================================
 
+Fixes
+-----
+
+- Fix call to has_measurements() to let deleting activity work
+
+
 4.3.0 (2018-08-13)
 ------------------
 
@@ -30,7 +36,7 @@ Changelog of lizard-progress
 - Avoid running calc_progress in projectreview view, show reviewproject.progress instead.
 
 - Disable Download reviews button if there are no reviews.
-  
+
 
 4.1.11 (2018-07-05)
 -------------------

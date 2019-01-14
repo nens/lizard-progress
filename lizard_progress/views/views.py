@@ -1171,7 +1171,8 @@ class DashboardCsvView(ProjectsView):
         response['Content-Disposition'] = ('attachment; filename=%s' %
                                            (filename,))
 
-        locations = self.activity.location_set.all()
+        locations = self.activity.location_set.all().\
+                    prefetch_related('measurement_set')
 
         # Write header row
         writer.writerow(['Locatie ID', 'Geupload in'])

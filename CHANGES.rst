@@ -4,7 +4,7 @@ Changelog of lizard-progress
 4.4.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Speed up generation of Dashboard CSV.
 
 
 4.4.1 (2018-11-02)
@@ -54,7 +54,7 @@ Changelog of lizard-progress
 - Avoid running calc_progress in projectreview view, show reviewproject.progress instead.
 
 - Disable Download reviews button if there are no reviews.
-  
+
 
 4.1.11 (2018-07-05)
 -------------------

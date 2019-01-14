@@ -4,6 +4,8 @@ Changelog of lizard-progress
 Fixes
 -----
 
+- Speed up generation of Dashboard CSV.
+
 - Fix call to has_measurements() to let deleting activity work
 
 

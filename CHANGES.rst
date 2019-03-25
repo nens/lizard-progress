@@ -8,6 +8,8 @@ Fixes
 
 - Fix call to has_measurements() to let deleting activity work
 
+- Check that recipients of notifications are still active users.
+
 
 4.3.0 (2018-08-13)
 ------------------

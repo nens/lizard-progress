@@ -155,7 +155,7 @@ class Notification(models.Model):
             return False
 
         profile = recipient.userprofile_set.first()
-        if not roles:
+        if not profile:
             return False
 
         return profile.roles.count() > 0

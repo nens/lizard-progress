@@ -127,6 +127,10 @@ class Notification(models.Model):
                action_object=None,
                target=None,
                extra=None):
+        # Never send to inactive users
+        if not cls.check_recipient(recipient):
+            return None
+
         notification = cls(
             notification_type=notification_type,
             recipient=recipient)
@@ -140,6 +144,21 @@ class Notification(models.Model):
             setattr(notification, 'extra', extra)
         notification.save()
         return notification
+
+    @classmethod
+    def check_recipient(cls, recipient):
+        """Recipients must be active and have roles, so that
+        we don't send mails to people who don't use the
+        application anymore."""
+
+        if not recipient.is_active:
+            return False
+
+        profile = recipient.userprofile_set.first()
+        if not roles:
+            return False
+
+        return profile.roles.count() > 0
 
     def send(self):
         if not self.recipient.email:
@@ -209,7 +228,8 @@ def send_notification(notification_type, recipient, **kwargs):
         target=target,
         extra=extra)
 
-    send_notification_task.delay(n)
+    if n:
+        send_notification_task.delay(n)
 
 notify.connect(
     send_notification,

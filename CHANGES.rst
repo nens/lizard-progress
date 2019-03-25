@@ -6,6 +6,8 @@ Changelog of lizard-progress
 
 - Speed up generation of Dashboard CSV.
 
+- Check that recipients of notifications are still active users.
+
 
 4.4.1 (2018-11-02)
 ------------------

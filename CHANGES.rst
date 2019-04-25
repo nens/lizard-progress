@@ -4,7 +4,8 @@ Changelog of lizard-progress
 5.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Use older connection.cursor() syntax to prevent a problem
+  on old Ubuntus.
 
 
 5.0.1 (2019-04-25)

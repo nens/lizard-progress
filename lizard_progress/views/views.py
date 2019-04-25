@@ -790,7 +790,8 @@ def get_closest_to(request, *args, **kwargs):
         # considering active overlays
         # NN search is more efficiently carried out by postgis
 
-        with connection.cursor() as cursor:
+        cursor = connection.cursor()
+        try:
             q = """SELECT DISTINCT ON (loc.location_type) loc.id FROM lizard_progress_location loc
             INNER JOIN lizard_progress_activity a ON a.id = loc.activity_id
             AND a.name IN ({3})
@@ -803,7 +804,8 @@ def get_closest_to(request, *args, **kwargs):
 
             cursor.execute(q)
             locationIds = [l[0] for l in cursor.fetchall()]
-
+        finally:
+            cursor.close()
     else:
         if objType == 'location':
             rootLocation = Location.objects.get(id=objId)

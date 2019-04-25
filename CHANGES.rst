@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-5.0.1 (unreleased)
+5.0.1 (2019-04-25)
 ------------------
 
 - Remove check on 'is_ajax' for the get_closest_to view as

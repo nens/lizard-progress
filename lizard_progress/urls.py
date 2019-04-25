@@ -20,7 +20,6 @@ from lizard_progress.views import DownloadHomeView
 from lizard_progress.views import DownloadView
 from lizard_progress.views import DownloadDocumentsView
 from lizard_progress.views import DownloadOrganizationDocumentView
-from lizard_progress.views import InlineMapView
 from lizard_progress.views import InlineMapViewNew
 from lizard_progress.views import MapView
 from lizard_progress.views import ProjectsView
@@ -105,11 +104,6 @@ activity_urls = [
 ]
 
 project_urls = [
-    # Kaartlagen view
-    url('^map/$', login_required(InlineMapView.as_view()),
-        name='lizard_progress_inlinemapview'),
-
-    # NEW MAP ###################################
     url('^map_new/$', login_required(InlineMapViewNew.as_view()),
         name='lizard_progress_inlinemapview_new'),
 
@@ -126,16 +120,15 @@ project_urls = [
     url('^map_new/change_request/(?P<change_request>[^/]+)/$',
         login_required(InlineMapViewNew.as_view()),
         name='lizard_progress_newmap_change_request'),
-    # END NEW MAP ###############################
 
-    url('^mapinline/$', login_required(MapView.as_view()),
-        name='lizard_progress_mapview'),
-    url('^map/change_request/(?P<change_request>[^/]+)/$',
-        login_required(InlineMapView.as_view()),
-        name='lizard_progress_mapview_change_request'),
-    url('^map/location_code/(?P<location_code>[^/]+)/$',
-        login_required(InlineMapView.as_view()),
-        name='lizard_progress_mapview_location_code'),
+    # url('^mapinline/$', login_required(MapView.as_view()),
+    #     name='lizard_progress_mapview'),
+    # url('^map/change_request/(?P<change_request>[^/]+)/$',
+    #     login_required(InlineMapView.as_view()),
+    #     name='lizard_progress_mapview_change_request'),
+    # url('^map/location_code/(?P<location_code>[^/]+)/$',
+    #     login_required(InlineMapView.as_view()),
+    #     name='lizard_progress_mapview_location_code'),
     # Dashboard page
     url('^dashboard/$', login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),

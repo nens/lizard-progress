@@ -4,6 +4,8 @@ Changelog of lizard-progress
 4.4.2 (unreleased)
 ------------------
 
+- Remove old map. Prepare for removal of Lizard 4 dependency.
+
 - Speed up generation of Dashboard CSV.
 
 - Check that recipients of notifications are still active users.

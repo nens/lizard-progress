@@ -492,10 +492,6 @@ class View(KickOutMixin, ProjectsMixin, TemplateView):
     template_name = 'lizard_progress/home.html'
 
 
-class InlineMapView(View):
-    template_name = 'lizard_progress/map_inline.html'
-
-
 class InlineMapViewNew(View):
     template_name = 'lizard_progress/map_inline_new.html'
 

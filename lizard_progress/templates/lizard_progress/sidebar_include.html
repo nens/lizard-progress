@@ -24,81 +24,63 @@ Dashboard will show in 3 columns width, while the others will have a 1 column wi
 	      </li>
 	      <li>
 	        <a href="{% url "lizard_progress_downloadhomeview" view.project.slug %}"><i class="fa fa-lg fa-files-o"></i> &nbsp; bestanden</a>
-	      </li>	
+	      </li>
         {% if not view.user_is_viewer %}
-        <!-- TODO: make view unavailable via url -->
         <li>
           <a href="{% url "lizard_progress_project_configuration_view" view.project.slug %}"><i class="fa fa-lg fa-cogs"></i> &nbsp; configuratie</a>
         </li>
         {% endif %}
-<!-- 	      <li>
-	        <a href="#"><i class="fa fa-lg fa-question-circle"></i> &nbsp; aanvragen <span class="badge">4x</span></a>
-	      </li> -->
 	      <li>
-	        <a href="{% url "lizard_progress_inlinemapview" view.project.slug %}"><i class="fa fa-lg fa-globe"></i> &nbsp; kaart</a>
+	        <a href="{% url "lizard_progress_inlinemapview_new" view.project.slug %}"><i class="fa fa-lg fa-globe"></i> &nbsp; kaart</a>
 	      </li>
-	      <li>
-	        <a href="{% url "lizard_progress_inlinemapview_new" view.project.slug %}"><i class="fa fa-lg fa-globe"></i> &nbsp; kaart (nieuw)</a>
-	      </li>
-<!-- 	      <li>
-	        <a href="#"><i class="fa fa-lg fa-share"></i> &nbsp; exporteren</a>
-	      </li> -->
 	    </ul>
 	  </nav>
-	</div>  
+	</div>
 {% else %}
 	<div class="col-md-1" role="complementary">
 	  <nav class="sidebar hidden-print">
 	    <ul class="nav sidenav">
 	      <li data-toggle="tooltip" data-placement="left" title="Dashboard">
 	        <a href="{% url "lizard_progress_dashboardview" view.project.slug %}"><i class="fa fa-lg fa-tachometer"></i><span class="hidden-md hidden-lg">&nbsp;Dashboard</span></a>
-	      </li>   
+	      </li>
 	      <li data-toggle="tooltip" data-placement="left" title="Werkzaamheden">
-	        <a 
+	        <a
 	        {% if active == 'activities' %}
-	        	class="active" 
+	        	class="active"
 	        {% endif %}
 	        	href="{% url "lizard_progress_activitiesView" view.project.slug %}">
 	        	<i class="fa fa-lg fa-tasks"></i><span class="hidden-md hidden-lg">&nbsp;Werkzaamheden</span>
 	        </a>
 	      </li>
 	      <li data-toggle="tooltip" data-placement="left" title="Bestanden">
-	        <a 
+	        <a
 	        {% if active == 'download' %}
-	        	class="active" 
+	        	class="active"
 	        {% endif %}
 	        	href="{% url "lizard_progress_downloadhomeview" view.project.slug %}">
 	        	<i class="fa fa-lg fa-files-o"></i><span class="hidden-md hidden-lg">&nbsp;Bestanden</span>
 	        </a>
-	      </li>	
+	      </li>
         {% if not view.user_is_viewer %}
         <li data-toggle="tooltip" data-placement="left" title="Configuratie">
-          <a 
+          <a
           {% if active == 'configuration' %}
-            class="active" 
+            class="active"
           {% endif %}
             href="{% url "lizard_progress_project_configuration_view" view.project.slug %}">
             <i class="fa fa-lg fa-cogs"></i><span class="hidden-md hidden-lg">&nbsp;Configuratie</span>
           </a>
         </li>
         {% endif %}
-	      <li data-toggle="tooltip" data-placement="left" title="Kaart">
-	        <a 
-	        {% if active == 'map' %}
-	        	class="active" 
-	        {% endif %}        
-	        	href="{% url "lizard_progress_inlinemapview" view.project.slug %}">
-	        	<i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart</span>
-	        </a>
-		<li data-toggle="tooltip" data-placement="left" title="Kaart (nieuw)">
-	        <a 
+		<li data-toggle="tooltip" data-placement="left" title="Kaart">
+	        <a
 	            {% if active == 'new_map' %}
-	            class="active" 
-	            {% endif %}        
+	            class="active"
+	            {% endif %}
 	            href="{% url "lizard_progress_inlinemapview_new" view.project.slug %}">
-	            <i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart (nieuw)</span>
+	            <i class="fa fa-lg fa-globe"></i><span class="hidden-md hidden-lg">&nbsp;Kaart</span>
 	        </a>
-	        
+
 	      </li>
 	    </ul>
 	  </nav>

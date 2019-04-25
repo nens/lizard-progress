@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-5.0.2 (unreleased)
+5.0.2 (2019-04-25)
 ------------------
 
 - Use older connection.cursor() syntax to prevent a problem

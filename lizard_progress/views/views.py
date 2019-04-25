@@ -74,16 +74,6 @@ logger = logging.getLogger(__name__)
 UiView  # Don't delete, it is imported by ``views/activity.py``
 
 
-# Decorator serving to assure the request is a AJAX request
-def ajax_request(view):
-    def wrapper(request, *args, **kwargs):
-        if request.is_ajax():
-            return view(request, *args, **kwargs)
-        else:
-            raise PermissionDenied
-    return wrapper
-
-
 class ProjectsMixin(object):
     """Helper functions for working with projects in views"""
     project_slug = None
@@ -767,7 +757,6 @@ class InlineMapViewNew(View):
         return (res)
 
 @login_required
-@ajax_request
 def get_closest_to(request, *args, **kwargs):
     """ When clicked on the map, searches for nearest neighbours (one of every type) within
     active overlays (=activities).

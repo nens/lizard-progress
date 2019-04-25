@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-4.4.2 (unreleased)
+5.0.0 (2019-04-25)
 ------------------
 
 - Remove old map. Prepare for removal of Lizard 4 dependency.

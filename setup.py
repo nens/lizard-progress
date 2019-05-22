@@ -20,8 +20,6 @@ install_requires = [
     'django-nose',
     'django-transaction-hooks',
     'geojson',
-    'lizard-ui >= 4.40, < 5.0',
-    'lizard-map >= 4.50, < 5.0',
     'metfilelib >= 0.14',
     'ribxlib >= 0.10',
     'pkginfo',

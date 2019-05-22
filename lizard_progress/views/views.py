@@ -44,7 +44,6 @@ from lizard_map.matplotlib_settings import SCREEN_DPI
 from lizard_map.views import AppView
 from lizard_map.views import MAP_LOCATION as EXTENT_SESSION_KEY
 from lizard_ui.layout import Action
-from lizard_ui.views import UiView
 
 from lizard_progress import configuration
 from lizard_progress import crosssection_graph
@@ -71,7 +70,31 @@ from lizard_progress.forms import UploadReviews
 logger = logging.getLogger(__name__)
 
 
-UiView  # Don't delete, it is imported by ``views/activity.py``
+class ViewContextMixin(object):
+    """View mixin that adds the view object to the context.
+
+    Make sure this is near the front of the inheritance list: it should come
+    before other mixins that (re-)define ``get_context_data()``.
+
+    When you use this mixin in your view, you can do ``{{ view.some_method
+    }}`` or ``{{ view.some_attribute }}`` in your class and it will call those
+    methods or attributes on your view object: no more need to pass in
+    anything in a context dictionary, just stick it on ``self``!
+
+    """
+    def get_context_data(self, **kwargs):
+        """Return context with view object available as 'view'."""
+        try:
+            context = super(ViewContextMixin, self).get_context_data(**kwargs)
+        except AttributeError:
+            context = {}
+        context.update({'view': self})
+        return context
+
+
+class UiView(ViewContextMixin, TemplateView):
+    """Deleted the stuff that was in here when it was in lizard-ui."""
+    pass
 
 
 class ProjectsMixin(object):

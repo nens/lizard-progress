@@ -1,7 +1,7 @@
 import os
 
-from lizard_ui.settingshelper import setup_logging
-from lizard_ui.settingshelper import STATICFILES_FINDERS
+from lizard_progress.settingshelper import setup_logging
+from lizard_progress.settingshelper import STATICFILES_FINDERS
 
 DEBUG = True
 TEMPLATE_DEBUG = True
@@ -97,9 +97,6 @@ INSTALLED_APPS = [
     'lizard_progress',
     'lizard_progress.changerequests',
     'lizard_progress.email_notifications',
-    'lizard_ui',
-    'lizard_map',
-    'lizard_security',
     'django.contrib.staticfiles',
     'compressor',
     'south',
@@ -115,8 +112,6 @@ INSTALLED_APPS = [
 ROOT_URLCONF = 'lizard_progress.urls'
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-    # Uncomment this one if you use lizard-map.
-    # 'lizard_map.context_processors.processor.processor',
     # Default django 1.3 processors.
     "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",

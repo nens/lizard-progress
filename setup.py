@@ -33,6 +33,10 @@ install_requires = [
     'geoalchemy2',
     'pyshp',
     'requests',
+    # Previously in lizard-map / lizard-ui
+    'south',
+    'django-compressor',
+    'django-tls'
     ]
 
 tests_require = [
@@ -61,9 +65,5 @@ setup(name='lizard-progress',
       extras_require={'test': tests_require},
       entry_points={
           'console_scripts': [],
-          'lizard_map.adapter_class': [
-              'adapter_progress = lizard_progress.layers:ProgressAdapter',
-              'adapter_hydrovak = lizard_progress.layers:HydrovakAdapter',
-              'adapter_changerequest = '
-              'lizard_progress.changerequests.layers:ChangeRequestAdapter',
-              ]})
+      }
+)

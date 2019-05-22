@@ -40,11 +40,6 @@ from django.views.generic.base import TemplateView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.static import serve
 
-from lizard_map.matplotlib_settings import SCREEN_DPI
-from lizard_map.views import AppView
-from lizard_map.views import MAP_LOCATION as EXTENT_SESSION_KEY
-from lizard_ui.layout import Action
-
 from lizard_progress import configuration
 from lizard_progress import crosssection_graph
 from lizard_progress import forms
@@ -52,6 +47,7 @@ from lizard_progress import models
 from lizard_progress.changerequests.models import Request
 from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
+from lizard_progress.matplotlib_settings import SCREEN_DPI
 from lizard_progress.models import Location
 from lizard_progress.models import MeasurementTypeAllowed
 from lizard_progress.models import Project
@@ -63,9 +59,9 @@ from lizard_progress.models import UserProfile
 from lizard_progress.models import AvailableMeasurementType
 from lizard_progress.util import directories
 from lizard_progress.util import geo
-from lizard_progress.util import workspaces
 from lizard_progress.forms import NewReviewProjectForm
 from lizard_progress.forms import UploadReviews
+from lizard_progress.views.action import Action
 
 logger = logging.getLogger(__name__)
 
@@ -964,107 +960,6 @@ def xsecimage(request, *args, **kwargs):
         response = HttpResponse()
 
     return response
-
-
-class MapView(View, AppView):
-    """View that can show a project's locations as map layers."""
-    template_name = 'lizard_progress/map.html'
-
-    def get(self, request, *args, **kwargs):
-        """Besides rendering the map page, zoom to the extent of all our
-        layers, and place them in the workspace."""
-
-        # XXX Note that this is somewhat dubious as some JS functionality
-        # (like toggling the visibility of the workspace items) also calls
-        # *this entire view* to update its view of the workspace items.
-        workspaces.set_items(request, self.available_layers)
-        self.set_extent(request.session,
-                        change_request=kwargs.get('change_request', None),
-                        location_code=kwargs.get('location_code', None))
-        return super(MapView, self).get(request, *args, **kwargs)
-
-    @cached_property
-    def available_layers(self):
-        """List of layers available to draw. One layer per activity. These
-        are lizard_progress.util.workspaces.MapLayer instances."""
-
-        # Return a tuple instead of a list because an immutable value
-        # is safer with @cached_property.
-        return tuple(self.project.available_layers(self.request.user))
-
-    def set_extent(self, session, change_request, location_code):
-        """We need min-x, max-x, min-y and max-y as Google coordinates."""
-        rd_extent = self.get_rd_extent(change_request, location_code)
-
-        if rd_extent:
-            formatted_google_extent = geo.rd_to_google_extent(rd_extent)
-            session[EXTENT_SESSION_KEY] = formatted_google_extent
-
-    def get_rd_extent(self, change_request, location_code):
-        """Compute the extent we want to zoom to, in RD."""
-
-        locations = Location.objects.filter(activity__project=self.project)
-        if location_code:
-            locations = locations.filter(location_code=location_code)
-
-        # Layers MAY define their own extent (used for the extents of
-        # change requests). Otherwise layer.extent will be None.
-        extra_extents = [layer.extent for layer in self.available_layers
-                         if layer.extent is not None]
-
-        if change_request:
-            extent = Request.objects.get(id=change_request).map_layer().extent
-        elif locations.exists():
-            # Start with this extent, add the extras to this
-            extent = locations.extent()
-        elif extra_extents:
-            # No locations, but extra extents: use the first as start extent
-            extent = extra_extents.pop()
-        else:
-            # There is nothing to zoom to...
-            return None
-
-        minx, miny, maxx, maxy = extent
-
-        # Combine extra extents
-        for extra_extent in extra_extents:
-            e_minx, e_miny, e_maxx, e_maxy = extra_extent
-            minx = min(minx, e_minx)
-            miny = min(miny, e_miny)
-            maxx = max(maxx, e_maxx)
-            maxy = max(maxy, e_maxy)
-
-        return (minx, miny, maxx, maxy)
-
-    @property
-    def content_actions(self):
-        """Hide everything but the zoom to start location action"""
-        return [action for action in
-                super(MapView, self).content_actions
-                if 'load-default-location' in action.klass]
-
-    @property
-    def sidebar_actions(self):
-        """..."""
-        actions = super(MapView, self).sidebar_actions
-        actions[0].name = 'Kaartlagen'
-        return actions
-
-    @property
-    def breadcrumbs(self):
-        """Breadcrumbs for this page."""
-
-        crumbs = super(MapView, self).breadcrumbs
-
-        crumbs.append(
-            Action(
-                name="Kaartlagen",
-                description=("De kaartlagen van {project} in Lizard"
-                             .format(project=self.project.name)),
-                url=reverse('lizard_progress_mapview',
-                            kwargs={'project_slug': self.project_slug})))
-
-        return crumbs
 
 
 class DashboardView(ProjectsView):

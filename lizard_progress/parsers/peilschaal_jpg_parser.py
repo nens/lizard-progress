@@ -5,7 +5,7 @@ import os.path
 
 from django.contrib.gis.geos import Point
 
-from lizard_map.coordinates import wgs84_to_rd
+from lizard_progress.util.coordinates import wgs84_to_rd
 from lizard_progress.models import Location
 from lizard_progress.models import Measurement
 from lizard_progress.models import SRID

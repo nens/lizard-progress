@@ -20,14 +20,13 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
 
-from lizard_ui.views import ViewContextMixin
-
 from lizard_progress import configuration
 from lizard_progress import forms
 from lizard_progress import tasks
 from lizard_progress import models
 from lizard_progress.util import directories
 from lizard_progress.views.views import ProjectsView
+from lizard_progress.views.views import ViewContextMixin
 from lizard_progress.views.activity import ActivityView
 
 APP_LABEL = models.Project._meta.app_label

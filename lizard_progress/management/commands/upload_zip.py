@@ -15,7 +15,7 @@ from django.core.management.base import CommandError
 
 import Image
 
-from lizard_map.coordinates import wgs84_to_rd
+from lizard_progress.util.coordinates import wgs84_to_rd
 from lizard_progress import models
 from lizard_progress import tasks
 from lizard_progress.util.image import get_exif_data, get_lat_lon

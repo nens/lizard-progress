@@ -14,7 +14,7 @@ from django.contrib.gis.geos import Point
 
 from osgeo import ogr
 
-from lizard_map import coordinates
+from lizard_progress.util import coordinates
 
 
 def rd_to_wgs84_extent(rd_extent, extra_border=0.1):

@@ -29,7 +29,7 @@ import osgeo.ogr
 
 from ribxlib import parsers
 
-from lizard_ui.layout import Action
+from lizard_progress.views.action import Action
 
 from lizard_progress.views.views import KickOutMixin
 from lizard_progress.views.views import ProjectsMixin

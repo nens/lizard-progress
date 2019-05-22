@@ -31,14 +31,13 @@ from jsonfield import JSONField
 from lizard_progress.email_notifications import notify
 from lizard_progress.email_notifications.models import NotificationSubscription
 from lizard_progress.email_notifications.models import NotificationType
+from lizard_progress.util import coordinates
 from lizard_progress.util import directories
 from lizard_progress.util import geo
 # from lizard_progress.util import filler
 from lizard_progress.util.autoreviewer import AutoReviewer
 from lizard_progress.util.autoreviewer import Field
 from lizard_progress.util.autoreviewer import Observation
-
-from lizard_map import coordinates
 
 import geojson
 import datetime

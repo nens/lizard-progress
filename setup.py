@@ -20,8 +20,6 @@ install_requires = [
     'django-nose',
     'django-transaction-hooks',
     'geojson',
-    'lizard-ui >= 4.40, < 5.0',
-    'lizard-map >= 4.50, < 5.0',
     'metfilelib >= 0.14',
     'ribxlib >= 0.10',
     'pkginfo',
@@ -35,6 +33,10 @@ install_requires = [
     'geoalchemy2',
     'pyshp',
     'requests',
+    # Previously in lizard-map / lizard-ui
+    'south',
+    'django-compressor',
+    'django-tls'
     ]
 
 tests_require = [
@@ -63,9 +65,5 @@ setup(name='lizard-progress',
       extras_require={'test': tests_require},
       entry_points={
           'console_scripts': [],
-          'lizard_map.adapter_class': [
-              'adapter_progress = lizard_progress.layers:ProgressAdapter',
-              'adapter_hydrovak = lizard_progress.layers:HydrovakAdapter',
-              'adapter_changerequest = '
-              'lizard_progress.changerequests.layers:ChangeRequestAdapter',
-              ]})
+      }
+)

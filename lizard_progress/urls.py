@@ -7,11 +7,16 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import logging
+
+from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls import patterns
 from django.conf.urls import url
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from lizard_progress.views import ActivitiesView
 from lizard_progress.views import DashboardView
@@ -21,7 +26,6 @@ from lizard_progress.views import DownloadView
 from lizard_progress.views import DownloadDocumentsView
 from lizard_progress.views import DownloadOrganizationDocumentView
 from lizard_progress.views import InlineMapViewNew
-from lizard_progress.views import MapView
 from lizard_progress.views import ProjectsView
 from lizard_progress.views import UploadDialogView
 from lizard_progress.views import UploadReportsView
@@ -32,7 +36,21 @@ from lizard_progress.views import dashboard_graph
 from lizard_progress import views
 from lizard_progress.views import organization_admin
 
-from lizard_ui.urls import debugmode_urlpatterns
+logger = logging.getLogger(__name__)
+
+
+def debugmode_urlpatterns():
+    # Staticfiles url patterns.
+    patterns = staticfiles_urlpatterns()
+    # User-uploaded media patterns. Used to be arranged by django-staticfiles.
+    prefix = settings.MEDIA_URL
+    root = settings.MEDIA_ROOT
+    if prefix and root:
+        patterns += static(prefix, document_root=root)
+    else:
+        logger.warn("Can't find MEDIA_URL (%s) and/or MEDIA_ROOT (%s).",
+                    prefix, root)
+    return patterns
 
 admin.autodiscover()
 
@@ -121,14 +139,6 @@ project_urls = [
         login_required(InlineMapViewNew.as_view()),
         name='lizard_progress_newmap_change_request'),
 
-    # url('^mapinline/$', login_required(MapView.as_view()),
-    #     name='lizard_progress_mapview'),
-    # url('^map/change_request/(?P<change_request>[^/]+)/$',
-    #     login_required(InlineMapView.as_view()),
-    #     name='lizard_progress_mapview_change_request'),
-    # url('^map/location_code/(?P<location_code>[^/]+)/$',
-    #     login_required(InlineMapView.as_view()),
-    #     name='lizard_progress_mapview_location_code'),
     # Dashboard page
     url('^dashboard/$', login_required(DashboardView.as_view()),
         name='lizard_progress_dashboardview'),

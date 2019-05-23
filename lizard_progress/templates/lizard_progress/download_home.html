@@ -141,7 +141,7 @@
                                 {% else %}Onbekend{% endif%}
                               </td>
                               <td id="present-{{ export_run.id }}">
-                                {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif">{% elif export_run.error_message %}<span class="small">{{ export_run.error_message }}</span>
+                                {% if export_run.available %}{{ export_run.created_at }}{% elif export_run.export_running %}<img src="{{ STATIC_URL }}lizard_progress/ajax-loader3.gif">{% elif export_run.error_message %}<span class="small">{{ export_run.error_message }}</span>
                                 {% endif %}
                               </td>
                               <td id="uptodate-{{ export_run.id }}">
@@ -165,7 +165,7 @@
                                         autocomplete="off" {# So it does not stay disabled after reloading in Firefox #}
                                         {% if export_run.export_running %}disabled="disabled"{% endif %}
                                         data-export-run-url="{% url "lizard_progress_start_export_run_view" project_slug=view.project_slug export_run_id=export_run.id %}"
-                                        data-loader-gif="{{ STATIC_URL }}lizard_ui/ajax-loader3.gif"
+                                        data-loader-gif="{{ STATIC_URL }}lizard_progress/ajax-loader3.gif"
                                         data-export-run-id="{{ export_run.id }}"
                                         class="export-run-button btn btn-primary">
                                   <i class="fa fa-lg fa-share" data-toggle="tooltip" data-placement="right" title="Genereren"></i>

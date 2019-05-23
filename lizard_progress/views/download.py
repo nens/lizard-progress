@@ -18,7 +18,7 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import View
 from django.views.static import serve
 
-from lizard_ui.layout import Action
+from lizard_progress.views.action import Action
 
 from lizard_progress import models
 from lizard_progress import tasks
@@ -87,7 +87,6 @@ def file_download(request, path):
 
 
 class DownloadOrganizationDocumentView(View):
-
     def get(self, request, organization_id, filename):
         organization = get_object_or_404(Organization,
                                          id=organization_id)

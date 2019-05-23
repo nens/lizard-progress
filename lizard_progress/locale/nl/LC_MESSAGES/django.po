@@ -129,24 +129,6 @@ msgstr ""
 msgid "[Uploadservice]"
 msgstr "[Uploadservice]"
 
-#: templates/lizard_map/tag_workspace_edit.html:18
-msgid ""
-"This is your workspace. Hover your mouse over the containing items to see "
-"options."
-msgstr ""
-
-#: templates/lizard_map/tag_workspace_edit.html:19
-msgid "Layers"
-msgstr ""
-
-#: templates/lizard_map/tag_workspace_edit.html:57
-msgid "Zoom to extent"
-msgstr ""
-
-#: templates/lizard_map/tag_workspace_edit.html:68
-msgid "No map layers selected."
-msgstr ""
-
 #: templates/lizard_progress/map_legend.html:12
 msgid "Legend"
 msgstr "Legenda"

@@ -494,14 +494,7 @@ class ProjectsView(KickOutMixin, ProjectsMixin, TemplateView):
     template_name = "lizard_progress/projects.html"
 
 
-class View(KickOutMixin, ProjectsMixin, TemplateView):
-    """The app's root, shows a choice of projects, or a choice of
-    dashboard / upload / map layer pages if a project is chosen."""
-
-    template_name = 'lizard_progress/home.html'
-
-
-class InlineMapViewNew(View):
+class InlineMapViewNew(KickOutMixin, ProjectsMixin, TemplateView):
     template_name = 'lizard_progress/map_inline_new.html'
 
     def get(self, request, *args, **kwargs):

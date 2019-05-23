@@ -138,7 +138,7 @@ function openTab(evt, tab, lat, lng) {
     evt.currentTarget.className += " active";
     popup.setLatLng([lat, lng]);
     reloadGraphs();
-} 
+}
 function reloadDynamicGraph($graph, callback, force) {
     // check if graph is already loaded
     if (force !== true && $graph.attr('data-graph-loaded')) return;
@@ -154,7 +154,7 @@ function reloadDynamicGraph($graph, callback, force) {
     var url = $graph.attr('data-image-graph-url');
     if (url) {
         // add a spinner
-        var $loading = $('<img src="/static_media/lizard_ui/ajax-loader.gif" class="graph-loading-animation" />');
+        var $loading = $('<img src="/static_media/lizard_progress/ajax-loader.gif" class="graph-loading-animation" />');
         $graph.empty().append($loading);
         $graph.attr('data-graph-loading', 'true');
 
@@ -176,7 +176,7 @@ function reloadDynamicGraph($graph, callback, force) {
             on_loaded();
             $graph.html('Voor deze locatie is er geen data anwezig in het systeem.');
 	}
-	
+
         // show a message when loading has failed
         var on_error = function () {
             on_loaded();
@@ -254,7 +254,7 @@ function calcLocationStatus(feat) {
 	status = 'complete';
     } else {
 	if (feat.properties.planned_date !== null) {
-	    var now = Date.now();    
+	    var now = Date.now();
 	    var duedate = new Date(feat.properties.planned_date);
 	    var overdue = duedate < now;
 	    /* Scheduled, incomplete, overdue */
@@ -307,7 +307,7 @@ function build_map(gj, extent, OoI) {
 	preferCanvas: true,
 	zoomControl: false
     });
-  
+
     currBounds = [
 	[extent.top, extent.left],
 	[extent.bottom, extent.right]
@@ -315,7 +315,7 @@ function build_map(gj, extent, OoI) {
     var _orderingTable = {LineString: 0, Point: 10};
 
     mymap.fitBounds(currBounds);
-    mymap.on('moveend', function() { 
+    mymap.on('moveend', function() {
 	currBounds = mymap.getBounds();
     });
 
@@ -368,7 +368,7 @@ function build_map(gj, extent, OoI) {
 	    if (feature.properties.type == 'location') {
 		/* Displace locations slightly depending on their activity.
 		   It's ok as long as the displacement is << object size.
-		   2e-6 lat/lng deg is approx 22 cm. */ 
+		   2e-6 lat/lng deg is approx 22 cm. */
 		if (globalDummyArr.indexOf(feature.properties.activity) < 0) {
 		    globalDummyArr.push(feature.properties.activity);
 		}
@@ -389,7 +389,7 @@ function build_map(gj, extent, OoI) {
 		var r = L.rectangle(c.getBounds(), {stroke:true, weight: 2, lineJoin: 'round'});
 		mymap.removeLayer(c);
 		return r;
-	    }		
+	    }
 	},
 	style: function(feature) {
 	    /* Determine color and shape of the feature marker based on its type, status etc. */
@@ -397,7 +397,7 @@ function build_map(gj, extent, OoI) {
 		var color = 'orange';
 		var opacity = 1;
 		var fillOpacity = opacity;
-		var now = Date.now();    
+		var now = Date.now();
 
 		if (feat.properties.type == 'location') {
 		    var status = calcLocationStatus(feat);
@@ -411,7 +411,7 @@ function build_map(gj, extent, OoI) {
 		    color = reqStatuses[feat.properties.status].color;
 		    opacity = reqStatuses[feat.properties.status].opacity;
 		    fillOpacity = opacity;
-		   
+
 		    /* process moving requests separately since they come pairwise (old/new) */
 		    if (feat.properties.req_type == 2) {
 			if (feat.properties.old == 1) {
@@ -419,9 +419,9 @@ function build_map(gj, extent, OoI) {
 			    fillOpacity = 0;
 			}
 		    }
-		    
+
 		    legendColor = reqStatuses[feat.properties.status].color;
-		    /* for requests, collect colors rather than statusses, since rejected, cancelled and invalid 
+		    /* for requests, collect colors rather than statusses, since rejected, cancelled and invalid
 		       requests share color */
 		    if (dynamicLegendColors['requests'].indexOf(legendColor) < 0) {dynamicLegendColors['requests'].push(legendColor); }
 		}
@@ -499,13 +499,13 @@ function build_map(gj, extent, OoI) {
     /* Add Overlay Control */
     control = new L.control.layers([], overlayMaps, {position: 'topleft'}).addTo(mymap);
     $(".leaflet-control-layers-overlays").prepend("<label><u>Kaartlagen</u></label>");
-    
+
     /* Create and add Legend */
     var legend = L.control({position: 'bottomright'});
     legend.onAdd = function (mymap) {
 	var div = L.DomUtil.create('div', 'info legend');
 	div.style.background = 'rgba(255,255,255, .7)';
-	
+
 	div.innerHTML += '<span><strong><u>Legenda</u></strong></span><br>';
 	for (idx in dynamicLegend['locations']) {
 	    var s = dynamicLegend['locations'][idx];
@@ -577,14 +577,7 @@ function build_map(gj, extent, OoI) {
                 }
             }
         } else {
-            var nothingFoundMessage = '';
-            if (lizard_map && lizard_map.nothingFoundMessage) {
-                nothingFoundMessage = lizard_map.nothingFoundMessage;
-            } else {
-                // Backwards compatibility
-                nothingFoundMessage = "Er is niets rond deze locatie gevonden.";
-            }
-            html = nothingFoundMessage;
+          html = "Er is niets rond deze locatie gevonden.";
         }
 
 	/* find max tab height and use it as fixed popup height */
@@ -609,7 +602,7 @@ function build_map(gj, extent, OoI) {
 	} else {
 	    popup.setContent('Ophalen Locatiegegevens...')
 		.openOn(mymap);
-	}	    
+	}
 	$.ajax({
 	    type: 'get',
 	    url: 'get_closest_to',

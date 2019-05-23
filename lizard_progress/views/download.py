@@ -87,7 +87,6 @@ def file_download(request, path):
 
 
 class DownloadOrganizationDocumentView(View):
-
     def get(self, request, organization_id, filename):
         organization = get_object_or_404(Organization,
                                          id=organization_id)

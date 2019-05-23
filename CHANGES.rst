@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-5.0.3 (unreleased)
+5.1.0 (2019-05-23)
 ------------------
 
 - Removed all dependencies on Lizard 4; since we changed to the new

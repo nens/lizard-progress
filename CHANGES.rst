@@ -4,7 +4,12 @@ Changelog of lizard-progress
 5.0.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Removed all dependencies on Lizard 4; since we changed to the new
+  map implementation, nothing substantial was still used apart from
+  some util libraries and static files (like small images for spinners
+  and logos) that were copied to lizard_progress.
+
+  This should make porting to newer Django, newer Ubuntu etc much simpler.
 
 
 5.0.2 (2019-04-25)

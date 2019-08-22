@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-5.1.1 (unreleased)
+5.1.1 (2019-08-22)
 ------------------
 
 - Fix map link on the upload page.

@@ -4,7 +4,7 @@ Changelog of lizard-progress
 5.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- In reviewmodels, skip pipes without geometries.
 
 
 5.1.1 (2019-08-22)

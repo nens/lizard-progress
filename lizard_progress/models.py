@@ -857,6 +857,12 @@ class ReviewProject(models.Model):
             # pipes
             pipe = self._parse_zb_a(elem)
 
+            if 'Beginpunt x' not in pipe:
+                # Geometry information missing, we have no good way to deal with
+                # this. Skip it.
+                logger.info('Skipping pipe', str(elem), str(pipe))
+                continue
+
             if 'ZC' in pipe:
 
                 keep = [False] * len(pipe['ZC'])

@@ -4,7 +4,7 @@ Changelog of lizard-progress
 5.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added two forms for reviewprojects to remove and rename a reviewproject.
 
 
 5.1.1 (2019-08-22)

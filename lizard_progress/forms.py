@@ -339,6 +339,14 @@ class NewReviewProjectForm(forms.Form):
         super(NewReviewProjectForm, self).__init__(*args, **kwargs)
 
 
+class SelectReviewProjectForm(forms.Form):
+    review_project_id = forms.IntegerField(label="review_project_id")
+
+
+class ChangeNameReviewProjectForm(SelectReviewProjectForm):
+    name = forms.CharField(label='name', max_length=50)
+
+
 class UploadReviews(forms.Form):
 
     #reviews = JSONFormField(label='reviews')

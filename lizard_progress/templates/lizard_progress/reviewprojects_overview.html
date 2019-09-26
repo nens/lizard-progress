@@ -23,20 +23,40 @@
       <ul>
       {% for review in view.all_review_projects %}
         <li>
-          <div class="row">
-            <div class="col-sm"><a href="{{ review.id }}"> {{ review.name }} </a></div>
-            <div class="col-sm">{{ review.progress }}%</div>
+          <div class="row" style="padding:15px;">
+            <div class="col-sm">
+              {% if view.user_is_manager %}
+                <form action="" method="post" enctype="multipart/form-data"
+                      onsubmit="return confirm('Do you really want to remove {{ review.name }}?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="review_project_id" value={{ review.id }}>
+                  <input type="submit" value="Remove" name="delete reviewproject"
+                         class="btn btn-primary btn-md pull-right"
+                         style="padding:5px;margin-right:15px">
+                </form>
+
+                <form action="" method="post" enctype="multipart/form-data"
+                      onsubmit="return confirm('Do you really want rename {{ review.name }}?');" >
+                  {% csrf_token %}
+                  <div class="pull-right">
+                    <input type="hidden" name="review_project_id" value={{ review.id }}>
+                    {{ view.name_form.name }}
+                    <input type="submit" value="Change name"
+                           name="change reviewproject name"
+                           class="btn btn-primary btn-md pull-right"
+                           style="padding:5px;margin-right:25px">
+                  </div>
+
+                </form>
+              {% endif %}
+              <a href="{{ review.id }}">{{ review.name }}</a>
+              {{ review.progress }}%
+            </div>
           </div>
         </li>
 
       {% endfor %}
-      </ul>
-    </div>
-
-    </div>
-
-    <br/>
-
+    </ul>
   </div>
 
 {% endblock %}

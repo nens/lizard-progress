@@ -1468,6 +1468,37 @@ class EmailNotificationConfigurationView(ProjectsView):
 class ReviewProjectsOverview(KickOutMixin, ReviewProjectMixin, TemplateView):
     template_name = 'lizard_progress/reviewprojects_overview.html'
 
+    def get(self, request, *args, **kwargs):
+        if not hasattr(self, 'name_form'):
+            self.name_form = forms.ChangeNameReviewProjectForm()
+        return super(ReviewProjectsOverview, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not self.user_is_manager():
+            return
+        if 'delete reviewproject' in request.POST:
+            form = forms.SelectReviewProjectForm(request.POST)
+            if not form.is_valid():
+                return ReviewProjectsOverview.get(request)
+            review_id = form.cleaned_data.get('review_project_id')
+            self.remove_review_project(review_id)
+        elif 'change reviewproject name' in request.POST:
+            form = forms.ChangeNameReviewProjectForm(request.POST)
+            if not form.is_valid():
+                return ReviewProjectsOverview.get(request)
+            review_id = form.cleaned_data.get('review_project_id')
+            new_review_name = form.cleaned_data.get('name')
+            self.change_review_project_name(review_id, new_review_name)
+        return self.get(request, *args, **kwargs)
+
+    def remove_review_project(self, review_project_id):
+        ReviewProject.objects.get(id=review_project_id).delete()
+
+    def change_review_project_name(self, review_project_id, new_name):
+        review_project = ReviewProject.objects.get(id=review_project_id)
+        review_project.name = new_name
+        review_project.save()
+
 
 class ReviewProjectView(KickOutMixin, ReviewProjectMixin, TemplateView):
     template_name = 'lizard_progress/reviewproject.html'

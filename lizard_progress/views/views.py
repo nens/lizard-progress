@@ -1489,7 +1489,9 @@ class ReviewProjectsOverview(KickOutMixin, ReviewProjectMixin, TemplateView):
             review_id = form.cleaned_data.get('review_project_id')
             new_review_name = form.cleaned_data.get('name')
             self.change_review_project_name(review_id, new_review_name)
-        return self.get(request, *args, **kwargs)
+        return HttpResponseRedirect(
+            reverse('lizard_progress_reviews_overview')
+        )
 
     def remove_review_project(self, review_project_id):
         ReviewProject.objects.get(id=review_project_id).delete()

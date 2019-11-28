@@ -1,7 +1,7 @@
 Changelog of lizard-progress
 ===================================================
 
-5.1.4 (unreleased)
+5.1.4 (2019-11-28)
 ------------------
 
 - Pyshp released a version 2.0 and our export code isn't compatible

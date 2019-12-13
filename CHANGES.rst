@@ -4,7 +4,7 @@ Changelog of lizard-progress
 5.1.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Remove links to the old map, that make the change request pages fail.
 
 
 5.1.4 (2019-11-28)

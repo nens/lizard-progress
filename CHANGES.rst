@@ -4,7 +4,7 @@ Changelog of lizard-progress
 5.1.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Improved performance of percentage calculation queries.
 
 
 5.1.5 (2019-12-13)

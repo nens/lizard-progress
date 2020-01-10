@@ -435,7 +435,7 @@ class ProjectActivityMixin(object):
         except ZeroDivisionError:
             return 'N/A'
 
-    @property
+    @cached_property
     def pie(self):
 
         done = self.percentage_done
@@ -470,7 +470,7 @@ class Project(ProjectActivityMixin, models.Model):
     project_type = models.ForeignKey(ProjectType, null=True, blank=True)
     created_at = models.DateTimeField(default=datetime.datetime.now)
 
-    objects = AnnotatedProjectManager()
+    # objects = AnnotatedProjectManager()
 
     class Meta:
         ordering = ('name',)
@@ -506,17 +506,33 @@ class Project(ProjectActivityMixin, models.Model):
     def specifics(self, activity=None):
         return lizard_progress.specifics.Specifics(self, activity)
 
-    @property
+    @cached_property
+    def _mylocations(self):
+        return set(
+            Location.objects
+            .prefetch_related('activity', 'activity__project')
+            .filter(activity__project=self)
+            .values_list('id', flat=True)
+        )
+
+    @cached_property
+    def _mycompletelocations(self):
+        return set(
+            Location.objects.filter(id__in=self._mylocations,
+                                    complete=True,
+                                    not_part_of_project=False)
+            .values_list('id', flat=True)
+        )
+
+    @cached_property
     def number_of_locations(self):
-        return self.counted_number_of_locations
+        return len(self._mylocations)
 
-    @property
+    @cached_property
     def number_of_complete_locations(self):
-        return Location.objects.filter(
-            activity__project=self, complete=True,
-            not_part_of_project=False).count()
+        return len(self._mycompletelocations)
 
-    @property
+    @cached_property
     def percentage_done(self):
         return self.percentage(self.number_of_locations,
                                self.number_of_complete_locations)
@@ -589,13 +605,13 @@ class Project(ProjectActivityMixin, models.Model):
             subscriber_content_type=project_content_type,
             subscriber_object_id=self.id).exists()
 
-    @property
+    @cached_property
     def show_numbers_on_map(self):
         """Should map layers show numbers for multiple recent uploads."""
         # Note that self.project_type is nullable.
         return self.project_type and self.project_type.show_numbers_on_map
 
-    @property
+    @cached_property
     def most_recent(self):
         try:
             return self.latest_log.when
@@ -1566,7 +1582,7 @@ class Activity(ProjectActivityMixin, models.Model):
     def has_locations(self):
         return self.location_set.filter(not_part_of_project=False).exists()
 
-    @property
+    @cached_property
     def num_complete_locations(self):
         return self.location_set.filter(
             complete=True, not_part_of_project=False).count()
@@ -1720,7 +1736,7 @@ class Activity(ProjectActivityMixin, models.Model):
         """Should map layers show numbers for multiple recent uploads."""
         return self.project.show_numbers_on_map
 
-    @property
+    @cached_property
     def percentage_done(self):
         if self.has_locations():
             return self.percentage(self.num_locations,
